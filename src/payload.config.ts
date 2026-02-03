@@ -10,6 +10,8 @@ import { importExportPlugin } from 'payload-import-export'
 import { collections } from './collections'
 // import { getServerSideURL } from '@/utilities/getURL'
 import { s3Storage } from '@payloadcms/storage-s3'
+import sharp from 'sharp'
+
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
@@ -48,6 +50,7 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
+  sharp,
   plugins: [
     s3Storage({
       collections: {
