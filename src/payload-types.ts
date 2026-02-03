@@ -64,41 +64,116 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
+    admins: AdminAuthOperations;
   };
   blocks: {};
   collections: {
     users: User;
+    admins: Admin;
+    'app-categories': AppCategory;
     media: Media;
+    'app-sub-categories': AppSubCategory;
+    'customization-template': CustomizationTemplate;
+    menu: Menu;
+    shop: Shop;
+    'shop-menu': ShopMenu;
+    coupon: Coupon;
+    'shop-coupon': ShopCoupon;
+    otp: Otp;
+    'app-cart': AppCart;
+    wishlist: Wishlist;
+    'app-orders': AppOrder;
+    'web-categories': WebCategory;
+    'web-sub-categories': WebSubCategory;
+    'web-products': WebProduct;
+    'web-cart': WebCart;
+    exports: Export;
+    import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
+    'payload-jobs': PayloadJob;
+    'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    'payload-folders': {
+      documentsAndFolders: 'payload-folders' | 'media';
+    };
+  };
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    admins: AdminsSelect<false> | AdminsSelect<true>;
+    'app-categories': AppCategoriesSelect<false> | AppCategoriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'app-sub-categories': AppSubCategoriesSelect<false> | AppSubCategoriesSelect<true>;
+    'customization-template': CustomizationTemplateSelect<false> | CustomizationTemplateSelect<true>;
+    menu: MenuSelect<false> | MenuSelect<true>;
+    shop: ShopSelect<false> | ShopSelect<true>;
+    'shop-menu': ShopMenuSelect<false> | ShopMenuSelect<true>;
+    coupon: CouponSelect<false> | CouponSelect<true>;
+    'shop-coupon': ShopCouponSelect<false> | ShopCouponSelect<true>;
+    otp: OtpSelect<false> | OtpSelect<true>;
+    'app-cart': AppCartSelect<false> | AppCartSelect<true>;
+    wishlist: WishlistSelect<false> | WishlistSelect<true>;
+    'app-orders': AppOrdersSelect<false> | AppOrdersSelect<true>;
+    'web-categories': WebCategoriesSelect<false> | WebCategoriesSelect<true>;
+    'web-sub-categories': WebSubCategoriesSelect<false> | WebSubCategoriesSelect<true>;
+    'web-products': WebProductsSelect<false> | WebProductsSelect<true>;
+    'web-cart': WebCartSelect<false> | WebCartSelect<true>;
+    exports: ExportsSelect<false> | ExportsSelect<true>;
+    import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
+    'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
   db: {
-    defaultIDType: string;
+    defaultIDType: number;
   };
   fallbackLocale: null;
   globals: {};
   globalsSelect: {};
   locale: null;
-  user: User & {
-    collection: 'users';
-  };
+  user:
+    | (User & {
+        collection: 'users';
+      })
+    | (Admin & {
+        collection: 'admins';
+      });
   jobs: {
-    tasks: unknown;
+    tasks: {
+      createCollectionExport: TaskCreateCollectionExport;
+      inline: {
+        input: unknown;
+        output: unknown;
+      };
+    };
     workflows: unknown;
   };
 }
 export interface UserAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
+  };
+}
+export interface AdminAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -121,7 +196,19 @@ export interface UserAuthOperations {
  * via the `definition` "users".
  */
 export interface User {
-  id: string;
+  id: number;
+  role: 'customer';
+  gender?: ('male' | 'female' | 'other') | null;
+  phone?: string | null;
+  name?: string | null;
+  profileImage?: (number | null) | Media;
+  address?: {
+    street?: string | null;
+    apartment?: string | null;
+    city?: string | null;
+    state?: string | null;
+    country?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -145,8 +232,724 @@ export interface User {
  * via the `definition` "media".
  */
 export interface Media {
-  id: string;
+  id: number;
   alt: string;
+  caption?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  prefix?: string | null;
+  folder?: (number | null) | FolderInterface;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-folders".
+ */
+export interface FolderInterface {
+  id: number;
+  name: string;
+  folder?: (number | null) | FolderInterface;
+  documentsAndFolders?: {
+    docs?: (
+      | {
+          relationTo?: 'payload-folders';
+          value: number | FolderInterface;
+        }
+      | {
+          relationTo?: 'media';
+          value: number | Media;
+        }
+    )[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  folderType?: 'media'[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "admins".
+ */
+export interface Admin {
+  id: number;
+  role?: ('super-admin' | 'admin' | 'shop-manager' | 'barista') | null;
+  name: string;
+  gender?: ('male' | 'female' | 'other') | null;
+  speciality?: string | null;
+  profileImage?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-categories".
+ */
+export interface AppCategory {
+  id: number;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-sub-categories".
+ */
+export interface AppSubCategory {
+  id: number;
+  title: string;
+  parentCategory?: (number | null) | AppCategory;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customization-template".
+ */
+export interface CustomizationTemplate {
+  id: number;
+  title: string;
+  sections?:
+    | {
+        title: string;
+        selectionType: 'single' | 'multiple';
+        groups?:
+          | {
+              groupTitle: string;
+              options?:
+                | {
+                    label: string;
+                    price?: number | null;
+                    id?: string | null;
+                  }[]
+                | null;
+              id?: string | null;
+            }[]
+          | null;
+        options?:
+          | {
+              label: string;
+              price?: number | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu".
+ */
+export interface Menu {
+  id: number;
+  name: string;
+  /**
+   * Keep it between 5 and 50 characters.
+   */
+  tagline?: string | null;
+  /**
+   * Upload Food Item Image
+   */
+  image?: (number | null) | Media;
+  description?: string | null;
+  category: number | AppCategory;
+  subCategories?: (number | AppSubCategory)[] | null;
+  regularPrice: number;
+  salePrice?: number | null;
+  /**
+   * Select dietary type of the food item
+   */
+  dietaryType?: ('veg' | 'non-veg' | 'vegan') | null;
+  customizations?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop".
+ */
+export interface Shop {
+  id: number;
+  name: string;
+  openingTime: string;
+  closingTime: string;
+  address: string;
+  shopManager: number | Admin;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop-menu".
+ */
+export interface ShopMenu {
+  id: number;
+  name: string;
+  shop?: (number | null) | Shop;
+  menuRelation?: (number | Menu)[] | null;
+  createdBy?: (number | null) | Admin;
+  /**
+   * Keep it between 5 and 50 characters.
+   */
+  tagline?: string | null;
+  /**
+   * Upload Food Item Image
+   */
+  image?: (number | null) | Media;
+  description?: string | null;
+  category: number | AppCategory;
+  subCategories?: (number | AppSubCategory)[] | null;
+  regularPrice: number;
+  salePrice?: number | null;
+  /**
+   * Select dietary type of the food item
+   */
+  dietaryType?: ('veg' | 'non-veg' | 'vegan') | null;
+  stockCount?: number | null;
+  /**
+   * Check if the item is in stock
+   */
+  inStock?: boolean | null;
+  customizations?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupon".
+ */
+export interface Coupon {
+  id: number;
+  createdBy?: (number | null) | Admin;
+  /**
+   * Select status
+   */
+  status: 'active' | 'inactive';
+  /**
+   * Enter coupon code
+   */
+  code: string;
+  /**
+   * Please select at least one option.
+   */
+  couponFor?: {
+    website?: boolean | null;
+    app?: boolean | null;
+  };
+  /**
+   * Toggle on to show this coupon in the "Available Offers" section on both Web and App.
+   */
+  isPubliclyVisible?: boolean | null;
+  applicability: 'all' | 'products';
+  /**
+   * Select products
+   */
+  products?:
+    | (
+        | {
+            relationTo: 'shop-menu';
+            value: number | ShopMenu;
+          }
+        | {
+            relationTo: 'web-products';
+            value: number | WebProduct;
+          }
+      )[]
+    | null;
+  /**
+   * Select discount type
+   */
+  discountType: 'percentage' | 'fixed';
+  /**
+   * Enter discount amount
+   */
+  discountAmount: number;
+  /**
+   * Select expiry date
+   */
+  expiryDate: string;
+  /**
+   * Enter minimum amount
+   */
+  minimumAmount: number;
+  /**
+   * The maximum number of times this coupon can be used across all customers (e.g., "First 100 people").
+   */
+  usageLimit?: number | null;
+  /**
+   * How many times a single customer can use this specific coupon.
+   */
+  usageLimitPerUser: number;
+  /**
+   * Internal counter of how many times this coupon has been successfully redeemed.
+   */
+  usageCount?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-products".
+ */
+export interface WebProduct {
+  id: number;
+  name: string;
+  hasVariantOptions?: boolean | null;
+  variants?:
+    | {
+        /**
+         * Automatically generated unique ID
+         */
+        vId?: string | null;
+        variantName: string;
+        variantImage: number | Media;
+        hasVariantSub?: boolean | null;
+        subFreq?:
+          | {
+              duration: number;
+              interval?: ('year' | 'month' | 'week' | 'day') | null;
+              subscriptionDiscount: number;
+              id?: string | null;
+            }[]
+          | null;
+        variantRegularPrice: number;
+        variantSalePrice?: number | null;
+        variantInStock?: boolean | null;
+        variantStockQuantity?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  regularPrice: number;
+  salePrice?: number | null;
+  inStock?: boolean | null;
+  stockQuantity?: number | null;
+  hasSimpleSub?: boolean | null;
+  /**
+   * Add subscription frequency
+   */
+  subFreq?:
+    | {
+        duration: number;
+        interval?: ('year' | 'month' | 'week' | 'day') | null;
+        subscriptionDiscount: number;
+        id?: string | null;
+      }[]
+    | null;
+  productImage?: (number | null) | Media;
+  description: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  categories: (number | WebCategory)[];
+  subCategories?: (number | WebSubCategory)[] | null;
+  farm: string;
+  tastingNotes: string;
+  variety: string;
+  process: string;
+  altitude: string;
+  body: string;
+  aroma: string;
+  roast: string;
+  finish: string;
+  farmDescription: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  videoBanner: number | Media;
+  brewGuide?: {
+    filter?: boolean | null;
+    espresso?: boolean | null;
+    milk?: boolean | null;
+  };
+  meta?: {
+    title?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+    description?: string | null;
+  };
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-categories".
+ */
+export interface WebCategory {
+  id: number;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-sub-categories".
+ */
+export interface WebSubCategory {
+  id: number;
+  title: string;
+  parentCategory?: (number | null) | WebCategory;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop-coupon".
+ */
+export interface ShopCoupon {
+  id: number;
+  shop?: (number | null) | Shop;
+  couponRelation: (number | Coupon)[];
+  createdBy?: (number | null) | Admin;
+  /**
+   * Select status
+   */
+  status: 'active' | 'inactive';
+  /**
+   * Enter coupon code
+   */
+  code: string;
+  /**
+   * Please select at least one option.
+   */
+  couponFor?: {
+    website?: boolean | null;
+    app?: boolean | null;
+  };
+  /**
+   * Toggle on to show this coupon in the "Available Offers" section on both Web and App.
+   */
+  isPubliclyVisible?: boolean | null;
+  applicability: 'all' | 'products';
+  /**
+   * Select products
+   */
+  products?:
+    | (
+        | {
+            relationTo: 'shop-menu';
+            value: number | ShopMenu;
+          }
+        | {
+            relationTo: 'web-products';
+            value: number | WebProduct;
+          }
+      )[]
+    | null;
+  /**
+   * Select discount type
+   */
+  discountType: 'percentage' | 'fixed';
+  /**
+   * Enter discount amount
+   */
+  discountAmount: number;
+  /**
+   * Select expiry date
+   */
+  expiryDate: string;
+  /**
+   * Enter minimum amount
+   */
+  minimumAmount: number;
+  /**
+   * The maximum number of times this coupon can be used across all customers (e.g., "First 100 people").
+   */
+  usageLimit?: number | null;
+  /**
+   * How many times a single customer can use this specific coupon.
+   */
+  usageLimitPerUser: number;
+  /**
+   * Internal counter of how many times this coupon has been successfully redeemed.
+   */
+  usageCount?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "otp".
+ */
+export interface Otp {
+  id: number;
+  email: string;
+  otp: string;
+  isUsed?: boolean | null;
+  expiresAt: string;
+  requestHistory?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-cart".
+ */
+export interface AppCart {
+  id: number;
+  user: number | User;
+  origin: 'app' | 'website';
+  shop: number | Shop;
+  items?:
+    | {
+        product:
+          | {
+              relationTo: 'shop-menu';
+              value: number | ShopMenu;
+            }
+          | {
+              relationTo: 'web-products';
+              value: number | WebProduct;
+            };
+        quantity?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wishlist".
+ */
+export interface Wishlist {
+  id: number;
+  user: number | User;
+  items?:
+    | {
+        product:
+          | {
+              relationTo: 'shop-menu';
+              value: number | ShopMenu;
+            }
+          | {
+              relationTo: 'web-products';
+              value: number | WebProduct;
+            };
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-orders".
+ */
+export interface AppOrder {
+  id: number;
+  name: string;
+  shop: number | Shop;
+  menuRelation: (number | ShopMenu)[];
+  orderAcceptance: 'pending' | 'accepted' | 'rejected';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-cart".
+ */
+export interface WebCart {
+  id: number;
+  user: number | User;
+  items?:
+    | {
+        product: number | WebProduct;
+        vId?: string | null;
+        quantity?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exports".
+ */
+export interface Export {
+  id: number;
+  name?: string | null;
+  format?: ('csv' | 'json') | null;
+  limit?: number | null;
+  page?: number | null;
+  sort?: string | null;
+  sortOrder?: ('asc' | 'desc') | null;
+  drafts?: ('yes' | 'no') | null;
+  selectionToUse?: ('currentSelection' | 'currentFilters' | 'all') | null;
+  fields?: string[] | null;
+  collectionSlug: string;
+  where?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "import_export_plugin_imports".
+ */
+export interface ImportExportPluginImport {
+  id: number;
+  name?: string | null;
+  collectionSlug: string;
+  jsonData?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -164,7 +967,7 @@ export interface Media {
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: string;
+  id: number;
   key: string;
   data:
     | {
@@ -178,24 +981,201 @@ export interface PayloadKv {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs".
+ */
+export interface PayloadJob {
+  id: number;
+  /**
+   * Input data provided to the job
+   */
+  input?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  taskStatus?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  completedAt?: string | null;
+  totalTried?: number | null;
+  /**
+   * If hasError is true this job will not be retried
+   */
+  hasError?: boolean | null;
+  /**
+   * If hasError is true, this is the error that caused it
+   */
+  error?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Task execution log
+   */
+  log?:
+    | {
+        executedAt: string;
+        completedAt: string;
+        taskSlug: 'inline' | 'createCollectionExport';
+        taskID: string;
+        input?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        output?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        state: 'failed' | 'succeeded';
+        error?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  taskSlug?: ('inline' | 'createCollectionExport') | null;
+  queue?: string | null;
+  waitUntil?: string | null;
+  processing?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: string;
+  id: number;
   document?:
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
+      } | null)
+    | ({
+        relationTo: 'admins';
+        value: number | Admin;
+      } | null)
+    | ({
+        relationTo: 'app-categories';
+        value: number | AppCategory;
       } | null)
     | ({
         relationTo: 'media';
-        value: string | Media;
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'app-sub-categories';
+        value: number | AppSubCategory;
+      } | null)
+    | ({
+        relationTo: 'customization-template';
+        value: number | CustomizationTemplate;
+      } | null)
+    | ({
+        relationTo: 'menu';
+        value: number | Menu;
+      } | null)
+    | ({
+        relationTo: 'shop';
+        value: number | Shop;
+      } | null)
+    | ({
+        relationTo: 'shop-menu';
+        value: number | ShopMenu;
+      } | null)
+    | ({
+        relationTo: 'coupon';
+        value: number | Coupon;
+      } | null)
+    | ({
+        relationTo: 'shop-coupon';
+        value: number | ShopCoupon;
+      } | null)
+    | ({
+        relationTo: 'otp';
+        value: number | Otp;
+      } | null)
+    | ({
+        relationTo: 'app-cart';
+        value: number | AppCart;
+      } | null)
+    | ({
+        relationTo: 'wishlist';
+        value: number | Wishlist;
+      } | null)
+    | ({
+        relationTo: 'app-orders';
+        value: number | AppOrder;
+      } | null)
+    | ({
+        relationTo: 'web-categories';
+        value: number | WebCategory;
+      } | null)
+    | ({
+        relationTo: 'web-sub-categories';
+        value: number | WebSubCategory;
+      } | null)
+    | ({
+        relationTo: 'web-products';
+        value: number | WebProduct;
+      } | null)
+    | ({
+        relationTo: 'web-cart';
+        value: number | WebCart;
+      } | null)
+    | ({
+        relationTo: 'exports';
+        value: number | Export;
+      } | null)
+    | ({
+        relationTo: 'import_export_plugin_imports';
+        value: number | ImportExportPluginImport;
+      } | null)
+    | ({
+        relationTo: 'payload-folders';
+        value: number | FolderInterface;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: number | User;
+      }
+    | {
+        relationTo: 'admins';
+        value: number | Admin;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -204,11 +1184,16 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: string;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  id: number;
+  user:
+    | {
+        relationTo: 'users';
+        value: number | User;
+      }
+    | {
+        relationTo: 'admins';
+        value: number | Admin;
+      };
   key?: string | null;
   value?:
     | {
@@ -227,7 +1212,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: string;
+  id: number;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -238,6 +1223,20 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
+  gender?: T;
+  phone?: T;
+  name?: T;
+  profileImage?: T;
+  address?:
+    | T
+    | {
+        street?: T;
+        apartment?: T;
+        city?: T;
+        state?: T;
+        country?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -257,10 +1256,449 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "admins_select".
+ */
+export interface AdminsSelect<T extends boolean = true> {
+  role?: T;
+  name?: T;
+  gender?: T;
+  speciality?: T;
+  profileImage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-categories_select".
+ */
+export interface AppCategoriesSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  caption?: T;
+  prefix?: T;
+  folder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-sub-categories_select".
+ */
+export interface AppSubCategoriesSelect<T extends boolean = true> {
+  title?: T;
+  parentCategory?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "customization-template_select".
+ */
+export interface CustomizationTemplateSelect<T extends boolean = true> {
+  title?: T;
+  sections?:
+    | T
+    | {
+        title?: T;
+        selectionType?: T;
+        groups?:
+          | T
+          | {
+              groupTitle?: T;
+              options?:
+                | T
+                | {
+                    label?: T;
+                    price?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+        options?:
+          | T
+          | {
+              label?: T;
+              price?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu_select".
+ */
+export interface MenuSelect<T extends boolean = true> {
+  name?: T;
+  tagline?: T;
+  image?: T;
+  description?: T;
+  category?: T;
+  subCategories?: T;
+  regularPrice?: T;
+  salePrice?: T;
+  dietaryType?: T;
+  customizations?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop_select".
+ */
+export interface ShopSelect<T extends boolean = true> {
+  name?: T;
+  openingTime?: T;
+  closingTime?: T;
+  address?: T;
+  shopManager?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop-menu_select".
+ */
+export interface ShopMenuSelect<T extends boolean = true> {
+  name?: T;
+  shop?: T;
+  menuRelation?: T;
+  createdBy?: T;
+  tagline?: T;
+  image?: T;
+  description?: T;
+  category?: T;
+  subCategories?: T;
+  regularPrice?: T;
+  salePrice?: T;
+  dietaryType?: T;
+  stockCount?: T;
+  inStock?: T;
+  customizations?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupon_select".
+ */
+export interface CouponSelect<T extends boolean = true> {
+  createdBy?: T;
+  status?: T;
+  code?: T;
+  couponFor?:
+    | T
+    | {
+        website?: T;
+        app?: T;
+      };
+  isPubliclyVisible?: T;
+  applicability?: T;
+  products?: T;
+  discountType?: T;
+  discountAmount?: T;
+  expiryDate?: T;
+  minimumAmount?: T;
+  usageLimit?: T;
+  usageLimitPerUser?: T;
+  usageCount?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop-coupon_select".
+ */
+export interface ShopCouponSelect<T extends boolean = true> {
+  shop?: T;
+  couponRelation?: T;
+  createdBy?: T;
+  status?: T;
+  code?: T;
+  couponFor?:
+    | T
+    | {
+        website?: T;
+        app?: T;
+      };
+  isPubliclyVisible?: T;
+  applicability?: T;
+  products?: T;
+  discountType?: T;
+  discountAmount?: T;
+  expiryDate?: T;
+  minimumAmount?: T;
+  usageLimit?: T;
+  usageLimitPerUser?: T;
+  usageCount?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "otp_select".
+ */
+export interface OtpSelect<T extends boolean = true> {
+  email?: T;
+  otp?: T;
+  isUsed?: T;
+  expiresAt?: T;
+  requestHistory?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-cart_select".
+ */
+export interface AppCartSelect<T extends boolean = true> {
+  user?: T;
+  origin?: T;
+  shop?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wishlist_select".
+ */
+export interface WishlistSelect<T extends boolean = true> {
+  user?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-orders_select".
+ */
+export interface AppOrdersSelect<T extends boolean = true> {
+  name?: T;
+  shop?: T;
+  menuRelation?: T;
+  orderAcceptance?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-categories_select".
+ */
+export interface WebCategoriesSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-sub-categories_select".
+ */
+export interface WebSubCategoriesSelect<T extends boolean = true> {
+  title?: T;
+  parentCategory?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-products_select".
+ */
+export interface WebProductsSelect<T extends boolean = true> {
+  name?: T;
+  hasVariantOptions?: T;
+  variants?:
+    | T
+    | {
+        vId?: T;
+        variantName?: T;
+        variantImage?: T;
+        hasVariantSub?: T;
+        subFreq?:
+          | T
+          | {
+              duration?: T;
+              interval?: T;
+              subscriptionDiscount?: T;
+              id?: T;
+            };
+        variantRegularPrice?: T;
+        variantSalePrice?: T;
+        variantInStock?: T;
+        variantStockQuantity?: T;
+        id?: T;
+      };
+  regularPrice?: T;
+  salePrice?: T;
+  inStock?: T;
+  stockQuantity?: T;
+  hasSimpleSub?: T;
+  subFreq?:
+    | T
+    | {
+        duration?: T;
+        interval?: T;
+        subscriptionDiscount?: T;
+        id?: T;
+      };
+  productImage?: T;
+  description?: T;
+  categories?: T;
+  subCategories?: T;
+  farm?: T;
+  tastingNotes?: T;
+  variety?: T;
+  process?: T;
+  altitude?: T;
+  body?: T;
+  aroma?: T;
+  roast?: T;
+  finish?: T;
+  farmDescription?: T;
+  videoBanner?: T;
+  brewGuide?:
+    | T
+    | {
+        filter?: T;
+        espresso?: T;
+        milk?: T;
+      };
+  meta?:
+    | T
+    | {
+        title?: T;
+        image?: T;
+        description?: T;
+      };
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-cart_select".
+ */
+export interface WebCartSelect<T extends boolean = true> {
+  user?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        vId?: T;
+        quantity?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exports_select".
+ */
+export interface ExportsSelect<T extends boolean = true> {
+  name?: T;
+  format?: T;
+  limit?: T;
+  page?: T;
+  sort?: T;
+  sortOrder?: T;
+  drafts?: T;
+  selectionToUse?: T;
+  fields?: T;
+  collectionSlug?: T;
+  where?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "import_export_plugin_imports_select".
+ */
+export interface ImportExportPluginImportsSelect<T extends boolean = true> {
+  name?: T;
+  collectionSlug?: T;
+  jsonData?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -280,6 +1718,49 @@ export interface MediaSelect<T extends boolean = true> {
 export interface PayloadKvSelect<T extends boolean = true> {
   key?: T;
   data?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs_select".
+ */
+export interface PayloadJobsSelect<T extends boolean = true> {
+  input?: T;
+  taskStatus?: T;
+  completedAt?: T;
+  totalTried?: T;
+  hasError?: T;
+  error?: T;
+  log?:
+    | T
+    | {
+        executedAt?: T;
+        completedAt?: T;
+        taskSlug?: T;
+        taskID?: T;
+        input?: T;
+        output?: T;
+        state?: T;
+        error?: T;
+        id?: T;
+      };
+  taskSlug?: T;
+  queue?: T;
+  waitUntil?: T;
+  processing?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-folders_select".
+ */
+export interface PayloadFoldersSelect<T extends boolean = true> {
+  name?: T;
+  folder?: T;
+  documentsAndFolders?: T;
+  folderType?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -312,6 +1793,37 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskCreateCollectionExport".
+ */
+export interface TaskCreateCollectionExport {
+  input: {
+    name?: string | null;
+    format?: ('csv' | 'json') | null;
+    limit?: number | null;
+    page?: number | null;
+    sort?: string | null;
+    sortOrder?: ('asc' | 'desc') | null;
+    drafts?: ('yes' | 'no') | null;
+    selectionToUse?: ('currentSelection' | 'currentFilters' | 'all') | null;
+    fields?: string[] | null;
+    collectionSlug: string;
+    where?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    user?: string | null;
+    userCollection?: string | null;
+    exportsCollection?: string | null;
+  };
+  output?: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

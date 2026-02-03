@@ -3,22 +3,41 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
-import sharp from 'sharp'
-
-import { Users } from './collections/Users'
-import { Media } from './collections/Media'
-
+import { Admins } from './collections/Users/Admins'
+import { seoPlugin } from '@payloadcms/plugin-seo'
+import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
+import { importExportPlugin } from 'payload-import-export'
+import { collections } from './collections'
+// import { getServerSideURL } from '@/utilities/getURL'
+import { s3Storage } from '@payloadcms/storage-s3'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+// const generateTitle: GenerateTitle<Product | Page> = ({ doc }) => {
+//   return doc?.title ? `${doc.title} | Payload Ecommerce Template` : 'Payload Ecommerce Template'
+// }
+
+// const generateURL: GenerateURL<Product | Page> = ({ doc }) => {
+//   const url = getServerSideURL()
+
+//   return doc?.slug ? `${url}/${doc.slug}` : url
+// }
+
 export default buildConfig({
   admin: {
-    user: Users.slug,
-    importMap: {
-      baseDir: path.resolve(dirname),
+    components: {
+      views: {
+        MyCustomView: {
+          Component:
+            '@/collections/components/ShopManagerCustomComponents/pendingOrders#pendingOrders',
+          path: '/pending-orders',
+        },
+      },
+      afterNavLinks: ['@/collections/components/Navbar/MySidebarLink#MySidebarLink'],
     },
+    user: Admins.slug,
   },
-  collections: [Users, Media],
+  collections: collections,
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -29,6 +48,39 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  sharp,
-  plugins: [],
+  plugins: [
+    s3Storage({
+      collections: {
+        // 'media' is your collection slug
+        media: {
+          // 'prefix' here is the ROOT folder in MinIO
+          prefix: 'uploads',
+
+          // This is crucial: it ensures the browser sees the correct path
+          generateFileURL: ({ filename, prefix }) => {
+            // prefix will now look like "uploads/products" or "uploads/users"
+            // depending on the folder you created in the Admin panel.
+            return `https://storage-admin-api.whitemantis.ae/whitemantis/${prefix}/${filename}`
+          },
+        },
+      },
+      bucket: process.env.S3_BUCKET as string,
+      config: {
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_KEY as string,
+          secretAccessKey: process.env.S3_SECRET_KEY as string,
+        },
+        endpoint: process.env.S3_ENDPOINT!,
+        region: 'us-east-1',
+        forcePathStyle: true,
+      },
+    }),
+    importExportPlugin({
+      collections: ['web-products'],
+    }),
+    // seoPlugin({
+    //   generateTitle,
+    //   generateURL,
+    // }),
+  ],
 })
