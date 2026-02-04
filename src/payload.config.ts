@@ -7,23 +7,23 @@ import { Admins } from './collections/Users/Admins'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { importExportPlugin } from 'payload-import-export'
-import { collections } from './collections'
-// import { getServerSideURL } from '@/utilities/getURL'
+import { collections, globals } from './collections'
+import { getServerSideURL } from '@/utilities/getURL'
 import { s3Storage } from '@payloadcms/storage-s3'
 import sharp from 'sharp'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-// const generateTitle: GenerateTitle<Product | Page> = ({ doc }) => {
-//   return doc?.title ? `${doc.title} | Payload Ecommerce Template` : 'Payload Ecommerce Template'
-// }
+const generateTitle: GenerateTitle = ({ doc }) => {
+  return doc?.title ? `${doc.title} | Payload Ecommerce Template` : 'Payload Ecommerce Template'
+}
 
-// const generateURL: GenerateURL<Product | Page> = ({ doc }) => {
-//   const url = getServerSideURL()
+const generateURL: GenerateURL = ({ doc }) => {
+  const url = getServerSideURL()
 
-//   return doc?.slug ? `${url}/${doc.slug}` : url
-// }
+  return doc?.slug ? `${url}/${doc.slug}` : url
+}
 
 export default buildConfig({
   admin: {
@@ -39,7 +39,13 @@ export default buildConfig({
     },
     user: Admins.slug,
   },
+  cors: [
+    'http://localhost:8100',
+    'http://localhost:5173',
+    process.env.PAYLOAD_PUBLIC_SERVER_URL || '',
+  ].filter(Boolean),
   collections: collections,
+  globals: globals,
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -54,15 +60,9 @@ export default buildConfig({
   plugins: [
     s3Storage({
       collections: {
-        // 'media' is your collection slug
         media: {
-          // 'prefix' here is the ROOT folder in MinIO
           prefix: 'uploads',
-
-          // This is crucial: it ensures the browser sees the correct path
           generateFileURL: ({ filename, prefix }) => {
-            // prefix will now look like "uploads/products" or "uploads/users"
-            // depending on the folder you created in the Admin panel.
             return `https://storage-admin-api.whitemantis.ae/whitemantis/${prefix}/${filename}`
           },
         },
@@ -81,9 +81,9 @@ export default buildConfig({
     importExportPlugin({
       collections: ['web-products'],
     }),
-    // seoPlugin({
-    //   generateTitle,
-    //   generateURL,
-    // }),
+    seoPlugin({
+      generateTitle,
+      generateURL,
+    }),
   ],
 })
