@@ -1,59 +1,130 @@
-import { headers as getHeaders } from 'next/headers'
-import Image from 'next/image'
-import { getPayload } from 'payload'
-import React from 'react'
-import { fileURLToPath } from 'url'
+'use client'
 
-import config from '@/payload.config'
-import './styles.css'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import ProductCard from './components/ProductCard'
+import SubscriptionModal from './components/SubscriptionModal'
+import { Product } from './types/product'
+import styles from './home.module.css'
 
-export default async function HomePage() {
-  const headers = await getHeaders()
-  const payloadConfig = await config
-  const payload = await getPayload({ config: payloadConfig })
-  const { user } = await payload.auth({ headers })
+export default function HomePage() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/checkout/subscription?limit=8`, {
+          cache: 'no-store',
+        })
+        if (!res.ok) {
+          setProducts([])
+          return
+        }
+        const data = await res.json()
+        setProducts(data.docs || [])
+      } catch (error) {
+        console.error('Error fetching products:', error)
+        setProducts([])
+      }
+    }
+    fetchProducts()
+  }, [])
+
+  const handleSubscribeClick = (product: Product) => {
+    setSelectedProduct(product)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedProduct(null)
+  }
 
   return (
-    <div className="home">
-      <div className="content">
-        <picture>
-          <source srcSet="https://raw.githubusercontent.com/payloadcms/payload/main/packages/ui/src/assets/payload-favicon.svg" />
-          <Image
-            alt="Payload Logo"
-            height={65}
-            src="https://raw.githubusercontent.com/payloadcms/payload/main/packages/ui/src/assets/payload-favicon.svg"
-            width={65}
-          />
-        </picture>
-        {!user && <h1>Welcome to your new project.</h1>}
-        {user && <h1>Welcome back, {user.email}</h1>}
-        <div className="links">
-          <a
-            className="admin"
-            href={payloadConfig.routes.admin}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Go to admin panel
-          </a>
-          <a
-            className="docs"
-            href="https://payloadcms.com/docs"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Documentation
-          </a>
+    <div className={styles.home}>
+      {/* Hero Section */}
+      <section className={styles.hero}>
+        <div className="container">
+          <div className={styles.heroContent}>
+            <h1 className={styles.heroTitle}>
+              Premium Coffee
+              <br />
+              <span className={styles.heroAccent}>Delivered Fresh</span>
+            </h1>
+            <p className={styles.heroText}>
+              Discover exceptional coffee from the world&apos;s finest farms, roasted to perfection and delivered to your door.
+            </p>
+            <div className={styles.heroActions}>
+              <Link href="/products" className="btn btn-primary btn-lg">
+                Shop Now
+              </Link>
+              <Link href="/about" className="btn btn-outline btn-lg">
+                Learn More
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="footer">
-        <p>Update this page by editing</p>
-        <a className="codeLink" href={fileURL}>
-          <code>app/(frontend)/page.tsx</code>
-        </a>
-      </div>
+      </section>
+
+      {/* Featured Products */}
+      <section className={styles.featured}>
+        <div className="container">
+          <div className={styles.sectionHeader}>
+            <h2>Featured Products</h2>
+            <p>Handpicked selections from our premium collection</p>
+          </div>
+
+          <div className="grid grid-4">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onSubscribe={() => handleSubscribeClick(product)}
+              />
+            ))}
+          </div>
+
+          <div className={styles.viewAll}>
+            <Link href="/products" className="btn btn-primary">
+              View All Products
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className={styles.features}>
+        <div className="container">
+          <div className="grid grid-3">
+            <div className={styles.feature}>
+              <div className={styles.featureIcon}>🚚</div>
+              <h3>Free Delivery</h3>
+              <p>On orders over AED 200</p>
+            </div>
+            <div className={styles.feature}>
+              <div className={styles.featureIcon}>☕</div>
+              <h3>Fresh Roasted</h3>
+              <p>Roasted to order for maximum freshness</p>
+            </div>
+            <div className={styles.feature}>
+              <div className={styles.featureIcon}>🌍</div>
+              <h3>Sustainably Sourced</h3>
+              <p>Direct trade with ethical farmers</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Subscription Modal */}
+      {selectedProduct && (
+        <SubscriptionModal
+          product={selectedProduct}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   )
 }

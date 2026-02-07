@@ -5,7 +5,7 @@ import {
     OverviewField,
     PreviewField,
 } from '@payloadcms/plugin-seo/fields';
-import { slugField, type CollectionConfig } from "payload";
+import { type CollectionConfig } from "payload";
 
 export const WebProducts: CollectionConfig = {
     slug: 'web-products',
@@ -22,21 +22,13 @@ export const WebProducts: CollectionConfig = {
         },
         maxPerDoc: 50,
     },
-    hooks: {
-        beforeValidate: [
-            async ({ data }) => {
-                if (data?.variants && Array.isArray(data.variants)) {
-                    data.variants = data.variants.map((variant: any) => {
-                        if (!variant.vId) {
-                            variant.vId = Math.random().toString(36).substring(2, 8).toUpperCase();
-                        }
-                        return variant;
-                    });
-                }
-                return data;
-            }
-        ]
+    access: {
+        read: () => true,
+        update: () => true,
+        create: () => true,
+        delete: () => true,
     },
+
     fields: [
         {
             name: 'name',
@@ -45,6 +37,15 @@ export const WebProducts: CollectionConfig = {
             required: true,
             admin: {
                 placeholder: 'Enter Product Name',
+            }
+        },
+        {
+            name: 'tagline',
+            label: 'Tagline',
+            type: 'text',
+            required: true,
+            admin: {
+                placeholder: 'Enter Tagline',
             }
         },
         {
@@ -70,15 +71,6 @@ export const WebProducts: CollectionConfig = {
                             },
                             fields: [
                                 {
-                                    name: 'vId',
-                                    label: 'Variant ID',
-                                    type: 'text',
-                                    admin: {
-                                        readOnly: true,
-                                        description: 'Automatically generated unique ID',
-                                    }
-                                },
-                                {
                                     name: 'variantName',
                                     label: 'Variant Name',
                                     type: 'text',
@@ -98,6 +90,7 @@ export const WebProducts: CollectionConfig = {
                                     type: 'checkbox',
                                     defaultValue: false,
                                 },
+                                { name: 'subscriptionDiscount', label: 'Subscription Discount', type: 'number', required: true, admin: { condition: (_, siblingData) => Boolean(siblingData?.hasVariantSub) } },
                                 {
                                     name: 'subFreq',
                                     label: 'Repeat Every',
@@ -111,10 +104,10 @@ export const WebProducts: CollectionConfig = {
                                             type: 'row',
                                             fields: [
                                                 { name: 'duration', label: 'Every', type: 'number', required: true, admin: { width: '50%' } },
-                                                { 
-                                                    name: 'interval', 
-                                                    label: 'Interval', 
-                                                    type: 'select', 
+                                                {
+                                                    name: 'interval',
+                                                    label: 'Interval',
+                                                    type: 'select',
                                                     defaultValue: 'month',
                                                     options: [
                                                         { label: 'Year', value: 'year' },
@@ -126,7 +119,6 @@ export const WebProducts: CollectionConfig = {
                                                 },
                                             ]
                                         },
-                                        { name: 'subscriptionDiscount', label: 'Subscription Discount', type: 'number', required: true }
                                     ],
                                 },
                                 {
@@ -140,16 +132,16 @@ export const WebProducts: CollectionConfig = {
                                     type: 'row',
                                     fields: [
                                         { name: 'variantInStock', label: 'In Stock', type: 'checkbox', defaultValue: false, admin: { width: '50%' } },
-                                        { 
-                                            name: 'variantStockQuantity', 
-                                            label: 'Stock Quantity', 
-                                            type: 'number', 
+                                        {
+                                            name: 'variantStockQuantity',
+                                            label: 'Stock Quantity',
+                                            type: 'number',
                                             required: true,
-                                            admin: { 
+                                            admin: {
                                                 width: '50%',
                                                 // Check siblingData for the checkbox right above it
                                                 condition: (_, siblingData) => Boolean(siblingData?.variantInStock)
-                                            } 
+                                            }
                                         },
                                     ]
                                 }
@@ -169,15 +161,15 @@ export const WebProducts: CollectionConfig = {
                             admin: { condition: (data) => !data?.hasVariantOptions },
                             fields: [
                                 { name: 'inStock', label: 'In Stock', type: 'checkbox', defaultValue: false, admin: { width: '50%' } },
-                                { 
-                                    name: 'stockQuantity', 
-                                    label: 'Stock Quantity', 
-                                    type: 'number', 
-                                    required: true, 
-                                    admin: { 
+                                {
+                                    name: 'stockQuantity',
+                                    label: 'Stock Quantity',
+                                    type: 'number',
+                                    required: true,
+                                    admin: {
                                         width: '50%',
                                         condition: (data) => Boolean(data?.inStock)
-                                    } 
+                                    }
                                 },
                             ]
                         },
@@ -190,6 +182,7 @@ export const WebProducts: CollectionConfig = {
                                 condition: (data) => !data?.hasVariantOptions,
                             }
                         },
+                        { name: 'subscriptionDiscount', label: 'Subscription Discount', type: 'number', required: true, admin: { condition: (_, siblingData) => Boolean(siblingData?.hasVariantSub) } },
                         {
                             name: 'subFreq',
                             label: 'Repeat Every',
@@ -203,10 +196,10 @@ export const WebProducts: CollectionConfig = {
                                     type: 'row',
                                     fields: [
                                         { name: 'duration', label: 'Every', type: 'number', required: true, admin: { width: '50%' } },
-                                        { 
-                                            name: 'interval', 
-                                            label: 'Interval', 
-                                            type: 'select', 
+                                        {
+                                            name: 'interval',
+                                            label: 'Interval',
+                                            type: 'select',
                                             defaultValue: 'month',
                                             options: [
                                                 { label: 'Year', value: 'year' },
@@ -214,11 +207,10 @@ export const WebProducts: CollectionConfig = {
                                                 { label: 'Week', value: 'week' },
                                                 { label: 'Day', value: 'day' },
                                             ],
-                                            admin: { width: '50%' } 
+                                            admin: { width: '50%' }
                                         },
                                     ]
                                 },
-                                { name: 'subscriptionDiscount', label: 'Subscription Discount', type: 'number', required: true }
                             ],
                         },
                     ],
@@ -233,7 +225,7 @@ export const WebProducts: CollectionConfig = {
                             relationTo: 'media',
                             required: true,
                             admin: {
-                                condition: (data) => !data?.hasVariantOptions
+                                description: 'Upload product image that will be visible on Product Listing'
                             },
                             filterOptions: { mimeType: { contains: 'image' } },
                         },
@@ -242,17 +234,17 @@ export const WebProducts: CollectionConfig = {
                             type: 'row',
                             fields: [
                                 { name: 'categories', label: 'Categories', type: 'relationship', relationTo: 'web-categories', hasMany: true, required: true, admin: { width: '50%' } },
-                                { 
-                                    name: 'subCategories', 
-                                    label: 'Sub Categories', 
-                                    type: 'relationship', 
-                                    relationTo: 'web-sub-categories', 
-                                    hasMany: true, 
-                                    required: true, 
-                                    admin: { 
+                                {
+                                    name: 'subCategories',
+                                    label: 'Sub Categories',
+                                    type: 'relationship',
+                                    relationTo: 'web-sub-categories',
+                                    hasMany: true,
+                                    required: true,
+                                    admin: {
                                         width: '50%',
-                                        condition: (data) => Array.isArray(data?.categories) && data.categories.length > 0 
-                                    } 
+                                        condition: (data) => Array.isArray(data?.categories) && data.categories.length > 0
+                                    }
                                 },
                             ]
                         },
@@ -319,6 +311,30 @@ export const WebProducts: CollectionConfig = {
                 },
             ],
         },
-        slugField({ fieldToUse: 'name' })
+        {
+            name: 'slug',
+            type: 'text',
+            index: true,
+            unique: true,
+            admin: {
+                position: 'sidebar',
+                description: 'Auto-generated from product name. You can edit it manually.',
+            },
+            hooks: {
+                beforeValidate: [({ value, data }) => {
+                    if (value) return value; // Keep manual input
+                    const name = data?.name || '';
+                    if (!name) return undefined; // Let Payload handle empty case
+                    const tagline = data?.tagline || '';
+                    const source = tagline ? `${name} ${tagline}` : name;
+                    const slug = source
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-+|-+$/g, '');
+                    // Add timestamp if slug is empty after sanitization
+                    return slug || `product-${Date.now()}`;
+                }],
+            },
+        }
     ]
 }

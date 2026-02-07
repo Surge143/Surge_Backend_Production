@@ -14,3 +14,13 @@ export const emitOrderCreated = (order: any) => {
         console.warn('Socket.io instance not found on global object')
     }
 }
+
+export const emitOrderUpdated = (order: any) => {
+    const io = getIO()
+    if (io) {
+        console.log('Emitting order-updated via Socket.io')
+        io.emit('order-updated', order)
+    } else {
+        console.warn('Socket.io instance not found on global object')
+    }
+}

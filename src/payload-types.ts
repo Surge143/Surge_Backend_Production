@@ -81,12 +81,16 @@ export interface Config {
     'shop-coupon': ShopCoupon;
     otp: Otp;
     'app-cart': AppCart;
-    wishlist: Wishlist;
+    'app-wishlist': AppWishlist;
     'app-orders': AppOrder;
     'web-categories': WebCategory;
     'web-sub-categories': WebSubCategory;
     'web-products': WebProduct;
     'web-cart': WebCart;
+    'user-rewards': UserReward;
+    'web-orders': WebOrder;
+    slots: Slot;
+    'web-subscription': WebSubscription;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -115,12 +119,16 @@ export interface Config {
     'shop-coupon': ShopCouponSelect<false> | ShopCouponSelect<true>;
     otp: OtpSelect<false> | OtpSelect<true>;
     'app-cart': AppCartSelect<false> | AppCartSelect<true>;
-    wishlist: WishlistSelect<false> | WishlistSelect<true>;
+    'app-wishlist': AppWishlistSelect<false> | AppWishlistSelect<true>;
     'app-orders': AppOrdersSelect<false> | AppOrdersSelect<true>;
     'web-categories': WebCategoriesSelect<false> | WebCategoriesSelect<true>;
     'web-sub-categories': WebSubCategoriesSelect<false> | WebSubCategoriesSelect<true>;
     'web-products': WebProductsSelect<false> | WebProductsSelect<true>;
     'web-cart': WebCartSelect<false> | WebCartSelect<true>;
+    'user-rewards': UserRewardsSelect<false> | UserRewardsSelect<true>;
+    'web-orders': WebOrdersSelect<false> | WebOrdersSelect<true>;
+    slots: SlotsSelect<false> | SlotsSelect<true>;
+    'web-subscription': WebSubscriptionSelect<false> | WebSubscriptionSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -134,8 +142,14 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    rewards: Reward;
+    'ship-and-tax': ShipAndTax;
+  };
+  globalsSelect: {
+    rewards: RewardsSelect<false> | RewardsSelect<true>;
+    'ship-and-tax': ShipAndTaxSelect<false> | ShipAndTaxSelect<true>;
+  };
   locale: null;
   user:
     | (User & {
@@ -305,10 +319,11 @@ export interface FolderInterface {
  */
 export interface Admin {
   id: number;
-  role?: ('super-admin' | 'admin' | 'shop-manager' | 'barista') | null;
+  role: 'super-admin' | 'admin' | 'shop-manager' | 'barista';
   name: string;
   gender?: ('male' | 'female' | 'other') | null;
   speciality?: string | null;
+  shop?: (number | null) | Shop;
   profileImage?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
@@ -330,15 +345,25 @@ export interface Admin {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop".
+ */
+export interface Shop {
+  id: number;
+  name: string;
+  openingTime: string;
+  closingTime: string;
+  address: string;
+  shopManager: number | Admin;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "app-categories".
  */
 export interface AppCategory {
   id: number;
   title: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -351,10 +376,6 @@ export interface AppSubCategory {
   id: number;
   title: string;
   parentCategory?: (number | null) | AppCategory;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -429,25 +450,7 @@ export interface Menu {
     | number
     | boolean
     | null;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
   slug: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "shop".
- */
-export interface Shop {
-  id: number;
-  name: string;
-  openingTime: string;
-  closingTime: string;
-  address: string;
-  shopManager: number | Admin;
   updatedAt: string;
   createdAt: string;
 }
@@ -492,10 +495,6 @@ export interface ShopMenu {
     | number
     | boolean
     | null;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -580,21 +579,18 @@ export interface Coupon {
 export interface WebProduct {
   id: number;
   name: string;
+  tagline: string;
   hasVariantOptions?: boolean | null;
   variants?:
     | {
-        /**
-         * Automatically generated unique ID
-         */
-        vId?: string | null;
         variantName: string;
         variantImage: number | Media;
         hasVariantSub?: boolean | null;
+        subscriptionDiscount?: number | null;
         subFreq?:
           | {
               duration: number;
               interval?: ('year' | 'month' | 'week' | 'day') | null;
-              subscriptionDiscount: number;
               id?: string | null;
             }[]
           | null;
@@ -610,6 +606,7 @@ export interface WebProduct {
   inStock?: boolean | null;
   stockQuantity?: number | null;
   hasSimpleSub?: boolean | null;
+  subscriptionDiscount?: number | null;
   /**
    * Add subscription frequency
    */
@@ -617,11 +614,13 @@ export interface WebProduct {
     | {
         duration: number;
         interval?: ('year' | 'month' | 'week' | 'day') | null;
-        subscriptionDiscount: number;
         id?: string | null;
       }[]
     | null;
-  productImage?: (number | null) | Media;
+  /**
+   * Upload product image that will be visible on Product Listing
+   */
+  productImage: number | Media;
   description: {
     root: {
       type: string;
@@ -678,10 +677,9 @@ export interface WebProduct {
     description?: string | null;
   };
   /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   * Auto-generated from product name. You can edit it manually.
    */
-  generateSlug?: boolean | null;
-  slug: string;
+  slug?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -693,10 +691,6 @@ export interface WebProduct {
 export interface WebCategory {
   id: number;
   title: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -709,10 +703,6 @@ export interface WebSubCategory {
   id: number;
   title: string;
   parentCategory?: (number | null) | WebCategory;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -843,9 +833,9 @@ export interface AppCart {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "wishlist".
+ * via the `definition` "app-wishlist".
  */
-export interface Wishlist {
+export interface AppWishlist {
   id: number;
   user: number | User;
   items?:
@@ -873,8 +863,33 @@ export interface AppOrder {
   id: number;
   name: string;
   shop: number | Shop;
+  barista?: (number | null) | Admin;
   menuRelation: (number | ShopMenu)[];
   orderAcceptance: 'pending' | 'accepted' | 'rejected';
+  timeSelection?: ('now' | 'custom') | null;
+  slot?: (number | null) | Slot;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "slots".
+ */
+export interface Slot {
+  id: number;
+  isActive?: boolean | null;
+  timeSelection?: ('now' | 'custom') | null;
+  slot?: string | null;
+  /**
+   * Total number of orders allowed for this slot.
+   */
+  maxCapacity: number;
+  /**
+   * Total count of accepted orders in this slot.
+   */
+  currentLoad?: number | null;
+  shop?: (number | null) | Shop;
+  shopManager?: (number | null) | Admin;
   updatedAt: string;
   createdAt: string;
 }
@@ -892,6 +907,150 @@ export interface WebCart {
         quantity?: number | null;
         id?: string | null;
       }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * User Rewards
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-rewards".
+ */
+export interface UserReward {
+  id: number;
+  /**
+   * User
+   */
+  user: number | User;
+  /**
+   * Points
+   */
+  totalEarnedPoints: number;
+  /**
+   * Automatically set to 1 year from earned date
+   */
+  rewardExpiry: string;
+  redeemedPointsHistory?:
+    | {
+        /**
+         * Points
+         */
+        redeemedPoints: number;
+        /**
+         * Order
+         */
+        associatedOrder: number | WebOrder;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-orders".
+ */
+export interface WebOrder {
+  id: number;
+  user?: (number | null) | User;
+  deliveryOption: 'delivery' | 'pickup';
+  origin: 'subscription' | 'one-time';
+  items: {
+    product: number | WebProduct;
+    variant: number | WebProduct;
+    quantity: number;
+    price: number;
+    id?: string | null;
+  }[];
+  newsAndOffers?: boolean | null;
+  shippingAddress?: {
+    addressLine1: string;
+    addressLine2?: string | null;
+    city: string;
+    emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
+    phoneNumber: string;
+  };
+  billingAddress: {
+    addressLine1: string;
+    addressLine2?: string | null;
+    city: string;
+    emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
+    phoneNumber: string;
+  };
+  paymentStatus: 'pending' | 'completed' | 'refunded';
+  deliveryStatus?: ('placed' | 'shipped' | 'delivered') | null;
+  appliedBenefit?: ('none' | 'coupon' | 'points') | null;
+  couponCode?: (number | null) | Coupon;
+  pointsUsed?: number | null;
+  financials: {
+    subtotal: number;
+    discountAmount?: number | null;
+    total: number;
+  };
+  stripeData?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-subscription".
+ */
+export interface WebSubscription {
+  id: number;
+  user?: (number | null) | User;
+  deliveryOption: 'delivery' | 'pickup';
+  nextPaymentDate: string;
+  subFreq: string;
+  origin: 'subscription' | 'one-time';
+  items: {
+    product: number | WebProduct;
+    variant: number | WebProduct;
+    quantity: number;
+    price: number;
+    id?: string | null;
+  }[];
+  newsAndOffers?: boolean | null;
+  shippingAddress?: {
+    addressLine1: string;
+    addressLine2?: string | null;
+    city: string;
+    emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
+    phoneNumber: string;
+  };
+  billingAddress: {
+    addressLine1: string;
+    addressLine2?: string | null;
+    city: string;
+    emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
+    phoneNumber: string;
+  };
+  paymentStatus: 'pending' | 'completed' | 'refunded';
+  deliveryStatus?: ('placed' | 'shipped' | 'delivered') | null;
+  appliedBenefit?: ('none' | 'coupon' | 'points') | null;
+  couponCode?: (number | null) | Coupon;
+  pointsUsed?: number | null;
+  financials: {
+    subtotal: number;
+    discountAmount?: number | null;
+    total: number;
+  };
+  stripeData?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
     | null;
   updatedAt: string;
   createdAt: string;
@@ -1131,8 +1290,8 @@ export interface PayloadLockedDocument {
         value: number | AppCart;
       } | null)
     | ({
-        relationTo: 'wishlist';
-        value: number | Wishlist;
+        relationTo: 'app-wishlist';
+        value: number | AppWishlist;
       } | null)
     | ({
         relationTo: 'app-orders';
@@ -1153,6 +1312,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'web-cart';
         value: number | WebCart;
+      } | null)
+    | ({
+        relationTo: 'user-rewards';
+        value: number | UserReward;
+      } | null)
+    | ({
+        relationTo: 'web-orders';
+        value: number | WebOrder;
+      } | null)
+    | ({
+        relationTo: 'slots';
+        value: number | Slot;
+      } | null)
+    | ({
+        relationTo: 'web-subscription';
+        value: number | WebSubscription;
       } | null)
     | ({
         relationTo: 'exports';
@@ -1263,6 +1438,7 @@ export interface AdminsSelect<T extends boolean = true> {
   name?: T;
   gender?: T;
   speciality?: T;
+  shop?: T;
   profileImage?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1287,7 +1463,6 @@ export interface AdminsSelect<T extends boolean = true> {
  */
 export interface AppCategoriesSelect<T extends boolean = true> {
   title?: T;
-  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1334,7 +1509,6 @@ export interface MediaSelect<T extends boolean = true> {
 export interface AppSubCategoriesSelect<T extends boolean = true> {
   title?: T;
   parentCategory?: T;
-  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1390,7 +1564,6 @@ export interface MenuSelect<T extends boolean = true> {
   salePrice?: T;
   dietaryType?: T;
   customizations?: T;
-  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1428,7 +1601,6 @@ export interface ShopMenuSelect<T extends boolean = true> {
   stockCount?: T;
   inStock?: T;
   customizations?: T;
-  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1522,9 +1694,9 @@ export interface AppCartSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "wishlist_select".
+ * via the `definition` "app-wishlist_select".
  */
-export interface WishlistSelect<T extends boolean = true> {
+export interface AppWishlistSelect<T extends boolean = true> {
   user?: T;
   items?:
     | T
@@ -1542,8 +1714,11 @@ export interface WishlistSelect<T extends boolean = true> {
 export interface AppOrdersSelect<T extends boolean = true> {
   name?: T;
   shop?: T;
+  barista?: T;
   menuRelation?: T;
   orderAcceptance?: T;
+  timeSelection?: T;
+  slot?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1553,7 +1728,6 @@ export interface AppOrdersSelect<T extends boolean = true> {
  */
 export interface WebCategoriesSelect<T extends boolean = true> {
   title?: T;
-  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1565,7 +1739,6 @@ export interface WebCategoriesSelect<T extends boolean = true> {
 export interface WebSubCategoriesSelect<T extends boolean = true> {
   title?: T;
   parentCategory?: T;
-  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1576,20 +1749,20 @@ export interface WebSubCategoriesSelect<T extends boolean = true> {
  */
 export interface WebProductsSelect<T extends boolean = true> {
   name?: T;
+  tagline?: T;
   hasVariantOptions?: T;
   variants?:
     | T
     | {
-        vId?: T;
         variantName?: T;
         variantImage?: T;
         hasVariantSub?: T;
+        subscriptionDiscount?: T;
         subFreq?:
           | T
           | {
               duration?: T;
               interval?: T;
-              subscriptionDiscount?: T;
               id?: T;
             };
         variantRegularPrice?: T;
@@ -1603,12 +1776,12 @@ export interface WebProductsSelect<T extends boolean = true> {
   inStock?: T;
   stockQuantity?: T;
   hasSimpleSub?: T;
+  subscriptionDiscount?: T;
   subFreq?:
     | T
     | {
         duration?: T;
         interval?: T;
-        subscriptionDiscount?: T;
         id?: T;
       };
   productImage?: T;
@@ -1640,7 +1813,6 @@ export interface WebProductsSelect<T extends boolean = true> {
         image?: T;
         description?: T;
       };
-  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1660,6 +1832,145 @@ export interface WebCartSelect<T extends boolean = true> {
         quantity?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-rewards_select".
+ */
+export interface UserRewardsSelect<T extends boolean = true> {
+  user?: T;
+  totalEarnedPoints?: T;
+  rewardExpiry?: T;
+  redeemedPointsHistory?:
+    | T
+    | {
+        redeemedPoints?: T;
+        associatedOrder?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-orders_select".
+ */
+export interface WebOrdersSelect<T extends boolean = true> {
+  user?: T;
+  deliveryOption?: T;
+  origin?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        variant?: T;
+        quantity?: T;
+        price?: T;
+        id?: T;
+      };
+  newsAndOffers?: T;
+  shippingAddress?:
+    | T
+    | {
+        addressLine1?: T;
+        addressLine2?: T;
+        city?: T;
+        emirates?: T;
+        phoneNumber?: T;
+      };
+  billingAddress?:
+    | T
+    | {
+        addressLine1?: T;
+        addressLine2?: T;
+        city?: T;
+        emirates?: T;
+        phoneNumber?: T;
+      };
+  paymentStatus?: T;
+  deliveryStatus?: T;
+  appliedBenefit?: T;
+  couponCode?: T;
+  pointsUsed?: T;
+  financials?:
+    | T
+    | {
+        subtotal?: T;
+        discountAmount?: T;
+        total?: T;
+      };
+  stripeData?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "slots_select".
+ */
+export interface SlotsSelect<T extends boolean = true> {
+  isActive?: T;
+  timeSelection?: T;
+  slot?: T;
+  maxCapacity?: T;
+  currentLoad?: T;
+  shop?: T;
+  shopManager?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-subscription_select".
+ */
+export interface WebSubscriptionSelect<T extends boolean = true> {
+  user?: T;
+  deliveryOption?: T;
+  nextPaymentDate?: T;
+  subFreq?: T;
+  origin?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        variant?: T;
+        quantity?: T;
+        price?: T;
+        id?: T;
+      };
+  newsAndOffers?: T;
+  shippingAddress?:
+    | T
+    | {
+        addressLine1?: T;
+        addressLine2?: T;
+        city?: T;
+        emirates?: T;
+        phoneNumber?: T;
+      };
+  billingAddress?:
+    | T
+    | {
+        addressLine1?: T;
+        addressLine2?: T;
+        city?: T;
+        emirates?: T;
+        phoneNumber?: T;
+      };
+  paymentStatus?: T;
+  deliveryStatus?: T;
+  appliedBenefit?: T;
+  couponCode?: T;
+  pointsUsed?: T;
+  financials?:
+    | T
+    | {
+        subtotal?: T;
+        discountAmount?: T;
+        total?: T;
+      };
+  stripeData?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1793,6 +2104,97 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Rewards Configuration
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "rewards".
+ */
+export interface Reward {
+  id: number;
+  /**
+   * Points to earn per order in percentage
+   */
+  pointsEarn: number;
+  /**
+   * Points to AED conversion rate in percentage
+   */
+  pointsToAed: number;
+  /**
+   * Reward expiry in months
+   */
+  rewardExpiry: number;
+  /**
+   * The maximum number of points a user can spend on a single order. Add 0 for no limit.
+   */
+  maxPointsPerOrder: number;
+  /**
+   * Minimum points a user must have to use them in an order. Add 0 for no limit.
+   */
+  minPointsPerOrder: number;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ship-and-tax".
+ */
+export interface ShipAndTax {
+  id: number;
+  /**
+   * Add tax percentage here (e.g., 5 for 5%)
+   */
+  tax?: number | null;
+  /**
+   * Add shipping charges for each emirate in AED
+   */
+  emirateCharges?: {
+    abu_dhabi?: number | null;
+    dubai?: number | null;
+    sharjah?: number | null;
+    ajman?: number | null;
+    umm_al_quwain?: number | null;
+    ras_al_khaimah?: number | null;
+    fujairah?: number | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "rewards_select".
+ */
+export interface RewardsSelect<T extends boolean = true> {
+  pointsEarn?: T;
+  pointsToAed?: T;
+  rewardExpiry?: T;
+  maxPointsPerOrder?: T;
+  minPointsPerOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ship-and-tax_select".
+ */
+export interface ShipAndTaxSelect<T extends boolean = true> {
+  tax?: T;
+  emirateCharges?:
+    | T
+    | {
+        abu_dhabi?: T;
+        dubai?: T;
+        sharjah?: T;
+        ajman?: T;
+        umm_al_quwain?: T;
+        ras_al_khaimah?: T;
+        fujairah?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

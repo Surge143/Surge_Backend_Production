@@ -1,7 +1,7 @@
 import type { CollectionConfig } from "payload";
 
-const Wishlist: CollectionConfig = {
-    slug: 'wishlist',
+const WebWishlist: CollectionConfig = {
+    slug: 'web-wishlist',
     admin: {
         hidden: true,
     },
@@ -26,7 +26,7 @@ const Wishlist: CollectionConfig = {
                 {
                     name: 'product',
                     type: 'relationship',
-                    relationTo: ['shop-menu', 'web-products'],
+                    relationTo: 'web-products',
                     required: true,
                 },
             ],
@@ -34,4 +34,4 @@ const Wishlist: CollectionConfig = {
     ],
 };
 
-export { Wishlist };
+export { WebWishlist };

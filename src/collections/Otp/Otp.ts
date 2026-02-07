@@ -46,4 +46,4 @@ export const Otp: CollectionConfig = {
         { name: 'requestHistory', type: 'json' }, // Array of timestamps [number, number]
     ],
     timestamps: true,
-};
+}

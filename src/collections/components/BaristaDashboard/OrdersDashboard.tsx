@@ -2,21 +2,28 @@ import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter } from '@payloadcms/ui'
 import { AdminViewProps } from 'payload'
 import React from 'react'
-import { OrderListClient } from './components/OrderListClient'
+import { AcceptedOrdersClient } from './components/AcceptedOrdersClient'
 
-export const pendingOrders: React.FC<AdminViewProps> = async ({
+export const OrdersDashboard: React.FC<AdminViewProps> = async ({
     initPageResult,
     params,
     searchParams
 }) => {
     const { permissions, locale, req, visibleEntities } = initPageResult
+    const currentUser = req.user
 
-    // Fetch orders with status 'pending'
+    const query: any = {
+        orderAcceptance: { equals: 'accepted' },
+    }
+
+    if (currentUser && currentUser.role === 'barista') {
+        query.barista = { equals: currentUser.id }
+    }
+
+    // Fetch orders with status 'accepted'
     const { docs: initialOrders } = await req.payload.find({
         collection: 'app-orders',
-        where: {
-            orderAcceptance: { equals: 'pending' },
-        },
+        where: query,
         depth: 2,
     })
 
@@ -34,14 +41,17 @@ export const pendingOrders: React.FC<AdminViewProps> = async ({
             <Gutter>
                 <div style={{ marginTop: 'var(--gutter-v)' }}>
                     <h1 className="list-header__title" style={{ marginBottom: '2rem' }}>
-                        Incoming Cafe Orders
+                        Accepted Orders - Barista Dashboard
                     </h1>
 
-                    <OrderListClient initialOrders={initialOrders} />
+                    <AcceptedOrdersClient
+                        initialOrders={initialOrders}
+                        currentUser={currentUser ? { id: currentUser.id, role: currentUser.role } : null}
+                    />
                 </div>
             </Gutter>
         </DefaultTemplate>
     )
 }
 
-export default pendingOrders
+export default OrdersDashboard

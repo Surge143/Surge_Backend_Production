@@ -20,22 +20,42 @@ export const verifyOtpWeb: PayloadHandler = async (req) => {
             ?.split('=')[1];
 
         if (!encryptedEmail) {
-            return Response.json({ success: false, message: 'Session expired' }, { status: 400 });
+            console.error('No pendingLogin cookie found in headers');
+            return Response.json({ success: false, message: 'Session expired. Please request a new OTP.' }, { status: 400 });
         }
 
         const body = (await req.json()) as { otp?: string }
         const { otp } = body
 
-        const email = decrypt<{ email: string }>(encryptedEmail);
-
-        if (!email || !otp) {
+        if (!otp) {
             return Response.json(
-                { success: false, message: 'Email and OTP are required' },
+                { success: false, message: 'OTP is required' },
                 { status: 400 }
             );
         }
 
-        const decryptedEmail = decrypt<{ email: string }>(encryptedEmail);
+        // URL-decode the cookie value (browser encodes it)
+        const decodedCookie = decodeURIComponent(encryptedEmail);
+
+        // Try to decrypt the email
+        let decryptedEmail: { email: string };
+        try {
+            decryptedEmail = decrypt<{ email: string }>(decodedCookie);
+        } catch (decryptError: any) {
+            console.error('Failed to decrypt pendingLogin cookie:', decryptError.message);
+            console.error('Cookie value (first 50 chars):', decodedCookie.substring(0, 50));
+            return Response.json(
+                { success: false, message: 'Invalid session. Please request a new OTP.' },
+                { status: 400 }
+            );
+        }
+
+        if (!decryptedEmail?.email) {
+            return Response.json(
+                { success: false, message: 'Invalid session data' },
+                { status: 400 }
+            );
+        }
 
         const now = new Date();
         const nowMs = now.getTime();
@@ -179,7 +199,7 @@ export const verifyOtpWeb: PayloadHandler = async (req) => {
 
             res.cookies.set('pendingLogin', '', {
                 httpOnly: true,
-                secure: true,
+                secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
                 maxAge: 0,
             });
@@ -187,7 +207,7 @@ export const verifyOtpWeb: PayloadHandler = async (req) => {
             if (result.token) {
                 res.cookies.set('token', result.token, {
                     httpOnly: true,
-                    secure: true,
+                    secure: process.env.NODE_ENV === 'production',
                     sameSite: 'strict',
                     maxAge: 60 * 60 * 24 * 7,
                 });

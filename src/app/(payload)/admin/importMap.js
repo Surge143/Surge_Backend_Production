@@ -1,4 +1,3 @@
-import { SlugField as SlugField_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -46,13 +45,14 @@ import { ExportSaveButton as ExportSaveButton_7d8c2ee66d868f2af498f46de2c9b2f8 }
 import { ImportPreview as ImportPreview_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
 import { FolderTypeField as FolderTypeField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
 import { MySidebarLink as MySidebarLink_656f662ab5214447cb676fcf6ae488ee } from '@/collections/components/Navbar/MySidebarLink'
+import { BaristaDashboardLink as BaristaDashboardLink_3bea824dbff9559afc699976245b71b3 } from '@/collections/components/Navbar/BaristaDashboardLink'
 import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
 import { ImportExportProvider as ImportExportProvider_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
-import { pendingOrders as pendingOrders_786abc72e3f25d568593cbfe4765ea66 } from '@/collections/components/ShopManagerCustomComponents/pendingOrders'
+import { pendingOrders as pendingOrders_f4186d53f34f61062346315dc23f9ae8 } from '@/collections/components/ShopManagerCustomComponents/PendingOrders/PendingOrders'
+import { OrdersDashboard as OrdersDashboard_1a7850c769448e12f0bf338f3f71516f } from '@/collections/components/BaristaDashboard/OrdersDashboard'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
-  "@payloadcms/next/rsc#SlugField": SlugField_f9c02e79a4aed9a3924487c0cd4cafb1,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -100,8 +100,10 @@ export const importMap = {
   "payload-import-export/rsc#ImportPreview": ImportPreview_7d8c2ee66d868f2af498f46de2c9b2f8,
   "@payloadcms/next/client#FolderTypeField": FolderTypeField_2b8867833a34864a02ddf429b0728a40,
   "@/collections/components/Navbar/MySidebarLink#MySidebarLink": MySidebarLink_656f662ab5214447cb676fcf6ae488ee,
+  "@/collections/components/Navbar/BaristaDashboardLink#BaristaDashboardLink": BaristaDashboardLink_3bea824dbff9559afc699976245b71b3,
   "@payloadcms/storage-s3/client#S3ClientUploadHandler": S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24,
   "payload-import-export/rsc#ImportExportProvider": ImportExportProvider_7d8c2ee66d868f2af498f46de2c9b2f8,
-  "@/collections/components/ShopManagerCustomComponents/pendingOrders#pendingOrders": pendingOrders_786abc72e3f25d568593cbfe4765ea66,
+  "@/collections/components/ShopManagerCustomComponents/PendingOrders/PendingOrders#pendingOrders": pendingOrders_f4186d53f34f61062346315dc23f9ae8,
+  "@/collections/components/BaristaDashboard/OrdersDashboard#OrdersDashboard": OrdersDashboard_1a7850c769448e12f0bf338f3f71516f,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

@@ -6,8 +6,12 @@ import React, { useEffect, useState } from 'react'
 import { io } from 'socket.io-client'
 import { OrderActions } from './OrderActions'
 
-export const OrderListClient: React.FC<{ initialOrders: any[] }> = ({ initialOrders }) => {
+export const OrderListClient: React.FC<{
+    initialOrders: any[],
+    baristas: { id: string | number, name: string, shop: any }[]
+}> = ({ initialOrders, baristas = [] }) => {
     const [orders, setOrders] = useState<any[]>(initialOrders)
+    const [selectedBaristas, setSelectedBaristas] = useState<Record<string, string | number>>({})
     const router = useRouter()
 
     useEffect(() => {
@@ -76,11 +80,60 @@ export const OrderListClient: React.FC<{ initialOrders: any[] }> = ({ initialOrd
                                 </p>
                             </div>
 
-                            {/* Client Actions */}
-                            <OrderActions
-                                orderId={order.id}
-                                onStatusUpdate={(status) => handleUpdate(order.id, status)}
-                            />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                {/* Barista Selection */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    <label style={{ fontSize: '0.75rem', opacity: 0.6 }}>Assign Barista</label>
+                                    <select
+                                        style={{
+                                            padding: '0.5rem',
+                                            borderRadius: '4px',
+                                            border: '1px solid var(--theme-elevation-200)',
+                                            background: 'var(--theme-elevation-100)',
+                                            color: 'inherit',
+                                            fontSize: '0.85rem'
+                                        }}
+                                        value={selectedBaristas[order.id] || ''}
+                                        onChange={(e) => setSelectedBaristas(prev => ({
+                                            ...prev,
+                                            [order.id]: e.target.value
+                                        }))}
+                                    >
+                                        <option value="">Select Barista... ({baristas.length})</option>
+                                        {baristas.length === 0 && <option disabled>Check Admins collection</option>}
+                                        {baristas
+                                            // .filter(b => {
+                                            //     // 1. Get Order Shop ID
+                                            //     const orderShopId = typeof order.shop === 'object' ? order.shop?.id : order.shop
+
+                                            //     // 2. Get Barista Shop ID
+                                            //     let baristaShopId = b.shop
+                                            //     if (typeof b.shop === 'object' && b.shop !== null) {
+                                            //         baristaShopId = b.shop.id
+                                            //     }
+
+                                            //     // 3. Logic: If no shop assigned to order OR barista, show them
+                                            //     if (!orderShopId || !baristaShopId) return true
+
+                                            //     // 4. Compare IDs as strings
+                                            //     return String(orderShopId) === String(baristaShopId)
+                                            // })
+                                            .map(barista => (
+                                                <option key={barista.id} value={barista.id}>
+                                                    {barista.name}
+                                                </option>
+                                            ))
+                                        }
+                                    </select>
+                                </div>
+
+                                {/* Client Actions */}
+                                <OrderActions
+                                    orderId={order.id}
+                                    selectedBaristaId={selectedBaristas[order.id]}
+                                    onStatusUpdate={(status) => handleUpdate(order.id, status)}
+                                />
+                            </div>
                         </div>
 
                         {/* Collapsible Product List */}

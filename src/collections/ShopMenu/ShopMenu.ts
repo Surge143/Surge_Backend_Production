@@ -1,4 +1,4 @@
-import { CollectionConfig, slugField } from 'payload';
+import { CollectionConfig } from 'payload';
 
 export const ShopMenu: CollectionConfig = {
     slug: 'shop-menu',
@@ -230,8 +230,23 @@ export const ShopMenu: CollectionConfig = {
                     ],
                     label: 'Customization Panel'
                 }
-            ]
+            ],
         },
-        slugField({ fieldToUse: 'name' }),
+        {
+            name: 'slug',
+            type: 'text',
+            index: true,
+            unique: true,
+            required: true,
+            admin: {
+                position: 'sidebar',
+            },
+            hooks: {
+                beforeValidate: [({ value, data }) => {
+                    if (value) return value;
+                    return (data?.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                }],
+            },
+        },
     ],
 }

@@ -19,7 +19,7 @@ export const Admins: CollectionConfig = {
             return true
         },
 
-        read: ({ req: { user } }): boolean | Where => {
+        read: async ({ req: { user, payload } }): Promise<boolean | Where> => {
             if (!user) return false
             if (user.role === 'super-admin') return true
 
@@ -28,19 +28,33 @@ export const Admins: CollectionConfig = {
                 (r) => roleHierarchy[r] > roleHierarchy[user.role as string]
             )
 
-            // Using a clear Where object structure
+            if (user.role === 'shop-manager') {
+                const managedShops = await payload.find({
+                    collection: 'shop',
+                    where: { shopManager: { equals: user.id } },
+                    limit: 1,
+                    depth: 0,
+                })
+
+                const shopId = managedShops.docs[0]?.id
+
+                return {
+                    or: [
+                        { id: { equals: user.id } },
+                        {
+                            and: [
+                                { role: { in: lowerRoles } },
+                                { shop: { equals: shopId || 'none' } }
+                            ]
+                        }
+                    ]
+                }
+            }
+
             return {
                 or: [
-                    {
-                        id: {
-                            equals: user.id,
-                        },
-                    },
-                    {
-                        role: {
-                            in: lowerRoles,
-                        },
-                    },
+                    { id: { equals: user.id } },
+                    { role: { in: lowerRoles } },
                 ],
             }
         },
@@ -76,7 +90,7 @@ export const Admins: CollectionConfig = {
                 role: {
                     in: Object.keys(roleHierarchy).filter(r => roleHierarchy[r] > roleHierarchy[user.role as string])
                 }
-            }
+            } as Where
         },
     },
 
@@ -90,27 +104,12 @@ export const Admins: CollectionConfig = {
             name: 'role',
             type: 'select',
             required: true,
-            // HIDE higher roles from the dropdown during creation/edit
-            admin: {
-                condition: (data, siblingData, { user }) => {
-                    // Optional: further UI logic to hide field if necessary
-                    return true;
-                }
-            },
             options: [
                 { label: 'Super Admin', value: 'super-admin' },
                 { label: 'Admin', value: 'admin' },
                 { label: 'Shop Manager', value: 'shop-manager' },
                 { label: 'Barista', value: 'barista' },
             ],
-            access: {
-                // Prevent users from promoting themselves or others to a role higher than their own
-                update: ({ req: { user }, data }) => {
-                    if (user?.role === 'super-admin') return true;
-                    // You can add logic here to prevent role-tampering
-                    return true;
-                }
-            }
         },
         {
             name: 'name',
@@ -130,10 +129,36 @@ export const Admins: CollectionConfig = {
             name: 'speciality',
             type: 'text',
             admin: {
-
                 condition: (data) => data.role === 'barista',
-
             },
+        },
+        {
+            name: 'shop',
+            type: 'relationship',
+            relationTo: 'shop',
+            admin: {
+                condition: (data) => data.role === 'barista',
+            },
+            filterOptions: async ({ req }) => {
+                const { user, payload } = req;
+                if (!user) return false;
+                if (user.role === 'super-admin' || user.role === 'admin') return true;
+
+                if (user.role === 'shop-manager') {
+                    const managedShops = await payload.find({
+                        collection: 'shop',
+                        where: { shopManager: { equals: user.id } },
+                        limit: 1,
+                        depth: 0,
+                    });
+                    if (managedShops.docs.length > 0) {
+                        return {
+                            id: { equals: managedShops.docs[0].id }
+                        };
+                    }
+                }
+                return false;
+            }
         },
         {
             name: 'profileImage',

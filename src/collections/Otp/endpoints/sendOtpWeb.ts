@@ -121,10 +121,12 @@ export const sendOtpWeb: PayloadHandler = async (req) => {
 
         res.cookies.set('pendingLogin', encryptedEmail, {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             maxAge: 5 * 60,
         });
+
+        console.log('Set pendingLogin cookie, encrypted length:', encryptedEmail.length);
 
         return res;
 

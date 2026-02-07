@@ -13,10 +13,16 @@ import { ShopCoupons } from "./ShopCoupons/ShopCoupons";
 import { ShopMenu } from "./ShopMenu/ShopMenu";
 import { WebCategories } from "./WebCategories/WebCategories";
 import { WebSubCategories } from "./WebCategories/WebSubCategories";
-import { Wishlist } from "./Wishlist/Wishlist";
+import { AppWishlist } from './AppWishlist/AppWishlist'
 import { Users } from "./Users/Users";
 import { WebProducts } from "./WebProducts/WebProducts";
 import { WebCart } from "./WebCart/WebCart";
+import { Rewards } from "./Rewards/Rewards";
+import { UserRewards } from "./UserRewards/UserRewards";
+import { WebOrders } from "./WebOrders/WebOrders";
+import { Slots } from "./Slots/Slots";
+import { ShipAndTax } from "./ShipAndTax/ShipAndTax";
+import { WebSubscription } from "./WebSubscription/WebSubscription";
 
 export const collections = [
     Users,
@@ -32,10 +38,19 @@ export const collections = [
     ShopCoupons,
     Otp,
     AppCart,
-    Wishlist,
+    AppWishlist,
     AppOrders,
     WebCategories,
     WebSubCategories,
     WebProducts,
-    WebCart
+    WebCart,
+    UserRewards,
+    WebOrders,
+    Slots,
+    WebSubscription
+]
+
+export const globals = [
+    Rewards,
+    ShipAndTax
 ]

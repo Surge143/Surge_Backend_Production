@@ -19,7 +19,11 @@ app.prepare().then(() => {
 
     const io = new Server(httpServer, {
         cors: {
-            origin: "*",
+            origin: [
+                'http://localhost:8100',
+                'http://localhost:5173',
+                process.env.PAYLOAD_PUBLIC_SERVER_URL || '',
+            ].filter(Boolean),
             methods: ["GET", "POST"]
         }
     })

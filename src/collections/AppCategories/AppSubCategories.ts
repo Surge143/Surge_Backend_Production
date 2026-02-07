@@ -1,4 +1,3 @@
-import { slugField } from 'payload'
 import type { CollectionConfig } from 'payload'
 
 export const AppSubCategories: CollectionConfig = {
@@ -34,8 +33,21 @@ export const AppSubCategories: CollectionConfig = {
             relationTo: 'app-categories', // Reference this same collection
             hasMany: false,
         },
-        slugField({
-            fieldToUse: 'title',
-        }),
+        {
+            name: 'slug',
+            type: 'text',
+            index: true,
+            unique: true,
+            required: true,
+            admin: {
+                position: 'sidebar',
+            },
+            hooks: {
+                beforeValidate: [({ value, data }) => {
+                    if (value) return value;
+                    return (data?.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                }],
+            },
+        },
     ],
 }

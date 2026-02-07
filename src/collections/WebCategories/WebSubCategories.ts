@@ -1,9 +1,8 @@
-import { slugField } from 'payload'
 import type { CollectionConfig } from 'payload'
 
 export const WebSubCategories: CollectionConfig = {
     slug: 'web-sub-categories',
-    access: {   
+    access: {
         read: () => true,
         update: ({ req: { user } }) => {
             return user?.role === 'admin' || user?.role === 'super-admin';
@@ -33,8 +32,21 @@ export const WebSubCategories: CollectionConfig = {
             relationTo: 'web-categories', // Reference this same collection
             hasMany: false,
         },
-        slugField({
-            fieldToUse: 'title',
-        }),
+        {
+            name: 'slug',
+            type: 'text',
+            index: true,
+            unique: true,
+            required: true,
+            admin: {
+                position: 'sidebar',
+            },
+            hooks: {
+                beforeValidate: [({ value, data }) => {
+                    if (value) return value;
+                    return (data?.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                }],
+            },
+        },
     ],
 }

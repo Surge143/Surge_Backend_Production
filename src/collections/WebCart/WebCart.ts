@@ -4,7 +4,6 @@ import { beforeWebCartChange } from "./hooks/beforeWebCartChange";
 export const WebCart: CollectionConfig = {
     slug: 'web-cart',
     admin: {
-        hidden: true,
         defaultColumns: ['user', 'items'],
         group: 'Website',
     },
@@ -33,6 +32,7 @@ export const WebCart: CollectionConfig = {
                     name: 'product',
                     type: 'relationship',
                     relationTo: 'web-products',
+                    unique: true,
                     required: true,
                 },
                 {
@@ -49,4 +49,5 @@ export const WebCart: CollectionConfig = {
             ],
         },
     ],
+    timestamps: true,
 };

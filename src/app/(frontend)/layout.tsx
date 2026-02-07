@@ -1,18 +1,28 @@
-import React from 'react'
-import './styles.css'
+import './globals.css'
+import Header from './components/Header'
+import Footer from './components/Footer'
+import { CartProvider } from './components/CartContext'
 
 export const metadata = {
-  description: 'A blank template using Payload in a Next.js app.',
-  title: 'Payload Blank Template',
+  title: 'WhiteMantis - Premium Coffee',
+  description: 'Discover premium coffee from around the world',
 }
 
-export default async function RootLayout(props: { children: React.ReactNode }) {
-  const { children } = props
-
+export default function FrontendLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
       <body>
-        <main>{children}</main>
+        <CartProvider>
+          <Header />
+          <main style={{ minHeight: 'calc(100vh - 80px - 300px)' }}>
+            {children}
+          </main>
+          <Footer />
+        </CartProvider>
       </body>
     </html>
   )
