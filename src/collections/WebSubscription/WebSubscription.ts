@@ -207,7 +207,7 @@ export const WebSubscription: CollectionConfig = {
                                 {
                                     name: 'subsStatus',
                                     type: 'select',
-                                    defaultValue: 'placed',
+                                    defaultValue: 'active',
                                     admin: {
                                         condition: (data) => data?.paymentStatus === 'completed',
                                     },

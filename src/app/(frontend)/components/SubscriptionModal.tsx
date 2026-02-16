@@ -20,17 +20,18 @@ export default function SubscriptionModal({ product, isOpen, onClose, quantity =
 
     // Get available subscription frequencies
     const getAvailableFrequencies = useCallback((): SubscriptionFrequency[] => {
+        if (!product) return []
         if (product.hasVariantOptions && selectedVariant) {
             return selectedVariant.subFreq || []
         }
         return product.subFreq || []
-    }, [product.hasVariantOptions, product.subFreq, selectedVariant])
+    }, [product?.hasVariantOptions, product?.subFreq, selectedVariant])
 
     // Initialize selected variant and frequency when modal opens
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && product) {
             // First initialize variant if needed
-            if (product.hasVariantOptions && product.variants.length > 0 && !selectedVariant) {
+            if (product.hasVariantOptions && product.variants?.length > 0 && !selectedVariant) {
                 setSelectedVariant(product.variants[0])
             }
 
@@ -45,6 +46,7 @@ export default function SubscriptionModal({ product, isOpen, onClose, quantity =
 
     // Get current price
     const getCurrentPrice = (): number => {
+        if (!product) return 0
         if (product.hasVariantOptions && selectedVariant) {
             return selectedVariant.variantSalePrice || selectedVariant.variantRegularPrice
         }
@@ -53,6 +55,7 @@ export default function SubscriptionModal({ product, isOpen, onClose, quantity =
 
     // Get current image
     const getCurrentImage = (): string => {
+        if (!product) return '/placeholder.jpg'
         if (product.hasVariantOptions && selectedVariant) {
             const variantImage = selectedVariant.variantImage
             if (typeof variantImage === 'object' && variantImage !== null) {

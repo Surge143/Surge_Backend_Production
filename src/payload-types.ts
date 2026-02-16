@@ -151,13 +151,7 @@ export interface Config {
     'ship-and-tax': ShipAndTaxSelect<false> | ShipAndTaxSelect<true>;
   };
   locale: null;
-  user:
-    | (User & {
-        collection: 'users';
-      })
-    | (Admin & {
-        collection: 'admins';
-      });
+  user: User | Admin;
   jobs: {
     tasks: {
       createCollectionExport: TaskCreateCollectionExport;
@@ -245,6 +239,7 @@ export interface User {
       }[]
     | null;
   password?: string | null;
+  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -347,6 +342,7 @@ export interface Admin {
       }[]
     | null;
   password?: string | null;
+  collection: 'admins';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
