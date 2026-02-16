@@ -222,8 +222,9 @@ export interface User {
         street?: string | null;
         apartment?: string | null;
         city?: string | null;
-        emirates?: string | null;
+        emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
         country?: string | null;
+        phoneNumber?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -1446,6 +1447,7 @@ export interface UsersSelect<T extends boolean = true> {
         city?: T;
         emirates?: T;
         country?: T;
+        phoneNumber?: T;
         id?: T;
       };
   updatedAt?: T;
