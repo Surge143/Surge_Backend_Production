@@ -7,9 +7,7 @@ export const WTCoins: GlobalConfig = {
         group: 'WTCoins',
     },
     access: {
-        read: ({ req: { user } }) => {
-            return user?.role === 'admin' || user?.role === 'super-admin';
-        },
+        read: () => true,
         update: ({ req: { user } }) => {
             return user?.role === 'admin' || user?.role === 'super-admin';
         },

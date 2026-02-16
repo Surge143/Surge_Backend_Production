@@ -227,8 +227,9 @@ export async function POST(req: NextRequest) {
         }
 
         const totalAfterDiscounts = Math.max(0, subtotal - wtDiscount - couponDiscount);
-        const taxAmount = totalAfterDiscounts * (taxRate / 100);
-        const finalTotal = totalAfterDiscounts + shippingCharge + taxAmount;
+        const totalWithShipping = totalAfterDiscounts + shippingCharge;
+        const taxAmount = totalWithShipping * (taxRate / 100);
+        const finalTotal = totalWithShipping + taxAmount;
 
         // --- CREATE PAYLOAD ORDER ---
         try {

@@ -54,7 +54,7 @@ function CheckoutForm() {
     useEffect(() => {
         // Fetch User
         const fetchUserData = async () => {
-            const userRes = await fetch('/api/auth/me')
+            const userRes = await fetch('/api/users/me')
             if (userRes.ok) {
                 const userData = await userRes.json()
                 if (userData.user) {
@@ -162,10 +162,11 @@ function CheckoutForm() {
         // Apply WTCoins discount
         const wtDiscount = calculateWTCoinsDiscount()
         total -= wtDiscount
-        // Add tax
+        // Add shipping first
+        total += taxStats.shippingCharge
+        // Then calculate and add tax
         const taxAmount = total * (taxStats.taxRate / 100)
-        // Add shipping
-        return total + taxAmount + taxStats.shippingCharge
+        return total + taxAmount
     }
 
     const handlePayment = async (e: React.FormEvent) => {
@@ -425,7 +426,7 @@ function CheckoutForm() {
                                 </div>
                                 <div className={styles.calcRow}>
                                     <span>Tax ({taxStats.taxRate}%)</span>
-                                    <span>AED {((totalPrice - (couponData ? (couponData.type === 'fixed' ? couponData.value : totalPrice * (couponData.value / 100)) : 0) - calculateWTCoinsDiscount()) * (taxStats.taxRate / 100)).toFixed(2)}</span>
+                                    <span>AED {(((totalPrice - (couponData ? (couponData.type === 'fixed' ? couponData.value : totalPrice * (couponData.value / 100)) : 0) - calculateWTCoinsDiscount()) + taxStats.shippingCharge) * (taxStats.taxRate / 100)).toFixed(2)}</span>
                                 </div>
                                 <div className={styles.totalRow}>
                                     <span>Total</span>
@@ -433,14 +434,23 @@ function CheckoutForm() {
                                 </div>
                             </div>
 
-                            {user && wtCoinsBalance && (
-                                <div className={styles.wtCoins}>
-                                    <label className={styles.checkboxLabel}>
-                                        <input type="checkbox" checked={useWTCoins} onChange={() => setUseWTCoins(!useWTCoins)} />
-                                        Use WT Coins (Balance: {wtCoinsBalance.balance} ≈ AED {wtCoinsBalance.estimatedValue})
-                                    </label>
-                                </div>
-                            )}
+                            <div className={styles.wtCoins}>
+                                <label className={styles.checkboxLabel}>
+                                    <input
+                                        type="checkbox"
+                                        checked={useWTCoins}
+                                        onChange={() => setUseWTCoins(!useWTCoins)}
+                                        disabled={!user || !wtCoinsBalance || wtCoinsBalance.balance === 0}
+                                    />
+                                    {user && wtCoinsBalance ? (
+                                        `Use WT Coins (Balance: ${wtCoinsBalance.balance} ≈ AED ${wtCoinsBalance.estimatedValue})`
+                                    ) : user ? (
+                                        'Use WT Coins (Loading...)'
+                                    ) : (
+                                        'Use WT Coins (Login required)'
+                                    )}
+                                </label>
+                            </div>
 
                             <button
                                 disabled={isProcessing || !stripe}

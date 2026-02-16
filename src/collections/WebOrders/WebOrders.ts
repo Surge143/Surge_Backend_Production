@@ -1,10 +1,53 @@
 import type { CollectionConfig } from "payload";
+import { awardWTCoins, convertPointsToAED } from "./hooks/wtCoinsUtils";
 
 export const WebOrders: CollectionConfig = {
     slug: 'web-orders',
     admin: {
         useAsTitle: 'id',
         group: 'Website',
+    },
+    hooks: {
+        afterChange: [
+            async ({ doc, previousDoc, req }) => {
+                // Award WTCoins when delivery status changes to 'shipped'
+                const deliveryStatusChanged = previousDoc?.deliveryStatus !== doc.deliveryStatus
+                const isNowShipped = doc.deliveryStatus === 'shipped'
+                const hasUser = doc.user
+                const alreadyAwarded = doc.wtCoinsAwarded // Track if already awarded
+
+                if (deliveryStatusChanged && isNowShipped && hasUser && !alreadyAwarded) {
+                    try {
+                        const userId = typeof doc.user === 'object' ? doc.user.id : doc.user
+
+                        // Ensure userId is a number
+                        if (typeof userId !== 'number') {
+                            console.error('User ID is not a number, skipping WTCoins award')
+                            return
+                        }
+
+                        // Calculate real money spent (excluding WTCoins discount)
+                        const wtCoinsDiscount = doc.pointsUsed ? await convertPointsToAED(req.payload, doc.pointsUsed) : 0
+                        const realMoneySpent = Math.max(0, doc.financials.total - wtCoinsDiscount)
+
+                        if (realMoneySpent > 0) {
+                            await awardWTCoins(req.payload, userId, realMoneySpent, doc.id)
+
+                            // Mark as awarded to prevent duplicate awards
+                            await req.payload.update({
+                                collection: 'web-orders',
+                                id: doc.id,
+                                data: { wtCoinsAwarded: true }
+                            })
+
+                            console.log(`✅ Awarded WTCoins for order ${doc.id} on shipment`)
+                        }
+                    } catch (error) {
+                        console.error('Error awarding WTCoins on shipment:', error)
+                    }
+                }
+            }
+        ]
     },
     fields: [
         {
@@ -205,7 +248,7 @@ export const WebOrders: CollectionConfig = {
                                     type: 'select',
                                     defaultValue: 'placed',
                                     admin: {
-                                        condition: (data) => data?.paymentStatus === 'completed',
+                                        condition: (data) => data?.paymentStatus === 'completed' && data?.deliveryOption === 'delivery',
                                     },
                                     options: [
                                         { label: 'Placed', value: 'placed' },
@@ -244,6 +287,15 @@ export const WebOrders: CollectionConfig = {
                     ],
                 },
             ],
+        },
+        {
+            name: 'wtCoinsAwarded',
+            type: 'checkbox',
+            defaultValue: false,
+            admin: {
+                hidden: true,
+                description: 'Tracks if WTCoins have been awarded for this order'
+            },
         },
         {
             name: 'stripeData',

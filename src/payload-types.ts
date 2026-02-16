@@ -1002,6 +1002,10 @@ export interface WebOrder {
     discountAmount?: number | null;
     total: number;
   };
+  /**
+   * Tracks if WTCoins have been awarded for this order
+   */
+  wtCoinsAwarded?: boolean | null;
   stripeData?:
     | {
         [k: string]: unknown;
@@ -1934,6 +1938,7 @@ export interface WebOrdersSelect<T extends boolean = true> {
         discountAmount?: T;
         total?: T;
       };
+  wtCoinsAwarded?: T;
   stripeData?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -2,7 +2,7 @@
 const LOGO_URL = 'https://wordpressbackend.whitemantis.ae/wp-content/uploads/2026/01/image.png';
 
 export function getOTPEmailTemplate(otp: string): string {
-    return `
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -154,7 +154,7 @@ export function getOTPEmailTemplate(otp: string): string {
 }
 
 export function OTPForUpdateEmail(otp: string): string {
-    return `
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -312,7 +312,7 @@ export function OTPForUpdateEmail(otp: string): string {
 }
 
 export function welcomeEmailTemplate(name: string): string {
-    return `
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -442,7 +442,28 @@ export function welcomeEmailTemplate(name: string): string {
 }
 
 export function orderConfirmationEmailTemplate({ order }: { order: any }) {
-    return `
+  // Helper function to format address
+  const formatAddress = (addr: any) => {
+    if (!addr) return 'N/A';
+    return `${addr.firstName || ''} ${addr.lastName || ''}<br/>${addr.address || ''}<br/>${addr.city || ''}, ${addr.state || ''} ${addr.postalCode || ''}<br/>${addr.country || ''}`.trim();
+  };
+
+  // Helper function to get product image
+  const getProductImage = (product: any) => {
+    if (typeof product === 'object' && product?.images?.length > 0) {
+      const img = product.images[0];
+      return typeof img === 'object' ? img.url : img;
+    }
+    return '';
+  };
+
+  // Helper function to get product name
+  const getProductName = (product: any) => {
+    if (typeof product === 'object') return product.name || 'Product';
+    return 'Product';
+  };
+
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -466,7 +487,7 @@ export function orderConfirmationEmailTemplate({ order }: { order: any }) {
                     <img src="${LOGO_URL}" alt="Whitemantis" width="50" height="auto" style="display: block; width: 50px; font-family: Helvetica, Arial, sans-serif;" />
                   </td>
                   <td align="right" valign="middle" style="font-size: 14px; color: #2F362A; font-family: Helvetica, Arial, sans-serif;">
-                    Order Id : <span style="font-weight: 700; font-family: Helvetica, Arial, sans-serif;">${order.id || 'N/A'}</span>
+                    Order Id : <span style="font-weight: 700; font-family: Helvetica, Arial, sans-serif;">#${order.id || 'N/A'}</span>
                   </td>
                 </tr>
               </table>
@@ -484,33 +505,33 @@ export function orderConfirmationEmailTemplate({ order }: { order: any }) {
               <p style="font-size: 16px; color: #6E736A; line-height: 1.5; margin: 0 0 16px 0; font-family: Helvetica, Arial, sans-serif;">Hello,</p>
               <p style="font-size: 16px; color: #6E736A; line-height: 1.5; margin: 0 0 24px 0; font-family: Helvetica, Arial, sans-serif;">
                 Thank you for your purchase from Whitemantis.<br/> 
-                Your order has been successfully placed and we’re already preparing it with care.
+                Your order has been successfully placed and we're already preparing it with care.
               </p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-family: Helvetica, Arial, sans-serif;">
                 <tr>
                   <td align="left" style="padding-bottom: 32px; font-family: Helvetica, Arial, sans-serif;">
-                    <a href="${order.orderUrl}" style="display: inline-block; background-color: #6c7a5f; color: #ffffff; text-decoration: none; padding: 12px 28px; font-size: 15px; border-radius: 4px; font-weight: bold; font-family: Helvetica, Arial, sans-serif;">View order</a>
+                    <a href="${process.env.NEXTAUTH_URL || 'https://whitemantis.ae'}/account/orders/${order.id}" style="display: inline-block; background-color: #6c7a5f; color: #ffffff; text-decoration: none; padding: 12px 28px; font-size: 15px; border-radius: 4px; font-weight: bold; font-family: Helvetica, Arial, sans-serif;">View order</a>
                   </td>
                 </tr>
               </table>
 
               <h2 style="font-size: 18px; font-weight: 700; color: #2F362A; margin: 0 0 16px 0; border-bottom: 1px solid #e5e5e5; padding-bottom: 10px; font-family: Helvetica, Arial, sans-serif;">
-                Order Summary (${order.items.length} items)
+                Order Summary (${order.items?.length || 0} items)
               </h2>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 24px; font-family: Helvetica, Arial, sans-serif;">
-                ${order.items.map((item: any) => `
+                ${(order.items || []).map((item: any) => `
                   <tr>
                     <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; vertical-align: top; width: 60px; font-family: Helvetica, Arial, sans-serif;">
-                      ${item.image ? `<img src="${item.image}" alt="${(item.name)}" width="48" height="48" style="display: block; border-radius: 4px; object-fit: contain; font-family: Helvetica, Arial, sans-serif;" />` : ""}
+                      ${getProductImage(item.product) ? `<img src="${getProductImage(item.product)}" alt="${getProductName(item.product)}" width="48" height="48" style="display: block; border-radius: 4px; object-fit: contain; font-family: Helvetica, Arial, sans-serif;" />` : ""}
                     </td>
                     <td style="padding: 12px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; font-family: Helvetica, Arial, sans-serif;">
-                      <div style="font-size: 14px; color: #2F362A; font-weight: 600; font-family: Helvetica, Arial, sans-serif;">${item.name}</div>
-                      <div style="font-size: 13px; color: #2F362A; font-family: Helvetica, Arial, sans-serif;">Qty: ${item.quantity}</div>
+                      <div style="font-size: 14px; color: #2F362A; font-weight: 600; font-family: Helvetica, Arial, sans-serif;">${getProductName(item.product)}</div>
+                      <div style="font-size: 13px; color: #2F362A; font-family: Helvetica, Arial, sans-serif;">Qty: ${item.quantity || 1}</div>
                     </td>
                     <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; vertical-align: middle; text-align: right; white-space: nowrap; font-family: Helvetica, Arial, sans-serif;">
-                      <span style="font-size: 14px; color: #2F362A; font-family: Helvetica, Arial, sans-serif;">${item.price}</span>
+                      <span style="font-size: 14px; color: #2F362A; font-family: Helvetica, Arial, sans-serif;">AED ${(item.price || 0).toFixed(2)}</span>
                     </td>
                   </tr>
                 `).join("")}
@@ -519,23 +540,27 @@ export function orderConfirmationEmailTemplate({ order }: { order: any }) {
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 32px; font-family: Helvetica, Arial, sans-serif;">
                 <tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; font-family: Helvetica, Arial, sans-serif;">Subtotal</td>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; text-align: right; font-family: Helvetica, Arial, sans-serif;">${order.subtotal}</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; text-align: right; font-family: Helvetica, Arial, sans-serif;">AED ${(order.financials?.subtotal || 0).toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; font-family: Helvetica, Arial, sans-serif;">Shipping</td>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; text-align: right; font-family: Helvetica, Arial, sans-serif;">${order.shipping}</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; text-align: right; font-family: Helvetica, Arial, sans-serif;">AED ${(order.financials?.shipping || 0).toFixed(2)}</td>
                 </tr>
-                 <tr>
+                ${order.financials?.couponDiscount > 0 ? `<tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; font-family: Helvetica, Arial, sans-serif;">Coupon Discount</td>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; text-align: right; font-family: Helvetica, Arial, sans-serif;">${order.discount}</td>
-                </tr>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; text-align: right; font-family: Helvetica, Arial, sans-serif;">-AED ${(order.financials.couponDiscount).toFixed(2)}</td>
+                </tr>` : ''}
+                ${order.pointsUsed > 0 ? `<tr>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; font-family: Helvetica, Arial, sans-serif;">WTCoins Discount</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; text-align: right; font-family: Helvetica, Arial, sans-serif;">-AED ${(order.financials?.wtCoinsDiscount || 0).toFixed(2)}</td>
+                </tr>` : ''}
                 <tr>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; font-family: Helvetica, Arial, sans-serif;">VAT</td>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; text-align: right; font-family: Helvetica, Arial, sans-serif;">${order.vat}</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; font-family: Helvetica, Arial, sans-serif;">VAT (5%)</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; text-align: right; font-family: Helvetica, Arial, sans-serif;">AED ${(order.financials?.tax || 0).toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 12px 0 0 0; font-size: 16px; font-weight: 700; color: #2F362A; border-top: 1px solid #e5e5e5; margin-top: 8px; font-family: Helvetica, Arial, sans-serif;">Total</td>
-                  <td style="padding: 12px 0 0 0; font-size: 16px; font-weight: 700; color: #2F362A; border-top: 1px solid #e5e5e5; margin-top: 8px; text-align: right; font-family: Helvetica, Arial, sans-serif;">${order.total}</td>
+                  <td style="padding: 12px 0 0 0; font-size: 16px; font-weight: 700; color: #2F362A; border-top: 1px solid #e5e5e5; margin-top: 8px; text-align: right; font-family: Helvetica, Arial, sans-serif;">AED ${(order.financials?.total || 0).toFixed(2)}</td>
                 </tr>
               </table>
 
@@ -546,37 +571,37 @@ export function orderConfirmationEmailTemplate({ order }: { order: any }) {
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 24px; font-family: Helvetica, Arial, sans-serif;">
                 <tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; width: 40%; vertical-align: top; font-family: Helvetica, Arial, sans-serif;"><strong style="font-family: Helvetica, Arial, sans-serif;">Name:</strong></td>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.name}</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.billingAddress?.firstName || ''} ${order.billingAddress?.lastName || ''}</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;"><strong style="font-family: Helvetica, Arial, sans-serif;">Email:</strong></td>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.email}</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.billingAddress?.email || 'N/A'}</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;"><strong style="font-family: Helvetica, Arial, sans-serif;">Phone:</strong></td>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.phone}</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.billingAddress?.phone || 'N/A'}</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;"><strong style="font-family: Helvetica, Arial, sans-serif;">Order Date:</strong></td>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.orderDate}</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;"><strong style="font-family: Helvetica, Arial, sans-serif;">Payment Method:</strong></td>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.paymentMethod}</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">Card Payment</td>
                 </tr>
                 <tr><td colspan="2" style="height: 12px; font-family: Helvetica, Arial, sans-serif;"></td></tr>
                     <tr>
                     <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;"><strong style="font-family: Helvetica, Arial, sans-serif;">Shipping Address:</strong></td>
-                    <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.shippingAddress}</td>
+                    <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${formatAddress(order.shippingAddress)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;"><strong style="font-family: Helvetica, Arial, sans-serif;">Billing Address:</strong></td>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.billingAddress}</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${formatAddress(order.billingAddress)}</td>
                 </tr>
               </table>
 
               <p style="font-size: 13px; color: #2F362A; line-height: 1.5; margin: 24px 0; font-family: Helvetica, Arial, sans-serif;">
-                Your order will be dispatched within 2–3 business days. Once shipped, you’ll receive tracking details by email.<br />
+                Your order will be dispatched within 2–3 business days. Once shipped, you'll receive tracking details by email.<br />
                 Please note: once your order is dispatched, it can no longer be cancelled. For assistance, reach out to our Customer Support team.
               </p>
 
@@ -599,7 +624,7 @@ export function orderConfirmationEmailTemplate({ order }: { order: any }) {
 }
 
 export function subscriptionConfirmationEmailTemplate({ order }: { order: any }) {
-    return `
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>

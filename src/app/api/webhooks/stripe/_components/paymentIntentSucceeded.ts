@@ -1,6 +1,8 @@
 import { stripe } from "@/lib/stripe";
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { sendEmail } from "@/lib/emailConfig";
+import { orderConfirmationEmailTemplate } from "@/lib/emailTemplate";
 
 export async function handlePaymentIntentSucceeded(paymentIntent: any) {
     const payload = await getPayload({ config })
@@ -26,23 +28,14 @@ export async function handlePaymentIntentSucceeded(paymentIntent: any) {
         }
 
         // --- WTCOINS MANAGEMENT ---
-        // Handle WTCoins deduction and reward earning
+        // Handle WTCoins deduction only (awarding happens when order is shipped)
         if (order.user) {
             const userId = typeof order.user === 'object' ? order.user.id : order.user
 
             try {
-                // 1. DEDUCT WTCOINS IF USED
+                // DEDUCT WTCOINS IF USED
                 if (order.pointsUsed && order.pointsUsed > 0) {
                     await deductWTCoins(payload, userId, order.pointsUsed, orderId)
-                }
-
-                // 2. AWARD WTCOINS BASED ON REAL MONEY SPENT
-                // Calculate the actual amount paid (excluding WTCoins discount)
-                const wtCoinsDiscount = order.pointsUsed ? await convertPointsToAED(payload, order.pointsUsed) : 0
-                const realMoneySpent = Math.max(0, order.financials.total - wtCoinsDiscount)
-
-                if (realMoneySpent > 0) {
-                    await awardWTCoins(payload, userId, realMoneySpent, orderId)
                 }
             } catch (error) {
                 console.error('Error managing WTCoins:', error)
@@ -117,16 +110,68 @@ export async function handlePaymentIntentSucceeded(paymentIntent: any) {
             }
         }
 
-        // --- UPDATE ORDER STATUS ---
+        // --- UPDATE ORDER STATUS AND PAYMENT DETAILS ---
         try {
+            // Extract payment details from PaymentIntent
+            const chargeId = paymentIntent.latest_charge || paymentIntent.charges?.data?.[0]?.id
+            const receiptUrl = paymentIntent.charges?.data?.[0]?.receipt_url
+
             await payload.update({
                 collection: 'web-orders',
                 id: orderId,
                 data: {
                     paymentStatus: 'completed',
+                    deliveryStatus: 'placed', // Set initial delivery status when payment completes
+                    stripeOrderId: paymentIntent.id,
+                    stripeData: {
+                        paymentIntentId: paymentIntent.id,
+                        chargeId: chargeId,
+                        customerId: paymentIntent.customer,
+                        receiptUrl: receiptUrl,
+                        amount: paymentIntent.amount,
+                        currency: paymentIntent.currency,
+                        paymentMethod: paymentIntent.payment_method,
+                        status: paymentIntent.status,
+                        created: paymentIntent.created,
+                    },
                 },
             })
-            console.log(`✅ Order ${orderId} marked as completed`)
+            console.log(`✅ Order ${orderId} marked as completed with payment details`)
+
+            // Send order confirmation email
+            try {
+                // Extract user email from order
+                const userEmail = typeof order.user === 'object' && order.user?.email
+                    ? order.user.email
+                    : order.billingAddress?.email || order.shippingAddress?.email
+
+                if (userEmail) {
+                    const userName = order.billingAddress?.firstName || 'Customer'
+
+                    await sendEmail({
+                        to: userEmail,
+                        subject: "Order Confirmation - White Mantis",
+                        body: `Hi ${userName},
+
+Thank you for your order! Your order #${orderId} has been confirmed.
+
+Order Total: AED ${order.financials.total.toFixed(2)}
+
+We'll send you another email when your order ships.
+
+Happy brewing,
+Team White Mantis`.trim(),
+                        html: orderConfirmationEmailTemplate({ order: order }),
+                    })
+
+                    console.log(`✅ Order confirmation email sent to ${userEmail}`)
+                } else {
+                    console.warn(`⚠️ No email found for order ${orderId}, skipping confirmation email`)
+                }
+            } catch (emailError: any) {
+                console.error("❌ Failed to send order confirmation email:", emailError)
+                // Don't throw - email failure shouldn't break the webhook
+            }
         } catch (error) {
             console.error('Error updating order status:', error)
         }
@@ -176,112 +221,6 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
     } catch (error) {
         console.error('Error deducting WTCoins:', error)
         throw error
-    }
-}
-
-/**
- * Award WTCoins to user based on real money spent
- */
-async function awardWTCoins(payload: any, userId: string | number, realMoneySpent: number, orderId: string | number) {
-    try {
-        // Fetch WTCoins configuration
-        const wtCoinsConfig = await payload.findGlobal({
-            slug: 'wt-coins',
-            depth: 1,
-        })
-
-        if (!wtCoinsConfig) {
-            console.error('WTCoins configuration not found')
-            return
-        }
-
-        // Calculate points to award (percentage of real money spent)
-        const pointsEarnRate = wtCoinsConfig.pointsEarn || 0
-        const pointsToAward = Math.floor(realMoneySpent * (pointsEarnRate / 100))
-
-        if (pointsToAward <= 0) {
-            console.log(`No points to award for order ${orderId}`)
-            return
-        }
-
-        // Calculate expiry date
-        const expiryMonths = wtCoinsConfig.rewardExpiry || 12
-        const expiryDate = new Date()
-        expiryDate.setMonth(expiryDate.getMonth() + expiryMonths)
-
-        // Find or create user's WTCoins record
-        const userRewards = await payload.find({
-            collection: 'user-wt-coins',
-            where: { user: { equals: userId } },
-        })
-
-        let userWTCoins: any
-
-        if (userRewards.docs.length === 0) {
-            // Create new record
-            userWTCoins = await payload.create({
-                collection: 'user-wt-coins',
-                data: {
-                    user: userId,
-                    totalBalance: pointsToAward,
-                    earningHistory: [
-                        {
-                            amount: pointsToAward,
-                            earnedAt: new Date(),
-                            expiryDate: expiryDate,
-                        }
-                    ],
-                    redeemedPointsHistory: []
-                }
-            })
-            console.log(`✅ Created WTCoins record and awarded ${pointsToAward} points to user ${userId}`)
-        } else {
-            // Update existing record
-            userWTCoins = userRewards.docs[0]
-            const newBalance = (userWTCoins.totalBalance || 0) + pointsToAward
-
-            await payload.update({
-                collection: 'user-wt-coins',
-                id: userWTCoins.id,
-                data: {
-                    totalBalance: newBalance,
-                    earningHistory: [
-                        ...(userWTCoins.earningHistory || []),
-                        {
-                            amount: pointsToAward,
-                            earnedAt: new Date(),
-                            expiryDate: expiryDate,
-                        }
-                    ]
-                }
-            })
-            console.log(`✅ Awarded ${pointsToAward} WTCoins to user ${userId}. New balance: ${newBalance}`)
-        }
-    } catch (error) {
-        console.error('Error awarding WTCoins:', error)
-        throw error
-    }
-}
-
-/**
- * Convert points to AED based on configuration
- */
-async function convertPointsToAED(payload: any, points: number): Promise<number> {
-    try {
-        const wtCoinsConfig = await payload.findGlobal({
-            slug: 'wt-coins',
-            depth: 1,
-        })
-
-        if (!wtCoinsConfig) {
-            return 0
-        }
-
-        const pointsToAedRate = wtCoinsConfig.pointsToAed || 1
-        return points / pointsToAedRate
-    } catch (error) {
-        console.error('Error converting points to AED:', error)
-        return 0
     }
 }
 

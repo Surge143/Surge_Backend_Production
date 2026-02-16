@@ -6,7 +6,6 @@ import { calculateWTCoinsDiscount } from '../_components/validateAndCalculateWTC
 import { stripe } from "@/lib/stripe";
 import crypto from 'crypto';
 import { calculateTaxAndShipping } from '../_components/calculateTaxAndShipping';
-import { validateCoupon } from '@/collections/Coupon/endpoints/couponUtils';
 
 export async function POST(req: NextRequest) {
     try {
@@ -28,7 +27,6 @@ export async function POST(req: NextRequest) {
             email,
             product,
             useWTCoins,
-            appliedCouponCode,
         } = body
 
         // --- DATA NORMALIZATION ---
@@ -161,41 +159,9 @@ export async function POST(req: NextRequest) {
             let totalDiscount = totalPrice * (validatedData.discount / 100)
             let priceAfterSubDiscount = totalPrice - totalDiscount
 
-            // VALIDATE AND APPLY COUPON
-            let couponDiscount = 0;
-            let couponId: string | number | null = null;
-
-            if (appliedCouponCode) {
-                const result = await validateCoupon(payload, appliedCouponCode, user as any, body.shopId);
-
-                if (!result.success) {
-                    return NextResponse.json({ error: result.error }, { status: result.status || 400 });
-                }
-
-                const coupon = result.coupon;
-
-                // Validate Minimum Amount
-                if (priceAfterSubDiscount < coupon.minimumAmount) {
-                    return NextResponse.json({
-                        error: `Minimum order amount of AED ${coupon.minimumAmount} required for this coupon`
-                    }, { status: 400 });
-                }
-
-                // Calculate Coupon Discount (apply to subscription-discounted price)
-                if (coupon.discountType === 'percentage') {
-                    couponDiscount = priceAfterSubDiscount * (coupon.discountAmount / 100);
-                } else {
-                    couponDiscount = Math.min(coupon.discountAmount, priceAfterSubDiscount);
-                }
-
-                couponId = coupon.id;
-            }
-
-            const priceAfterCoupon = priceAfterSubDiscount - couponDiscount;
-
             // CALCULATE WHITEMANTIS COINS
 
-            let finalPrice: number = priceAfterCoupon
+            let finalPrice: number = priceAfterSubDiscount
             let wtPointsUsed = 0;
             let wtDiscount = 0;
             let wtRemainingBalance = 0;
@@ -205,7 +171,7 @@ export async function POST(req: NextRequest) {
                     return NextResponse.json({ error: 'Please Login to use WT Coins' }, { status: 401 });
                 }
 
-                const result = await calculateWTCoinsDiscount(payload, user.id, priceAfterCoupon);
+                const result = await calculateWTCoinsDiscount(payload, user.id, priceAfterSubDiscount);
 
                 // If the function returned an error object, return it to the client
                 if ('error' in result) {
@@ -218,9 +184,10 @@ export async function POST(req: NextRequest) {
                 wtRemainingBalance = result.remainingBalance;
             }
 
-            const totalAfterDiscount = priceAfterCoupon - wtDiscount;
-            const taxAmount = totalAfterDiscount * (taxRate / 100);
-            const finalTotal = totalAfterDiscount + shippingCharge + taxAmount;
+            const totalAfterDiscount = priceAfterSubDiscount - wtDiscount;
+            const totalWithShipping = totalAfterDiscount + shippingCharge;
+            const taxAmount = totalWithShipping * (taxRate / 100);
+            const finalTotal = totalWithShipping + taxAmount;
 
             // CREATE PAYLOAD SUBSCRIPTION
 
@@ -251,7 +218,7 @@ export async function POST(req: NextRequest) {
                         pointsUsed: wtPointsUsed,
                         financials: {
                             subtotal: totalPrice,
-                            discountAmount: totalDiscount + couponDiscount + wtDiscount,
+                            discountAmount: totalDiscount + wtDiscount,
                             total: finalTotal,
                         }
                     },

@@ -12,14 +12,14 @@ export default function Header() {
 
     useEffect(() => {
         // Check if user is logged in
-        fetch('/api/auth/me')
+        fetch('/api/users/me')
             .then(res => res.ok ? res.json() : null)
             .then(data => setUser(data?.user || null))
             .catch(() => setUser(null))
     }, [])
 
     const handleLogout = async () => {
-        await fetch('/api/auth/logout', { method: 'POST' })
+        await fetch('/api/users/logout', { method: 'POST' })
         setUser(null)
         window.location.href = '/'
     }

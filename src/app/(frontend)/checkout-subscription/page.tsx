@@ -39,8 +39,6 @@ function CheckoutSubscriptionForm() {
     const [wtCoinsBalance, setWtCoinsBalance] = useState<any>(null)
     const [deliveryOption, setDeliveryOption] = useState<'delivery' | 'pickup'>('delivery')
     const [shippingAsBilling, setShippingAsBilling] = useState(true)
-    const [couponCode, setCouponCode] = useState('')
-    const [couponData, setCouponData] = useState<any>(null)
     const [taxStats, setTaxStats] = useState({ taxRate: 0, shippingCharge: 0 })
 
     const [shippingAddress, setShippingAddress] = useState({
@@ -71,7 +69,7 @@ function CheckoutSubscriptionForm() {
         const fetchData = async () => {
             try {
                 // Fetch User
-                const userRes = await fetch('/api/auth/me')
+                const userRes = await fetch('/api/users/me')
                 if (userRes.ok) {
                     const userData = await userRes.json()
                     if (userData.user) {
@@ -172,50 +170,28 @@ function CheckoutSubscriptionForm() {
         return base * (discountPercent / 100)
     }
 
-    const handleApplyCoupon = async () => {
-        if (!couponCode) return
-        try {
-            const subtotalAfterSub = getBasePrice() * quantity - calculateSubscriptionDiscount()
-            const res = await fetch('/api/coupon/validate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: couponCode, cartTotal: subtotalAfterSub })
-            })
-            const data = await res.json()
-            if (res.ok) {
-                setCouponData(data)
-                alert('Coupon applied successfully!')
-            } else {
-                alert(data.error || 'Invalid coupon')
-            }
-        } catch (err) {
-            alert('Failed to validate coupon')
-        }
-    }
-
-    const calculateCouponDiscount = () => {
-        if (!couponData) return 0
-        const subtotalAfterSub = getBasePrice() * quantity - calculateSubscriptionDiscount()
-        if (couponData.type === 'fixed') return Math.min(couponData.value, subtotalAfterSub)
-        return subtotalAfterSub * (couponData.value / 100)
-    }
-
     const calculateWTCoinsDiscount = () => {
         if (!useWTCoins || !wtCoinsBalance) return 0
-        const subtotalAfterDiscounts = getBasePrice() * quantity - calculateSubscriptionDiscount() - calculateCouponDiscount()
+        const subtotalAfterDiscounts = getBasePrice() * quantity - calculateSubscriptionDiscount()
         const maxDiscount = wtCoinsBalance.balance / wtCoinsBalance.pointsToAed
+        console.log('WTCoins Debug:', {
+            balance: wtCoinsBalance.balance,
+            pointsToAed: wtCoinsBalance.pointsToAed,
+            maxDiscount,
+            subtotalAfterDiscounts,
+            finalDiscount: Math.min(maxDiscount, subtotalAfterDiscounts)
+        })
         return Math.min(maxDiscount, subtotalAfterDiscounts)
     }
 
     const calculateFinalTotal = () => {
         const subtotal = getBasePrice() * quantity
         const subDiscount = calculateSubscriptionDiscount()
-        const couponDiscount = calculateCouponDiscount()
         const wtDiscount = calculateWTCoinsDiscount()
-        const afterDiscount = subtotal - subDiscount - couponDiscount - wtDiscount
-
-        const taxAmount = afterDiscount * (taxStats.taxRate / 100)
-        return afterDiscount + taxAmount + taxStats.shippingCharge
+        const afterDiscount = subtotal - subDiscount - wtDiscount
+        const withShipping = afterDiscount + taxStats.shippingCharge
+        const taxAmount = withShipping * (taxStats.taxRate / 100)
+        return withShipping + taxAmount
     }
 
     const handlePayment = async (e: React.FormEvent) => {
@@ -245,7 +221,6 @@ function CheckoutSubscriptionForm() {
                 paymentMethodId: paymentMethod.id,
                 deliveryOption,
                 useWTCoins,
-                appliedCouponCode: couponData?.code,
                 shippingAddressAsBillingAddress: shippingAsBilling,
                 product: {
                     productId: product.id,
@@ -433,16 +408,6 @@ function CheckoutSubscriptionForm() {
                                 </div>
                             </div>
 
-                            <div className={styles.couponCode}>
-                                <input
-                                    placeholder="Coupon Code"
-                                    value={couponCode}
-                                    onChange={(e) => setCouponCode(e.target.value)}
-                                    className={styles.couponInput}
-                                />
-                                <button type="button" onClick={handleApplyCoupon} className={styles.applyBtn}>Apply</button>
-                            </div>
-
                             <div className={styles.calculation}>
                                 <div className={styles.calcRow}>
                                     <span>Subtotal</span>
@@ -452,12 +417,6 @@ function CheckoutSubscriptionForm() {
                                     <div className={`${styles.calcRow} ${styles.discount}`}>
                                         <span>Subscription Discount ({selectedVariant?.subscriptionDiscount || product?.subscriptionDiscount || 0}%)</span>
                                         <span>-AED {calculateSubscriptionDiscount().toFixed(2)}</span>
-                                    </div>
-                                )}
-                                {couponData && (
-                                    <div className={`${styles.calcRow} ${styles.discount}`}>
-                                        <span>Coupon ({couponData.code})</span>
-                                        <span>-AED {calculateCouponDiscount().toFixed(2)}</span>
                                     </div>
                                 )}
                                 {useWTCoins && wtCoinsBalance && calculateWTCoinsDiscount() > 0 && (
@@ -472,7 +431,7 @@ function CheckoutSubscriptionForm() {
                                 </div>
                                 <div className={styles.calcRow}>
                                     <span>Tax ({taxStats.taxRate}%)</span>
-                                    <span>AED {((getBasePrice() * quantity - calculateSubscriptionDiscount() - calculateCouponDiscount() - calculateWTCoinsDiscount()) * (taxStats.taxRate / 100)).toFixed(2)}</span>
+                                    <span>AED {(((getBasePrice() * quantity - calculateSubscriptionDiscount() - calculateWTCoinsDiscount()) + taxStats.shippingCharge) * (taxStats.taxRate / 100)).toFixed(2)}</span>
                                 </div>
                                 <div className={styles.totalRow}>
                                     <span>Total (Recurring)</span>
@@ -480,14 +439,23 @@ function CheckoutSubscriptionForm() {
                                 </div>
                             </div>
 
-                            {user && wtCoinsBalance && (
-                                <div className={styles.wtCoins}>
-                                    <label className={styles.checkboxLabel}>
-                                        <input type="checkbox" checked={useWTCoins} onChange={() => setUseWTCoins(!useWTCoins)} />
-                                        Use WT Coins (Balance: {wtCoinsBalance.balance} ≈ AED {wtCoinsBalance.estimatedValue})
-                                    </label>
-                                </div>
-                            )}
+                            <div className={styles.wtCoins}>
+                                <label className={styles.checkboxLabel}>
+                                    <input
+                                        type="checkbox"
+                                        checked={useWTCoins}
+                                        onChange={() => setUseWTCoins(!useWTCoins)}
+                                        disabled={!user || !wtCoinsBalance || wtCoinsBalance.balance === 0}
+                                    />
+                                    {user && wtCoinsBalance ? (
+                                        `Use WT Coins (Balance: ${wtCoinsBalance.balance} ≈ AED ${wtCoinsBalance.estimatedValue})`
+                                    ) : user ? (
+                                        'Use WT Coins (Loading...)'
+                                    ) : (
+                                        'Use WT Coins (Login required)'
+                                    )}
+                                </label>
+                            </div>
 
                             <button
                                 disabled={isProcessing || !stripe}

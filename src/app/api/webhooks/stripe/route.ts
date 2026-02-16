@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'invoice.paid':
         console.log(JSON.stringify(event, null, 2));
-        handleInvoicePaid(event.data.object);
+        await handleInvoicePaid(event.data.object);
         break;
       case 'payment_intent.succeeded':
         const pi = event.data.object;
@@ -29,9 +29,8 @@ export async function POST(req: NextRequest) {
 
         // 2. Otherwise, treat it as a One-Time Order
         console.log('✅ Processing One-Time Order...');
-        handlePaymentIntentSucceeded(pi)
-        // await handleOneTimeOrder(pi, payload);
-        break;;
+        await handlePaymentIntentSucceeded(pi);
+        break;
       case 'refund.created':
         console.log('Refund Created:', event.data.object);
         break;
@@ -44,8 +43,6 @@ export async function POST(req: NextRequest) {
       default:
         console.log('Unhandled event type:', event.type);
     }
-
-
   } catch (err: any) {
     console.error('⚠️ Webhook signature verification failed.', err.message);
     return NextResponse.json({ error: 'Webhook Error' }, { status: 400 });
