@@ -18,28 +18,31 @@ export async function POST(req: NextRequest) {
         console.log(JSON.stringify(event, null, 2));
         await handleInvoicePaid(event.data.object);
         break;
+
       case 'payment_intent.succeeded':
         const pi = event.data.object;
 
         // 1. Check if this PI was created by a subscription invoice
         if (pi.invoice) {
-          console.log('⏭️ Skipping: This PaymentIntent belongs to an Invoice.');
           break;
         }
-
         // 2. Otherwise, treat it as a One-Time Order
         console.log('✅ Processing One-Time Order...');
         await handlePaymentIntentSucceeded(pi);
         break;
+
       case 'refund.created':
         console.log('Refund Created:', event.data.object);
         break;
+
       case 'charge.refunded':
         console.log('Charge Refunded:', event.data.object);
         break;
+
       case 'customer.subscription.deleted':
         console.log('Customer Subscription Deleted:', event.data.object);
         break;
+
       default:
         console.log('Unhandled event type:', event.type);
     }

@@ -115,19 +115,18 @@ function CheckoutForm() {
             }
         }
         updateStats()
-    }, [deliveryOption, shippingAddress.emirates])
+    }, [deliveryOption, shippingAddress.emirates, shippingAddress])
 
     const handleApplyCoupon = async () => {
         if (!couponCode) return
         try {
-            const res = await fetch('/api/coupon/validate', {
-                method: 'POST',
+            const res = await fetch(`/api/coupon/coupons/${couponCode}`, {
+                method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: couponCode, cartTotal: totalPrice })
             })
             const data = await res.json()
-            if (res.ok) {
-                setCouponData(data)
+            if (res.ok && data.success) {
+                setCouponData(data.coupon)
                 alert('Coupon applied successfully!')
             } else {
                 alert(data.error || 'Invalid coupon')
@@ -143,8 +142,8 @@ function CheckoutForm() {
         // Calculate subtotal after coupon
         let subtotal = totalPrice
         if (couponData) {
-            if (couponData.type === 'fixed') subtotal -= couponData.value
-            else subtotal -= (totalPrice * (couponData.value / 100))
+            if (couponData.discountType === 'fixed') subtotal -= couponData.discountAmount
+            else subtotal -= (totalPrice * (couponData.discountAmount / 100))
         }
 
         // Calculate max WTCoins discount
@@ -156,8 +155,8 @@ function CheckoutForm() {
         let total = totalPrice
         // Apply coupon discount
         if (couponData) {
-            if (couponData.type === 'fixed') total -= couponData.value
-            else total -= (totalPrice * (couponData.value / 100))
+            if (couponData.discountType === 'fixed') total -= couponData.discountAmount
+            else total -= (totalPrice * (couponData.discountAmount / 100))
         }
         // Apply WTCoins discount
         const wtDiscount = calculateWTCoinsDiscount()
@@ -411,7 +410,7 @@ function CheckoutForm() {
                                 {couponData && (
                                     <div className={`${styles.calcRow} ${styles.discount}`}>
                                         <span>Discount ({couponData.code})</span>
-                                        <span>-AED {(couponData.type === 'fixed' ? couponData.value : totalPrice * (couponData.value / 100)).toFixed(2)}</span>
+                                        <span>-AED {(couponData.discountType === 'fixed' ? couponData.discountAmount : totalPrice * (couponData.discountAmount / 100)).toFixed(2)}</span>
                                     </div>
                                 )}
                                 {useWTCoins && wtCoinsBalance && calculateWTCoinsDiscount() > 0 && (
@@ -426,7 +425,7 @@ function CheckoutForm() {
                                 </div>
                                 <div className={styles.calcRow}>
                                     <span>Tax ({taxStats.taxRate}%)</span>
-                                    <span>AED {(((totalPrice - (couponData ? (couponData.type === 'fixed' ? couponData.value : totalPrice * (couponData.value / 100)) : 0) - calculateWTCoinsDiscount()) + taxStats.shippingCharge) * (taxStats.taxRate / 100)).toFixed(2)}</span>
+                                    <span>AED {(((totalPrice - (couponData ? (couponData.discountType === 'fixed' ? couponData.discountAmount : totalPrice * (couponData.discountAmount / 100)) : 0) - calculateWTCoinsDiscount()) + taxStats.shippingCharge) * (taxStats.taxRate / 100)).toFixed(2)}</span>
                                 </div>
                                 <div className={styles.totalRow}>
                                     <span>Total</span>

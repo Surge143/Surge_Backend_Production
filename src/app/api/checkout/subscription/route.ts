@@ -154,14 +154,14 @@ export async function POST(req: NextRequest) {
                 };
             }
 
-            let productPrice = validatedData.salePrice || validatedData.regularPrice
-            let totalPrice = productPrice * product.quantity
-            let totalDiscount = totalPrice * (validatedData.discount / 100)
-            let priceAfterSubDiscount = totalPrice - totalDiscount
+            const productPrice = validatedData.salePrice || validatedData.regularPrice
+            const totalPrice = productPrice * product.quantity
+            const totalDiscount = totalPrice * (validatedData.discount / 100)
+            const priceAfterSubDiscount = totalPrice - totalDiscount
 
             // CALCULATE WHITEMANTIS COINS
 
-            let finalPrice: number = priceAfterSubDiscount
+            const finalPrice: number = priceAfterSubDiscount
             let wtPointsUsed = 0;
             let wtDiscount = 0;
             let wtRemainingBalance = 0;
@@ -216,16 +216,17 @@ export async function POST(req: NextRequest) {
                         billingAddress: billingAddress,
                         paymentStatus: 'pending',
                         pointsUsed: wtPointsUsed,
+                        guestAccessToken: guestAccessToken,
                         financials: {
                             subtotal: totalPrice,
-                            discountAmount: totalDiscount + wtDiscount,
+                            discountAmount: totalDiscount,
+                            wtDiscount: wtDiscount,
                             total: finalTotal,
                         }
                     },
                     overrideAccess: true,
                 })
 
-                let guestAccessToken: string | null = null;
                 if (subscriptionDoc.guestAccessToken) {
                     guestAccessToken = subscriptionDoc.guestAccessToken;
                 }
@@ -268,6 +269,29 @@ export async function POST(req: NextRequest) {
 
                     // CREATE STRIPE SUBSCRIPTION
 
+                    // Calculate the recurring price (Full price without WTCoins discount)
+                    const recurringTotal = priceAfterSubDiscount + shippingCharge + (priceAfterSubDiscount + shippingCharge) * (taxRate / 100);
+
+                    // Create a one-time coupon for WTCoins discount if applicable
+                    let stripeCouponId: string | undefined;
+                    if (wtDiscount > 0) {
+                        try {
+                            const coupon = await stripe.coupons.create({
+                                amount_off: Math.round(wtDiscount * 100),
+                                currency: 'aed',
+                                duration: 'once',
+                                name: `WTCoins Discount for ${email}`,
+                            });
+                            stripeCouponId = coupon.id;
+                        } catch (couponError) {
+                            console.error('Error creating Stripe coupon:', couponError);
+                            // If coupon creation fails, we might want to proceed or fail. 
+                            // For now, let's proceed without the discount or fail? 
+                            // Let's fail to be safe and avoid charging full price when discount was expected.
+                            return NextResponse.json({ error: 'Failed to apply WT Coins discount' }, { status: 500 });
+                        }
+                    }
+
                     const subscription: any = await stripe.subscriptions.create({
                         customer: stripeCustomerId,
                         items: [
@@ -275,7 +299,7 @@ export async function POST(req: NextRequest) {
                                 price_data: {
                                     currency: "aed",
                                     product: process.env.STRIPE_MASTER_PRODUCT_ID as string,
-                                    unit_amount: Math.round(finalTotal * 100), // Stripe expects amounts in fils
+                                    unit_amount: Math.round(recurringTotal * 100), // Recurring amount is without WT discount
                                     recurring: {
                                         interval: (validatedData.frequency.interval as string).toLowerCase() as 'day' | 'week' | 'month' | 'year',
                                         interval_count: validatedData.frequency.duration,
@@ -283,7 +307,8 @@ export async function POST(req: NextRequest) {
                                 },
                             },
                         ],
-                        payment_behavior: "default_incomplete", // better alternative
+                        discounts: stripeCouponId ? [{ coupon: stripeCouponId }] : [],
+                        payment_behavior: "default_incomplete",
                         payment_settings: { save_default_payment_method: "on_subscription" },
                         metadata: {
                             db_subscription_id: subscriptionDoc.id,

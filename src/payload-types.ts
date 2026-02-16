@@ -216,13 +216,17 @@ export interface User {
   phone?: string | null;
   name?: string | null;
   profileImage?: (number | null) | Media;
-  address?: {
-    street?: string | null;
-    apartment?: string | null;
-    city?: string | null;
-    state?: string | null;
-    country?: string | null;
-  };
+  addresses?:
+    | {
+        label?: string | null;
+        street?: string | null;
+        apartment?: string | null;
+        city?: string | null;
+        emirates?: string | null;
+        country?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -1069,6 +1073,7 @@ export interface WebSubscription {
   financials: {
     subtotal: number;
     discountAmount?: number | null;
+    wtDiscount?: number | null;
     total: number;
   };
   stripeData?:
@@ -1432,14 +1437,16 @@ export interface UsersSelect<T extends boolean = true> {
   phone?: T;
   name?: T;
   profileImage?: T;
-  address?:
+  addresses?:
     | T
     | {
+        label?: T;
         street?: T;
         apartment?: T;
         city?: T;
-        state?: T;
+        emirates?: T;
         country?: T;
+        id?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -2004,6 +2011,7 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
     | {
         subtotal?: T;
         discountAmount?: T;
+        wtDiscount?: T;
         total?: T;
       };
   stripeData?: T;

@@ -53,7 +53,8 @@ export async function awardWTCoins(payload: Payload, userId: number, realMoneySp
                         }
                     ],
                     redeemedPointsHistory: []
-                }
+                },
+                overrideAccess: true,
             })
             console.log(`✅ Created WTCoins record and awarded ${pointsToAward} points to user ${userId}`)
         } else {
@@ -74,7 +75,8 @@ export async function awardWTCoins(payload: Payload, userId: number, realMoneySp
                             expiryDate: expiryDate.toISOString(),
                         }
                     ]
-                }
+                },
+                overrideAccess: true,
             })
             console.log(`✅ Awarded ${pointsToAward} WTCoins to user ${userId}. New balance: ${newBalance}`)
         }

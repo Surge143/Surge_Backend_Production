@@ -109,8 +109,8 @@ export async function POST(request: NextRequest) {
 
         // console.log(`DEBUG: Cart Find Result: ${carts.docs.length} found`);
 
-        let cart = carts.docs[0]
-        let items: any[] = cart?.items || []
+        const cart = carts.docs[0]
+        const items: any[] = cart?.items || []
 
         const existingIndex = items.findIndex(
             (item: any) => (typeof item.product === 'object' ? item.product.id : item.product) === product && item.vId === (vId || '')

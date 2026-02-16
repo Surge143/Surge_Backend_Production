@@ -157,7 +157,7 @@ function CheckoutSubscriptionForm() {
             }
         }
         updateStats()
-    }, [deliveryOption, shippingAddress.emirates])
+    }, [deliveryOption, shippingAddress.emirates, shippingAddress])
 
     const getBasePrice = () => {
         if (selectedVariant) return selectedVariant.variantSalePrice || selectedVariant.variantRegularPrice

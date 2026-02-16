@@ -232,6 +232,7 @@ export const WebSubscription: CollectionConfig = {
                                     fields: [
                                         { name: 'subtotal', type: 'number', required: true },
                                         { name: 'discountAmount', type: 'number' },
+                                        { name: 'wtDiscount', type: 'number', label: 'WT Coins Discount' },
                                         { name: 'total', type: 'number', required: true },
                                     ],
                                 },

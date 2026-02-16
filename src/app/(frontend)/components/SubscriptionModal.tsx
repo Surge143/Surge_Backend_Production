@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Product, ProductVariant, SubscriptionFrequency } from '../types/product'
@@ -18,6 +18,14 @@ export default function SubscriptionModal({ product, isOpen, onClose, quantity =
     const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
     const [selectedFrequency, setSelectedFrequency] = useState<SubscriptionFrequency | null>(null)
 
+    // Get available subscription frequencies
+    const getAvailableFrequencies = useCallback((): SubscriptionFrequency[] => {
+        if (product.hasVariantOptions && selectedVariant) {
+            return selectedVariant.subFreq || []
+        }
+        return product.subFreq || []
+    }, [product.hasVariantOptions, product.subFreq, selectedVariant])
+
     // Initialize selected variant and frequency when modal opens
     useEffect(() => {
         if (isOpen) {
@@ -32,15 +40,8 @@ export default function SubscriptionModal({ product, isOpen, onClose, quantity =
                 setSelectedFrequency(frequencies[0])
             }
         }
-    }, [isOpen, selectedVariant, product])
+    }, [isOpen, selectedVariant, product, getAvailableFrequencies, selectedFrequency])
 
-    // Get available subscription frequencies
-    const getAvailableFrequencies = (): SubscriptionFrequency[] => {
-        if (product.hasVariantOptions && selectedVariant) {
-            return selectedVariant.subFreq || []
-        }
-        return product.subFreq || []
-    }
 
     // Get current price
     const getCurrentPrice = (): number => {

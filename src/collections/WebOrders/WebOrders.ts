@@ -8,44 +8,44 @@ export const WebOrders: CollectionConfig = {
         group: 'Website',
     },
     hooks: {
-        afterChange: [
-            async ({ doc, previousDoc, req }) => {
-                // Award WTCoins when delivery status changes to 'shipped'
-                const deliveryStatusChanged = previousDoc?.deliveryStatus !== doc.deliveryStatus
-                const isNowShipped = doc.deliveryStatus === 'shipped'
-                const hasUser = doc.user
-                const alreadyAwarded = doc.wtCoinsAwarded // Track if already awarded
+        beforeChange: [
+            async ({ data, req, originalDoc, operation }) => {
+                if (operation === 'update') {
+                    // Award WTCoins when delivery status changes to 'shipped'
+                    const isNowShipped = data.deliveryStatus === 'shipped'
+                    const wasShipped = originalDoc?.deliveryStatus === 'shipped'
+                    const alreadyAwarded = originalDoc?.wtCoinsAwarded
+                    const hasUser = data.user || originalDoc?.user
 
-                if (deliveryStatusChanged && isNowShipped && hasUser && !alreadyAwarded) {
-                    try {
-                        const userId = typeof doc.user === 'object' ? doc.user.id : doc.user
+                    if (isNowShipped && !wasShipped && hasUser && !alreadyAwarded) {
+                        try {
+                            const userId = typeof (data.user || originalDoc.user) === 'object'
+                                ? (data.user || originalDoc.user).id
+                                : (data.user || originalDoc.user)
 
-                        // Ensure userId is a number
-                        if (typeof userId !== 'number') {
-                            console.error('User ID is not a number, skipping WTCoins award')
-                            return
+                            if (typeof userId === 'number') {
+                                // Calculate real money spent (excluding WTCoins discount)
+                                const pointsUsed = data.pointsUsed !== undefined ? data.pointsUsed : (originalDoc.pointsUsed || 0)
+                                const totalAmount = data.financials?.total !== undefined ? data.financials.total : (originalDoc.financials?.total || 0)
+
+                                const wtCoinsDiscount = pointsUsed ? await convertPointsToAED(req.payload, pointsUsed) : 0
+                                const realMoneySpent = Math.max(0, totalAmount - wtCoinsDiscount)
+
+                                if (realMoneySpent > 0) {
+                                    await awardWTCoins(req.payload, userId, realMoneySpent, originalDoc.id)
+                                    // Mark as awarded in the same operation
+                                    data.wtCoinsAwarded = true
+                                    console.log(`✅ Awarded WTCoins for order ${originalDoc.id} in beforeChange`)
+                                }
+                            } else {
+                                console.error('User ID is not a number, skipping WTCoins award')
+                            }
+                        } catch (error) {
+                            console.error('Error awarding WTCoins on shipment:', error)
                         }
-
-                        // Calculate real money spent (excluding WTCoins discount)
-                        const wtCoinsDiscount = doc.pointsUsed ? await convertPointsToAED(req.payload, doc.pointsUsed) : 0
-                        const realMoneySpent = Math.max(0, doc.financials.total - wtCoinsDiscount)
-
-                        if (realMoneySpent > 0) {
-                            await awardWTCoins(req.payload, userId, realMoneySpent, doc.id)
-
-                            // Mark as awarded to prevent duplicate awards
-                            await req.payload.update({
-                                collection: 'web-orders',
-                                id: doc.id,
-                                data: { wtCoinsAwarded: true }
-                            })
-
-                            console.log(`✅ Awarded WTCoins for order ${doc.id} on shipment`)
-                        }
-                    } catch (error) {
-                        console.error('Error awarding WTCoins on shipment:', error)
                     }
                 }
+                return data
             }
         ]
     },
