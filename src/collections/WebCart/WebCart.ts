@@ -32,7 +32,6 @@ export const WebCart: CollectionConfig = {
                     name: 'product',
                     type: 'relationship',
                     relationTo: 'web-products',
-                    unique: true,
                     required: true,
                 },
                 {

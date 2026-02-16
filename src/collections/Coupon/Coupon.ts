@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { validateWebCouponHandler } from "./endpoints/validateWebCoupon";
 
 export const Coupon: CollectionConfig = {
     slug: "coupon",
@@ -6,6 +7,13 @@ export const Coupon: CollectionConfig = {
         singular: "Coupon",
         plural: "Coupons"
     },
+    endpoints: [
+        {
+            path: '/coupons/:couponCode',
+            method: 'get',
+            handler: validateWebCouponHandler,
+        },
+    ],
     admin: {
         useAsTitle: "code",
         defaultColumns: ["code", "status", "isPubliclyVisible", "applicability", "discountType", "discountAmount", "expiryDate"],

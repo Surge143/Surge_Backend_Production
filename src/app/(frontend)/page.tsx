@@ -15,7 +15,7 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/checkout/subscription?limit=8`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/web-products?limit=8`, {
           cache: 'no-store',
         })
         if (!res.ok) {

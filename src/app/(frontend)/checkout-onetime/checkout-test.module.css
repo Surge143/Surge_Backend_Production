@@ -1,0 +1,210 @@
+.Main {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.Container {
+    width: 100%;
+    max-width: 1000px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    overflow: hidden;
+}
+
+.FormSection {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.SummarySection {
+    background: rgba(0, 0, 0, 0.02);
+    padding: 40px;
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.Title {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #1a1a1a;
+    margin-bottom: 5px;
+}
+
+.Subtitle {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.SectionTitle {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: #888;
+    margin-bottom: 15px;
+    margin-top: 10px;
+}
+
+.Grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.InputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.Input {
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1.5px solid #eee;
+    background: #fff;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    color: #333;
+}
+
+.Input:focus {
+    outline: none;
+    border-color: #000;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.StripeElement {
+    background: #fff;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1.5px solid #eee;
+    transition: all 0.3s ease;
+}
+
+.StripeElementContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.CheckboxRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 5px 0;
+}
+
+.Checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #000;
+}
+
+.ProductCard {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    padding: 20px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    margin-bottom: 30px;
+}
+
+.ProductInfo {
+    flex: 1;
+}
+
+.ProductName {
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.ProductDetail {
+    font-size: 12px;
+    color: #888;
+}
+
+.Totals {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.TotalRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    color: #666;
+}
+
+.GrandTotal {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #eee;
+    font-size: 20px;
+    font-weight: 800;
+    color: #000;
+}
+
+.SubmitButton {
+    width: 100%;
+    padding: 18px;
+    border-radius: 16px;
+    border: none;
+    background: #000;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    margin-top: 20px;
+}
+
+.SubmitButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.SubmitButton:active {
+    transform: translateY(0);
+}
+
+.SubmitButton:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+@media (max-width: 850px) {
+    .Container {
+        grid-template-columns: 1fr;
+    }
+
+    .SummarySection {
+        order: -1;
+        border-left: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+}

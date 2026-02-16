@@ -62,15 +62,16 @@ export default function CartPage() {
                                 <div className={styles.itemActions}>
                                     <div className={styles.quantity}>
                                         <button
-                                            onClick={() => updateQuantity(item.product, item.quantity - 1, item.vId)}
+                                            onClick={() => updateQuantity(item.product, item.quantity - 1, item.vId, 'decrement')}
                                             className={styles.qtyBtn}
                                         >
                                             −
                                         </button>
                                         <span>{item.quantity}</span>
                                         <button
-                                            onClick={() => updateQuantity(item.product, item.quantity + 1, item.vId)}
+                                            onClick={() => updateQuantity(item.product, item.quantity + 1, item.vId, 'increment')}
                                             className={styles.qtyBtn}
+                                            disabled={item.quantity >= 5}
                                         >
                                             +
                                         </button>

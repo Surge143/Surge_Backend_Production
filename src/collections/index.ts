@@ -17,8 +17,8 @@ import { AppWishlist } from './AppWishlist/AppWishlist'
 import { Users } from "./Users/Users";
 import { WebProducts } from "./WebProducts/WebProducts";
 import { WebCart } from "./WebCart/WebCart";
-import { Rewards } from "./Rewards/Rewards";
-import { UserRewards } from "./UserRewards/UserRewards";
+import { WTCoins } from "./WTCoins/WTCoins";
+import { UserWTCoins } from "./UserWTCoins/UserWTCoins";
 import { WebOrders } from "./WebOrders/WebOrders";
 import { Slots } from "./Slots/Slots";
 import { ShipAndTax } from "./ShipAndTax/ShipAndTax";
@@ -44,13 +44,13 @@ export const collections = [
     WebSubCategories,
     WebProducts,
     WebCart,
-    UserRewards,
+    UserWTCoins,
     WebOrders,
     Slots,
     WebSubscription
 ]
 
 export const globals = [
-    Rewards,
+    WTCoins,
     ShipAndTax
 ]

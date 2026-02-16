@@ -182,7 +182,7 @@ export const WebProducts: CollectionConfig = {
                                 condition: (data) => !data?.hasVariantOptions,
                             }
                         },
-                        { name: 'subscriptionDiscount', label: 'Subscription Discount', type: 'number', required: true, admin: { condition: (_, siblingData) => Boolean(siblingData?.hasVariantSub) } },
+                        { name: 'subscriptionDiscount', label: 'Subscription Discount', type: 'number', required: true, admin: { condition: (_, siblingData) => Boolean(siblingData?.hasSimpleSub) } },
                         {
                             name: 'subFreq',
                             label: 'Repeat Every',

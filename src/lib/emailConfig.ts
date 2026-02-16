@@ -17,6 +17,20 @@ const REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN!;
 const EMAIL_FROM = process.env.EMAIL_FROM!; // your business email
 
 export async function sendEmail({ to, subject, body = "", html, name }: SendEmailParams) {
+    console.log(`Attempting to send email to: ${to} | Subject: ${subject}`);
+
+    // Check environment variables
+    const missingVars: string[] = [];
+    if (!CLIENT_ID) missingVars.push('GMAIL_CLIENT_ID');
+    if (!CLIENT_SECRET) missingVars.push('GMAIL_CLIENT_SECRET');
+    if (!REFRESH_TOKEN) missingVars.push('GMAIL_REFRESH_TOKEN');
+    if (!EMAIL_FROM) missingVars.push('EMAIL_FROM');
+
+    if (missingVars.length > 0) {
+        console.error('Missing Gmail configuration variables:', missingVars.join(', '));
+        throw new Error(`Email configuration is incomplete. Missing: ${missingVars.join(', ')}`);
+    }
+
     const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
     oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
@@ -63,5 +77,6 @@ ${body}`;
         requestBody: { raw: encodedMessage },
     });
 
+    console.log('Email sent successfully via Gmail API');
     return true;
 }

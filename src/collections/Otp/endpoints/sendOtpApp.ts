@@ -105,12 +105,14 @@ export const sendOtpApp: PayloadHandler = async (req) => {
 
         // 5. Send the Email
         try {
+            console.log(`sendOtpApp: Triggering sendEmail for ${email}`);
             await sendEmail({
                 to: email,
                 subject: "Your Login Code",
                 body: `Your verification code is: ${generatedOTP}. This code is valid for the next 5 minutes.`,
                 html: getOTPEmailTemplate(generatedOTP),
             });
+            console.log(`sendOtpApp: Email sent successfully for ${email}`);
         } catch (emailError: any) {
             console.error("Error sending OTP email in sendOtpApp:", emailError);
             return Response.json({ success: false, message: 'Failed to send OTP email' }, { status: 500 });

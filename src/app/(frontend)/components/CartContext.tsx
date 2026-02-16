@@ -16,10 +16,10 @@ interface CartContextType {
     items: CartItem[]
     itemCount: number
     totalPrice: number
-    addItem: (item: CartItem) => void
-    removeItem: (productId: string, vId?: string) => void
-    updateQuantity: (productId: string, quantity: number, vId?: string) => void
-    clearCart: () => void
+    addItem: (item: Partial<CartItem> & { product: string; quantity?: number }) => Promise<void>
+    removeItem: (productId: string, vId?: string) => Promise<void>
+    updateQuantity: (productId: string, quantity: number, vId?: string, action?: 'increment' | 'decrement') => Promise<void>
+    clearCart: () => Promise<void>
     loading: boolean
 }
 
@@ -48,7 +48,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
-    const addItem = async (item: CartItem) => {
+    const addItem = async (item: Partial<CartItem> & { product: string; quantity?: number }) => {
         try {
             const response = await fetch('/api/cart', {
                 method: 'POST',
@@ -82,8 +82,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
-    const updateQuantity = async (productId: string, quantity: number, vId?: string) => {
-        if (quantity <= 0) {
+    const updateQuantity = async (productId: string, quantity: number, vId?: string, action?: 'increment' | 'decrement') => {
+        if (!action && quantity <= 0) {
             removeItem(productId, vId)
             return
         }
@@ -92,7 +92,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             const response = await fetch('/api/cart', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ product: productId, vId, quantity }),
+                body: JSON.stringify({ product: productId, vId, quantity, action }),
             })
 
             if (response.ok) {

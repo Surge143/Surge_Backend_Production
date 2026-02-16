@@ -16,7 +16,30 @@ export const WebSubscription: CollectionConfig = {
                         {
                             type: 'row',
                             fields: [
-                                { name: 'user', type: 'relationship', relationTo: 'users' },
+                                {
+                                    name: 'customerType',
+                                    type: 'select',
+                                    defaultValue: 'guest',
+                                    options: [
+                                        { label: 'Guest', value: 'guest' },
+                                        { label: 'Registered User', value: 'user' },
+                                    ],
+                                    admin: {
+                                        width: '50%',
+                                    },
+                                },
+                                {
+                                    name: 'user',
+                                    type: 'relationship',
+                                    relationTo: 'users',
+                                    required: false, // Optional because it's hidden for guests
+                                    admin: {
+                                        width: '50%',
+                                        // This field ONLY shows up if customerType is 'user'
+                                        condition: (data) => data?.customerType === 'user',
+                                        description: 'Select the registered user account for this order.',
+                                    },
+                                },
                                 {
                                     name: 'deliveryOption',
                                     type: 'select',
@@ -27,24 +50,14 @@ export const WebSubscription: CollectionConfig = {
                                     ],
                                 },
                                 {
+                                    name: 'stripeSubscriptionID',
+                                    type: 'text',
+                                    admin: { description: 'The ID from Stripe' }
+                                },
+                                {
                                     name: 'nextPaymentDate',
                                     type: 'date',
-                                    required: true,
                                 },
-                                {
-                                    name: 'subFreq',
-                                    type: 'text',
-                                    required: true,
-                                },
-                                {
-                                    name: 'origin',
-                                    type: 'select',
-                                    required: true,
-                                    options: [
-                                        { label: 'Subscription', value: 'subscription' },
-                                        { label: 'One Time', value: 'one-time' },
-                                    ],
-                                }
                             ],
                         },
                         {
@@ -55,10 +68,45 @@ export const WebSubscription: CollectionConfig = {
                                 {
                                     type: 'row',
                                     fields: [
-                                        { name: 'product', type: 'relationship', relationTo: 'web-products', required: true, admin: { width: '30%' } },
-                                        { name: 'variant', type: 'relationship', relationTo: 'web-products', required: true, admin: { width: '30%' } },
-                                        { name: 'quantity', type: 'number', required: true, admin: { width: '15%' } },
-                                        { name: 'price', type: 'number', required: true, admin: { width: '25%' } },
+                                        {
+                                            name: 'product',
+                                            type: 'relationship',
+                                            relationTo: 'web-products',
+                                            required: true,
+                                            admin: { width: '25%' }
+                                        },
+                                        {
+                                            name: 'variantID',
+                                            label: 'Variation ID',
+                                            type: 'text',
+                                            required: true,
+                                            admin: {
+                                                width: '25%',
+                                                description: 'The ID of the row in the Product Variants array'
+                                            }
+                                        },
+                                        {
+                                            name: 'subFreqID',
+                                            label: 'Subscription Freq ID',
+                                            type: 'text',
+                                            required: true,
+                                            admin: {
+                                                width: '25%',
+                                                description: 'The ID of the row in the subFreq array'
+                                            }
+                                        },
+                                        {
+                                            name: 'quantity',
+                                            type: 'number',
+                                            required: true,
+                                            admin: { width: '10%' }
+                                        },
+                                        {
+                                            name: 'price',
+                                            type: 'number',
+                                            required: true,
+                                            admin: { width: '15%' }
+                                        },
                                     ],
                                 },
                             ],
@@ -80,18 +128,17 @@ export const WebSubscription: CollectionConfig = {
                                 {
                                     type: 'row',
                                     fields: [
-                                        { name: 'addressLine1', type: 'text', required: true },
+                                        { name: 'addressLine1', type: 'text' },
                                         { name: 'addressLine2', type: 'text' },
                                     ],
                                 },
                                 {
                                     type: 'row',
                                     fields: [
-                                        { name: 'city', type: 'text', required: true },
+                                        { name: 'city', type: 'text' },
                                         {
                                             name: 'emirates',
                                             type: 'select',
-                                            required: true,
                                             options: [
                                                 { label: 'Abu Dhabi', value: 'abu_dhabi' },
                                                 { label: 'Dubai', value: 'dubai' },
@@ -102,7 +149,7 @@ export const WebSubscription: CollectionConfig = {
                                                 { label: 'Fujairah', value: 'fujairah' },
                                             ],
                                         },
-                                        { name: 'phoneNumber', type: 'text', required: true },
+                                        { name: 'phoneNumber', type: 'text' },
                                     ],
                                 },
                             ],
@@ -114,18 +161,16 @@ export const WebSubscription: CollectionConfig = {
                                 {
                                     type: 'row',
                                     fields: [
-                                        { name: 'addressLine1', type: 'text', required: true },
-                                        { name: 'addressLine2', type: 'text' },
+                                        { name: 'addressLine1', type: 'text' }
                                     ],
                                 },
                                 {
                                     type: 'row',
                                     fields: [
-                                        { name: 'city', type: 'text', required: true },
+                                        { name: 'city', type: 'text' },
                                         {
                                             name: 'emirates',
                                             type: 'select',
-                                            required: true,
                                             options: [
                                                 { label: 'Abu Dhabi', value: 'abu_dhabi' },
                                                 { label: 'Dubai', value: 'dubai' },
@@ -136,7 +181,7 @@ export const WebSubscription: CollectionConfig = {
                                                 { label: 'Fujairah', value: 'fujairah' },
                                             ],
                                         },
-                                        { name: 'phoneNumber', type: 'text', required: true },
+                                        { name: 'phoneNumber', type: 'text', },
                                     ],
                                 },
                             ],
@@ -160,44 +205,23 @@ export const WebSubscription: CollectionConfig = {
                                     ],
                                 },
                                 {
-                                    name: 'deliveryStatus',
+                                    name: 'subsStatus',
                                     type: 'select',
                                     defaultValue: 'placed',
                                     admin: {
                                         condition: (data) => data?.paymentStatus === 'completed',
                                     },
                                     options: [
-                                        { label: 'Placed', value: 'placed' },
-                                        { label: 'Shipped', value: 'shipped' },
-                                        { label: 'Delivered', value: 'delivered' },
+                                        { label: 'Active', value: 'active' },
+                                        { label: 'Inactive', value: 'inactive' },
+                                        { label: 'Cancalled', value: 'cancelled' },
                                     ],
                                 },
                             ],
                         },
                         {
-                            name: 'appliedBenefit',
-                            type: 'select',
-                            defaultValue: 'none',
-                            options: [
-                                { label: 'None', value: 'none' },
-                                { label: 'Coupon', value: 'coupon' },
-                                { label: 'Points', value: 'points' },
-                            ],
-                        },
-                        {
-                            name: 'couponCode',
-                            type: 'relationship',
-                            relationTo: 'coupon',
-                            admin: {
-                                condition: (data) => data?.appliedBenefit === 'coupon',
-                            },
-                        },
-                        {
                             name: 'pointsUsed',
                             type: 'number',
-                            admin: {
-                                condition: (data) => data?.appliedBenefit === 'points',
-                            },
                         },
                         {
                             name: 'financials',
@@ -224,5 +248,12 @@ export const WebSubscription: CollectionConfig = {
                 hidden: true,
             },
         },
+        {
+            name: 'guestAccessToken',
+            type: 'text',
+            admin: {
+                hidden: true,
+            },
+        }
     ],
 };

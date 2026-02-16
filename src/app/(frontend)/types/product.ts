@@ -44,6 +44,7 @@ export interface ProductVariant {
     variantInStock: boolean
     variantStockQuantity: number
     subFreq: SubscriptionFrequency[]
+    subscriptionDiscount?: number
 }
 
 export interface Category {
@@ -92,6 +93,7 @@ export interface Product {
     stockQuantity: number | null
     hasSimpleSub: boolean
     subFreq: SubscriptionFrequency[]
+    subscriptionDiscount?: number
     productImage: Media | null
     description: RichTextContent
     categories: Category[]

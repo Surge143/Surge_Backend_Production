@@ -37,7 +37,7 @@ export const sendOtpWeb: PayloadHandler = async (req) => {
 
             });
         } catch (findError: any) {
-            console.error("Error finding OTP record in sendOtpApp:", findError);
+            console.error("Error finding OTP record in sendOtpWeb:", findError);
             return Response.json({ success: false, message: 'Failed to check existing OTP records' }, { status: 500 });
         }
 
@@ -98,7 +98,7 @@ export const sendOtpWeb: PayloadHandler = async (req) => {
                 });
             }
         } catch (dbError: any) {
-            console.error(`Error ${record ? 'updating' : 'creating'} OTP record in sendOtpApp:`, dbError);
+            console.error(`Error ${record ? 'updating' : 'creating'} OTP record in sendOtpWeb:`, dbError);
             return Response.json({ success: false, message: 'Failed to save OTP record' }, { status: 500 });
         }
 
@@ -106,14 +106,16 @@ export const sendOtpWeb: PayloadHandler = async (req) => {
 
         // 5. Send the Email
         try {
+            console.log(`sendOtpWeb: Triggering sendEmail for ${email}`);
             await sendEmail({
                 to: email,
                 subject: "Your Login Code",
                 body: `Your verification code is: ${generatedOTP}. This code is valid for the next 5 minutes.`,
                 html: getOTPEmailTemplate(generatedOTP),
             });
+            console.log(`sendOtpWeb: Email sent successfully for ${email}`);
         } catch (emailError: any) {
-            console.error("Error sending OTP email in sendOtpApp:", emailError);
+            console.error("Error sending OTP email in sendOtpWeb:", emailError);
             return Response.json({ success: false, message: 'Failed to send OTP email' }, { status: 500 });
         }
 
@@ -131,7 +133,7 @@ export const sendOtpWeb: PayloadHandler = async (req) => {
         return res;
 
     } catch (error: any) {
-        console.error("Critical error in sendOtpApp endpoint:", error);
+        console.error("Critical error in sendOtpWeb endpoint:", error);
         return Response.json({ success: false, message: error.message || 'Internal server error' }, { status: 500 });
     }
 }

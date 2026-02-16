@@ -87,7 +87,7 @@ export interface Config {
     'web-sub-categories': WebSubCategory;
     'web-products': WebProduct;
     'web-cart': WebCart;
-    'user-rewards': UserReward;
+    'user-wt-coins': UserWtCoin;
     'web-orders': WebOrder;
     slots: Slot;
     'web-subscription': WebSubscription;
@@ -125,7 +125,7 @@ export interface Config {
     'web-sub-categories': WebSubCategoriesSelect<false> | WebSubCategoriesSelect<true>;
     'web-products': WebProductsSelect<false> | WebProductsSelect<true>;
     'web-cart': WebCartSelect<false> | WebCartSelect<true>;
-    'user-rewards': UserRewardsSelect<false> | UserRewardsSelect<true>;
+    'user-wt-coins': UserWtCoinsSelect<false> | UserWtCoinsSelect<true>;
     'web-orders': WebOrdersSelect<false> | WebOrdersSelect<true>;
     slots: SlotsSelect<false> | SlotsSelect<true>;
     'web-subscription': WebSubscriptionSelect<false> | WebSubscriptionSelect<true>;
@@ -143,11 +143,11 @@ export interface Config {
   };
   fallbackLocale: null;
   globals: {
-    rewards: Reward;
+    'wt-coins': WtCoin;
     'ship-and-tax': ShipAndTax;
   };
   globalsSelect: {
-    rewards: RewardsSelect<false> | RewardsSelect<true>;
+    'wt-coins': WtCoinsSelect<false> | WtCoinsSelect<true>;
     'ship-and-tax': ShipAndTaxSelect<false> | ShipAndTaxSelect<true>;
   };
   locale: null;
@@ -912,34 +912,38 @@ export interface WebCart {
   createdAt: string;
 }
 /**
- * User Rewards
+ * Aggregated User WT Coins Balance
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "user-rewards".
+ * via the `definition` "user-wt-coins".
  */
-export interface UserReward {
+export interface UserWtCoin {
   id: number;
   /**
-   * User
+   * User who owns this balance
    */
   user: number | User;
   /**
-   * Points
+   * Current spendable balance
    */
-  totalEarnedPoints: number;
+  totalBalance?: number | null;
   /**
-   * Automatically set to 1 year from earned date
+   * Log of all points earned
    */
-  rewardExpiry: string;
+  earningHistory?:
+    | {
+        amount: number;
+        earnedAt?: string | null;
+        expiryDate?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Log of all points spent
+   */
   redeemedPointsHistory?:
     | {
-        /**
-         * Points
-         */
         redeemedPoints: number;
-        /**
-         * Order
-         */
         associatedOrder: number | WebOrder;
         id?: string | null;
       }[]
@@ -953,34 +957,44 @@ export interface UserReward {
  */
 export interface WebOrder {
   id: number;
+  customerType?: ('guest' | 'user') | null;
+  /**
+   * Select the registered user account for this order.
+   */
   user?: (number | null) | User;
   deliveryOption: 'delivery' | 'pickup';
+  /**
+   * The ID from Stripe
+   */
+  stripeOrderId?: string | null;
   origin: 'subscription' | 'one-time';
   items: {
     product: number | WebProduct;
-    variant: number | WebProduct;
+    /**
+     * The ID of the row in the Product Variants array
+     */
+    variantID: string;
     quantity: number;
     price: number;
     id?: string | null;
   }[];
   newsAndOffers?: boolean | null;
   shippingAddress?: {
-    addressLine1: string;
+    addressLine1?: string | null;
     addressLine2?: string | null;
-    city: string;
-    emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
-    phoneNumber: string;
+    city?: string | null;
+    emirates?: ('abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah') | null;
+    phoneNumber?: string | null;
   };
-  billingAddress: {
-    addressLine1: string;
+  billingAddress?: {
+    addressLine1?: string | null;
     addressLine2?: string | null;
-    city: string;
-    emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
-    phoneNumber: string;
+    city?: string | null;
+    emirates?: ('abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah') | null;
+    phoneNumber?: string | null;
   };
   paymentStatus: 'pending' | 'completed' | 'refunded';
   deliveryStatus?: ('placed' | 'shipped' | 'delivered') | null;
-  appliedBenefit?: ('none' | 'coupon' | 'points') | null;
   couponCode?: (number | null) | Coupon;
   pointsUsed?: number | null;
   financials: {
@@ -1006,37 +1020,47 @@ export interface WebOrder {
  */
 export interface WebSubscription {
   id: number;
+  customerType?: ('guest' | 'user') | null;
+  /**
+   * Select the registered user account for this order.
+   */
   user?: (number | null) | User;
   deliveryOption: 'delivery' | 'pickup';
-  nextPaymentDate: string;
-  subFreq: string;
-  origin: 'subscription' | 'one-time';
+  /**
+   * The ID from Stripe
+   */
+  stripeSubscriptionID?: string | null;
+  nextPaymentDate?: string | null;
   items: {
     product: number | WebProduct;
-    variant: number | WebProduct;
+    /**
+     * The ID of the row in the Product Variants array
+     */
+    variantID: string;
+    /**
+     * The ID of the row in the subFreq array
+     */
+    subFreqID: string;
     quantity: number;
     price: number;
     id?: string | null;
   }[];
   newsAndOffers?: boolean | null;
   shippingAddress?: {
-    addressLine1: string;
+    addressLine1?: string | null;
     addressLine2?: string | null;
-    city: string;
-    emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
-    phoneNumber: string;
+    city?: string | null;
+    emirates?: ('abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah') | null;
+    phoneNumber?: string | null;
   };
-  billingAddress: {
-    addressLine1: string;
-    addressLine2?: string | null;
-    city: string;
-    emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
-    phoneNumber: string;
+  billingAddress?: {
+    addressLine1?: string | null;
+    city?: string | null;
+    emirates?: ('abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah') | null;
+    phoneNumber?: string | null;
   };
   paymentStatus: 'pending' | 'completed' | 'refunded';
-  deliveryStatus?: ('placed' | 'shipped' | 'delivered') | null;
-  appliedBenefit?: ('none' | 'coupon' | 'points') | null;
-  couponCode?: (number | null) | Coupon;
+  subsStatus?: ('active' | 'inactive' | 'cancelled') | null;
   pointsUsed?: number | null;
   financials: {
     subtotal: number;
@@ -1052,6 +1076,7 @@ export interface WebSubscription {
     | number
     | boolean
     | null;
+  guestAccessToken?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1314,8 +1339,8 @@ export interface PayloadLockedDocument {
         value: number | WebCart;
       } | null)
     | ({
-        relationTo: 'user-rewards';
-        value: number | UserReward;
+        relationTo: 'user-wt-coins';
+        value: number | UserWtCoin;
       } | null)
     | ({
         relationTo: 'web-orders';
@@ -1837,12 +1862,19 @@ export interface WebCartSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "user-rewards_select".
+ * via the `definition` "user-wt-coins_select".
  */
-export interface UserRewardsSelect<T extends boolean = true> {
+export interface UserWtCoinsSelect<T extends boolean = true> {
   user?: T;
-  totalEarnedPoints?: T;
-  rewardExpiry?: T;
+  totalBalance?: T;
+  earningHistory?:
+    | T
+    | {
+        amount?: T;
+        earnedAt?: T;
+        expiryDate?: T;
+        id?: T;
+      };
   redeemedPointsHistory?:
     | T
     | {
@@ -1858,14 +1890,16 @@ export interface UserRewardsSelect<T extends boolean = true> {
  * via the `definition` "web-orders_select".
  */
 export interface WebOrdersSelect<T extends boolean = true> {
+  customerType?: T;
   user?: T;
   deliveryOption?: T;
+  stripeOrderId?: T;
   origin?: T;
   items?:
     | T
     | {
         product?: T;
-        variant?: T;
+        variantID?: T;
         quantity?: T;
         price?: T;
         id?: T;
@@ -1891,7 +1925,6 @@ export interface WebOrdersSelect<T extends boolean = true> {
       };
   paymentStatus?: T;
   deliveryStatus?: T;
-  appliedBenefit?: T;
   couponCode?: T;
   pointsUsed?: T;
   financials?:
@@ -1925,16 +1958,17 @@ export interface SlotsSelect<T extends boolean = true> {
  * via the `definition` "web-subscription_select".
  */
 export interface WebSubscriptionSelect<T extends boolean = true> {
+  customerType?: T;
   user?: T;
   deliveryOption?: T;
+  stripeSubscriptionID?: T;
   nextPaymentDate?: T;
-  subFreq?: T;
-  origin?: T;
   items?:
     | T
     | {
         product?: T;
-        variant?: T;
+        variantID?: T;
+        subFreqID?: T;
         quantity?: T;
         price?: T;
         id?: T;
@@ -1953,15 +1987,12 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
     | T
     | {
         addressLine1?: T;
-        addressLine2?: T;
         city?: T;
         emirates?: T;
         phoneNumber?: T;
       };
   paymentStatus?: T;
-  deliveryStatus?: T;
-  appliedBenefit?: T;
-  couponCode?: T;
+  subsStatus?: T;
   pointsUsed?: T;
   financials?:
     | T
@@ -1971,6 +2002,7 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
         total?: T;
       };
   stripeData?: T;
+  guestAccessToken?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2106,12 +2138,12 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * Rewards Configuration
+ * White Mantis Coins Configuration
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "rewards".
+ * via the `definition` "wt-coins".
  */
-export interface Reward {
+export interface WtCoin {
   id: number;
   /**
    * Points to earn per order in percentage
@@ -2163,9 +2195,9 @@ export interface ShipAndTax {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "rewards_select".
+ * via the `definition` "wt-coins_select".
  */
-export interface RewardsSelect<T extends boolean = true> {
+export interface WtCoinsSelect<T extends boolean = true> {
   pointsEarn?: T;
   pointsToAed?: T;
   rewardExpiry?: T;

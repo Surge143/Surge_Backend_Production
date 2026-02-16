@@ -1,20 +1,27 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useRef, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import styles from './verify.module.css'
 
-export default function VerifyOTPPage() {
+function VerifyOTPContent() {
     const [otp, setOtp] = useState(['', '', '', ''])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const email = searchParams.get('email')
 
     useEffect(() => {
+        // Redirect back to login if no email is present
+        if (!email) {
+            router.push('/login')
+            return
+        }
         // Focus first input on mount
         inputRefs.current[0]?.focus()
-    }, [])
+    }, [email, router])
 
     const handleChange = (index: number, value: string) => {
         if (!/^\d*$/.test(value)) return // Only allow digits
@@ -68,7 +75,7 @@ export default function VerifyOTPPage() {
             const response = await fetch('/api/otp/verify-web', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ otp: code }),
+                body: JSON.stringify({ email, otp: code }),
             })
 
             const data = await response.json()
@@ -174,5 +181,13 @@ export default function VerifyOTPPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function VerifyOTPPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <VerifyOTPContent />
+        </Suspense>
     )
 }

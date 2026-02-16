@@ -26,7 +26,7 @@ export default function LoginPage() {
 
             if (response.ok) {
                 // Redirect to OTP verification page
-                router.push('/verify-otp')
+                router.push(`/verify-otp?email=${encodeURIComponent(email)}`)
             } else {
                 setError(data.message || 'Failed to send OTP')
             }

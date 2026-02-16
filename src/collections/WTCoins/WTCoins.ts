@@ -1,10 +1,10 @@
 import type { GlobalConfig } from 'payload'
 
-export const Rewards: GlobalConfig = {
-    slug: 'rewards',
+export const WTCoins: GlobalConfig = {
+    slug: 'wt-coins',
     admin: {
-        description: "Rewards Configuration",
-        group: 'Rewards',
+        description: "White Mantis Coins Configuration",
+        group: 'WTCoins',
     },
     access: {
         read: ({ req: { user } }) => {

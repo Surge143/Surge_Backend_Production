@@ -205,7 +205,7 @@ export const verifyOtpWeb: PayloadHandler = async (req) => {
             });
 
             if (result.token) {
-                res.cookies.set('token', result.token, {
+                res.cookies.set('payload-token', result.token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'strict',

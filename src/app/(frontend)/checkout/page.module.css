@@ -1,0 +1,148 @@
+/* Main Layout */
+.MainContainer {
+  max-width: 1100px;
+  margin: 40px auto;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 40px;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Left Side */
+.LeftSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.SectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* Inputs */
+.Input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  transition: 0.2s ease;
+  background: #fff;
+}
+
+.Input:focus {
+  outline: none;
+  border-color: #000;
+}
+
+/* Stripe Inputs */
+.StripeInput {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+  margin-bottom: 12px;
+}
+
+/* Checkbox Row */
+.CheckRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Button */
+.SubmitButton {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  background: black;
+  color: white;
+  transition: 0.2s ease;
+}
+
+.SubmitButton:hover {
+  opacity: 0.85;
+}
+
+.SubmitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Right Side - Order Summary */
+.SummaryCard {
+  background: #fafafa;
+  padding: 25px;
+  border-radius: 14px;
+  border: 1px solid #eee;
+  height: fit-content;
+}
+
+.ProductRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ImageWrapper {
+  position: relative;
+}
+
+.Badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: black;
+  color: white;
+  font-size: 12px;
+  border-radius: 50%;
+  padding: 4px 8px;
+}
+
+.ProductName {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.Price {
+  font-weight: 600;
+}
+
+.Divider {
+  margin: 20px 0;
+  border: none;
+  border-top: 1px solid #e5e5e5;
+}
+
+.TotalRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.GrandTotal {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .MainContainer {
+    grid-template-columns: 1fr;
+  }
+
+  .SummaryCard {
+    order: -1;
+  }
+}

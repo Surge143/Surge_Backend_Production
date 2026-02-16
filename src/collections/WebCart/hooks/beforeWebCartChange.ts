@@ -26,8 +26,14 @@ export const beforeWebCartChange: CollectionBeforeChangeHook = async ({
 
             if (itemMap.has(key)) {
                 const existing = itemMap.get(key)!;
+                if (existing.quantity + (item.quantity || 1) > 5) {
+                    throw new Error(`Maximum quantity of 5 units allowed for this item.`);
+                }
                 existing.quantity += (item.quantity || 1);
             } else {
+                if ((item.quantity || 1) > 5) {
+                    throw new Error(`Maximum quantity of 5 units allowed for this item.`);
+                }
                 itemMap.set(key, {
                     product: productId,
                     quantity: item.quantity || 1,
@@ -49,7 +55,7 @@ export const beforeWebCartChange: CollectionBeforeChangeHook = async ({
             if (productDoc) {
                 if (item.vId) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const variant = ((productDoc as any).variants as any[])?.find((v: any) => v.vId === item.vId);
+                    const variant = ((productDoc as any).variants as any[])?.find((v: any) => v.id === item.vId);
                     if (variant) {
                         if (!variant.variantInStock) {
                             throw new Error(`${productDoc.name} (${variant.variantName}) is out of stock.`);

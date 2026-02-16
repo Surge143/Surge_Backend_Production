@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { headers as getNextHeaders } from 'next/headers';
+import { calculateWTCoinsDiscount } from '../_components/validateAndCalculateWTCoins';
+import { stripe } from "@/lib/stripe";
+import crypto from 'crypto';
+import { calculateTaxAndShipping } from '../_components/calculateTaxAndShipping';
+import { validateCoupon } from '@/collections/Coupon/endpoints/couponUtils';
 
 export async function POST(req: NextRequest) {
     try {
@@ -9,13 +14,9 @@ export async function POST(req: NextRequest) {
         const payloadConfig = await config
         const payload = await getPayload({ config: payloadConfig })
 
-        const headers = await getNextHeaders();
-
-        const authResult = await payload.auth({
-            headers,
-        });
-        const { user } = authResult;
-        console.log('Authenticated User:', user?.email);
+        const { user } = await payload.auth({
+            headers: await getNextHeaders(),
+        })
 
         const body = await req.json();
         const {
@@ -26,7 +27,18 @@ export async function POST(req: NextRequest) {
             paymentMethodId,
             email,
             product,
+            useWTCoins,
+            appliedCouponCode,
         } = body
+
+        // --- DATA NORMALIZATION ---
+        // Handle legacy 'phone' key from frontend/cache
+        if (shippingAddress && !shippingAddress.phoneNumber && (shippingAddress as any).phone) {
+            shippingAddress.phoneNumber = (shippingAddress as any).phone
+        }
+        if (billingAddress && !billingAddress.phoneNumber && (billingAddress as any).phone) {
+            billingAddress.phoneNumber = (billingAddress as any).phone
+        }
 
         if (!deliveryOption || !paymentMethodId || !product) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -50,43 +62,18 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
-        // Tax and Shipping
-        let tax: any = 0
-        let shipping: any = 0
+        // TAX AND SHIPPING FETCHING
+        let taxRate = 0;
+        let shippingCharge = 0;
         try {
-            const taxAndShippingResult = await payload.findGlobal({
-                slug: 'ship-and-tax',
-                depth: 1,
-            })
-
-            if (!taxAndShippingResult) {
-                return NextResponse.json({ error: 'Tax and shipping not found' }, { status: 404 })
-            }
-            tax = taxAndShippingResult?.tax
-
-            if (shippingAddress.emirates === 'abu_dhabi') {
-                shipping = taxAndShippingResult?.emirateCharges?.abu_dhabi
-            } else if (shippingAddress.emirates === 'dubai') {
-                shipping = taxAndShippingResult?.emirateCharges?.dubai
-            } else if (shippingAddress.emirates === 'sharjah') {
-                shipping = taxAndShippingResult?.emirateCharges?.sharjah
-            } else if (shippingAddress.emirates === 'ajman') {
-                shipping = taxAndShippingResult?.emirateCharges?.ajman
-            } else if (shippingAddress.emirates === 'umm_al_quwain') {
-                shipping = taxAndShippingResult?.emirateCharges?.umm_al_quwain
-            } else if (shippingAddress.emirates === 'ras_al_khaimah') {
-                shipping = taxAndShippingResult?.emirateCharges?.ras_al_khaimah
-            } else if (shippingAddress.emirates === 'fujairah') {
-                shipping = taxAndShippingResult?.emirateCharges?.fujairah
-            } else {
-                return NextResponse.json({ error: 'Invalid emirates' }, { status: 400 })
-            }
-        } catch (error) {
-            console.error('Error fetching tax and shipping:', error)
-            return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+            const result = await calculateTaxAndShipping(payload, deliveryOption, shippingAddress);
+            taxRate = result.taxRate;
+            shippingCharge = result.shippingCharge;
+        } catch (error: any) {
+            return NextResponse.json({ error: error.message }, { status: 400 });
         }
 
-        // Product Fetching
+        // PRODUCT FETCHING AND VALIDATION
         try {
             const productResult = await payload.find({
                 collection: 'web-products',
@@ -107,6 +94,17 @@ export async function POST(req: NextRequest) {
 
                 if (!selectedVariant) {
                     return NextResponse.json({ error: 'Invalid Variant ID' }, { status: 400 });
+                }
+
+                // --- STOCK VALIDATION FOR VARIANTS ---
+                if (!selectedVariant.variantInStock) {
+                    return NextResponse.json({ error: 'Selected variant is out of stock' }, { status: 400 });
+                }
+
+                if (typeof selectedVariant.variantStockQuantity === 'number' && selectedVariant.variantStockQuantity < product.quantity) {
+                    return NextResponse.json({
+                        error: `Insufficient stock for variant. Only ${selectedVariant.variantStockQuantity} units available.`
+                    }, { status: 400 });
                 }
 
                 const selectedSub = product.subscriptionId
@@ -136,6 +134,17 @@ export async function POST(req: NextRequest) {
                     return NextResponse.json({ error: 'Subscription plan not found for this product' }, { status: 400 });
                 }
 
+                // --- STOCK VALIDATION FOR NON-VARIANTS ---
+                if (!productDoc.inStock) {
+                    return NextResponse.json({ error: 'Product is out of stock' }, { status: 400 });
+                }
+
+                if (typeof productDoc.stockQuantity === 'number' && productDoc.stockQuantity < product.quantity) {
+                    return NextResponse.json({
+                        error: `Insufficient stock. Only ${productDoc.stockQuantity} units available.`
+                    }, { status: 400 });
+                }
+
                 validatedData = {
                     frequency: selectedSub ? {
                         duration: selectedSub.duration,
@@ -147,45 +156,202 @@ export async function POST(req: NextRequest) {
                 };
             }
 
-            const productPrice = validatedData.salePrice || validatedData.regularPrice
-            const totalPrice = productPrice * product.quantity
-            const totalDiscount = totalPrice * (validatedData.discount / 100)
-            const finalPrice = totalPrice - totalDiscount
+            let productPrice = validatedData.salePrice || validatedData.regularPrice
+            let totalPrice = productPrice * product.quantity
+            let totalDiscount = totalPrice * (validatedData.discount / 100)
+            let priceAfterSubDiscount = totalPrice - totalDiscount
 
-            if (user) {
-                const userRewards = await payload.find({
-                    collection: 'user-rewards',
-                    where: { user: { equals: user.id } },
-                });
+            // VALIDATE AND APPLY COUPON
+            let couponDiscount = 0;
+            let couponId: string | number | null = null;
 
-                if (!userRewards.docs.length) {
-                    return NextResponse.json({ error: 'User rewards not found' }, { status: 404 });
+            if (appliedCouponCode) {
+                const result = await validateCoupon(payload, appliedCouponCode, user as any, body.shopId);
+
+                if (!result.success) {
+                    return NextResponse.json({ error: result.error }, { status: result.status || 400 });
                 }
 
-                const userRewardDoc = userRewards.docs[0];
+                const coupon = result.coupon;
 
-                if (userRewardDoc.totalEarnedPoints < finalPrice) {
-                    return NextResponse.json({ error: 'Insufficient user rewards' }, { status: 400 });
+                // Validate Minimum Amount
+                if (priceAfterSubDiscount < coupon.minimumAmount) {
+                    return NextResponse.json({
+                        error: `Minimum order amount of AED ${coupon.minimumAmount} required for this coupon`
+                    }, { status: 400 });
                 }
 
-                await payload.update({
-                    collection: 'user-rewards',
-                    id: userRewardDoc.id,
-                    data: {
-                        totalEarnedPoints: userRewardDoc.totalEarnedPoints - finalPrice,
-                    },
-                });
+                // Calculate Coupon Discount (apply to subscription-discounted price)
+                if (coupon.discountType === 'percentage') {
+                    couponDiscount = priceAfterSubDiscount * (coupon.discountAmount / 100);
+                } else {
+                    couponDiscount = Math.min(coupon.discountAmount, priceAfterSubDiscount);
+                }
+
+                couponId = coupon.id;
             }
 
+            const priceAfterCoupon = priceAfterSubDiscount - couponDiscount;
 
+            // CALCULATE WHITEMANTIS COINS
 
+            let finalPrice: number = priceAfterCoupon
+            let wtPointsUsed = 0;
+            let wtDiscount = 0;
+            let wtRemainingBalance = 0;
 
+            if (useWTCoins) {
+                if (!user) {
+                    return NextResponse.json({ error: 'Please Login to use WT Coins' }, { status: 401 });
+                }
 
+                const result = await calculateWTCoinsDiscount(payload, user.id, priceAfterCoupon);
 
+                // If the function returned an error object, return it to the client
+                if ('error' in result) {
+                    return NextResponse.json({ error: result.error }, { status: result.status });
+                }
 
+                // Otherwise, use the calculated values
+                wtDiscount = result.discount;
+                wtPointsUsed = result.pointsUsed;
+                wtRemainingBalance = result.remainingBalance;
+            }
 
-            return NextResponse.json({ data: finalPrice }, { status: 200 })
+            const totalAfterDiscount = priceAfterCoupon - wtDiscount;
+            const taxAmount = totalAfterDiscount * (taxRate / 100);
+            const finalTotal = totalAfterDiscount + shippingCharge + taxAmount;
 
+            // CREATE PAYLOAD SUBSCRIPTION
+
+            let guestAccessToken: string | null = null;
+            if (!user) {
+                guestAccessToken = crypto.randomBytes(32).toString('hex');
+            }
+
+            try {
+                const subscriptionDoc = await payload.create({
+                    collection: 'web-subscription',
+                    data: {
+                        customerType: user ? 'user' : 'guest',
+                        user: user?.id,
+                        deliveryOption: deliveryOption,
+                        items: [
+                            {
+                                product: Number(product.productId),
+                                variantID: product.variantId,
+                                subFreqID: product.subscriptionId,
+                                quantity: product.quantity,
+                                price: productPrice,
+                            }
+                        ],
+                        shippingAddress: shippingAddress,
+                        billingAddress: billingAddress,
+                        paymentStatus: 'pending',
+                        pointsUsed: wtPointsUsed,
+                        financials: {
+                            subtotal: totalPrice,
+                            discountAmount: totalDiscount + couponDiscount + wtDiscount,
+                            total: finalTotal,
+                        }
+                    },
+                    overrideAccess: true,
+                })
+
+                let guestAccessToken: string | null = null;
+                if (subscriptionDoc.guestAccessToken) {
+                    guestAccessToken = subscriptionDoc.guestAccessToken;
+                }
+
+                if (!subscriptionDoc) {
+                    return NextResponse.json({ error: 'Failed to create subscription' }, { status: 500 })
+                }
+
+                // CREATE STRIPE SUBSCRIPTION
+
+                try {
+
+                    const existingCustomers = await stripe.customers.list({
+                        email: email,
+                        limit: 1,
+                    });
+
+                    let stripeCustomerId: any;
+
+                    if (existingCustomers.data.length > 0) {
+                        // Customer exists - get their ID
+                        stripeCustomerId = existingCustomers.data[0].id;
+
+                        await stripe.paymentMethods.attach(paymentMethodId, {
+                            customer: stripeCustomerId,
+                        });
+
+                        await stripe.customers.update(stripeCustomerId, {
+                            invoice_settings: { default_payment_method: paymentMethodId },
+                        });
+                    } else {
+                        // Create new customer
+                        const customer = await stripe.customers.create({
+                            email: email,
+                            payment_method: paymentMethodId,
+                            invoice_settings: { default_payment_method: paymentMethodId },
+                        });
+                        stripeCustomerId = customer.id;
+                    }
+
+                    // CREATE STRIPE SUBSCRIPTION
+
+                    const subscription: any = await stripe.subscriptions.create({
+                        customer: stripeCustomerId,
+                        items: [
+                            {
+                                price_data: {
+                                    currency: "aed",
+                                    product: process.env.STRIPE_MASTER_PRODUCT_ID as string,
+                                    unit_amount: Math.round(finalTotal * 100), // Stripe expects amounts in fils
+                                    recurring: {
+                                        interval: (validatedData.frequency.interval as string).toLowerCase() as 'day' | 'week' | 'month' | 'year',
+                                        interval_count: validatedData.frequency.duration,
+                                    },
+                                },
+                            },
+                        ],
+                        payment_behavior: "default_incomplete", // better alternative
+                        payment_settings: { save_default_payment_method: "on_subscription" },
+                        metadata: {
+                            db_subscription_id: subscriptionDoc.id,
+                            guest_access_token: guestAccessToken || "", // Store token in Stripe metadata
+                        },
+                        expand: [
+                            "latest_invoice.confirmation_secret"
+                        ]
+                    });
+
+                    const clientSecret = subscription.latest_invoice?.confirmation_secret?.client_secret;
+
+                    const responseData: any = {
+                        success: true,
+                        message: "Subscription created successfully",
+                        stripeSubscriptionId: subscription.id,
+                        dbSubscriptionId: subscriptionDoc.id,
+                        clientSecret,
+                    };
+
+                    if (guestAccessToken) {
+                        responseData.guestAccessToken = guestAccessToken;
+                        console.log("✅ Returning guest access token in subscription response");
+                    }
+
+                    return NextResponse.json(responseData, { status: 200 })
+
+                } catch (error) {
+                    console.error('Error creating subscription:', error);
+                    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+                }
+            } catch (error) {
+                console.error('Error creating subscription order:', error);
+                return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+            }
         } catch (error) {
             console.error('Error fetching product:', error)
             return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

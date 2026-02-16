@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Product, ProductVariant, SubscriptionFrequency } from '../types/product'
 import styles from './SubscriptionModal.module.css'
@@ -9,18 +10,29 @@ interface SubscriptionModalProps {
     product: Product
     isOpen: boolean
     onClose: () => void
+    quantity?: number
 }
 
-export default function SubscriptionModal({ product, isOpen, onClose }: SubscriptionModalProps) {
+export default function SubscriptionModal({ product, isOpen, onClose, quantity = 1 }: SubscriptionModalProps) {
+    const router = useRouter()
     const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
     const [selectedFrequency, setSelectedFrequency] = useState<SubscriptionFrequency | null>(null)
 
-    // Initialize selected variant when modal opens
+    // Initialize selected variant and frequency when modal opens
     useEffect(() => {
-        if (isOpen && product.hasVariantOptions && product.variants.length > 0) {
-            setSelectedVariant(product.variants[0])
+        if (isOpen) {
+            // First initialize variant if needed
+            if (product.hasVariantOptions && product.variants.length > 0 && !selectedVariant) {
+                setSelectedVariant(product.variants[0])
+            }
+
+            // Then initialize frequency based on current selection
+            const frequencies = getAvailableFrequencies()
+            if (frequencies.length > 0 && !selectedFrequency) {
+                setSelectedFrequency(frequencies[0])
+            }
         }
-    }, [isOpen, product])
+    }, [isOpen, selectedVariant, product])
 
     // Get available subscription frequencies
     const getAvailableFrequencies = (): SubscriptionFrequency[] => {
@@ -57,27 +69,28 @@ export default function SubscriptionModal({ product, isOpen, onClose }: Subscrip
     // Calculate discounted price
     const calculateDiscountedPrice = (frequency: SubscriptionFrequency): number => {
         const basePrice = getCurrentPrice()
-        const discount = frequency.subscriptionDiscount || 0
+        const discount = selectedVariant?.subscriptionDiscount || product.subscriptionDiscount || 0
         return basePrice - (basePrice * discount / 100)
     }
 
     // Handle subscription
     const handleSubscribe = () => {
-        if (!selectedFrequency) return
-
-        const subscriptionData = {
-            productId: product.id,
-            productName: product.name,
-            variantId: selectedVariant?.id,
-            variantName: selectedVariant?.variantName,
-            frequency: selectedFrequency,
-            price: calculateDiscountedPrice(selectedFrequency),
-            originalPrice: getCurrentPrice(),
+        if (!selectedFrequency) {
+            return
         }
 
-        console.log('Subscription data:', subscriptionData)
-        // TODO: Implement actual subscription logic
-        alert('Subscription feature coming soon!')
+        const params = new URLSearchParams({
+            productId: product.id.toString(),
+            quantity: quantity.toString(),
+            frequencyId: selectedFrequency.id,
+        })
+
+        if (selectedVariant) {
+            params.append('variantId', selectedVariant.id)
+        }
+
+        const url = `/checkout-subscription?${params.toString()}`
+        router.push(url)
         onClose()
     }
 
@@ -170,7 +183,7 @@ export default function SubscriptionModal({ product, isOpen, onClose }: Subscrip
                                                         {frequency.duration > 1 ? 's' : ''}
                                                     </div>
                                                     <div className={styles.frequencyDiscount}>
-                                                        Save {frequency.subscriptionDiscount}% (AED {savings.toFixed(2)})
+                                                        Save {selectedVariant?.subscriptionDiscount || product.subscriptionDiscount || 0}% (AED {savings.toFixed(2)})
                                                     </div>
                                                 </div>
                                                 <div className={styles.frequencyPrice}>

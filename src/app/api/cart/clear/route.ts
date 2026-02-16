@@ -3,13 +3,15 @@ import { cookies } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 
-async function getUserFromCookie() {
+/**
+ * Helper to get the authenticated user and Payload instance
+ */
+async function getAuthContext() {
     try {
         const cookieStore = await cookies()
         const payloadConfig = await config
         const payload = await getPayload({ config: payloadConfig })
 
-        // Convert cookies to Headers for Payload auth
         const headers = new Headers()
         cookieStore.getAll().forEach(cookie => {
             headers.append('cookie', `${cookie.name}=${cookie.value}`)
@@ -22,34 +24,37 @@ async function getUserFromCookie() {
     }
 }
 
+/**
+ * POST /api/cart/clear
+ * Clears all items in the authenticated user's cart
+ */
 export async function POST(request: NextRequest) {
     try {
-        const { user, payload } = await getUserFromCookie()
+        const { user, payload } = await getAuthContext()
 
-        if (user && payload) {
-            // Clear WebCart collection
-            const carts = await payload.find({
-                collection: 'web-cart',
-                where: {
-                    user: { equals: user.id },
-                },
-                limit: 1,
-            })
-
-            if (carts.docs[0]) {
-                await payload.update({
-                    collection: 'web-cart',
-                    id: carts.docs[0].id,
-                    data: { items: [] },
-                })
-            }
+        if (!user || !payload) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // Clear guest cart cookie
-        const res = NextResponse.json({ success: true })
-        res.cookies.delete('guest_id')
-        return res
-    } catch (error) {
-        return NextResponse.json({ error: 'Failed to clear cart' }, { status: 500 })
+        const carts = await payload.find({
+            collection: 'web-cart',
+            where: {
+                user: { equals: user.id },
+            },
+            limit: 1,
+        })
+
+        if (carts.docs[0]) {
+            await payload.update({
+                collection: 'web-cart',
+                id: carts.docs[0].id,
+                data: { items: [] },
+            })
+        }
+
+        return NextResponse.json({ success: true, items: [] })
+    } catch (error: any) {
+        console.error('Clear Cart Error:', error)
+        return NextResponse.json({ error: error.message || 'Failed to clear cart' }, { status: 500 })
     }
 }

@@ -1,0 +1,274 @@
+.container {
+    padding: 60px 0;
+    min-height: 100vh;
+    background: #fcfcfc;
+}
+
+.checkoutGrid {
+    display: grid;
+    grid-template-columns: 1fr 450px;
+    gap: 80px;
+}
+
+.pageTitle {
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 40px;
+    letter-spacing: -1.5px;
+}
+
+.section {
+    background: #fff;
+    padding: 32px;
+    border-radius: 24px;
+    border: 1px solid #eee;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.sectionTitle {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.inputGroup label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+}
+
+.input {
+    padding: 14px 20px;
+    border-radius: 12px;
+    border: 1.5px solid #efefef;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.input:focus {
+    border-color: #000;
+    outline: none;
+    background: #fff;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.span-2 {
+    grid-column: span 2;
+}
+
+.deliveryToggle {
+    display: flex;
+    gap: 10px;
+    background: #f5f5f5;
+    padding: 6px;
+    border-radius: 14px;
+}
+
+.toggleBtn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggleBtn.active {
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.paymentBox {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.stripeElement label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.elementWrapper {
+    padding: 14px 20px;
+    border-radius: 12px;
+    border: 1.5px solid #efefef;
+    background: #fafafa;
+}
+
+.elementRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.summaryContent {
+    position: sticky;
+    top: 100px;
+    height: fit-content;
+}
+
+.stickySummary {
+    background: #fff;
+    padding: 32px;
+    border-radius: 24px;
+    border: 1px solid #eee;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+}
+
+.summaryTitle {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 24px;
+}
+
+.cartItems {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.summaryItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.siName {
+    display: block;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.siVariant {
+    display: block;
+    font-size: 13px;
+    color: #888;
+}
+
+.siPrice {
+    font-weight: 700;
+}
+
+.couponCode {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.couponInput {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1.5px solid #efefef;
+}
+
+.applyBtn {
+    padding: 0 20px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.calculation {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.calcRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    color: #666;
+}
+
+.discount {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.totalRow {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1.5px solid #eee;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.payBtn {
+    width: 100%;
+    padding: 18px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.payBtn:hover:not(:disabled) {
+    transform: scale(1.02);
+}
+
+.payBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.emptyCart {
+    text-align: center;
+    padding: 100px 0;
+}
+
+.wtCoins {
+    margin-bottom: 20px;
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+    .checkoutGrid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .summaryContent {
+        position: static;
+    }
+}
