@@ -25,7 +25,7 @@ export default function RichText({ content, className }: RichTextProps) {
         }
 
         if (node.type === 'heading') {
-            const Tag = node.tag as keyof JSX.IntrinsicElements;
+            const Tag = node.tag as keyof React.JSX.IntrinsicElements;
             return (
                 <Tag key={index} style={{ marginBottom: '0.5em', marginTop: '1em' }}>
                     {node.children.map((child: any, i: number) => renderNode(child, i))}
