@@ -92,7 +92,7 @@ export async function handleInvoicePaid(invoice: any) {
         }
 
         // 6. Delete the Stripe Coupon if it exists (requested by user)
-        const stripeDiscount = stripeSubscription.discounts || (stripeSubscription.discounts && stripeSubscription.discounts.length > 0 ? stripeSubscription.discounts[0] : null);
+        const stripeDiscount = stripeSubscription.discounts?.[0] || null;
 
         if (isFirstInvoice && stripeDiscount?.coupon) {
             try {
