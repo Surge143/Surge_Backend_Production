@@ -91,6 +91,7 @@ export interface Config {
     'web-orders': WebOrder;
     slots: Slot;
     'web-subscription': WebSubscription;
+    'web-wishlist': WebWishlist;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -129,6 +130,7 @@ export interface Config {
     'web-orders': WebOrdersSelect<false> | WebOrdersSelect<true>;
     slots: SlotsSelect<false> | SlotsSelect<true>;
     'web-subscription': WebSubscriptionSelect<false> | WebSubscriptionSelect<true>;
+    'web-wishlist': WebWishlistSelect<false> | WebWishlistSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1088,6 +1090,22 @@ export interface WebSubscription {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-wishlist".
+ */
+export interface WebWishlist {
+  id: number;
+  user: number | User;
+  items?:
+    | {
+        product: number | WebProduct;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
 export interface Export {
@@ -1359,6 +1377,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'web-subscription';
         value: number | WebSubscription;
+      } | null)
+    | ({
+        relationTo: 'web-wishlist';
+        value: number | WebWishlist;
       } | null)
     | ({
         relationTo: 'exports';
@@ -2014,6 +2036,21 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
       };
   stripeData?: T;
   guestAccessToken?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-wishlist_select".
+ */
+export interface WebWishlistSelect<T extends boolean = true> {
+  user?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

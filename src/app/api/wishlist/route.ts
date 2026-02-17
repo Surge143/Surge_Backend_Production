@@ -8,11 +8,21 @@ import { headers as getNextHeaders } from 'next/headers';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { productId } = body;
+        let { productId } = body;
 
         if (!productId) {
             return NextResponse.json(
                 { message: 'productId required', success: false },
+                { status: 400 }
+            );
+        }
+
+        // Convert to number if it's a string (PostgreSQL uses numeric IDs)
+        productId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
+
+        if (isNaN(productId)) {
+            return NextResponse.json(
+                { message: 'Invalid product ID format', success: false },
                 { status: 400 }
             );
         }
@@ -30,15 +40,35 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Validate that the product exists
+        try {
+            const product = await payload.findByID({
+                collection: 'web-products',
+                id: productId,
+            });
+
+            if (!product) {
+                return NextResponse.json(
+                    { message: 'Product not found', success: false },
+                    { status: 404 }
+                );
+            }
+        } catch (error) {
+            console.error('Product validation error:', error);
+            return NextResponse.json(
+                { message: 'Invalid product ID', success: false },
+                { status: 400 }
+            );
+        }
+
         // :white_check_mark: Find wishlist for the user
         const wishlists = await payload.find({
-            collection: 'web-wishlist' as any,
+            collection: 'web-wishlist',
             where: { user: { equals: user.id } },
             limit: 1,
         });
 
         const wishlist = wishlists.docs?.[0];
-
         // ---------------- If wishlist exists ----------------
         if (wishlist) {
             // Check for duplicate
@@ -59,7 +89,7 @@ export async function POST(request: NextRequest) {
 
             // Update wishlist
             await payload.update({
-                collection: 'web-wishlist' as any,
+                collection: 'web-wishlist',
                 id: wishlist.id,
                 data: {
                     items: [...(wishlist.items || []), { product: productId }],
@@ -73,12 +103,14 @@ export async function POST(request: NextRequest) {
         }
 
         // ---------------- Create new wishlist ----------------
+        const createData = {
+            user: user.id,
+            items: [{ product: productId }],
+        };
+
         await payload.create({
-            collection: 'web-wishlist' as any,
-            data: {
-                user: user.id,
-                items: [{ product: productId }],
-            },
+            collection: 'web-wishlist',
+            data: createData,
         });
 
         return NextResponse.json(
@@ -105,7 +137,7 @@ export async function GET(req: NextRequest) {
 
         if (!user) {
             return NextResponse.json(
-                { message: 'Please login to view wishlist' },
+                { message: 'Please login to view wishlist', success: false },
                 { status: 401 }
             );
         }
@@ -116,8 +148,7 @@ export async function GET(req: NextRequest) {
             where: {
                 user: { equals: user.id },
             },
-            limit: 1,
-            depth: 2, // populate related product data
+            depth: 1, // populate related product data
         });
 
         const wishlist = wishlists.docs?.[0];
@@ -126,19 +157,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ items: [] });
         }
 
-        // Return only id, name, and productLine
-        const items = wishlist.items?.map((item: any) => {
-            const product = typeof item.product === 'string' ? null : item.product;
-            return product
-                ? {
-                    id: product.id,
-                    name: product.name,
-                    productLine: product.productLine,
-                }
-                : { productId: item.product }; // fallback if product is not populated
-        });
-
-        return NextResponse.json({ items });
+        return NextResponse.json({ success: true, wishlist });
     } catch (error) {
         console.error('Wishlist GET Error:', error);
         return NextResponse.json(
@@ -153,11 +172,21 @@ export async function GET(req: NextRequest) {
 export async function DELETE(request: NextRequest) {
     try {
         const body = await request.json();
-        const { productId } = body;
+        let { productId } = body;
 
         if (!productId) {
             return NextResponse.json(
                 { message: 'productId required', success: false },
+                { status: 400 }
+            );
+        }
+
+        // Convert to number if it's a string (PostgreSQL uses numeric IDs)
+        productId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
+
+        if (isNaN(productId)) {
+            return NextResponse.json(
+                { message: 'Invalid product ID format', success: false },
                 { status: 400 }
             );
         }

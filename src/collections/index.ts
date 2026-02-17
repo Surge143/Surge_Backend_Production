@@ -23,6 +23,7 @@ import { WebOrders } from "./WebOrders/WebOrders";
 import { Slots } from "./Slots/Slots";
 import { ShipAndTax } from "./ShipAndTax/ShipAndTax";
 import { WebSubscription } from "./WebSubscription/WebSubscription";
+import { WebWishlist } from "./WebWishlist/WebWishlist";
 
 export const collections = [
     Users,
@@ -47,7 +48,8 @@ export const collections = [
     UserWTCoins,
     WebOrders,
     Slots,
-    WebSubscription
+    WebSubscription,
+    WebWishlist
 ]
 
 export const globals = [

@@ -3,7 +3,8 @@ import type { CollectionConfig } from "payload";
 const WebWishlist: CollectionConfig = {
     slug: 'web-wishlist',
     admin: {
-        // hidden: true,
+        hidden: true,
+        group: 'Website',
     },
     access: {
         read: () => true,
