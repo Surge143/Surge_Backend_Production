@@ -6,8 +6,12 @@ export const Users: CollectionConfig = {
     auth: true,
 
     access: {
-        create: ({ req }) => {
-            return !req.user
+        create: ({ req, id }) => {
+            if (req.user?.role === 'super-admin') return true
+            if (req.user?.role === 'admin') return true
+            if (req.user && req.user.id === id) return true
+
+            return false
         },
         read: () => { return true },
         update: ({ req, id }) => {

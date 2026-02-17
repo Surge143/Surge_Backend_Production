@@ -1,215 +1,258 @@
-// import { stripe } from "@/lib/stripe"
-// import { getPayload } from 'payload'
-// import config from '@/payload.config'
-// import { sendEmail } from "@/lib/emailConfig";
-// import { orderConfirmationEmailTemplate } from "@/lib/emailTemplate";
+import { stripe } from "@/lib/stripe"
+import { getPayload } from "payload"
+import config from "@/payload.config"
+import { sendEmail } from "@/lib/emailConfig"
+import { orderConfirmationEmailTemplate } from "@/lib/emailTemplate"
 
 export async function handleInvoicePaid(invoice: any) {
-//     const payload = await getPayload({ config })
+    const payload = await getPayload({ config })
 
-//     const stripeSubscriptionId = invoice.subscription
-//     if (!stripeSubscriptionId) {
-//         console.log('No subscription ID found in invoice')
-//         return
-//     }
+    console.log("✅ invoice.paid received:", invoice.id)
 
-//     try {
-//         // 1. Retrieve the subscription from Stripe to get metadata
-//         const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId)
-//         const dbSubscriptionId = stripeSubscription.metadata.db_subscription_id
-//         const guestAccessToken = stripeSubscription.metadata.guest_access_token
+    try {
+        /* --------------------------------------------------
+           1️⃣ Extract IDs (FIXED PATHS)
+        ---------------------------------------------------*/
+        // In your payload, metadata is inside subscription_details or the first line item
+        const dbSubscriptionId =
+            invoice.subscription_details?.metadata?.db_subscription_id ||
+            invoice.lines?.data[0]?.metadata?.db_subscription_id;
 
-//         if (!dbSubscriptionId) {
-//             console.error('No db_subscription_id found in Stripe subscription metadata')
-//             return
-//         }
+        const stripeSubscriptionId = invoice.parent.subscription_details.subscription;
 
-//         // 2. Fetch the web-subscription document
-//         const subscriptionDoc = await payload.findByID({
-//             collection: 'web-subscription',
-//             id: dbSubscriptionId,
-//         })
+        if (!dbSubscriptionId) {
+            console.error("❌ No db_subscription_id found in invoice metadata. Cannot link to database.");
+            return
+        }
 
-//         if (!subscriptionDoc) {
-//             console.error(`Subscription document ${dbSubscriptionId} not found in Payload`)
-//             return
-//         }
+        console.log("DB Subscription ID:", dbSubscriptionId)
+        console.log("Stripe Subscription ID:", stripeSubscriptionId)
 
-//         // 3. Determine if this is the first payment
-//         const isFirstInvoice = invoice.billing_reason === 'subscription_create';
+        /* --------------------------------------------------
+           2️⃣ Idempotency Check
+        ---------------------------------------------------*/
+        const existingOrder = await payload.find({
+            collection: "web-orders",
+            where: {
+                stripeOrderId: { equals: invoice.id },
+            },
+        })
 
-//         // 4. Create the web-orders document
-//         const orderData: any = {
-//             customerType: subscriptionDoc.customerType,
-//             user: subscriptionDoc.user ? (typeof subscriptionDoc.user === 'object' ? subscriptionDoc.user.id : subscriptionDoc.user) : null,
-//             deliveryOption: subscriptionDoc.deliveryOption,
-//             origin: 'subscription',
-//             newsAndOffers: subscriptionDoc.newsAndOffers,
-//             items: subscriptionDoc.items.map((item: any) => ({
-//                 product: typeof item.product === 'object' ? item.product.id : item.product,
-//                 variantID: item.variantID,
-//                 quantity: item.quantity,
-//                 price: item.price,
-//             })),
-//             shippingAddress: subscriptionDoc.shippingAddress,
-//             billingAddress: subscriptionDoc.billingAddress,
-//             paymentStatus: 'completed',
-//             deliveryStatus: 'placed',
-//             pointsUsed: isFirstInvoice ? (subscriptionDoc.pointsUsed || 0) : 0,
-//             financials: {
-//                 subtotal: subscriptionDoc.financials.subtotal,
-//                 discountAmount: (subscriptionDoc.financials.discountAmount || 0) + (isFirstInvoice ? (subscriptionDoc.financials.wtDiscount || 0) : 0),
-//                 total: invoice.amount_paid / 100,
-//             },
-//             stripeOrderId: invoice.id,
-//             stripeData: {
-//                 invoiceId: invoice.id,
-//                 subscriptionId: stripeSubscriptionId,
-//                 customerId: invoice.customer,
-//                 amount: invoice.amount_paid,
-//                 currency: invoice.currency,
-//                 status: invoice.status,
-//                 hosted_invoice_url: invoice.hosted_invoice_url,
-//                 receipt_url: invoice.charge ? (await stripe.charges.retrieve(invoice.charge as string)).receipt_url : null,
-//             },
-//         }
+        if (existingOrder.docs.length > 0) {
+            console.log("⚠️ Order already exists. Skipping duplicate.")
+            return
+        }
 
-//         const newOrder = await payload.create({
-//             collection: 'web-orders',
-//             data: orderData,
-//         })
+        /* --------------------------------------------------
+           3️⃣ Fetch Subscription Doc
+        ---------------------------------------------------*/
+        const subscriptionDoc = await payload.findByID({
+            collection: "web-subscription",
+            id: dbSubscriptionId,
+            depth: 2,
+        })
 
-//         console.log(`✅ Created order ${newOrder.id} from subscription invoice ${invoice.id}`)
+        if (!subscriptionDoc) {
+            console.error("❌ Subscription doc not found in Payload for ID:", dbSubscriptionId)
+            return
+        }
 
-//         // 5. Deduct WTCoins for the first order only
-//         if (isFirstInvoice && subscriptionDoc.user && subscriptionDoc.pointsUsed && subscriptionDoc.pointsUsed > 0) {
-//             const userId = typeof subscriptionDoc.user === 'object' ? subscriptionDoc.user.id : subscriptionDoc.user
-//             try {
-//                 await deductWTCoins(payload, userId, subscriptionDoc.pointsUsed, newOrder.id)
-//             } catch (error) {
-//                 console.error('Error deducting WTCoins for subscription:', error)
-//             }
-//         }
+        // Check if this is the first payment
+        const isFirstInvoice = invoice.billing_reason === "subscription_create"
 
-//         // 6. Delete the Stripe Coupon if it exists (requested by user)
-//         const stripeDiscount = (stripeSubscription.discounts?.[0] as any) || null;
+        /* --------------------------------------------------
+           4️⃣ Safe Receipt Retrieval
+        ---------------------------------------------------*/
+        let receiptUrl: string | null = invoice.hosted_invoice_url // Fallback to invoice URL
 
-//         if (isFirstInvoice && stripeDiscount?.coupon) {
-//             try {
-//                 const couponId = stripeDiscount.coupon.id
-//                 await stripe.coupons.del(couponId)
-//                 console.log(`✅ Deleted Stripe Coupon ${couponId} after first subscription payment`)
-//             } catch (couponDelError) {
-//                 console.error('Error deleting Stripe coupon:', couponDelError)
-//             }
-//         }
+        if (invoice.charge) {
+            try {
+                const charge = await stripe.charges.retrieve(invoice.charge as string)
+                receiptUrl = charge.receipt_url
+            } catch (err) {
+                console.warn("⚠️ Could not fetch specific receipt_url, using invoice URL.")
+            }
+        }
 
-//         // 7. Update Web Subscription status
-//         await payload.update({
-//             collection: 'web-subscription',
-//             id: dbSubscriptionId,
-//             data: {
-//                 paymentStatus: 'completed',
-//                 subsStatus: 'active',
-//                 stripeSubscriptionID: stripeSubscriptionId,
-//                 nextPaymentDate: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
-//             },
-//         })
+        /* --------------------------------------------------
+           5️⃣ Create Order
+        ---------------------------------------------------*/
+        const orderData: any = {
+            customerType: subscriptionDoc.customerType,
+            user: subscriptionDoc.user
+                ? typeof subscriptionDoc.user === "object"
+                    ? subscriptionDoc.user.id
+                    : subscriptionDoc.user
+                : null,
+            deliveryOption: subscriptionDoc.deliveryOption,
+            origin: "subscription",
+            newsAndOffers: subscriptionDoc.newsAndOffers,
+            stripeSubscriptionID: stripeSubscriptionId,
+            items: subscriptionDoc.items.map((item: any) => ({
+                product: typeof item.product === "object" ? item.product.id : item.product,
+                variantID: item.variantID,
+                quantity: item.quantity,
+                price: item.price,
+            })),
+            shippingAddress: subscriptionDoc.shippingAddress,
+            billingAddress: subscriptionDoc.billingAddress,
+            paymentStatus: "completed",
+            deliveryStatus: subscriptionDoc.deliveryOption === "delivery" ? "placed" : "delivered",
+            pointsUsed: isFirstInvoice ? (subscriptionDoc.pointsUsed || 0) : 0,
+            financials: {
+                subtotal: subscriptionDoc.financials.subtotal,
+                discountAmount: isFirstInvoice ? (subscriptionDoc.financials.discountAmount || 0) : 0,
+                total: invoice.amount_paid / 100,
+            },
+            stripeOrderId: invoice.id,
+            stripeData: {
+                invoiceId: invoice.id,
+                subscriptionId: stripeSubscriptionId,
+                customerId: invoice.customer,
+                amount: invoice.amount_paid,
+                currency: invoice.currency,
+                status: invoice.status,
+                hosted_invoice_url: invoice.hosted_invoice_url,
+                receipt_url: receiptUrl,
+            },
+        }
 
-//         // 8. Deduct Stock
-//         if (subscriptionDoc.items && subscriptionDoc.items.length > 0) {
-//             for (const item of subscriptionDoc.items) {
-//                 try {
-//                     await updateProductStock(payload, typeof item.product === 'object' ? item.product.id : item.product, item.variantID, item.quantity)
-//                 } catch (stockError) {
-//                     console.error('Error updating stock for subscription item:', stockError)
-//                 }
-//             }
-//         }
+        const newOrder = await payload.create({
+            collection: "web-orders",
+            data: orderData,
+        })
 
-//         // 9. Send Email
-//         try {
-//             const userEmail = typeof subscriptionDoc.user === 'object' && subscriptionDoc.user?.email
-//                 ? subscriptionDoc.user.email
-//                 : subscriptionDoc.billingAddress?.email || subscriptionDoc.shippingAddress?.email || invoice.customer_email
+        console.log(`✅ Order ${newOrder.id} created`)
 
-//             if (userEmail) {
-//                 await sendEmail({
-//                     to: userEmail,
-//                     subject: isFirstInvoice ? "Subscription Started - White Mantis" : "Subscription Renewal - White Mantis",
-//                     body: `Your subscription order #${newOrder.id} has been processed successfully.`,
-//                     html: orderConfirmationEmailTemplate({ order: newOrder }),
-//                 })
-//                 console.log(`✅ Subscription confirmation email sent to ${userEmail}`)
-//             }
-//         } catch (emailError) {
-//             console.error('Error sending subscription email:', emailError)
-//         }
+        /* --------------------------------------------------
+           6️⃣ WTCoins & Stock (Only if order created)
+        ---------------------------------------------------*/
+        const userId = subscriptionDoc.user && (typeof subscriptionDoc.user === "object" ? subscriptionDoc.user.id : subscriptionDoc.user);
 
-//     } catch (error) {
-//         console.error('Error handling invoice.paid webhook:', error)
-//     }
-// }
+        if (isFirstInvoice && userId && (subscriptionDoc.pointsUsed ?? 0) > 0) {
+            await deductWTCoins(payload, userId, subscriptionDoc.pointsUsed!, newOrder.id)
+        }
 
-// /**
-//  * Deduct WTCoins from user's balance
-//  */
-// async function deductWTCoins(payload: any, userId: string | number, pointsUsed: number, orderId: string | number) {
-//     const userRewards = await payload.find({
-//         collection: 'user-wt-coins',
-//         where: { user: { equals: userId } },
-//     })
+        for (const item of subscriptionDoc.items) {
+            await updateProductStock(
+                payload,
+                typeof item.product === "object" ? item.product.id : item.product,
+                item.variantID,
+                item.quantity
+            )
+        }
 
-//     if (userRewards.docs.length > 0) {
-//         const userWTCoins = userRewards.docs[0]
-//         const newBalance = Math.max(0, (userWTCoins.totalBalance || 0) - pointsUsed)
+        /* --------------------------------------------------
+           7️⃣ Update Subscription (Next Payment Date)
+        ---------------------------------------------------*/
+        try {
+            // Pull the next payment date directly from the line item period end
+            const periodEnd = invoice.lines?.data[0]?.period?.end;
 
-//         const processedHistory = (userWTCoins.redeemedPointsHistory || []).map((h: any) => ({
-//             redeemedPoints: h.redeemedPoints,
-//             associatedOrder: typeof h.associatedOrder === 'object' ? h.associatedOrder.id : h.associatedOrder
-//         }));
+            const updateData: any = {
+                paymentStatus: "completed",
+                subsStatus: "active",
+                stripeSubscriptionID: stripeSubscriptionId,
+            };
 
-//         await payload.update({
-//             collection: 'user-wt-coins',
-//             id: userWTCoins.id,
-//             data: {
-//                 totalBalance: newBalance,
-//                 redeemedPointsHistory: [
-//                     ...processedHistory,
-//                     {
-//                         redeemedPoints: pointsUsed,
-//                         associatedOrder: typeof orderId === 'string' && !isNaN(Number(orderId)) ? Number(orderId) : orderId,
-//                     }
-//                 ]
-//             }
-//         })
-//         console.log(`✅ Deducted ${pointsUsed} WTCoins for subscription order ${orderId}`)
-//     }
-// }
+            if (periodEnd) {
+                updateData.nextPaymentDate = new Date(periodEnd * 1000).toISOString();
+            }
 
-// /**
-//  * Update product stock
-//  */
-// async function updateProductStock(payload: any, productId: string | number, variantId: string, quantity: number) {
-//     const productDoc = await payload.findByID({
-//         collection: 'web-products',
-//         id: productId,
-//     })
+            await payload.update({
+                collection: "web-subscription",
+                id: dbSubscriptionId,
+                data: updateData,
+            });
 
-//     if (productDoc && productDoc.variants) {
-//         const variantIndex = productDoc.variants.findIndex((v: any) => v.id === variantId)
-//         if (variantIndex !== -1) {
-//             const variant = productDoc.variants[variantIndex]
-//             const newStock = Math.max(0, (variant.variantStockQuantity || 0) - quantity)
-//             productDoc.variants[variantIndex].variantStockQuantity = newStock
-//             if (newStock === 0) productDoc.variants[variantIndex].variantInStock = false
+            console.log("✅ Subscription record updated with next payment date:", updateData.nextPaymentDate)
+        } catch (err) {
+            console.error("❌ Failed updating subscription record:", err)
+        }
 
-//             await payload.update({
-//                 collection: 'web-products',
-//                 id: productId,
-//                 data: { variants: productDoc.variants },
-//             })
-//             console.log(`✅ Stock updated for product ${productId}, variant ${variantId}`)
-//         }
-//     }
+        /* --------------------------------------------------
+           8️⃣ Send Confirmation Email
+        ---------------------------------------------------*/
+        try {
+            const userEmail = (subscriptionDoc.user && typeof subscriptionDoc.user === "object")
+                ? (subscriptionDoc.user as any).email
+                : invoice.customer_email
+
+            if (userEmail) {
+                await sendEmail({
+                    to: userEmail,
+                    subject: isFirstInvoice ? "Subscription Started!" : "Subscription Renewed!",
+                    body: `Order #${newOrder.id} processed.`,
+                    html: orderConfirmationEmailTemplate({ order: newOrder }),
+                })
+                console.log("✅ Email sent")
+            }
+        } catch (err) {
+            console.error("❌ Email failed:", err)
+        }
+
+    } catch (error) {
+        console.error("❌ Fatal error in handleInvoicePaid:", error)
+    }
+}
+
+/* ======================================================
+    HELPER FUNCTIONS
+======================================================*/
+
+async function deductWTCoins(payload: any, userId: string | number, pointsUsed: number, orderId: string | number) {
+    const userRewards = await payload.find({
+        collection: "user-wt-coins",
+        where: { user: { equals: userId } },
+    })
+
+    if (userRewards.docs.length === 0) return
+
+    const record = userRewards.docs[0]
+    const newBalance = Math.max(0, (record.totalBalance || 0) - pointsUsed)
+
+    await payload.update({
+        collection: "user-wt-coins",
+        id: record.id,
+        data: {
+            totalBalance: newBalance,
+            redeemedPointsHistory: [
+                ...(record.redeemedPointsHistory || []),
+                {
+                    redeemedPoints: pointsUsed,
+                    associatedOrder: orderId,
+                    date: new Date().toISOString()
+                },
+            ],
+        },
+    })
+    console.log("✅ WTCoins deducted")
+}
+
+async function updateProductStock(payload: any, productId: string | number, variantId: string, quantity: number) {
+    const product = await payload.findByID({
+        collection: "web-products",
+        id: productId,
+    })
+
+    if (!product?.variants) return
+
+    const updatedVariants = product.variants.map((v: any) => {
+        if (v.id === variantId || v._id === variantId) {
+            const newQty = Math.max(0, (v.variantStockQuantity || 0) - quantity)
+            return {
+                ...v,
+                variantStockQuantity: newQty,
+                variantInStock: newQty > 0
+            }
+        }
+        return v
+    })
+
+    await payload.update({
+        collection: "web-products",
+        id: productId,
+        data: { variants: updatedVariants },
+    })
+    console.log(`✅ Stock updated for product ${productId}`)
 }

@@ -269,25 +269,35 @@ export async function POST(req: NextRequest) {
 
                     // CREATE STRIPE SUBSCRIPTION
 
-                    // Calculate the recurring price (Full price without WTCoins discount)
-                    const recurringTotal = priceAfterSubDiscount + shippingCharge + (priceAfterSubDiscount + shippingCharge) * (taxRate / 100);
+                    // Calculate the recurring price with tax AFTER WT Coins discount (matching frontend)
+                    const baseAmountAfterWTCoins = priceAfterSubDiscount - wtDiscount;
+                    const totalWithShippingAfterWT = baseAmountAfterWTCoins + shippingCharge;
+                    const taxOnDiscountedAmount = totalWithShippingAfterWT * (taxRate / 100);
+                    const recurringTotal = totalWithShippingAfterWT + taxOnDiscountedAmount;
+
+                    // For first payment, we don't need a coupon since tax is already calculated after WT discount
+                    // For recurring payments, the full price (without WT discount) will be charged
+                    const recurringTotalWithoutWTDiscount = priceAfterSubDiscount + shippingCharge + (priceAfterSubDiscount + shippingCharge) * (taxRate / 100);
 
                     // Create a one-time coupon for WTCoins discount if applicable
                     let stripeCouponId: string | undefined;
                     if (wtDiscount > 0) {
                         try {
+                            // Calculate the discount amount including the tax difference
+                            // Frontend shows: tax after WT discount
+                            // We need to discount: WT amount + (tax on WT amount)
+                            const taxOnWTDiscount = wtDiscount * (taxRate / 100);
+                            const totalDiscountWithTax = wtDiscount + taxOnWTDiscount;
+
                             const coupon = await stripe.coupons.create({
-                                amount_off: Math.round(wtDiscount * 100),
+                                amount_off: Math.round(totalDiscountWithTax * 100),
                                 currency: 'aed',
                                 duration: 'once',
-                                name: `WTCoins Discount for ${email}`,
+                                name: crypto.randomBytes(20).toString('hex'),
                             });
                             stripeCouponId = coupon.id;
                         } catch (couponError) {
                             console.error('Error creating Stripe coupon:', couponError);
-                            // If coupon creation fails, we might want to proceed or fail. 
-                            // For now, let's proceed without the discount or fail? 
-                            // Let's fail to be safe and avoid charging full price when discount was expected.
                             return NextResponse.json({ error: 'Failed to apply WT Coins discount' }, { status: 500 });
                         }
                     }
@@ -299,7 +309,7 @@ export async function POST(req: NextRequest) {
                                 price_data: {
                                     currency: "aed",
                                     product: process.env.STRIPE_MASTER_PRODUCT_ID as string,
-                                    unit_amount: Math.round(recurringTotal * 100), // Recurring amount is without WT discount
+                                    unit_amount: Math.round(recurringTotalWithoutWTDiscount * 100), // Recurring uses full price
                                     recurring: {
                                         interval: (validatedData.frequency.interval as string).toLowerCase() as 'day' | 'week' | 'month' | 'year',
                                         interval_count: validatedData.frequency.duration,
