@@ -21,6 +21,7 @@ export default function SubscriptionModal({ product, isOpen, onClose, quantity =
     // Get available subscription frequencies
     const getAvailableFrequencies = useCallback((): SubscriptionFrequency[] => {
         if (!product) return []
+        console.log(product)
         if (product.hasVariantOptions && selectedVariant) {
             return selectedVariant.subFreq || []
         }
