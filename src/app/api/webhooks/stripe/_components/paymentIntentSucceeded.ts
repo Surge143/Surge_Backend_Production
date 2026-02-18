@@ -146,7 +146,7 @@ export async function handlePaymentIntentSucceeded(paymentIntent: any) {
                     : order.billingAddress?.email || order.shippingAddress?.email
 
                 if (userEmail) {
-                    const userName = order.billingAddress?.firstName || 'Customer'
+                    const userName = order.billingAddress?.addressFirstName || 'Customer'
 
                     await sendEmail({
                         to: userEmail,

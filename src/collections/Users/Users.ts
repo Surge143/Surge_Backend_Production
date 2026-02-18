@@ -59,8 +59,13 @@ export const Users: CollectionConfig = {
             type: "text",
         },
         {
-            name: "name",
-            label: "Name",
+            name: "firstName",
+            label: "First Name",
+            type: "text",
+        },
+        {
+            name: "lastName",
+            label: "Last Name",
             type: "text",
         },
         {
@@ -85,8 +90,13 @@ export const Users: CollectionConfig = {
                     type: 'text',
                 },
                 {
-                    name: 'fullName',
-                    label: 'Full Name',
+                    name: 'addressFirstName',
+                    label: 'First Name',
+                    type: 'text',
+                },
+                {
+                    name: 'addressLastName',
+                    label: 'Last Name',
                     type: 'text',
                 },
                 {

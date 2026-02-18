@@ -92,6 +92,7 @@ export interface Config {
     slots: Slot;
     'web-subscription': WebSubscription;
     'web-wishlist': WebWishlist;
+    'wt-stamps': WtStamp;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -131,6 +132,7 @@ export interface Config {
     slots: SlotsSelect<false> | SlotsSelect<true>;
     'web-subscription': WebSubscriptionSelect<false> | WebSubscriptionSelect<true>;
     'web-wishlist': WebWishlistSelect<false> | WebWishlistSelect<true>;
+    'wt-stamps': WtStampsSelect<false> | WtStampsSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -210,11 +212,14 @@ export interface User {
   role: 'customer';
   gender?: ('male' | 'female' | 'other') | null;
   phone?: string | null;
-  name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   profileImage?: (number | null) | Media;
   addresses?:
     | {
         label?: string | null;
+        addressFirstName?: string | null;
+        addressLastName?: string | null;
         street?: string | null;
         apartment?: string | null;
         city?: string | null;
@@ -438,6 +443,7 @@ export interface Menu {
   description?: string | null;
   category: number | AppCategory;
   subCategories?: (number | AppSubCategory)[] | null;
+  isStampReward?: boolean | null;
   regularPrice: number;
   salePrice?: number | null;
   /**
@@ -478,6 +484,7 @@ export interface ShopMenu {
   description?: string | null;
   category: number | AppCategory;
   subCategories?: (number | AppSubCategory)[] | null;
+  isStampReward?: boolean | null;
   regularPrice: number;
   salePrice?: number | null;
   /**
@@ -828,6 +835,22 @@ export interface AppCart {
               value: number | WebProduct;
             };
         quantity?: number | null;
+        /**
+         * Snapshotted base price of the product at the time of addition/selection.
+         */
+        price?: number | null;
+        /**
+         * Stores a snapshot of customization selections (sectionTitle, label, price) to preserve price history.
+         */
+        customizations?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -865,12 +888,47 @@ export interface AppWishlist {
 export interface AppOrder {
   id: number;
   name: string;
+  orderAcceptance: 'pending' | 'accepted' | 'rejected';
+  appOrderStatus?: ('preparing' | 'pickup' | 'pickedup') | null;
   shop: number | Shop;
   barista?: (number | null) | Admin;
-  menuRelation: (number | ShopMenu)[];
-  orderAcceptance: 'pending' | 'accepted' | 'rejected';
+  items: {
+    product: number | ShopMenu;
+    quantity?: number | null;
+    customizations?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    id?: string | null;
+  }[];
+  specialInstructions?: string | null;
+  orderType: 'take-away' | 'dine-in';
   timeSelection?: ('now' | 'custom') | null;
   slot?: (number | null) | Slot;
+  isCouponUsed?: boolean | null;
+  coupon?: (number | null) | ShopCoupon;
+  coinsUsed?: number | null;
+  stampRewards?: (number | null) | ShopMenu;
+  financials?: {
+    subtotal?: number | null;
+    discountAmount?: number | null;
+    total?: number | null;
+  };
+  stripeOrderId?: string | null;
+  stripeData?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -933,10 +991,11 @@ export interface UserWtCoin {
   /**
    * Log of all points earned
    */
-  earningHistory?:
+  coinEarningHistory?:
     | {
         amount: number;
         earnedAt?: string | null;
+        linkedOrder?: (number | null) | WebOrder;
         expiryDate?: string | null;
         id?: string | null;
       }[]
@@ -944,7 +1003,7 @@ export interface UserWtCoin {
   /**
    * Log of all points spent
    */
-  redeemedPointsHistory?:
+  pointsRedemptionHistory?:
     | {
         redeemedPoints: number;
         associatedOrder: number | WebOrder;
@@ -983,6 +1042,8 @@ export interface WebOrder {
   }[];
   newsAndOffers?: boolean | null;
   shippingAddress?: {
+    addressFirstName?: string | null;
+    addressLastName?: string | null;
     addressLine1?: string | null;
     addressLine2?: string | null;
     city?: string | null;
@@ -990,6 +1051,8 @@ export interface WebOrder {
     phoneNumber?: string | null;
   };
   billingAddress?: {
+    addressFirstName?: string | null;
+    addressLastName?: string | null;
     addressLine1?: string | null;
     addressLine2?: string | null;
     city?: string | null;
@@ -1054,6 +1117,8 @@ export interface WebSubscription {
   }[];
   newsAndOffers?: boolean | null;
   shippingAddress?: {
+    addressFirstName?: string | null;
+    addressLastName?: string | null;
     addressLine1?: string | null;
     addressLine2?: string | null;
     city?: string | null;
@@ -1061,6 +1126,8 @@ export interface WebSubscription {
     phoneNumber?: string | null;
   };
   billingAddress?: {
+    addressFirstName?: string | null;
+    addressLastName?: string | null;
     addressLine1?: string | null;
     city?: string | null;
     emirates?: ('abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah') | null;
@@ -1098,6 +1165,39 @@ export interface WebWishlist {
   items?:
     | {
         product: number | WebProduct;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wt-stamps".
+ */
+export interface WtStamp {
+  id: number;
+  user?: (number | null) | User;
+  stampCount: number;
+  stampReward: number;
+  /**
+   * Log of all stamps earned
+   */
+  stampEarningHistory?:
+    | {
+        stamps: number;
+        earnedAt?: string | null;
+        linkedOrder: number | WebOrder;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Log of all stamps spent
+   */
+  stampsRedemptionHistory?:
+    | {
+        redeemedStamps: number;
+        associatedOrder: number | WebOrder;
         id?: string | null;
       }[]
     | null;
@@ -1383,6 +1483,10 @@ export interface PayloadLockedDocument {
         value: number | WebWishlist;
       } | null)
     | ({
+        relationTo: 'wt-stamps';
+        value: number | WtStamp;
+      } | null)
+    | ({
         relationTo: 'exports';
         value: number | Export;
       } | null)
@@ -1454,12 +1558,15 @@ export interface UsersSelect<T extends boolean = true> {
   role?: T;
   gender?: T;
   phone?: T;
-  name?: T;
+  firstName?: T;
+  lastName?: T;
   profileImage?: T;
   addresses?:
     | T
     | {
         label?: T;
+        addressFirstName?: T;
+        addressLastName?: T;
         street?: T;
         apartment?: T;
         city?: T;
@@ -1616,6 +1723,7 @@ export interface MenuSelect<T extends boolean = true> {
   description?: T;
   category?: T;
   subCategories?: T;
+  isStampReward?: T;
   regularPrice?: T;
   salePrice?: T;
   dietaryType?: T;
@@ -1651,6 +1759,7 @@ export interface ShopMenuSelect<T extends boolean = true> {
   description?: T;
   category?: T;
   subCategories?: T;
+  isStampReward?: T;
   regularPrice?: T;
   salePrice?: T;
   dietaryType?: T;
@@ -1743,6 +1852,8 @@ export interface AppCartSelect<T extends boolean = true> {
     | {
         product?: T;
         quantity?: T;
+        price?: T;
+        customizations?: T;
         id?: T;
       };
   updatedAt?: T;
@@ -1769,12 +1880,35 @@ export interface AppWishlistSelect<T extends boolean = true> {
  */
 export interface AppOrdersSelect<T extends boolean = true> {
   name?: T;
+  orderAcceptance?: T;
+  appOrderStatus?: T;
   shop?: T;
   barista?: T;
-  menuRelation?: T;
-  orderAcceptance?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        customizations?: T;
+        id?: T;
+      };
+  specialInstructions?: T;
+  orderType?: T;
   timeSelection?: T;
   slot?: T;
+  isCouponUsed?: T;
+  coupon?: T;
+  coinsUsed?: T;
+  stampRewards?: T;
+  financials?:
+    | T
+    | {
+        subtotal?: T;
+        discountAmount?: T;
+        total?: T;
+      };
+  stripeOrderId?: T;
+  stripeData?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1898,15 +2032,16 @@ export interface WebCartSelect<T extends boolean = true> {
 export interface UserWtCoinsSelect<T extends boolean = true> {
   user?: T;
   totalBalance?: T;
-  earningHistory?:
+  coinEarningHistory?:
     | T
     | {
         amount?: T;
         earnedAt?: T;
+        linkedOrder?: T;
         expiryDate?: T;
         id?: T;
       };
-  redeemedPointsHistory?:
+  pointsRedemptionHistory?:
     | T
     | {
         redeemedPoints?: T;
@@ -1939,6 +2074,8 @@ export interface WebOrdersSelect<T extends boolean = true> {
   shippingAddress?:
     | T
     | {
+        addressFirstName?: T;
+        addressLastName?: T;
         addressLine1?: T;
         addressLine2?: T;
         city?: T;
@@ -1948,6 +2085,8 @@ export interface WebOrdersSelect<T extends boolean = true> {
   billingAddress?:
     | T
     | {
+        addressFirstName?: T;
+        addressLastName?: T;
         addressLine1?: T;
         addressLine2?: T;
         city?: T;
@@ -2009,6 +2148,8 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
   shippingAddress?:
     | T
     | {
+        addressFirstName?: T;
+        addressLastName?: T;
         addressLine1?: T;
         addressLine2?: T;
         city?: T;
@@ -2018,6 +2159,8 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
   billingAddress?:
     | T
     | {
+        addressFirstName?: T;
+        addressLastName?: T;
         addressLine1?: T;
         city?: T;
         emirates?: T;
@@ -2049,6 +2192,32 @@ export interface WebWishlistSelect<T extends boolean = true> {
     | T
     | {
         product?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wt-stamps_select".
+ */
+export interface WtStampsSelect<T extends boolean = true> {
+  user?: T;
+  stampCount?: T;
+  stampReward?: T;
+  stampEarningHistory?:
+    | T
+    | {
+        stamps?: T;
+        earnedAt?: T;
+        linkedOrder?: T;
+        id?: T;
+      };
+  stampsRedemptionHistory?:
+    | T
+    | {
+        redeemedStamps?: T;
+        associatedOrder?: T;
         id?: T;
       };
   updatedAt?: T;

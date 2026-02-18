@@ -128,6 +128,13 @@ export const WebSubscription: CollectionConfig = {
                                 {
                                     type: 'row',
                                     fields: [
+                                        { name: 'addressFirstName', type: 'text' },
+                                        { name: 'addressLastName', type: 'text' },
+                                    ],
+                                },
+                                {
+                                    type: 'row',
+                                    fields: [
                                         { name: 'addressLine1', type: 'text' },
                                         { name: 'addressLine2', type: 'text' },
                                     ],
@@ -158,6 +165,13 @@ export const WebSubscription: CollectionConfig = {
                             name: 'billingAddress',
                             type: 'group',
                             fields: [
+                                {
+                                    type: 'row',
+                                    fields: [
+                                        { name: 'addressFirstName', type: 'text' },
+                                        { name: 'addressLastName', type: 'text' },
+                                    ],
+                                },
                                 {
                                     type: 'row',
                                     fields: [

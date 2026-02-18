@@ -28,7 +28,8 @@ function CheckoutForm() {
     const [shippingAsBilling, setShippingAsBilling] = useState(true);
 
     const [shippingAddress, setShippingAddress] = useState({
-        fullName: "Test User",
+        addressFirstName: "Test User",
+        addressLastName: "Test User",
         phoneNumber: "+91 9876543210",
         addressLine1: "123 Test Street",
         addressLine2: "Near Coffee Shop",
@@ -38,7 +39,8 @@ function CheckoutForm() {
     });
 
     const [billingAddress, setBillingAddress] = useState({
-        fullName: "Test User",
+        addressFirstName: "Test User",
+        addressLastName: "Test User",
         phoneNumber: "+91 9876543210",
         addressLine1: "123 Test Street",
         addressLine2: "Near Coffee Shop",
@@ -72,7 +74,7 @@ function CheckoutForm() {
                 card: cardElement,
                 billing_details: {
                     email,
-                    name: billingAddress.fullName,
+                    name: billingAddress.addressFirstName + " " + billingAddress.addressLastName,
                     address: {
                         city: billingAddress.city,
                         country: "AE", // Stripe expects ISO codes
@@ -138,11 +140,20 @@ function CheckoutForm() {
                         <div className={styles.Grid}>
                             <input
                                 className={styles.Input}
-                                placeholder="Full Name"
-                                value={shippingAddress.fullName}
-                                onChange={(e) => setShippingAddress({ ...shippingAddress, fullName: e.target.value })}
+                                placeholder="First Name"
+                                value={shippingAddress.addressFirstName}
+                                onChange={(e) => setShippingAddress({ ...shippingAddress, addressFirstName: e.target.value })}
                                 required
                             />
+                            <input
+                                className={styles.Input}
+                                placeholder="Last Name"
+                                value={shippingAddress.addressLastName}
+                                onChange={(e) => setShippingAddress({ ...shippingAddress, addressLastName: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className={styles.InputGroup} style={{ marginTop: '15px' }}>
                             <input
                                 className={styles.Input}
                                 placeholder="Phone"

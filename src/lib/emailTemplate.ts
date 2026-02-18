@@ -445,7 +445,7 @@ export function orderConfirmationEmailTemplate({ order }: { order: any }) {
   // Helper function to format address
   const formatAddress = (addr: any) => {
     if (!addr) return 'N/A';
-    return `${addr.firstName || ''} ${addr.lastName || ''}<br/>${addr.address || ''}<br/>${addr.city || ''}, ${addr.state || ''} ${addr.postalCode || ''}<br/>${addr.country || ''}`.trim();
+    return `${addr.addressFirstName || ''} ${addr.addressLastName || ''}<br/>${addr.addressLine1 || ''}${addr.addressLine2 ? `<br/>${addr.addressLine2}` : ''}<br/>${addr.city || ''}, ${addr.emirates || ''}`.trim();
   };
 
   // Helper function to get product image
@@ -571,7 +571,7 @@ export function orderConfirmationEmailTemplate({ order }: { order: any }) {
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 24px; font-family: Helvetica, Arial, sans-serif;">
                 <tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; width: 40%; vertical-align: top; font-family: Helvetica, Arial, sans-serif;"><strong style="font-family: Helvetica, Arial, sans-serif;">Name:</strong></td>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.billingAddress?.firstName || ''} ${order.billingAddress?.lastName || ''}</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.billingAddress?.addressFirstName || ''} ${order.billingAddress?.addressLastName || ''}</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;"><strong style="font-family: Helvetica, Arial, sans-serif;">Email:</strong></td>
@@ -579,7 +579,7 @@ export function orderConfirmationEmailTemplate({ order }: { order: any }) {
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;"><strong style="font-family: Helvetica, Arial, sans-serif;">Phone:</strong></td>
-                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.billingAddress?.phone || 'N/A'}</td>
+                  <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;">${order.billingAddress?.phoneNumber || 'N/A'}</td>
                 </tr>
                 <tr>
                   <td style="padding: 4px 0; font-size: 14px; color: #2F362A; vertical-align: top; font-family: Helvetica, Arial, sans-serif;"><strong style="font-family: Helvetica, Arial, sans-serif;">Order Date:</strong></td>

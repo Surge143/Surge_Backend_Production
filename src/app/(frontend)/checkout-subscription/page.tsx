@@ -42,7 +42,8 @@ function CheckoutSubscriptionForm() {
     const [taxStats, setTaxStats] = useState({ taxRate: 0, shippingCharge: 0 })
 
     const [shippingAddress, setShippingAddress] = useState({
-        fullName: '',
+        addressFirstName: '',
+        addressLastName: '',
         phoneNumber: '',
         addressLine1: '',
         addressLine2: '',
@@ -51,7 +52,8 @@ function CheckoutSubscriptionForm() {
     })
 
     const [billingAddress, setBillingAddress] = useState({
-        fullName: '',
+        addressFirstName: '',
+        addressLastName: '',
         phoneNumber: '',
         addressLine1: '',
         addressLine2: '',
@@ -77,7 +79,8 @@ function CheckoutSubscriptionForm() {
                         setEmail(userData.user.email || '')
                         setShippingAddress(prev => ({
                             ...prev,
-                            fullName: userData.user.name || '',
+                            addressFirstName: userData.user.firstName || '',
+                            addressLastName: userData.user.lastName || '',
                             phoneNumber: userData.user.phone || '',
                             addressLine1: userData.user.address?.street || '',
                             addressLine2: userData.user.address?.apartment || '',
@@ -209,7 +212,9 @@ function CheckoutSubscriptionForm() {
                 card: cardElement,
                 billing_details: {
                     email,
-                    name: shippingAsBilling ? shippingAddress.fullName : billingAddress.fullName,
+                    name: shippingAsBilling
+                        ? `${shippingAddress.addressFirstName} ${shippingAddress.addressLastName}`
+                        : `${billingAddress.addressFirstName} ${billingAddress.addressLastName}`,
                     phone: shippingAsBilling ? shippingAddress.phoneNumber : billingAddress.phoneNumber,
                 },
             })
@@ -277,15 +282,29 @@ function CheckoutSubscriptionForm() {
                                     />
                                 </div>
                                 <div className={styles.inputGroup}>
-                                    <label>Full Name</label>
+                                    <label>First Name</label>
                                     <input
-                                        placeholder="Full Name"
+                                        placeholder="First Name"
                                         required
-                                        value={shippingAddress.fullName}
+                                        value={shippingAddress.addressFirstName}
                                         onChange={(e) => {
                                             const val = e.target.value;
-                                            setShippingAddress({ ...shippingAddress, fullName: val });
-                                            setBillingAddress({ ...billingAddress, fullName: val });
+                                            setShippingAddress({ ...shippingAddress, addressFirstName: val });
+                                            setBillingAddress({ ...billingAddress, addressFirstName: val });
+                                        }}
+                                        className={styles.input}
+                                    />
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Last Name</label>
+                                    <input
+                                        placeholder="Last Name"
+                                        required
+                                        value={shippingAddress.addressLastName}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setShippingAddress({ ...shippingAddress, addressLastName: val });
+                                            setBillingAddress({ ...billingAddress, addressLastName: val });
                                         }}
                                         className={styles.input}
                                     />
