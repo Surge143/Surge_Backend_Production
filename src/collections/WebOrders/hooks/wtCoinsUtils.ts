@@ -45,14 +45,15 @@ export async function awardWTCoins(payload: Payload, userId: number, realMoneySp
                 data: {
                     user: userId,
                     totalBalance: pointsToAward,
-                    earningHistory: [
+                    coinEarningHistory: [
                         {
                             amount: pointsToAward,
                             earnedAt: new Date().toISOString(),
+                            linkedOrder: Number(orderId),
                             expiryDate: expiryDate.toISOString(),
                         }
                     ],
-                    redeemedPointsHistory: []
+                    pointsRedemptionHistory: []
                 },
                 overrideAccess: true,
             })
@@ -67,11 +68,12 @@ export async function awardWTCoins(payload: Payload, userId: number, realMoneySp
                 id: userWTCoins.id,
                 data: {
                     totalBalance: newBalance,
-                    earningHistory: [
-                        ...(userWTCoins.earningHistory || []),
+                    coinEarningHistory: [
+                        ...(userWTCoins.coinEarningHistory || []),
                         {
                             amount: pointsToAward,
                             earnedAt: new Date().toISOString(),
+                            linkedOrder: Number(orderId),
                             expiryDate: expiryDate.toISOString(),
                         }
                     ]

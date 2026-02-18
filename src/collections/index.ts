@@ -24,6 +24,7 @@ import { Slots } from "./Slots/Slots";
 import { ShipAndTax } from "./ShipAndTax/ShipAndTax";
 import { WebSubscription } from "./WebSubscription/WebSubscription";
 import { WebWishlist } from "./WebWishlist/WebWishlist";
+import { WTStamps } from "./WTStamps/WTStamps";
 
 export const collections = [
     Users,
@@ -49,7 +50,8 @@ export const collections = [
     WebOrders,
     Slots,
     WebSubscription,
-    WebWishlist
+    WebWishlist,
+    WTStamps,
 ]
 
 export const globals = [

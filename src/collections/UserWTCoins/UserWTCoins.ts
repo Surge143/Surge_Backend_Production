@@ -37,17 +37,18 @@ export const UserWTCoins: CollectionConfig = {
             }
         },
         {
-            name: 'earningHistory',
+            name: 'coinEarningHistory',
             type: 'array',
             admin: { description: "Log of all points earned" },
             fields: [
                 { name: 'amount', type: 'number', required: true },
                 { name: 'earnedAt', type: 'date', defaultValue: () => new Date() },
+                { name: 'linkedOrder', type: 'relationship', relationTo: 'web-orders' },
                 { name: 'expiryDate', type: 'date' },
             ]
         },
         {
-            name: 'redeemedPointsHistory',
+            name: 'pointsRedemptionHistory',
             type: 'array',
             admin: { description: "Log of all points spent" },
             fields: [

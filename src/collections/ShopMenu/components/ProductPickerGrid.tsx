@@ -6,9 +6,9 @@ import styles from './ProductPicker.module.css'
 export interface ShopMenuItem {
     id?: string
     productId?: string
-    originalPrice?: number
-    salePrice?: number
-    stockCount?: number
+    originalPrice?: string | number
+    salePrice?: string | number
+    stockCount?: string | number
     inStock?: boolean
     selected?: boolean
 }
@@ -150,11 +150,11 @@ export const ProductPickerGrid: React.FC<ProductPickerGridProps> = ({
                                 <td className={styles.colPrice}>
                                     <TextInput
                                         path={`originalPrice_${product.id}`}
-                                        value={selectedData?.originalPrice !== undefined ? String(selectedData.originalPrice) : String(product.regularPrice)}
+                                        value={selectedData?.originalPrice !== undefined ? String(selectedData.originalPrice) : String(product.regularPrice || '')}
                                         onChange={(e: any) => {
                                             const val = e.target.value;
                                             if (isSelected) {
-                                                onUpdate(product.id, { originalPrice: val === '' ? undefined : (parseFloat(val) || 0) })
+                                                onUpdate(product.id, { originalPrice: val })
                                             }
                                         }}
                                         readOnly={!isSelected}
@@ -164,11 +164,11 @@ export const ProductPickerGrid: React.FC<ProductPickerGridProps> = ({
                                 <td className={styles.colSale}>
                                     <TextInput
                                         path={`salePrice_${product.id}`}
-                                        value={selectedData?.salePrice !== undefined ? String(selectedData.salePrice) : String(product.salePrice ?? product.regularPrice)}
+                                        value={selectedData?.salePrice !== undefined ? String(selectedData.salePrice) : String(product.salePrice ?? product.regularPrice ?? '')}
                                         onChange={(e: any) => {
                                             const val = e.target.value;
                                             if (isSelected) {
-                                                onUpdate(product.id, { salePrice: val === '' ? undefined : (parseFloat(val) || 0) })
+                                                onUpdate(product.id, { salePrice: val })
                                             }
                                         }}
                                         readOnly={!isSelected}
@@ -182,7 +182,7 @@ export const ProductPickerGrid: React.FC<ProductPickerGridProps> = ({
                                         onChange={(e: any) => {
                                             const val = e.target.value;
                                             if (isSelected) {
-                                                onUpdate(product.id, { stockCount: val === '' ? undefined : (parseInt(val) || 0) })
+                                                onUpdate(product.id, { stockCount: val })
                                             }
                                         }}
                                         readOnly={!isSelected || !(selectedData?.inStock)}

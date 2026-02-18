@@ -1,0 +1,205 @@
+.testerContainer {
+  min-height: 100vh;
+  padding: var(--spacing-2xl) var(--spacing-md);
+  background: var(--color-bg-dark);
+  color: var(--color-text-dark);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--spacing-2xl);
+}
+
+.appFrame {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface-dark);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border-dark);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  height: min(90vh, 850px);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.header {
+  padding: var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--color-border-dark);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  background: linear-gradient(to right, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+}
+
+.productCard {
+  background: var(--color-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.productCard:hover {
+  transform: translateY(-2px);
+  background: var(--color-secondary-light);
+}
+
+.productInfo {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.productImage {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-md);
+  background: #333;
+  object-fit: cover;
+}
+
+.details h3 {
+  margin: 0 0 var(--spacing-xs);
+  font-size: var(--font-size-lg);
+}
+
+.priceTag {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
+.oldPrice {
+  text-decoration: line-through;
+  color: var(--color-text-lighter);
+  font-size: var(--font-size-sm);
+  margin-right: var(--spacing-sm);
+}
+
+.cartSidebar {
+  width: 400px;
+  background: var(--color-surface-dark);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border-dark);
+  display: flex;
+  flex-direction: column;
+  height: min(90vh, 850px);
+}
+
+.cartItem {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.snapshotList {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-lighter);
+}
+
+.modalOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(5px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+}
+
+.modalContent {
+  width: 100%;
+  background: var(--color-surface-dark);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: var(--spacing-xl);
+  max-height: 80%;
+  overflow-y: auto;
+  animation: slideUp var(--transition-slow) ease-out;
+}
+
+.section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-md);
+  color: var(--color-text-lighter);
+  margin-bottom: var(--spacing-sm);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.optionGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-sm);
+}
+
+.optionItem {
+  background: var(--color-secondary);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.optionItem.active {
+  border-color: var(--color-primary);
+  background: rgba(255, 120, 50, 0.1);
+}
+
+.addButton {
+  width: 100%;
+  margin-top: var(--spacing-xl);
+  background: var(--color-primary);
+  color: white;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: none;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.jsonViewer {
+  margin-top: auto;
+  background: #000;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-family: monospace;
+  font-size: 10px;
+  color: #0f0;
+  max-height: 200px;
+  overflow: auto;
+}

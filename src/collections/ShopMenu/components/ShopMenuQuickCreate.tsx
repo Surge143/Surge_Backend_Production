@@ -103,9 +103,11 @@ export const ShopMenuQuickCreate: React.FC = () => {
                     throw new Error(`Menu item "${globalItem.name}" is missing a category. Please edit the global menu item first.`)
                 }
 
+                const shopId = selectedShop ? (isNaN(Number(selectedShop)) ? selectedShop : Number(selectedShop)) : undefined;
+
                 const payload = {
                     name: globalItem.name,
-                    shop: selectedShop,
+                    shop: shopId,
                     menuRelation: [globalItem.id],
                     tagline: globalItem.tagline,
                     slug: globalItem.slug,
@@ -113,10 +115,10 @@ export const ShopMenuQuickCreate: React.FC = () => {
                     description: globalItem.description,
                     category: typeof globalItem.category === 'object' ? globalItem.category.id : globalItem.category,
                     subCategories: globalItem.subCategories?.map((s: any) => (typeof s === 'object' ? s.id : s)) || [],
-                    regularPrice: selection?.originalPrice ?? globalItem.regularPrice,
-                    salePrice: selection?.salePrice ?? globalItem.salePrice,
+                    regularPrice: parseFloat(String(selection?.originalPrice ?? globalItem.regularPrice)) || 0,
+                    salePrice: parseFloat(String(selection?.salePrice ?? globalItem.salePrice)) || 0,
                     dietaryType: globalItem.dietaryType,
-                    stockCount: selection?.stockCount ?? 0,
+                    stockCount: parseInt(String(selection?.stockCount ?? 0)) || 0,
                     inStock: selection?.inStock ?? true,
                     customizations: globalItem.customizations,
                 }
@@ -170,9 +172,13 @@ export const ShopMenuQuickCreate: React.FC = () => {
                                     path="shopSelect"
                                     name="shopSelect"
                                     label="Select Shop"
-                                    options={shops.map(s => ({ label: s.title || s.name, value: s.id }))}
+                                    options={shops.map(s => ({ label: String(s.title || s.name || s.id), value: String(s.id) }))}
                                     value={selectedShop}
-                                    onChange={(val: any) => setSelectedShop(val)}
+                                    onChange={(val: any) => {
+                                        // Payload 3.0 SelectInput might pass the value string or the whole object
+                                        const newValue = typeof val === 'object' && val !== null ? val.value : val;
+                                        setSelectedShop(newValue);
+                                    }}
                                 />
                             </div>
                         )}

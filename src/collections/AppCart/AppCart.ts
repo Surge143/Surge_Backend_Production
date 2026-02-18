@@ -55,6 +55,20 @@ const AppCart: CollectionConfig = {
                     defaultValue: 1,
                     min: 1,
                 },
+                {
+                    name: 'price',
+                    type: 'number',
+                    admin: {
+                        description: 'Snapshotted base price of the product at the time of addition/selection.',
+                    }
+                },
+                {
+                    name: 'customizations',
+                    type: 'json',
+                    admin: {
+                        description: 'Stores a snapshot of customization selections (sectionTitle, label, price) to preserve price history.',
+                    }
+                }
             ],
         },
     ],
