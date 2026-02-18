@@ -85,6 +85,11 @@ export const Users: CollectionConfig = {
                     type: 'text',
                 },
                 {
+                    name: 'fullName',
+                    label: 'Full Name',
+                    type: 'text',
+                },
+                {
                     name: "street",
                     label: "Street",
                     type: "text",
