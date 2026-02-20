@@ -3,7 +3,13 @@ import { Payload } from 'payload';
 /**
  * Award WTCoins to user based on real money spent
  */
-export async function awardWTCoins(payload: Payload, userId: number, realMoneySpent: number, orderId: string | number) {
+export async function awardWTCoins(
+    payload: Payload,
+    userId: number,
+    realMoneySpent: number,
+    orderId: string | number,
+    collection: 'web-orders' | 'app-orders' = 'web-orders'
+) {
     try {
         // Fetch WTCoins configuration
         const wtCoinsConfig = await payload.findGlobal({
@@ -49,7 +55,10 @@ export async function awardWTCoins(payload: Payload, userId: number, realMoneySp
                         {
                             amount: pointsToAward,
                             earnedAt: new Date().toISOString(),
-                            linkedOrder: Number(orderId),
+                            linkedOrder: {
+                                relationTo: collection,
+                                value: orderId as any
+                            },
                             expiryDate: expiryDate.toISOString(),
                         }
                     ],
@@ -73,7 +82,10 @@ export async function awardWTCoins(payload: Payload, userId: number, realMoneySp
                         {
                             amount: pointsToAward,
                             earnedAt: new Date().toISOString(),
-                            linkedOrder: Number(orderId),
+                            linkedOrder: {
+                                relationTo: collection,
+                                value: orderId as any
+                            },
                             expiryDate: expiryDate.toISOString(),
                         }
                     ]

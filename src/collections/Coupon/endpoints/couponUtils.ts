@@ -11,7 +11,6 @@ export const validateCoupon = async (
     payload: Payload,
     couponCode: string,
     user: User | null,
-    shopId?: string | number
 ): Promise<CouponValidationResult> => {
     try {
         let coupon: any = null;
@@ -25,26 +24,26 @@ export const validateCoupon = async (
                 },
             },
             limit: 1,
+            depth: 0,
+            select: {
+                id: true,
+                code: true,
+                couponFor: true,
+                status: true,
+                expiryDate: true,
+                usageLimit: true,
+                usageCount: true,
+                usageLimitPerUser: true,
+                discountType: true,
+                discountAmount: true,
+                minimumAmount: true,
+                applicability: true,
+                products: true,
+            }
         });
 
         if (coupons.docs.length > 0) {
             coupon = coupons.docs[0];
-        } else if (shopId) {
-            // 2. If not found in base, and shopId is provided, check shop-specific coupons
-            const shopCoupons = await payload.find({
-                collection: 'shop-coupon',
-                where: {
-                    and: [
-                        { shop: { equals: shopId } },
-                        { code: { equals: couponCode } },
-                    ],
-                },
-                limit: 1,
-            });
-
-            if (shopCoupons.docs.length > 0) {
-                coupon = shopCoupons.docs[0];
-            }
         }
 
         if (!coupon) {
@@ -74,16 +73,18 @@ export const validateCoupon = async (
 
         // Usage limit per user (only for logged in users)
         if (user && coupon.usageLimitPerUser) {
-            const userOrdersWithCoupon = await payload.find({
+            const userOrdersWithCoupon = await (payload as any).find({
                 collection: 'web-orders',
                 where: {
                     and: [
                         { user: { equals: user.id } },
-                        { couponCode: { equals: coupon.id } },
+                        { couponCode: { equals: String(coupon.id) } },
                         { paymentStatus: { not_equals: 'refunded' } }
                     ],
                 },
-                limit: 0,
+                limit: 1,
+                depth: 0,
+                select: { id: true }
             });
 
             if (userOrdersWithCoupon.totalDocs >= coupon.usageLimitPerUser) {

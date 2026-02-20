@@ -50,6 +50,9 @@ export default buildConfig({
   cors: [
     'http://localhost:8100',
     'http://localhost:5173',
+    'https://localhost',
+    'capacitor://localhost',
+    'https://whitemantis-app.vercel.app',
     process.env.PAYLOAD_PUBLIC_SERVER_URL || '',
   ].filter(Boolean),
   collections: collections,

@@ -93,6 +93,7 @@ export interface Config {
     'web-subscription': WebSubscription;
     'web-wishlist': WebWishlist;
     'wt-stamps': WtStamp;
+    'user-preferences': UserPreference;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -133,6 +134,7 @@ export interface Config {
     'web-subscription': WebSubscriptionSelect<false> | WebSubscriptionSelect<true>;
     'web-wishlist': WebWishlistSelect<false> | WebWishlistSelect<true>;
     'wt-stamps': WtStampsSelect<false> | WtStampsSelect<true>;
+    'user-preferences': UserPreferencesSelect<false> | UserPreferencesSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -149,10 +151,12 @@ export interface Config {
   globals: {
     'wt-coins': WtCoin;
     'ship-and-tax': ShipAndTax;
+    'stamp-reward-products': StampRewardProduct;
   };
   globalsSelect: {
     'wt-coins': WtCoinsSelect<false> | WtCoinsSelect<true>;
     'ship-and-tax': ShipAndTaxSelect<false> | ShipAndTaxSelect<true>;
+    'stamp-reward-products': StampRewardProductsSelect<false> | StampRewardProductsSelect<true>;
   };
   locale: null;
   user: User | Admin;
@@ -358,9 +362,17 @@ export interface Admin {
 export interface Shop {
   id: number;
   name: string;
+  tagline?: string | null;
+  image?: (number | null) | Media;
   openingTime: string;
   closingTime: string;
-  address: string;
+  address: {
+    street?: string | null;
+    apartment?: string | null;
+    city?: string | null;
+    emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
+    country?: string | null;
+  };
   shopManager: number | Admin;
   updatedAt: string;
   createdAt: string;
@@ -443,7 +455,6 @@ export interface Menu {
   description?: string | null;
   category: number | AppCategory;
   subCategories?: (number | AppSubCategory)[] | null;
-  isStampReward?: boolean | null;
   regularPrice: number;
   salePrice?: number | null;
   /**
@@ -484,7 +495,6 @@ export interface ShopMenu {
   description?: string | null;
   category: number | AppCategory;
   subCategories?: (number | AppSubCategory)[] | null;
-  isStampReward?: boolean | null;
   regularPrice: number;
   salePrice?: number | null;
   /**
@@ -821,8 +831,8 @@ export interface Otp {
 export interface AppCart {
   id: number;
   user: number | User;
-  origin: 'app' | 'website';
-  shop: number | Shop;
+  origin: 'cafe' | 'store';
+  shop?: (number | null) | Shop;
   items?:
     | {
         product:
@@ -834,13 +844,10 @@ export interface AppCart {
               relationTo: 'web-products';
               value: number | WebProduct;
             };
+        vId?: string | null;
         quantity?: number | null;
         /**
-         * Snapshotted base price of the product at the time of addition/selection.
-         */
-        price?: number | null;
-        /**
-         * Stores a snapshot of customization selections (sectionTitle, label, price) to preserve price history.
+         * Snapshot of selections (sectionTitle, label, price).
          */
         customizations?:
           | {
@@ -887,9 +894,10 @@ export interface AppWishlist {
  */
 export interface AppOrder {
   id: number;
-  name: string;
+  user: number | User;
   orderAcceptance: 'pending' | 'accepted' | 'rejected';
-  appOrderStatus?: ('preparing' | 'pickup' | 'pickedup') | null;
+  appOrderStatus?: ('pending' | 'preparing' | 'pickup' | 'refunded' | 'pickedup') | null;
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
   shop: number | Shop;
   barista?: (number | null) | Admin;
   items: {
@@ -913,7 +921,7 @@ export interface AppOrder {
   isCouponUsed?: boolean | null;
   coupon?: (number | null) | ShopCoupon;
   coinsUsed?: number | null;
-  stampRewards?: (number | null) | ShopMenu;
+  stampRewards?: (number | ShopMenu)[] | null;
   financials?: {
     subtotal?: number | null;
     discountAmount?: number | null;
@@ -995,7 +1003,15 @@ export interface UserWtCoin {
     | {
         amount: number;
         earnedAt?: string | null;
-        linkedOrder?: (number | null) | WebOrder;
+        linkedOrder?:
+          | ({
+              relationTo: 'web-orders';
+              value: number | WebOrder;
+            } | null)
+          | ({
+              relationTo: 'app-orders';
+              value: number | AppOrder;
+            } | null);
         expiryDate?: string | null;
         id?: string | null;
       }[]
@@ -1006,7 +1022,15 @@ export interface UserWtCoin {
   pointsRedemptionHistory?:
     | {
         redeemedPoints: number;
-        associatedOrder: number | WebOrder;
+        associatedOrder:
+          | {
+              relationTo: 'web-orders';
+              value: number | WebOrder;
+            }
+          | {
+              relationTo: 'app-orders';
+              value: number | AppOrder;
+            };
         id?: string | null;
       }[]
     | null;
@@ -1187,7 +1211,15 @@ export interface WtStamp {
     | {
         stamps: number;
         earnedAt?: string | null;
-        linkedOrder: number | WebOrder;
+        linkedOrder?:
+          | ({
+              relationTo: 'web-orders';
+              value: number | WebOrder;
+            } | null)
+          | ({
+              relationTo: 'app-orders';
+              value: number | AppOrder;
+            } | null);
         id?: string | null;
       }[]
     | null;
@@ -1197,7 +1229,55 @@ export interface WtStamp {
   stampsRedemptionHistory?:
     | {
         redeemedStamps: number;
-        associatedOrder: number | WebOrder;
+        associatedOrder:
+          | {
+              relationTo: 'web-orders';
+              value: number | WebOrder;
+            }
+          | {
+              relationTo: 'app-orders';
+              value: number | AppOrder;
+            };
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Stores per-user product customization preferences for the cafe app.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-preferences".
+ */
+export interface UserPreference {
+  id: number;
+  user: number | User;
+  /**
+   * Last-used customization selections per cafe menu product.
+   */
+  cafeProductPreferences?:
+    | {
+        /**
+         * The shop-menu product ID this preference belongs to.
+         */
+        productId: string;
+        /**
+         * Snapshot of the last-used customization selections (sectionTitle, label, price).
+         */
+        customizations?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        /**
+         * When this preference was last saved.
+         */
+        savedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -1387,10 +1467,6 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
-      } | null)
-    | ({
         relationTo: 'admins';
         value: number | Admin;
       } | null)
@@ -1485,6 +1561,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'wt-stamps';
         value: number | WtStamp;
+      } | null)
+    | ({
+        relationTo: 'user-preferences';
+        value: number | UserPreference;
       } | null)
     | ({
         relationTo: 'exports';
@@ -1723,7 +1803,6 @@ export interface MenuSelect<T extends boolean = true> {
   description?: T;
   category?: T;
   subCategories?: T;
-  isStampReward?: T;
   regularPrice?: T;
   salePrice?: T;
   dietaryType?: T;
@@ -1738,9 +1817,19 @@ export interface MenuSelect<T extends boolean = true> {
  */
 export interface ShopSelect<T extends boolean = true> {
   name?: T;
+  tagline?: T;
+  image?: T;
   openingTime?: T;
   closingTime?: T;
-  address?: T;
+  address?:
+    | T
+    | {
+        street?: T;
+        apartment?: T;
+        city?: T;
+        emirates?: T;
+        country?: T;
+      };
   shopManager?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1759,7 +1848,6 @@ export interface ShopMenuSelect<T extends boolean = true> {
   description?: T;
   category?: T;
   subCategories?: T;
-  isStampReward?: T;
   regularPrice?: T;
   salePrice?: T;
   dietaryType?: T;
@@ -1851,8 +1939,8 @@ export interface AppCartSelect<T extends boolean = true> {
     | T
     | {
         product?: T;
+        vId?: T;
         quantity?: T;
-        price?: T;
         customizations?: T;
         id?: T;
       };
@@ -1879,9 +1967,10 @@ export interface AppWishlistSelect<T extends boolean = true> {
  * via the `definition` "app-orders_select".
  */
 export interface AppOrdersSelect<T extends boolean = true> {
-  name?: T;
+  user?: T;
   orderAcceptance?: T;
   appOrderStatus?: T;
+  paymentStatus?: T;
   shop?: T;
   barista?: T;
   items?:
@@ -2225,6 +2314,23 @@ export interface WtStampsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-preferences_select".
+ */
+export interface UserPreferencesSelect<T extends boolean = true> {
+  user?: T;
+  cafeProductPreferences?:
+    | T
+    | {
+        productId?: T;
+        customizations?: T;
+        savedAt?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports_select".
  */
 export interface ExportsSelect<T extends boolean = true> {
@@ -2412,6 +2518,16 @@ export interface ShipAndTax {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stamp-reward-products".
+ */
+export interface StampRewardProduct {
+  id: number;
+  stampProducts: (number | ShopMenu)[];
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "wt-coins_select".
  */
 export interface WtCoinsSelect<T extends boolean = true> {
@@ -2441,6 +2557,16 @@ export interface ShipAndTaxSelect<T extends boolean = true> {
         ras_al_khaimah?: T;
         fujairah?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stamp-reward-products_select".
+ */
+export interface StampRewardProductsSelect<T extends boolean = true> {
+  stampProducts?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

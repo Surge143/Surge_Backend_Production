@@ -82,9 +82,12 @@ export const ShopCouponQuickCreate: React.FC = () => {
             // 2. Map through each selected coupon to create individual POST requests
             const creationPromises = fullCoupons.map(async (couponData: any) => {
                 const coupon = couponData // API returns the coupon object directly
+
+                const shopId = selectedShop ? (isNaN(Number(selectedShop)) ? selectedShop : Number(selectedShop)) : undefined;
+
                 const payload = {
                     // Link to the specific shop
-                    shop: selectedShop,
+                    shop: shopId,
                     couponRelation: [coupon.id], // Use the coupon ID and wrap in array for hasMany relationship
                     // Copy all data fields from the 'Coupon' to 'Shop Coupon'
                     code: coupon.code,
@@ -155,9 +158,12 @@ export const ShopCouponQuickCreate: React.FC = () => {
                                     path="shopSelect"
                                     name="shopSelect"
                                     label="Select Shop"
-                                    options={shops.map(s => ({ label: s.title || s.name, value: s.id }))}
+                                    options={shops.map(s => ({ label: String(s.title || s.name || s.id), value: String(s.id) }))}
                                     value={selectedShop}
-                                    onChange={(val: any) => setSelectedShop(val)}
+                                    onChange={(val: any) => {
+                                        const newValue = typeof val === 'object' && val !== null ? val.value : val;
+                                        setSelectedShop(newValue);
+                                    }}
                                 />
                             </div>
                         )}

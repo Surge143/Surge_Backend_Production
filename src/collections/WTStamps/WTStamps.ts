@@ -40,8 +40,7 @@ export const WTStamps: CollectionConfig = {
                 {
                     name: 'linkedOrder',
                     type: 'relationship',
-                    relationTo: 'web-orders',
-                    required: true,
+                    relationTo: ['web-orders', 'app-orders'],
                 },
             ]
         },
@@ -54,7 +53,7 @@ export const WTStamps: CollectionConfig = {
                 {
                     name: 'associatedOrder',
                     type: 'relationship',
-                    relationTo: 'web-orders',
+                    relationTo: ['web-orders', 'app-orders'],
                     required: true,
                 },
             ]

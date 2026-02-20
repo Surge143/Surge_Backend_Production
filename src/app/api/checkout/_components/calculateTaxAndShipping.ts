@@ -10,9 +10,13 @@ export const calculateTaxAndShipping = async (
     deliveryOption: 'delivery' | 'pickup',
     shippingAddress?: ShippingAddress | null
 ) => {
-    const taxAndShippingResult = await payload.findGlobal({
+    const taxAndShippingResult: any = await payload.findGlobal({
         slug: 'ship-and-tax',
-        depth: 1,
+        depth: 0,
+        select: {
+            tax: true,
+            emirateCharges: true,
+        }
     });
 
     if (!taxAndShippingResult) {

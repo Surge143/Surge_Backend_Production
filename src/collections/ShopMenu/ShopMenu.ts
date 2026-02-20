@@ -164,15 +164,6 @@ export const ShopMenu: CollectionConfig = {
                             },
                         },
                         {
-                            name: 'isStampReward',
-                            label: 'Is Stamp Reward',
-                            type: 'checkbox',
-                            admin: {
-                                position: 'sidebar',
-                                readOnly: true,
-                            },
-                        },
-                        {
                             name: 'regularPrice',
                             type: 'number',
                             required: true,

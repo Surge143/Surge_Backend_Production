@@ -1,6 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { getShopCouponsHandler } from "./endpoints/coupons/getCoupons";
-import { validateCouponHandler } from "./endpoints/coupons/validateCouponHandler";
+import { validateAppCouponHandler } from "./endpoints/coupons/validateAppCouponHandler";
 import { getAllItemsHandler } from "./endpoints/menu/getAllItems";
 import { individualItemHandler } from "./endpoints/menu/individualItem";
 
@@ -15,7 +15,7 @@ export const Shop: CollectionConfig = {
         {
             path: '/:shopId/coupons/:couponCode',
             method: 'get',
-            handler: validateCouponHandler,
+            handler: validateAppCouponHandler,
         },
         {
             path: '/:shopId/coupons',
@@ -58,6 +58,15 @@ export const Shop: CollectionConfig = {
             required: true
         },
         {
+            name: 'tagline',
+            type: 'text',
+        },
+        {
+            name: 'image',
+            type: 'upload',
+            relationTo: 'media',
+        },
+        {
             name: "openingTime",
             type: 'date',
             admin: {
@@ -81,8 +90,49 @@ export const Shop: CollectionConfig = {
         },
         {
             name: "address",
-            type: 'text',
+            type: 'group',
             required: true,
+            fields: [
+                {
+                    name: "street",
+                    label: "Street",
+                    type: "text",
+                },
+                {
+                    name: "apartment",
+                    label: "Apartment",
+                    type: "text",
+                },
+                {
+                    name: "city",
+                    label: "City",
+                    type: "text",
+                },
+                {
+                    name: "emirates",
+                    label: "Emirates",
+                    type: "select",
+                    required: true,
+                    options: [
+                        { label: 'Abu Dhabi', value: 'abu_dhabi' },
+                        { label: 'Dubai', value: 'dubai' },
+                        { label: 'Sharjah', value: 'sharjah' },
+                        { label: 'Ajman', value: 'ajman' },
+                        { label: 'Umm Al Quwain', value: 'umm_al_quwain' },
+                        { label: 'Ras Al Khaimah', value: 'ras_al_khaimah' },
+                        { label: 'Fujairah', value: 'fujairah' },
+                    ],
+                },
+                {
+                    name: "country",
+                    label: "Country",
+                    type: "text",
+                    defaultValue: "United Arab Emirates",
+                    admin: {
+                        readOnly: true,
+                    }
+                },
+            ]
         },
         {
             name: 'shopManager',

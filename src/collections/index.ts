@@ -25,6 +25,8 @@ import { ShipAndTax } from "./ShipAndTax/ShipAndTax";
 import { WebSubscription } from "./WebSubscription/WebSubscription";
 import { WebWishlist } from "./WebWishlist/WebWishlist";
 import { WTStamps } from "./WTStamps/WTStamps";
+import { UserPreferences } from "./UserPreferences/UserPreferences";
+import { StampRewardProducts } from "./StampRewardProducts/StampRewardProducts";
 
 export const collections = [
     Users,
@@ -52,9 +54,11 @@ export const collections = [
     WebSubscription,
     WebWishlist,
     WTStamps,
+    UserPreferences,
 ]
 
 export const globals = [
     WTCoins,
-    ShipAndTax
+    ShipAndTax,
+    StampRewardProducts
 ]

@@ -145,6 +145,6 @@ export const Users: CollectionConfig = {
                 },
             ],
         }
-
     ],
+    lockDocuments: false,   
 }

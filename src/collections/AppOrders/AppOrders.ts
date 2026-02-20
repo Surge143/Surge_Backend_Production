@@ -1,4 +1,7 @@
-import type { CollectionConfig, Where } from "payload";
+import type { CollectionConfig } from "payload";
+import { beforeValidateHook } from "./hooks/beforeValidate";
+import { afterChangeHook } from "./hooks/afterChange";
+import { afterDeleteHook } from "./hooks/afterDelete";
 
 export const AppOrders: CollectionConfig = {
     slug: "app-orders",
@@ -12,96 +15,10 @@ export const AppOrders: CollectionConfig = {
         group: 'App',
     },
     hooks: {
-        beforeValidate: [
-            async ({ data, req: { payload } }) => {
-                if (data?.items && Array.isArray(data.items) && data.shop) {
-                    const shopId = typeof data.shop === 'object' ? data.shop.id : data.shop;
-                    const itemIds = data.items.map((item: any) => typeof item.product === 'object' ? item.product.id : item.product);
-
-                    const menuItems = await payload.find({
-                        collection: 'shop-menu',
-                        where: {
-                            id: { in: itemIds },
-                        },
-                        depth: 0,
-                    });
-
-                    const invalidItems = menuItems.docs.filter(item => item.shop !== shopId);
-                    if (invalidItems.length > 0) {
-                        throw new Error(`All items in the order must belong to the selected shop. Invalid items found.`);
-                    }
-                }
-                return data;
-            },
-        ],
+        beforeValidate: [beforeValidateHook],
         beforeChange: [],
-        afterChange: [
-            async ({ doc, previousDoc, operation, req: { payload } }) => {
-                // Import the socket utilities
-                const { emitOrderCreated, emitOrderUpdated } = await import('@/utilities/socket');
-
-                if (operation === 'create') {
-                    emitOrderCreated(doc);
-                } else if (operation === 'update') {
-                    emitOrderUpdated(doc);
-                }
-
-                // Handle Slot Load Update
-                const updateSlotLoad = async (slotId: string) => {
-                    const ordersInSlot = await payload.find({
-                        collection: 'app-orders',
-                        where: {
-                            slot: { equals: slotId },
-                            orderAcceptance: { equals: 'accepted' }, // Only count accepted orders? Or all except rejected?
-                        },
-                        depth: 0,
-                    });
-
-                    const totalLoad = ordersInSlot.docs.length;
-
-                    await payload.update({
-                        collection: 'slots',
-                        id: slotId,
-                        data: {
-                            currentLoad: totalLoad,
-                        },
-                    });
-                };
-
-                if (doc.slot) {
-                    await updateSlotLoad(typeof doc.slot === 'object' ? doc.slot.id : doc.slot);
-                }
-
-                if (previousDoc && previousDoc.slot && previousDoc.slot !== doc.slot) {
-                    await updateSlotLoad(typeof previousDoc.slot === 'object' ? previousDoc.slot.id : previousDoc.slot);
-                }
-            }
-        ],
-        afterDelete: [
-            async ({ doc, req: { payload } }) => {
-                if (doc.slot) {
-                    const slotId = typeof doc.slot === 'object' ? doc.slot.id : doc.slot;
-                    const ordersInSlot = await payload.find({
-                        collection: 'app-orders',
-                        where: {
-                            slot: { equals: slotId },
-                            orderAcceptance: { equals: 'accepted' },
-                        },
-                        depth: 0,
-                    });
-
-                    const totalLoad = ordersInSlot.docs.length;
-
-                    await payload.update({
-                        collection: 'slots',
-                        id: slotId,
-                        data: {
-                            currentLoad: totalLoad,
-                        },
-                    });
-                }
-            }
-        ]
+        afterChange: [afterChangeHook],
+        afterDelete: [afterDeleteHook]
     },
     access: {
         read: () => true,
@@ -117,14 +34,14 @@ export const AppOrders: CollectionConfig = {
                     label: 'Order Details',
                     fields: [
                         {
+                            name: 'user',
+                            type: 'relationship',
+                            relationTo: 'users',
+                            required: true,
+                        },
+                        {
                             type: 'row',
                             fields: [
-                                {
-                                    name: "name",
-                                    type: "text",
-                                    required: true,
-                                    admin: { width: '50%' }
-                                },
                                 {
                                     name: 'orderAcceptance',
                                     type: 'select',
@@ -143,14 +60,29 @@ export const AppOrders: CollectionConfig = {
                             name: 'appOrderStatus',
                             type: 'select',
                             required: true,
+                            defaultValue: 'pending',
                             options: [
+                                { label: 'Pending', value: 'pending' },
                                 { label: 'Preparing', value: 'preparing' },
                                 { label: 'Pickup', value: 'pickup' },
+                                { label: 'Refunded', value: 'refunded' },
                                 { label: 'Order Pickedup', value: 'pickedup' },
                             ],
                             admin: {
                                 condition: (data) => data?.orderAcceptance === 'accepted'
                             }
+                        },
+                        {
+                            name: 'paymentStatus',
+                            type: 'select',
+                            required: true,
+                            defaultValue: 'pending',
+                            options: [
+                                { label: 'Pending', value: 'pending' },
+                                { label: 'Paid', value: 'paid' },
+                                { label: 'Failed', value: 'failed' },
+                                { label: 'Refunded', value: 'refunded' },
+                            ],
                         },
                         {
                             type: 'row',
@@ -167,6 +99,9 @@ export const AppOrders: CollectionConfig = {
                                     type: 'relationship',
                                     relationTo: 'admins',
                                     admin: { width: '50%' },
+                                    filterOptions: {
+                                        role: { equals: 'barista' }
+                                    }
                                 },
                             ]
                         },
@@ -180,7 +115,7 @@ export const AppOrders: CollectionConfig = {
                                     type: 'relationship',
                                     relationTo: 'shop-menu',
                                     required: true,
-                                },
+                                } as any, // Needed due to Payload type complexities in some environments
                                 {
                                     name: 'quantity',
                                     type: 'number',
@@ -225,7 +160,6 @@ export const AppOrders: CollectionConfig = {
                                     ],
                                     admin: {
                                         width: '50%',
-                                        // FIXED: Ensure strict data check
                                         condition: (data) => data?.orderType === 'take-away',
                                     }
                                 },
@@ -235,8 +169,8 @@ export const AppOrders: CollectionConfig = {
                             name: 'slot',
                             type: 'relationship',
                             relationTo: 'slots',
+                            required: false,
                             admin: {
-                                // FIXED: Accessing sibling data inside row/tab
                                 condition: (data) => data?.timeSelection === 'custom' && data?.orderType === 'take-away',
                             },
                         },
@@ -276,6 +210,19 @@ export const AppOrders: CollectionConfig = {
                                     name: 'stampRewards',
                                     type: 'relationship',
                                     relationTo: 'shop-menu',
+                                    hasMany: true,
+                                    filterOptions: async ({ req: { payload } }) => {
+                                        const stampRewardProductsGlobal = await payload.findGlobal({
+                                            slug: 'stamp-reward-products',
+                                            depth: 0,
+                                        });
+
+                                        const validStampProductIds = (stampRewardProductsGlobal?.stampProducts || []).map((p: any) => typeof p === 'object' ? p.id : p);
+
+                                        return {
+                                            id: { in: validStampProductIds }
+                                        };
+                                    },
                                     admin: { width: '50%' },
                                 },
                             ]

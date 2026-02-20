@@ -1,11 +1,13 @@
 import type { CollectionConfig } from 'payload';
 import { canReadCart, canUpdateOrDeleteCart } from './access';
 import { beforeCartChange } from './hooks/beforeCartChange';
+import { afterCartChange } from './hooks/afterCartChange';
 
 const AppCart: CollectionConfig = {
     slug: 'app-cart',
     admin: {
-        hidden: true,
+        group: 'Common',
+        defaultColumns: ['user', 'origin', 'updatedAt'],
     },
     access: {
         read: canReadCart,
@@ -15,6 +17,7 @@ const AppCart: CollectionConfig = {
     },
     hooks: {
         beforeChange: [beforeCartChange],
+        afterChange: [afterCartChange],
     },
     fields: [
         {
@@ -29,15 +32,17 @@ const AppCart: CollectionConfig = {
             type: 'select',
             required: true,
             options: [
-                { label: 'App', value: 'app' },
-                { label: 'Website', value: 'website' },
+                { label: 'Cafe', value: 'cafe' },
+                { label: 'Store', value: 'store' },
             ],
         },
         {
             name: 'shop',
             type: 'relationship',
             relationTo: 'shop',
-            required: true,
+            admin: {
+                condition: (data) => data?.origin === 'cafe',
+            },
         },
         {
             name: 'items',
@@ -50,28 +55,31 @@ const AppCart: CollectionConfig = {
                     required: true,
                 },
                 {
+                    name: 'vId',
+                    label: 'Variant ID',
+                    type: 'text',
+                    admin: {
+                        condition: (data, siblingData, { user }) => data?.origin === 'store',
+                    },
+                },
+                {
                     name: 'quantity',
                     type: 'number',
                     defaultValue: 1,
                     min: 1,
                 },
                 {
-                    name: 'price',
-                    type: 'number',
-                    admin: {
-                        description: 'Snapshotted base price of the product at the time of addition/selection.',
-                    }
-                },
-                {
                     name: 'customizations',
                     type: 'json',
                     admin: {
-                        description: 'Stores a snapshot of customization selections (sectionTitle, label, price) to preserve price history.',
-                    }
-                }
+                        description: 'Snapshot of selections (sectionTitle, label, price).',
+                        condition: (data) => data?.origin === 'cafe',
+                    },
+                },
             ],
         },
     ],
+    timestamps: true,
 };
 
 export { AppCart };

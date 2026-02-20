@@ -26,7 +26,7 @@ export default function SubscriptionModal({ product, isOpen, onClose, quantity =
             return selectedVariant.subFreq || []
         }
         return product.subFreq || []
-    }, [product?.hasVariantOptions, product?.subFreq, selectedVariant])
+    }, [product, selectedVariant])
 
     // Initialize selected variant and frequency when modal opens
     useEffect(() => {

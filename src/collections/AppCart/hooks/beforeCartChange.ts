@@ -2,9 +2,9 @@ import { CollectionBeforeChangeHook } from 'payload';
 
 const getInfo = (item: any) => {
     const p = item.product;
-    if (typeof p !== 'object' || !p) return { relationTo: 'shop-menu', productId: p };
+    if (typeof p !== 'object' || !p) return { relationTo: null, productId: p };
 
-    const relationTo = p.relationTo || 'shop-menu';
+    const relationTo = p.relationTo || null;
     const val = p.value;
     const productId = typeof val === 'object' ? val.id : val;
     return { relationTo, productId };
@@ -17,6 +17,49 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
     operation,
 }) => {
     const { payload, user } = req;
+
+    // 0. AUTO-DISCOVER RELATIONTO if missing
+    if (data.items && Array.isArray(data.items)) {
+        for (const item of data.items) {
+            // eslint-disable-next-line prefer-const
+            let { relationTo, productId } = getInfo(item);
+
+            if (!relationTo && productId) {
+                // Discovery logic
+                // 1. Try shop-menu
+                const shopDoc = await payload.findByID({
+                    collection: 'shop-menu',
+                    id: productId,
+                    depth: 0,
+                    disableErrors: true,
+                }).catch(() => null);
+
+                if (shopDoc) {
+                    relationTo = 'shop-menu';
+                } else {
+                    // 2. Try web-products
+                    const webDoc = await payload.findByID({
+                        collection: 'web-products',
+                        id: productId,
+                        depth: 0,
+                        disableErrors: true,
+                    }).catch(() => null);
+
+                    if (webDoc) {
+                        relationTo = 'web-products';
+                    }
+                }
+
+                // If found, update the item structure to polymorphic
+                if (relationTo) {
+                    item.product = {
+                        relationTo,
+                        value: productId,
+                    };
+                }
+            }
+        }
+    }
 
     // 1. Automatically set owner if creating
     if (operation === 'create' && !data.user && user) {
@@ -40,6 +83,14 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 data.items = data.items.filter((item: any) => getInfo(item).relationTo === 'shop-menu');
             }
+        }
+
+        // 2.1 Set Origin based on items
+        const finalRelations = new Set(data.items.map((item: any) => getInfo(item).relationTo));
+        if (finalRelations.has('web-products')) {
+            data.origin = 'store';
+        } else if (finalRelations.has('shop-menu')) {
+            data.origin = 'cafe';
         }
 
         // -- SHOP EXCLUSIVITY (Shop A vs Shop B) --
@@ -89,14 +140,15 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
     // 3. Consolidate items
     if (data.items && Array.isArray(data.items)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const itemMap = new Map<string, { id?: string | number; product: any; quantity: number; customizations: any }>();
+        const itemMap = new Map<string, { id?: string | number; product: any; vId?: string; quantity: number; customizations: any }>();
 
         for (const item of data.items) {
             const { relationTo, productId } = getInfo(item);
 
             // Use stable stringification for customizations to include in the key
             const custKey = item.customizations ? JSON.stringify(item.customizations) : '{}';
-            const key = `${relationTo}:${productId}:${custKey}`;
+            const vIdKey = item.vId || '';
+            const key = `${relationTo}:${productId}:${vIdKey}:${custKey}`;
 
             if (itemMap.has(key)) {
                 const existing = itemMap.get(key)!;
@@ -105,6 +157,7 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
                 itemMap.set(key, {
                     id: item.id, // Preserve the original ID if it exists
                     product: item.product,
+                    vId: item.vId,
                     quantity: item.quantity || 1,
                     customizations: item.customizations,
                 });
@@ -114,42 +167,40 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
         data.items = Array.from(itemMap.values()).map(val => ({
             id: val.id,
             product: val.product,
+            vId: val.vId,
             quantity: val.quantity,
             customizations: val.customizations,
         }));
     }
 
-    // 4. Final Shop Validation (Ensuring no stray items from other shops remain)
-    if (data.shop && data.items && data.items.length > 0) {
-        const shopId = typeof data.shop === 'object' ? data.shop.id : data.shop;
+    // 4. Integrity Validation (Shop Consistency & Customization Snapshotting)
+    if (data.items && Array.isArray(data.items)) {
+        const shopId = data.shop || (originalDoc?.shop ? (typeof originalDoc.shop === 'object' ? originalDoc.shop.id : originalDoc.shop) : null);
 
         for (const item of data.items) {
             const { relationTo, productId } = getInfo(item);
+            if (!relationTo || !productId) continue;
 
+            // --- 4.1 CASE: CAFE ITEMS ---
             if (relationTo === 'shop-menu') {
                 const shopMenuItem = await payload.findByID({
                     collection: 'shop-menu',
                     id: productId,
                     depth: 0,
-                });
+                    disableErrors: true,
+                }).catch(() => null);
 
-                if (shopMenuItem && shopMenuItem.shop !== shopId) {
+                if (!shopMenuItem) continue;
+
+                // Shop consistency check
+                if (shopId && shopMenuItem.shop !== shopId) {
                     throw new Error(`Item ${shopMenuItem.name} does not belong to the selected shop.`);
                 }
 
-                // --- BASE PRICE SNAPSHOTTING ---
-                // If price is not set (e.g. new item from frontend), snapshot it from the menu
-                if (typeof item.price !== 'number' && shopMenuItem) {
-                    item.price = shopMenuItem.salePrice || shopMenuItem.regularPrice || 0;
-                }
-
-                // --- CUSTOMIZATION SNAPSHOTTING ---
+                // Customization Snapshotting
                 if (item.customizations && Array.isArray(item.customizations)) {
                     const incomingSelections = item.customizations;
                     const snapshot: Array<{ sectionTitle: string, label: string, price: number }> = [];
-
-                    // 1. Build a lookup map of available options from the product data
-                    // Map key: "sectionTitle:label" -> price
                     const availableOptions = new Map<string, number>();
 
                     if (shopMenuItem?.customizations && Array.isArray(shopMenuItem.customizations)) {
@@ -157,21 +208,15 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
                             if (panel.sections && Array.isArray(panel.sections)) {
                                 panel.sections.forEach((section: any) => {
                                     const sectionTitle = section.title;
-
-                                    // Direct options
                                     if (section.options && Array.isArray(section.options)) {
                                         section.options.forEach((opt: any) => {
                                             availableOptions.set(`${sectionTitle}:${opt.label}`, opt.price || 0);
                                         });
                                     }
-
-                                    // Grouped options
                                     if (section.groups && Array.isArray(section.groups)) {
                                         section.groups.forEach((group: any) => {
                                             if (group.options && Array.isArray(group.options)) {
                                                 group.options.forEach((opt: any) => {
-                                                    // Use the group title + label or just label depending on how the frontend sends it
-                                                    // CustomizationsManager uses `${group.groupTitle} - ${opt.label}`
                                                     const fullLabel = `${group.groupTitle} - ${opt.label}`;
                                                     availableOptions.set(`${sectionTitle}:${fullLabel}`, opt.price || 0);
                                                 });
@@ -183,34 +228,19 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
                         });
                     }
 
-                    // 2. Resolve selections into snapshot
                     for (const sel of incomingSelections) {
-                        // If it's already a full snapshot (has price), preserve it
                         if (sel.sectionTitle && sel.label && typeof sel.price === 'number') {
-                            snapshot.push({
-                                sectionTitle: sel.sectionTitle,
-                                label: sel.label,
-                                price: sel.price
-                            });
+                            snapshot.push({ sectionTitle: sel.sectionTitle, label: sel.label, price: sel.price });
                             continue;
                         }
-
-                        // If it's a new selection from frontend (might only have sectionTitle and label)
                         if (sel.sectionTitle && sel.label) {
                             const key = `${sel.sectionTitle}:${sel.label}`;
                             if (availableOptions.has(key)) {
-                                snapshot.push({
-                                    sectionTitle: sel.sectionTitle,
-                                    label: sel.label,
-                                    price: availableOptions.get(key)!
-                                });
-                            } else {
-                                console.warn(`Customization not found in product: ${key}`);
+                                snapshot.push({ sectionTitle: sel.sectionTitle, label: sel.label, price: availableOptions.get(key)! });
                             }
                         }
                     }
 
-                    // Sort for stable consolidation key
                     item.customizations = snapshot.sort((a, b) =>
                         `${a.sectionTitle}:${a.label}`.localeCompare(`${b.sectionTitle}:${b.label}`)
                     );

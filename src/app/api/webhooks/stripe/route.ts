@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { handleInvoicePaid } from './_components/invoicePaid';
-import { handlePaymentIntentSucceeded } from './_components/paymentIntentSucceeded';
+import { handleWebPaymentIntentSucceeded } from './_components/webPaymentIntentSucceeded';
+import { handleAppPaymentIntentSucceeded } from './_components/appPaymentIntentSucceeded';
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest) {
 
   try {
     event = stripe.webhooks.constructEvent(body, sig!, endpointSecret!);
+    console.log(`🔔 Stripe Webhook received: ${event.type}`);
 
     switch (event.type) {
       case 'invoice.paid':
@@ -21,14 +23,17 @@ export async function POST(req: NextRequest) {
 
       case 'payment_intent.succeeded':
         const pi = event.data.object;
+        console.log(`💰 Payment Intent Succeeded: ${pi.id}, Order Type: ${pi.metadata?.order_type}`);
 
-        // 1. Check if this PI was created by a subscription invoice
         if (pi.invoice) {
           break;
         }
-        // 2. Otherwise, treat it as a One-Time Order
-        console.log('✅ Processing One-Time Order...');
-        await handlePaymentIntentSucceeded(pi);
+        if (pi.metadata?.order_type === 'store') {
+          await handleWebPaymentIntentSucceeded(pi);
+        }
+        if (pi.metadata?.order_type === 'cafe') {
+          await handleAppPaymentIntentSucceeded(pi);
+        }
         break;
 
       case 'refund.created':

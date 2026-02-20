@@ -1,10 +1,9 @@
-import { stripe } from "@/lib/stripe";
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { sendEmail } from "@/lib/emailConfig";
 import { orderConfirmationEmailTemplate } from "@/lib/emailTemplate";
 
-export async function handlePaymentIntentSucceeded(paymentIntent: any) {
+export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
     const payload = await getPayload({ config })
 
     const orderId = paymentIntent.metadata.db_order_id

@@ -16,14 +16,22 @@ export const calculateWTCoinsDiscount = async (
     const userRewards = await payload.find({
         collection: 'user-wt-coins',
         where: { user: { equals: userId } },
+        depth: 0,
+        limit: 1,
+        select: { totalBalance: true }
     });
 
     const userTotalWTCoins = userRewards.docs.length === 0 ? 0 : userRewards.docs[0].totalBalance || 0;
 
     // 2. FETCH GLOBAL CONFIGURATION
-    const WTCoinsConfiguration = await payload.findGlobal({
+    const WTCoinsConfiguration: any = await payload.findGlobal({
         slug: 'wt-coins',
-        depth: 1,
+        depth: 0,
+        select: {
+            minPointsPerOrder: true,
+            maxPointsPerOrder: true,
+            pointsToAed: true,
+        }
     });
 
     if (!WTCoinsConfiguration) {

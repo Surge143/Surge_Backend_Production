@@ -1,0 +1,355 @@
+/* App-specific global styles — dark, mobile-first */
+/* Inherits CSS variables from globals.css */
+
+.appRoot {
+    min-height: 100dvh;
+    background: var(--color-bg-dark);
+    color: var(--color-text-dark);
+    font-family: var(--font-family);
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* ── Top App Bar ── */
+.appBar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(22, 30, 36, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--color-border-dark);
+    padding: 0 var(--spacing-lg);
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+}
+
+.appBarTitle {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+
+.appBarBack {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    font-size: var(--font-size-lg);
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-weight: var(--font-weight-medium);
+    transition: opacity var(--transition-fast);
+}
+
+.appBarBack:hover {
+    opacity: 0.75;
+}
+
+.appBarRight {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* ── Scrollable Page Content ── */
+.pageContent {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
+/* ── Bottom Navigation ── */
+.bottomNav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    height: calc(64px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(22, 30, 36, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--color-border-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 100;
+}
+
+.navItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-lighter);
+    font-size: 10px;
+    font-weight: var(--font-weight-medium);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    position: relative;
+    border-radius: var(--radius-md);
+}
+
+.navItem.active {
+    color: var(--color-primary);
+}
+
+.navItem svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.8;
+}
+
+.navCartBadge {
+    position: absolute;
+    top: 4px;
+    right: 10px;
+    background: var(--color-primary);
+    color: white;
+    font-size: 9px;
+    font-weight: var(--font-weight-bold);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* ── Cards ── */
+.card {
+    background: var(--color-surface-dark);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-dark);
+    overflow: hidden;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card:active {
+    transform: scale(0.98);
+}
+
+/* ── Section Header ── */
+.sectionHeader {
+    padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-lighter);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+/* ── Primary Button ── */
+.btnPrimary {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.btnPrimary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btnPrimary:active {
+    transform: translateY(0);
+}
+
+.btnPrimary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ── Ghost Button ── */
+.btnGhost {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: transparent;
+    color: var(--color-text-lighter);
+    border: 1px solid var(--color-border-dark);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btnGhost:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* ── Bottom Sheet Modal ── */
+.sheetOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    animation: fadeIn 200ms ease;
+}
+
+.sheet {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--color-surface-dark);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    padding: var(--spacing-xl);
+    padding-bottom: calc(var(--spacing-xl) + env(safe-area-inset-bottom));
+    max-height: 85dvh;
+    overflow-y: auto;
+    animation: slideUp 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sheetHandle {
+    width: 36px;
+    height: 4px;
+    background: var(--color-border-dark);
+    border-radius: 2px;
+    margin: 0 auto var(--spacing-lg);
+}
+
+/* ── Input ── */
+.input {
+    width: 100%;
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid var(--color-border-dark);
+    border-radius: var(--radius-md);
+    color: var(--color-text-dark);
+    font-size: var(--font-size-base);
+    font-family: var(--font-family);
+    transition: border-color var(--transition-fast);
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(255, 120, 50, 0.12);
+}
+
+.input::placeholder {
+    color: var(--color-text-lighter);
+}
+
+/* ── Label ── */
+.label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-lighter);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: var(--spacing-xs);
+}
+
+/* ── Divider ── */
+.divider {
+    height: 1px;
+    background: var(--color-border-dark);
+    margin: var(--spacing-md) 0;
+}
+
+/* ── Loading Spinner ── */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--color-border-dark);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 700ms linear infinite;
+    margin: var(--spacing-2xl) auto;
+}
+
+/* ── Empty State ── */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    text-align: center;
+    color: var(--color-text-lighter);
+    gap: var(--spacing-md);
+}
+
+.emptyState svg {
+    opacity: 0.3;
+    width: 64px;
+    height: 64px;
+}
+
+.emptyState h3 {
+    font-size: var(--font-size-xl);
+    color: var(--color-text-dark);
+    margin: 0;
+}
+
+.emptyState p {
+    font-size: var(--font-size-sm);
+    margin: 0;
+}
+
+/* ── Animations ── */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

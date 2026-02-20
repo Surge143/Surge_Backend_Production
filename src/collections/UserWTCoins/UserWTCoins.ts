@@ -43,7 +43,7 @@ export const UserWTCoins: CollectionConfig = {
             fields: [
                 { name: 'amount', type: 'number', required: true },
                 { name: 'earnedAt', type: 'date', defaultValue: () => new Date() },
-                { name: 'linkedOrder', type: 'relationship', relationTo: 'web-orders' },
+                { name: 'linkedOrder', type: 'relationship', relationTo: ['web-orders', 'app-orders'] },
                 { name: 'expiryDate', type: 'date' },
             ]
         },
@@ -56,7 +56,7 @@ export const UserWTCoins: CollectionConfig = {
                 {
                     name: 'associatedOrder',
                     type: 'relationship',
-                    relationTo: 'web-orders',
+                    relationTo: ['web-orders', 'app-orders'],
                     required: true,
                 },
             ]

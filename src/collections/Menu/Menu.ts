@@ -55,7 +55,6 @@ export const Menu: CollectionConfig = {
                                         subCategories: doc.subCategories?.map((s: any) => (typeof s === 'object' ? s.id : s)),
                                         slug: doc.slug,
                                         dietaryType: doc.dietaryType,
-                                        isStampReward: doc.isStampReward,
                                         customizations: doc.customizations,
                                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     } as any,
@@ -162,11 +161,6 @@ export const Menu: CollectionConfig = {
                                 }
                                 return false;
                             },
-                        },
-                        {
-                            name: 'isStampReward',
-                            label: 'Is Stamp Reward',
-                            type: 'checkbox',
                         },
                         {
                             name: 'regularPrice',

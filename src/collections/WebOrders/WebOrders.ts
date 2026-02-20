@@ -251,6 +251,12 @@ export const WebOrders: CollectionConfig = {
                                     name: 'paymentStatus',
                                     type: 'select',
                                     required: true,
+                                    validate: (val, { data }) => {
+                                        if (val === 'refunded' && data?.deliveryStatus !== 'placed') {
+                                            return 'Refunds are only allowed while the delivery status is "Placed".';
+                                        }
+                                        return true;
+                                    },
                                     options: [
                                         { label: 'Pending', value: 'pending' },
                                         { label: 'Completed', value: 'completed' },

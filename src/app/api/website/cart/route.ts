@@ -27,36 +27,64 @@ async function getAuthContext() {
 /**
  * Maps raw backend cart items (with depth: 2) to flat frontend CartItem structure
  */
-function mapCartItems(items: any[]) {
-    return items.map((item: any) => {
-        const product = item.product
-        if (typeof product !== 'object') return item
+/**
+ * Maps raw backend cart items to flat frontend CartItem structure
+ * Uses batch fetching for efficiency if items aren't already populated.
+ */
+async function mapCartItems(payload: any, items: any[]) {
+    if (!items || items.length === 0) return [];
 
-        let name = product.name
-        let price = product.salePrice || product.regularPrice
-        let image = product.productImage?.url || ''
-        let variantName = ''
+    const productIds = Array.from(new Set(items.map(item =>
+        typeof item.product === 'object' ? item.product.id : item.product
+    )));
+
+    // Fetch essential product details in a single batch
+    const productsFetched = await payload.find({
+        collection: 'web-products',
+        where: { id: { in: productIds } },
+        depth: 0,
+        limit: 100,
+        select: {
+            name: true,
+            salePrice: true,
+            regularPrice: true,
+            productImage: true,
+            variants: true,
+        }
+    });
+
+    const productMap = new Map(productsFetched.docs.map(p => [String(p.id), p as any]));
+
+    return items.map((item: any) => {
+        const productId = typeof item.product === 'object' ? item.product.id : item.product;
+        const product: any = productMap.get(String(productId));
+
+        if (!product) return { product: productId, vId: item.vId, name: 'Unknown Product', price: 0, image: '', quantity: item.quantity };
+
+        const name = product.name;
+        let price = product.salePrice || product.regularPrice;
+        let image = product.productImage?.url || '';
+        let variantName = '';
 
         if (item.vId && product.variants) {
-            const variant = product.variants.find((v: any) => v.id === item.vId)
+            const variant = product.variants.find((v: any) => v.id === item.vId);
             if (variant) {
-                name = product.name // Keep product name as base
-                variantName = variant.variantName
-                price = variant.variantSalePrice || variant.variantRegularPrice
-                image = variant.variantImage?.url || image
+                variantName = variant.variantName;
+                price = variant.variantSalePrice || variant.variantRegularPrice;
+                image = variant.variantImage?.url || image;
             }
         }
 
         return {
-            product: product.id,
+            product: productId,
             vId: item.vId || '',
             name,
             price,
             image,
             variantName,
             quantity: item.quantity,
-        }
-    })
+        };
+    });
 }
 
 /**
@@ -72,11 +100,12 @@ export async function GET() {
             collection: 'web-cart',
             where: { user: { equals: user.id } },
             limit: 1,
-            depth: 2,
+            depth: 0,
+            select: { items: true }
         })
 
         const items = carts.docs[0]?.items || []
-        return NextResponse.json({ items: mapCartItems(items) })
+        return NextResponse.json({ items: await mapCartItems(payload, items) })
     } catch (error: any) {
         console.error('Cart GET Error:', error)
         return NextResponse.json({ error: error.message }, { status: 500 })
@@ -99,12 +128,12 @@ export async function POST(request: NextRequest) {
 
         if (isNaN(product)) return NextResponse.json({ error: 'Valid Product ID is required' }, { status: 400 })
 
-        // console.log(`DEBUG: Cart Lookup for User ID: ${user.id} (${typeof user.id})`);
-
-        const carts = await payload.find({
+        const carts = await (payload as any).find({
             collection: 'web-cart',
             where: { user: { equals: user.id } },
             limit: 1,
+            depth: 0,
+            select: { id: true, items: true }
         })
 
         // console.log(`DEBUG: Cart Find Result: ${carts.docs.length} found`);
@@ -134,34 +163,36 @@ export async function POST(request: NextRequest) {
                 collection: 'web-cart',
                 id: cart.id,
                 data: { items },
-                depth: 2,
+                depth: 0,
+                select: { items: true }
             })
         } else {
-            // Second safety check: search by user ID again just in case, but using payload.find with more breadth
-            // Or explicitly handle unique constraint error if create fails
             try {
                 updatedCart = await payload.create({
                     collection: 'web-cart',
                     data: { user: user.id, items },
-                    depth: 2,
+                    depth: 0,
+                    select: { items: true }
                 })
             } catch (err: any) {
-                // If it's a unique constraint violation, try to find and update instead
                 if (err.message?.includes('unique') || err.message?.includes('duplicate')) {
                     const retryCarts = await payload.find({
                         collection: 'web-cart',
                         where: { user: { equals: user.id } },
                         limit: 1,
+                        depth: 0,
+                        select: { items: true }
                     })
                     if (retryCarts.docs[0]) {
                         updatedCart = await payload.update({
                             collection: 'web-cart',
                             id: retryCarts.docs[0].id,
                             data: { items },
-                            depth: 2,
+                            depth: 0,
+                            select: { items: true }
                         })
                     } else {
-                        throw err // Re-throw if retry also fails to find it
+                        throw err
                     }
                 } else {
                     throw err
@@ -169,7 +200,7 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        return NextResponse.json({ items: mapCartItems(updatedCart.items || []) })
+        return NextResponse.json({ items: await mapCartItems(payload, updatedCart.items || []) })
     } catch (error: any) {
         console.error('Cart POST Error:', error)
         return NextResponse.json({ error: error.message }, { status: 500 })
@@ -192,6 +223,8 @@ export async function PATCH(request: NextRequest) {
             collection: 'web-cart',
             where: { user: { equals: user.id } },
             limit: 1,
+            depth: 0,
+            select: { items: true }
         })
 
         const cart = carts.docs[0]
@@ -221,10 +254,11 @@ export async function PATCH(request: NextRequest) {
                 collection: 'web-cart',
                 id: cart.id,
                 data: { items },
-                depth: 2,
+                depth: 0,
+                select: { items: true }
             })
 
-            return NextResponse.json({ items: mapCartItems(updatedCart.items || []) })
+            return NextResponse.json({ items: await mapCartItems(payload, updatedCart.items || []) })
         }
 
         return NextResponse.json({ items: [] })
@@ -250,6 +284,8 @@ export async function DELETE(request: NextRequest) {
             collection: 'web-cart',
             where: { user: { equals: user.id } },
             limit: 1,
+            depth: 0,
+            select: { items: true }
         })
 
         const cart = carts.docs[0]
@@ -262,10 +298,11 @@ export async function DELETE(request: NextRequest) {
                 collection: 'web-cart',
                 id: cart.id,
                 data: { items },
-                depth: 2,
+                depth: 0,
+                select: { items: true }
             })
 
-            return NextResponse.json({ items: mapCartItems(updatedCart.items || []) })
+            return NextResponse.json({ items: await mapCartItems(payload, updatedCart.items || []) })
         }
 
         return NextResponse.json({ items: [] })

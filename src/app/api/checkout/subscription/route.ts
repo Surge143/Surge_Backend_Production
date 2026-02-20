@@ -75,8 +75,18 @@ export async function POST(req: NextRequest) {
         try {
             const productResult = await payload.find({
                 collection: 'web-products',
-                depth: 3,
+                depth: 1,
                 where: { id: { equals: product.productId } },
+                select: {
+                    name: true,
+                    regularPrice: true,
+                    salePrice: true,
+                    variants: true,
+                    inStock: true,
+                    stockQuantity: true,
+                    subFreq: true,
+                    subscriptionDiscount: true,
+                }
             });
 
             if (!productResult.docs.length) {
@@ -197,7 +207,7 @@ export async function POST(req: NextRequest) {
             }
 
             try {
-                const subscriptionDoc = await payload.create({
+                const subscriptionDoc = await (payload as any).create({
                     collection: 'web-subscription',
                     data: {
                         customerType: user ? 'user' : 'guest',
@@ -224,8 +234,9 @@ export async function POST(req: NextRequest) {
                             total: finalTotal,
                         }
                     },
-                    overrideAccess: true,
-                })
+                    depth: 0,
+                    select: { id: true, guestAccessToken: true }
+                });
 
                 if (subscriptionDoc.guestAccessToken) {
                     guestAccessToken = subscriptionDoc.guestAccessToken;
@@ -323,6 +334,7 @@ export async function POST(req: NextRequest) {
                         metadata: {
                             db_subscription_id: subscriptionDoc.id,
                             guest_access_token: guestAccessToken || "", // Store token in Stripe metadata
+                            order_type: 'subscription'
                         },
                         expand: [
                             "latest_invoice.confirmation_secret"

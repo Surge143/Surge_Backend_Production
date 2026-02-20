@@ -6,6 +6,7 @@ import { calculateWTCoinsDiscount } from '../_components/validateAndCalculateWTC
 import { stripe } from "@/lib/stripe";
 import { calculateTaxAndShipping } from '../_components/calculateTaxAndShipping';
 import { validateCoupon } from '@/collections/Coupon/endpoints/couponUtils';
+import { calculateCouponDiscount } from '../_components/calculateCouponDiscount';
 
 export async function POST(req: NextRequest) {
     try {
@@ -58,7 +59,8 @@ export async function POST(req: NextRequest) {
             const cartResult = await payload.find({
                 collection: 'web-cart',
                 where: { user: { equals: user.id } },
-                depth: 2,
+                depth: 0,
+                select: { items: true }
             });
 
             if (cartResult.docs.length > 0 && cartResult.docs[0].items && cartResult.docs[0].items.length > 0) {
@@ -66,12 +68,12 @@ export async function POST(req: NextRequest) {
                     productId: typeof item.product === 'object' ? item.product.id : item.product,
                     variantId: item.vId,
                     quantity: item.quantity || 1,
-                    productDoc: typeof item.product === 'object' ? item.product : null,
+                    productDoc: null, // We'll batch fetch these
                 }));
             }
         }
 
-        // If not a user OR user has empty cart, check 'products' body field for guests/overrides
+        // ... (Guest/Override logic) ...
         if (itemsToProcess.length === 0 && products && Array.isArray(products) && products.length > 0) {
             itemsToProcess = products.map((p: any) => ({
                 productId: p.productId,
@@ -84,6 +86,27 @@ export async function POST(req: NextRequest) {
         if (itemsToProcess.length === 0) {
             return NextResponse.json({ error: 'Your cart/selection is empty' }, { status: 400 });
         }
+
+        // --- BATCH PRODUCT FETCHING ---
+        const productIds = Array.from(new Set(itemsToProcess.map(item => String(item.productId))));
+        const productsFetched = await payload.find({
+            collection: 'web-products',
+            where: {
+                id: { in: productIds }
+            },
+            depth: 0,
+            limit: 100,
+            select: {
+                name: true,
+                salePrice: true,
+                regularPrice: true,
+                variants: true,
+                inStock: true,
+                stockQuantity: true,
+            }
+        });
+
+        const productMap = new Map(productsFetched.docs.map(p => [String(p.id), p]));
 
         // --- TAX AND SHIPPING FETCHING ---
         let taxRate = 0;
@@ -101,22 +124,11 @@ export async function POST(req: NextRequest) {
         const orderItems: any[] = [];
 
         for (const item of itemsToProcess) {
-            let productDoc = item.productDoc;
+            const productId = String(item.productId);
+            const productDoc: any = productMap.get(productId);
 
             if (!productDoc) {
-                try {
-                    productDoc = await payload.findByID({
-                        collection: 'web-products',
-                        id: item.productId,
-                        depth: 1,
-                    });
-                } catch (e) {
-                    return NextResponse.json({ error: `Product not found: ${item.productId}` }, { status: 404 });
-                }
-            }
-
-            if (!productDoc) {
-                return NextResponse.json({ error: `Product not found: ${item.productId}` }, { status: 404 });
+                return NextResponse.json({ error: `Product not found: ${productId}` }, { status: 404 });
             }
 
             let itemPrice = 0;
@@ -124,25 +136,25 @@ export async function POST(req: NextRequest) {
             if (item.variantId) {
                 const selectedVariant = productDoc.variants?.find((v: any) => v.id === item.variantId);
                 if (!selectedVariant) {
-                    return NextResponse.json({ error: `Variant not found for product: ${productDoc.title}` }, { status: 400 });
+                    return NextResponse.json({ error: `Variant not found for product: ${productDoc.name}` }, { status: 400 });
                 }
 
                 // STOCK VALIDATION
                 if (!selectedVariant.variantInStock) {
-                    return NextResponse.json({ error: `${productDoc.title} variant is out of stock` }, { status: 400 });
+                    return NextResponse.json({ error: `${productDoc.name} variant is out of stock` }, { status: 400 });
                 }
                 if (typeof selectedVariant.variantStockQuantity === 'number' && selectedVariant.variantStockQuantity < item.quantity) {
-                    return NextResponse.json({ error: `Insufficient stock for ${productDoc.title} variant` }, { status: 400 });
+                    return NextResponse.json({ error: `Insufficient stock for ${productDoc.name} variant` }, { status: 400 });
                 }
 
                 itemPrice = selectedVariant.variantSalePrice || selectedVariant.variantRegularPrice;
             } else {
                 // STOCK VALIDATION
                 if (!productDoc.inStock) {
-                    return NextResponse.json({ error: `${productDoc.title} is out of stock` }, { status: 400 });
+                    return NextResponse.json({ error: `${productDoc.name} is out of stock` }, { status: 400 });
                 }
                 if (typeof productDoc.stockQuantity === 'number' && productDoc.stockQuantity < item.quantity) {
-                    return NextResponse.json({ error: `Insufficient stock for ${productDoc.title}` }, { status: 400 });
+                    return NextResponse.json({ error: `Insufficient stock for ${productDoc.name}` }, { status: 400 });
                 }
 
                 itemPrice = productDoc.salePrice || productDoc.regularPrice;
@@ -179,51 +191,18 @@ export async function POST(req: NextRequest) {
         let couponId: string | number | null = null;
 
         if (appliedCouponCode) {
-            const result = await validateCoupon(payload, appliedCouponCode, user as any, body.shopId);
-
+            const result = await validateCoupon(payload, appliedCouponCode, user as any);
             if (!result.success) {
                 return NextResponse.json({ error: result.error }, { status: result.status || 400 });
             }
 
-            const coupon = result.coupon;
-
-            // Validate Minimum Amount
-            if (subtotal < coupon.minimumAmount) {
-                return NextResponse.json({
-                    error: `Minimum order amount of AED ${coupon.minimumAmount} required for this coupon`
-                }, { status: 400 });
+            const discountResult = calculateCouponDiscount(result.coupon, subtotal, orderItems);
+            if ('error' in discountResult) {
+                return NextResponse.json({ error: discountResult.error }, { status: discountResult.status });
             }
 
-            // Calculate Coupon Discount
-            if (coupon.applicability === 'all') {
-                if (coupon.discountType === 'percentage') {
-                    couponDiscount = subtotal * (coupon.discountAmount / 100);
-                } else {
-                    couponDiscount = Math.min(coupon.discountAmount, subtotal);
-                }
-            } else if (coupon.applicability === 'products') {
-                // Apply only to eligible products
-                const eligibleProducts = (coupon.products as any[])?.map((p: any) => typeof p === 'object' ? p.id : p) || [];
-                let eligibleSubtotal = 0;
-
-                orderItems.forEach(item => {
-                    if (eligibleProducts.includes(item.product)) {
-                        eligibleSubtotal += (item.price * item.quantity);
-                    }
-                });
-
-                if (eligibleSubtotal === 0) {
-                    return NextResponse.json({ error: 'Coupon is not applicable to any products in your cart' }, { status: 400 });
-                }
-
-                if (coupon.discountType === 'percentage') {
-                    couponDiscount = eligibleSubtotal * (coupon.discountAmount / 100);
-                } else {
-                    couponDiscount = Math.min(coupon.discountAmount, eligibleSubtotal);
-                }
-            }
-
-            couponId = coupon.id;
+            couponDiscount = discountResult.discount;
+            couponId = discountResult.couponId;
         }
 
         const totalAfterDiscounts = Math.max(0, subtotal - wtDiscount - couponDiscount);
@@ -233,7 +212,7 @@ export async function POST(req: NextRequest) {
 
         // --- CREATE PAYLOAD ORDER ---
         try {
-            const orderDoc = await payload.create({
+            const orderDoc = await (payload as any).create({
                 collection: 'web-orders',
                 data: {
                     customerType: user ? 'user' : 'guest',
@@ -252,7 +231,8 @@ export async function POST(req: NextRequest) {
                         total: finalTotal,
                     },
                 },
-                overrideAccess: true,
+                depth: 0,
+                select: { id: true },
             });
 
             // --- CREATE STRIPE PAYMENT INTENT ---
@@ -290,7 +270,7 @@ export async function POST(req: NextRequest) {
                     confirm: true,
                     metadata: {
                         db_order_id: orderDoc.id,
-                        order_type: 'one-time',
+                        order_type: 'store',
                     },
                     return_url: `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/checkout/success?orderId=${orderDoc.id}`,
                 });

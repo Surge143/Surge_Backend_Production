@@ -3,7 +3,7 @@ import { validateCoupon } from './couponUtils'
 
 export const validateWebCouponHandler: PayloadHandler = async (req) => {
     const { payload, user } = req
-    const { shopId, couponCode } = (req.routeParams || {}) as any
+    const { couponCode } = (req.routeParams || {}) as any
 
     if (!user) {
         return Response.json({ error: 'Login to use Coupons' }, { status: 401 })
@@ -13,7 +13,7 @@ export const validateWebCouponHandler: PayloadHandler = async (req) => {
         return Response.json({ error: 'Coupon code is required' }, { status: 400 })
     }
 
-    const result = await validateCoupon(payload, couponCode, user as any, shopId)
+    const result = await validateCoupon(payload, couponCode, user as any)
 
     if (!result.success) {
         return Response.json({ success: false, error: result.error }, { status: result.status || 400 })
