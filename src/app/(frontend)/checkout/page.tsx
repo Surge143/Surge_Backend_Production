@@ -16,7 +16,21 @@ import styles from './checkout.module.css'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-function CheckoutForm() {
+// ------------------------------------------------------------------
+// Saved card type
+// ------------------------------------------------------------------
+interface SavedCard {
+    id: string
+    brand: string
+    last4: string
+    expMonth: number | undefined
+    expYear: number | undefined
+}
+
+// ------------------------------------------------------------------
+// Inner form — rendered inside <Elements>
+// ------------------------------------------------------------------
+function CheckoutForm({ savedCards }: { savedCards: SavedCard[] }) {
     const stripe = useStripe()
     const elements = useElements()
     const router = useRouter()
@@ -32,6 +46,11 @@ function CheckoutForm() {
     const [couponCode, setCouponCode] = useState('')
     const [couponData, setCouponData] = useState<any>(null)
     const [taxStats, setTaxStats] = useState({ taxRate: 0, shippingCharge: 0 })
+
+    // 'new' = entering a new card, otherwise the id of a SavedCard
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>(
+        savedCards.length > 0 ? savedCards[0].id : 'new'
+    )
 
     const [shippingAddress, setShippingAddress] = useState({
         addressFirstName: '',
@@ -54,7 +73,6 @@ function CheckoutForm() {
     })
 
     useEffect(() => {
-        // Fetch User
         const fetchUserData = async () => {
             const userRes = await fetch('/api/users/me')
             if (userRes.ok) {
@@ -73,7 +91,6 @@ function CheckoutForm() {
                         emirates: userData.user.address?.state || 'dubai'
                     }))
 
-                    // Fetch WTCoins balance using Payload API
                     Promise.all([
                         fetch(`/api/user-wt-coins?where[user][equals]=${userData.user.id}`),
                         fetch('/api/globals/wt-coins')
@@ -98,7 +115,6 @@ function CheckoutForm() {
     }, [])
 
     useEffect(() => {
-        // Recalculate tax and shipping
         const updateStats = async () => {
             try {
                 const res = await fetch('/api/checkout/calculate-tax-shipping', {
@@ -141,63 +157,63 @@ function CheckoutForm() {
 
     const calculateWTCoinsDiscount = () => {
         if (!useWTCoins || !wtCoinsBalance) return 0
-
-        // Calculate subtotal after coupon
         let subtotal = totalPrice
         if (couponData) {
             if (couponData.discountType === 'fixed') subtotal -= couponData.discountAmount
             else subtotal -= (totalPrice * (couponData.discountAmount / 100))
         }
-
-        // Calculate max WTCoins discount
         const maxDiscount = wtCoinsBalance.balance / wtCoinsBalance.pointsToAed
         return Math.min(maxDiscount, subtotal)
     }
 
     const calculateFinalTotal = () => {
         let total = totalPrice
-        // Apply coupon discount
         if (couponData) {
             if (couponData.discountType === 'fixed') total -= couponData.discountAmount
             else total -= (totalPrice * (couponData.discountAmount / 100))
         }
-        // Apply WTCoins discount
-        const wtDiscount = calculateWTCoinsDiscount()
-        total -= wtDiscount
-        // Add shipping first
+        total -= calculateWTCoinsDiscount()
         total += taxStats.shippingCharge
-        // Then calculate and add tax
-        const taxAmount = total * (taxStats.taxRate / 100)
-        return total + taxAmount
+        return total + total * (taxStats.taxRate / 100)
     }
 
     const handlePayment = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!stripe || !elements || items.length === 0) return
+        if (!stripe || items.length === 0) return
 
         setIsProcessing(true)
 
         try {
-            const cardElement = elements.getElement(CardNumberElement)
-            if (!cardElement) throw new Error('Card element not found')
+            let paymentMethodId: string
 
-            const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
-                type: 'card',
-                card: cardElement,
-                billing_details: {
-                    email,
-                    name: shippingAsBilling
-                        ? `${shippingAddress.addressFirstName} ${shippingAddress.addressLastName}`
-                        : `${billingAddress.addressFirstName} ${billingAddress.addressLastName}`,
-                    phone: shippingAsBilling ? shippingAddress.phoneNumber : billingAddress.phoneNumber,
-                },
-            })
+            if (selectedPaymentMethod !== 'new') {
+                // User chose a saved card — use it directly
+                paymentMethodId = selectedPaymentMethod
+            } else {
+                // User is entering a new card
+                if (!elements) throw new Error('Elements not loaded')
+                const cardElement = elements.getElement(CardNumberElement)
+                if (!cardElement) throw new Error('Card element not found')
 
-            if (pmError) throw new Error(pmError.message)
+                const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: cardElement,
+                    billing_details: {
+                        email,
+                        name: shippingAsBilling
+                            ? `${shippingAddress.addressFirstName} ${shippingAddress.addressLastName}`
+                            : `${billingAddress.addressFirstName} ${billingAddress.addressLastName}`,
+                        phone: shippingAsBilling ? shippingAddress.phoneNumber : billingAddress.phoneNumber,
+                    },
+                })
+
+                if (pmError) throw new Error(pmError.message)
+                paymentMethodId = paymentMethod!.id
+            }
 
             const checkoutBody = {
                 email,
-                paymentMethodId: paymentMethod.id,
+                paymentMethodId,
                 deliveryOption,
                 useWTCoins,
                 appliedCouponCode: couponData?.code,
@@ -236,6 +252,13 @@ function CheckoutForm() {
         }
     }
 
+    const cardBrandIcon: Record<string, string> = {
+        visa: '💳',
+        mastercard: '💳',
+        amex: '💳',
+        discover: '💳',
+    }
+
     if (items.length === 0) {
         return (
             <div className={styles.emptyCart}>
@@ -269,45 +292,21 @@ function CheckoutForm() {
                                 </div>
                                 <div className={styles.inputGroup}>
                                     <label>First Name</label>
-                                    <input
-                                        placeholder="First Name"
-                                        required
-                                        value={shippingAddress.addressFirstName}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            setShippingAddress({ ...shippingAddress, addressFirstName: val });
-                                            setBillingAddress({ ...billingAddress, addressFirstName: val });
-                                        }}
-                                        className={styles.input}
-                                    />
+                                    <input placeholder="First Name" required value={shippingAddress.addressFirstName}
+                                        onChange={(e) => { const v = e.target.value; setShippingAddress({ ...shippingAddress, addressFirstName: v }); setBillingAddress({ ...billingAddress, addressFirstName: v }) }}
+                                        className={styles.input} />
                                 </div>
                                 <div className={styles.inputGroup}>
                                     <label>Last Name</label>
-                                    <input
-                                        placeholder="Last Name"
-                                        required
-                                        value={shippingAddress.addressLastName}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            setShippingAddress({ ...shippingAddress, addressLastName: val });
-                                            setBillingAddress({ ...billingAddress, addressLastName: val });
-                                        }}
-                                        className={styles.input}
-                                    />
+                                    <input placeholder="Last Name" required value={shippingAddress.addressLastName}
+                                        onChange={(e) => { const v = e.target.value; setShippingAddress({ ...shippingAddress, addressLastName: v }); setBillingAddress({ ...billingAddress, addressLastName: v }) }}
+                                        className={styles.input} />
                                 </div>
                                 <div className={styles.inputGroup}>
                                     <label>Phone Number</label>
-                                    <input
-                                        placeholder="Phone Number"
-                                        required
-                                        value={shippingAddress.phoneNumber}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            setShippingAddress({ ...shippingAddress, phoneNumber: val });
-                                            setBillingAddress({ ...billingAddress, phoneNumber: val });
-                                        }}
-                                        className={styles.input}
-                                    />
+                                    <input placeholder="Phone Number" required value={shippingAddress.phoneNumber}
+                                        onChange={(e) => { const v = e.target.value; setShippingAddress({ ...shippingAddress, phoneNumber: v }); setBillingAddress({ ...billingAddress, phoneNumber: v }) }}
+                                        className={styles.input} />
                                 </div>
                             </div>
                         </section>
@@ -315,20 +314,8 @@ function CheckoutForm() {
                         <section className={styles.section}>
                             <h2 className={styles.sectionTitle}>Delivery Method</h2>
                             <div className={styles.deliveryToggle}>
-                                <button
-                                    type="button"
-                                    className={`${styles.toggleBtn} ${deliveryOption === 'delivery' ? styles.active : ''}`}
-                                    onClick={() => setDeliveryOption('delivery')}
-                                >
-                                    Home Delivery
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`${styles.toggleBtn} ${deliveryOption === 'pickup' ? styles.active : ''}`}
-                                    onClick={() => setDeliveryOption('pickup')}
-                                >
-                                    Store Pickup
-                                </button>
+                                <button type="button" className={`${styles.toggleBtn} ${deliveryOption === 'delivery' ? styles.active : ''}`} onClick={() => setDeliveryOption('delivery')}>Home Delivery</button>
+                                <button type="button" className={`${styles.toggleBtn} ${deliveryOption === 'pickup' ? styles.active : ''}`} onClick={() => setDeliveryOption('pickup')}>Store Pickup</button>
                             </div>
                         </section>
 
@@ -336,31 +323,10 @@ function CheckoutForm() {
                             <section className={styles.section}>
                                 <h2 className={styles.sectionTitle}>Shipping Address</h2>
                                 <div className={styles.formGrid}>
-                                    <input
-                                        placeholder="Address Line 1"
-                                        required
-                                        value={shippingAddress.addressLine1}
-                                        onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine1: e.target.value })}
-                                        className={`${styles.input} span-2`}
-                                    />
-                                    <input
-                                        placeholder="Address Line 2 (Optional)"
-                                        value={shippingAddress.addressLine2}
-                                        onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine2: e.target.value })}
-                                        className={`${styles.input} span-2`}
-                                    />
-                                    <input
-                                        placeholder="City"
-                                        required
-                                        value={shippingAddress.city}
-                                        onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
-                                        className={styles.input}
-                                    />
-                                    <select
-                                        value={shippingAddress.emirates}
-                                        onChange={(e) => setShippingAddress({ ...shippingAddress, emirates: e.target.value })}
-                                        className={styles.input}
-                                    >
+                                    <input placeholder="Address Line 1" required value={shippingAddress.addressLine1} onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine1: e.target.value })} className={`${styles.input} span-2`} />
+                                    <input placeholder="Address Line 2 (Optional)" value={shippingAddress.addressLine2} onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine2: e.target.value })} className={`${styles.input} span-2`} />
+                                    <input placeholder="City" required value={shippingAddress.city} onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })} className={styles.input} />
+                                    <select value={shippingAddress.emirates} onChange={(e) => setShippingAddress({ ...shippingAddress, emirates: e.target.value })} className={styles.input}>
                                         <option value="abu_dhabi">Abu Dhabi</option>
                                         <option value="dubai">Dubai</option>
                                         <option value="sharjah">Sharjah</option>
@@ -375,22 +341,49 @@ function CheckoutForm() {
 
                         <section className={styles.section}>
                             <h2 className={styles.sectionTitle}>Payment Details</h2>
-                            <div className={styles.paymentBox}>
-                                <div className={styles.stripeElement}>
-                                    <label>Card Number</label>
-                                    <div className={styles.elementWrapper}><CardNumberElement /></div>
+
+                            {/* ── Saved cards picker ── */}
+                            {savedCards.length > 0 && (
+                                <div className={styles.savedCards}>
+                                    {savedCards.map(card => (
+                                        <label key={card.id} className={`${styles.savedCard} ${selectedPaymentMethod === card.id ? styles.savedCardActive : ''}`}>
+                                            <input
+                                                type="radio"
+                                                name="paymentMethod"
+                                                value={card.id}
+                                                checked={selectedPaymentMethod === card.id}
+                                                onChange={() => setSelectedPaymentMethod(card.id)}
+                                            />
+                                            <span className={styles.cardBrand}>{cardBrandIcon[card.brand] ?? '💳'} {card.brand.charAt(0).toUpperCase() + card.brand.slice(1)}</span>
+                                            <span className={styles.cardDetails}>•••• {card.last4} &nbsp; {card.expMonth?.toString().padStart(2, '0')}/{card.expYear}</span>
+                                        </label>
+                                    ))}
+                                    <label className={`${styles.savedCard} ${selectedPaymentMethod === 'new' ? styles.savedCardActive : ''}`}>
+                                        <input type="radio" name="paymentMethod" value="new" checked={selectedPaymentMethod === 'new'} onChange={() => setSelectedPaymentMethod('new')} />
+                                        <span>➕ Use a new card</span>
+                                    </label>
                                 </div>
-                                <div className={styles.elementRow}>
+                            )}
+
+                            {/* ── New card entry elements (shown when no saved cards or "new card" chosen) ── */}
+                            {selectedPaymentMethod === 'new' && (
+                                <div className={styles.paymentBox}>
                                     <div className={styles.stripeElement}>
-                                        <label>Expiry Date</label>
-                                        <div className={styles.elementWrapper}><CardExpiryElement /></div>
+                                        <label>Card Number</label>
+                                        <div className={styles.elementWrapper}><CardNumberElement /></div>
                                     </div>
-                                    <div className={styles.stripeElement}>
-                                        <label>CVC</label>
-                                        <div className={styles.elementWrapper}><CardCvcElement /></div>
+                                    <div className={styles.elementRow}>
+                                        <div className={styles.stripeElement}>
+                                            <label>Expiry Date</label>
+                                            <div className={styles.elementWrapper}><CardExpiryElement /></div>
+                                        </div>
+                                        <div className={styles.stripeElement}>
+                                            <label>CVC</label>
+                                            <div className={styles.elementWrapper}><CardCvcElement /></div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
                         </section>
                     </div>
 
@@ -398,7 +391,6 @@ function CheckoutForm() {
                     <div className={styles.summaryContent}>
                         <div className={styles.stickySummary}>
                             <h3 className={styles.summaryTitle}>Order Summary</h3>
-
                             <div className={styles.cartItems}>
                                 {items.map((item, i) => (
                                     <div key={i} className={styles.summaryItem}>
@@ -412,20 +404,12 @@ function CheckoutForm() {
                             </div>
 
                             <div className={styles.couponCode}>
-                                <input
-                                    placeholder="Coupon Code"
-                                    value={couponCode}
-                                    onChange={(e) => setCouponCode(e.target.value)}
-                                    className={styles.couponInput}
-                                />
+                                <input placeholder="Coupon Code" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className={styles.couponInput} />
                                 <button type="button" onClick={handleApplyCoupon} className={styles.applyBtn}>Apply</button>
                             </div>
 
                             <div className={styles.calculation}>
-                                <div className={styles.calcRow}>
-                                    <span>Subtotal</span>
-                                    <span>AED {totalPrice.toFixed(2)}</span>
-                                </div>
+                                <div className={styles.calcRow}><span>Subtotal</span><span>AED {totalPrice.toFixed(2)}</span></div>
                                 {couponData && (
                                     <div className={`${styles.calcRow} ${styles.discount}`}>
                                         <span>Discount ({couponData.code})</span>
@@ -438,42 +422,22 @@ function CheckoutForm() {
                                         <span>-AED {calculateWTCoinsDiscount().toFixed(2)}</span>
                                     </div>
                                 )}
-                                <div className={styles.calcRow}>
-                                    <span>Shipping</span>
-                                    <span>{taxStats.shippingCharge > 0 ? `AED ${taxStats.shippingCharge.toFixed(2)}` : 'FREE'}</span>
-                                </div>
+                                <div className={styles.calcRow}><span>Shipping</span><span>{taxStats.shippingCharge > 0 ? `AED ${taxStats.shippingCharge.toFixed(2)}` : 'FREE'}</span></div>
                                 <div className={styles.calcRow}>
                                     <span>Tax ({taxStats.taxRate}%)</span>
                                     <span>AED {(((totalPrice - (couponData ? (couponData.discountType === 'fixed' ? couponData.discountAmount : totalPrice * (couponData.discountAmount / 100)) : 0) - calculateWTCoinsDiscount()) + taxStats.shippingCharge) * (taxStats.taxRate / 100)).toFixed(2)}</span>
                                 </div>
-                                <div className={styles.totalRow}>
-                                    <span>Total</span>
-                                    <span>AED {calculateFinalTotal().toFixed(2)}</span>
-                                </div>
+                                <div className={styles.totalRow}><span>Total</span><span>AED {calculateFinalTotal().toFixed(2)}</span></div>
                             </div>
 
                             <div className={styles.wtCoins}>
                                 <label className={styles.checkboxLabel}>
-                                    <input
-                                        type="checkbox"
-                                        checked={useWTCoins}
-                                        onChange={() => setUseWTCoins(!useWTCoins)}
-                                        disabled={!user || !wtCoinsBalance || wtCoinsBalance.balance === 0}
-                                    />
-                                    {user && wtCoinsBalance ? (
-                                        `Use WT Coins (Balance: ${wtCoinsBalance.balance} ≈ AED ${wtCoinsBalance.estimatedValue})`
-                                    ) : user ? (
-                                        'Use WT Coins (Loading...)'
-                                    ) : (
-                                        'Use WT Coins (Login required)'
-                                    )}
+                                    <input type="checkbox" checked={useWTCoins} onChange={() => setUseWTCoins(!useWTCoins)} disabled={!user || !wtCoinsBalance || wtCoinsBalance.balance === 0} />
+                                    {user && wtCoinsBalance ? `Use WT Coins (Balance: ${wtCoinsBalance.balance} ≈ AED ${wtCoinsBalance.estimatedValue})` : user ? 'Use WT Coins (Loading...)' : 'Use WT Coins (Login required)'}
                                 </label>
                             </div>
 
-                            <button
-                                disabled={isProcessing || !stripe}
-                                className={styles.payBtn}
-                            >
+                            <button disabled={isProcessing || !stripe} className={styles.payBtn}>
                                 {isProcessing ? 'Processing...' : `Pay AED ${calculateFinalTotal().toFixed(2)}`}
                             </button>
                         </div>
@@ -484,10 +448,28 @@ function CheckoutForm() {
     )
 }
 
+// ------------------------------------------------------------------
+// Outer wrapper — fetches saved cards, then mounts <Elements>
+// ------------------------------------------------------------------
 export default function CheckoutPage() {
+    const [savedCards, setSavedCards] = useState<SavedCard[]>([])
+    const [ready, setReady] = useState(false)
+
+    useEffect(() => {
+        fetch('/api/stripe/payment-methods')
+            .then(r => r.ok ? r.json() : { paymentMethods: [] })
+            .then(data => setSavedCards(data.paymentMethods ?? []))
+            .catch(() => setSavedCards([]))
+            .finally(() => setReady(true))
+    }, [])
+
+    if (!ready) {
+        return <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}><p>Loading payment options...</p></div>
+    }
+
     return (
         <Elements stripe={stripePromise}>
-            <CheckoutForm />
+            <CheckoutForm savedCards={savedCards} />
         </Elements>
     )
 }

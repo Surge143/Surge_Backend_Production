@@ -1,0 +1,136 @@
+ GET /admin/collections/web-orders/8 200 in 15859ms
+ GET /api/web-orders/8/cancel 200 in 8742ms
+ GET /admin/collections/web-orders/8 200 in 2055ms
+ ○ Compiling /api/webhooks/stripe ...
+ ✓ Compiled /api/webhooks/stripe in 28.8s (6338 modules)
+🔔 Stripe Webhook received: refund.created
+Refund Created: {
+  id: 're_3T2sZjGayg3cRhE21tW9YPFT',
+  object: 'refund',
+  amount: 28350,
+  balance_transaction: 'txn_3T2sZjGayg3cRhE21E606OnQ',
+  charge: 'ch_3T2sZjGayg3cRhE21ufLiT1L',
+  created: 1771591993,
+  currency: 'aed',
+  destination_details: {
+    card: {
+      reference_status: 'pending',
+      reference_type: 'acquirer_reference_number',
+      type: 'refund'
+    },
+    type: 'card'
+  },
+  metadata: {},
+  payment_intent: 'pi_3T2sZjGayg3cRhE21TI7cZC4',
+  reason: null,
+  receipt_number: null,
+  source_transfer_reversal: null,
+  status: 'succeeded',
+  transfer_reversal: null
+}
+🔔 Stripe Webhook received: refund.updated
+Unhandled event type: refund.updated
+🔔 Stripe Webhook received: charge.refund.updated
+Unhandled event type: charge.refund.updated
+🔔 Stripe Webhook received: charge.refunded
+Charge Refunded: {
+  id: 'ch_3T2sZjGayg3cRhE21ufLiT1L',
+  object: 'charge',
+  amount: 28350,
+  amount_captured: 28350,
+  amount_refunded: 28350,
+  application: null,
+  application_fee: null,
+  application_fee_amount: null,
+  balance_transaction: 'txn_3T2sZjGayg3cRhE21YcNnOH8',
+  billing_details: {
+    address: {
+      city: null,
+      country: null,
+      line1: null,
+      line2: null,
+      postal_code: null,
+      state: null
+    },
+    email: 'krishgupta577@gmail.com',
+    name: 'Krishna Gupta',
+    phone: '07879573109',
+    tax_id: null
+  },
+  calculated_statement_descriptor: 'Stripe',
+  captured: true,
+  created: 1771589571,
+  currency: 'aed',
+  customer: 'cus_TzgfFOqW2kAuki',
+  description: null,
+  destination: null,
+  dispute: null,
+  disputed: false,
+  failure_balance_transaction: null,
+  failure_code: null,
+  failure_message: null,
+  fraud_details: {},
+  livemode: false,
+  metadata: { order_type: 'store', db_order_id: '8' },
+  on_behalf_of: null,
+  order: null,
+  outcome: {
+    advice_code: null,
+    network_advice_code: null,
+    network_decline_code: null,
+    network_status: 'approved_by_network',
+    reason: null,
+    risk_level: 'normal',
+    risk_score: 10,
+    seller_message: 'Payment complete.',
+    type: 'authorized'
+  },
+  paid: true,
+  payment_intent: 'pi_3T2sZjGayg3cRhE21TI7cZC4',
+  payment_method: 'pm_1T2sZYGayg3cRhE2xhtMoiz4',
+  payment_method_details: {
+    card: {
+      amount_authorized: 28350,
+      authorization_code: '019984',
+      brand: 'visa',
+      checks: [Object],
+      country: 'US',
+      exp_month: 4,
+      exp_year: 2044,
+      extended_authorization: [Object],
+      fingerprint: 'r2V4VZFRjTONjNkD',
+      funding: 'credit',
+      incremental_authorization: [Object],
+      installments: null,
+      last4: '4242',
+      mandate: null,
+      multicapture: [Object],
+      network: 'visa',
+      network_token: [Object],
+      network_transaction_id: '114508652869070',
+      overcapture: [Object],
+      regulated_status: 'unregulated',
+      three_d_secure: null,
+      wallet: null
+    },
+    type: 'card'
+  },
+  radar_options: {},
+  receipt_email: 'hadesgupta@gmail.com',
+  receipt_number: null,
+  receipt_url: 'https://pay.stripe.com/receipts/payment/CAcaFwoVYWNjdF8xUkFPb1hHYXlnM2NSaEUyKLqy4cwGMgbpDPg9XF46LBYEizTc880lbgiTCYP1GB3VOoLDFXrToM5cK6W1Eo0_X9k_YaIUPJoUR1qV',
+  refunded: true,
+  review: null,
+  shipping: null,
+  source: null,
+  source_transfer: null,
+  statement_descriptor: null,
+  statement_descriptor_suffix: null,
+  status: 'succeeded',
+  transfer_data: null,
+  transfer_group: null
+}
+ POST /api/webhooks/stripe 200 in 43641ms
+ POST /api/webhooks/stripe 200 in 45643ms
+ POST /api/webhooks/stripe 200 in 45948ms
+ POST /api/webhooks/stripe 200 in 45947ms

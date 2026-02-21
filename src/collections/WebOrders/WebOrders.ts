@@ -1,5 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { awardWTCoins, convertPointsToAED } from "./hooks/wtCoinsUtils";
+import { refundHandler } from "./endpoints/refundHandler";
+import { linkGuestOrderToUser } from "./hooks/linkGuestToUser";
 
 export const WebOrders: CollectionConfig = {
     slug: 'web-orders',
@@ -7,6 +9,13 @@ export const WebOrders: CollectionConfig = {
         useAsTitle: 'id',
         group: 'Website',
     },
+    endpoints: [
+        {
+            path: '/:id/cancel',
+            method: 'get',
+            handler: refundHandler,
+        },
+    ],
     hooks: {
         beforeChange: [
             async ({ data, req, originalDoc, operation }) => {
@@ -47,7 +56,18 @@ export const WebOrders: CollectionConfig = {
                 }
                 return data
             }
-        ]
+        ],
+        afterChange: [
+            async ({ doc, previousDoc, req: { payload } }) => {
+                await linkGuestOrderToUser({
+                    payload,
+                    doc,
+                    previousDoc,
+                    collection: 'web-orders',
+                    paidStatus: 'completed',
+                });
+            }
+        ],
     },
     fields: [
         {
@@ -105,7 +125,16 @@ export const WebOrders: CollectionConfig = {
                                         { label: 'Subscription', value: 'subscription' },
                                         { label: 'One Time', value: 'one-time' },
                                     ],
-                                }
+                                },
+                                {
+                                    name: 'email',
+                                    label: 'Customer Email',
+                                    type: 'text',
+                                    admin: {
+                                        description: 'Stored at checkout for guest-to-user linking.',
+                                        readOnly: true,
+                                    },
+                                },
                             ],
                         },
                         {
@@ -260,6 +289,8 @@ export const WebOrders: CollectionConfig = {
                                     options: [
                                         { label: 'Pending', value: 'pending' },
                                         { label: 'Completed', value: 'completed' },
+                                        { label: 'Failed', value: 'failed' },
+                                        { label: 'Refund Initiated', value: 'refund-initiated' },
                                         { label: 'Refunded', value: 'refunded' },
                                     ],
                                 },
@@ -274,6 +305,7 @@ export const WebOrders: CollectionConfig = {
                                         { label: 'Placed', value: 'placed' },
                                         { label: 'Shipped', value: 'shipped' },
                                         { label: 'Delivered', value: 'delivered' },
+                                        { label: 'Cancelled', value: 'cancelled' },
                                     ],
                                 },
                             ],

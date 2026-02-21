@@ -219,6 +219,10 @@ export interface User {
   firstName?: string | null;
   lastName?: string | null;
   profileImage?: (number | null) | Media;
+  /**
+   * Automatically set when the user completes their first checkout.
+   */
+  stripeCustomerId?: string | null;
   addresses?:
     | {
         label?: string | null;
@@ -894,10 +898,14 @@ export interface AppWishlist {
  */
 export interface AppOrder {
   id: number;
-  user: number | User;
+  user?: (number | null) | User;
+  /**
+   * Stored at checkout for guest-to-user linking.
+   */
+  email?: string | null;
   orderAcceptance: 'pending' | 'accepted' | 'rejected';
-  appOrderStatus?: ('pending' | 'preparing' | 'pickup' | 'refunded' | 'pickedup') | null;
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  appOrderStatus?: ('pending' | 'preparing' | 'pickup' | 'pickedup' | 'cancelled') | null;
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refund-initiated' | 'refunded';
   shop: number | Shop;
   barista?: (number | null) | Admin;
   items: {
@@ -1054,6 +1062,10 @@ export interface WebOrder {
    */
   stripeOrderId?: string | null;
   origin: 'subscription' | 'one-time';
+  /**
+   * Stored at checkout for guest-to-user linking.
+   */
+  email?: string | null;
   items: {
     product: number | WebProduct;
     /**
@@ -1083,8 +1095,8 @@ export interface WebOrder {
     emirates?: ('abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah') | null;
     phoneNumber?: string | null;
   };
-  paymentStatus: 'pending' | 'completed' | 'refunded';
-  deliveryStatus?: ('placed' | 'shipped' | 'delivered') | null;
+  paymentStatus: 'pending' | 'completed' | 'failed' | 'refund-initiated' | 'refunded';
+  deliveryStatus?: ('placed' | 'shipped' | 'delivered' | 'cancelled') | null;
   couponCode?: (number | null) | Coupon;
   pointsUsed?: number | null;
   financials: {
@@ -1125,6 +1137,10 @@ export interface WebSubscription {
    */
   stripeSubscriptionID?: string | null;
   nextPaymentDate?: string | null;
+  /**
+   * Stored at checkout for guest-to-user linking.
+   */
+  email?: string | null;
   items: {
     product: number | WebProduct;
     /**
@@ -1157,7 +1173,7 @@ export interface WebSubscription {
     emirates?: ('abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah') | null;
     phoneNumber?: string | null;
   };
-  paymentStatus: 'pending' | 'completed' | 'refunded';
+  paymentStatus: 'pending' | 'completed' | 'failed';
   subsStatus?: ('active' | 'inactive' | 'cancelled') | null;
   pointsUsed?: number | null;
   financials: {
@@ -1641,6 +1657,7 @@ export interface UsersSelect<T extends boolean = true> {
   firstName?: T;
   lastName?: T;
   profileImage?: T;
+  stripeCustomerId?: T;
   addresses?:
     | T
     | {
@@ -1968,6 +1985,7 @@ export interface AppWishlistSelect<T extends boolean = true> {
  */
 export interface AppOrdersSelect<T extends boolean = true> {
   user?: T;
+  email?: T;
   orderAcceptance?: T;
   appOrderStatus?: T;
   paymentStatus?: T;
@@ -2150,6 +2168,7 @@ export interface WebOrdersSelect<T extends boolean = true> {
   deliveryOption?: T;
   stripeOrderId?: T;
   origin?: T;
+  email?: T;
   items?:
     | T
     | {
@@ -2223,6 +2242,7 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
   deliveryOption?: T;
   stripeSubscriptionID?: T;
   nextPaymentDate?: T;
+  email?: T;
   items?:
     | T
     | {

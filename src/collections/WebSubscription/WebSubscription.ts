@@ -1,10 +1,24 @@
 import type { CollectionConfig } from "payload";
+import { linkGuestOrderToUser } from "../WebOrders/hooks/linkGuestToUser";
 
 export const WebSubscription: CollectionConfig = {
     slug: 'web-subscription',
     admin: {
         useAsTitle: 'id',
         group: 'Website',
+    },
+    hooks: {
+        afterChange: [
+            async ({ doc, previousDoc, req: { payload } }) => {
+                await linkGuestOrderToUser({
+                    payload,
+                    doc,
+                    previousDoc,
+                    collection: 'web-subscription',
+                    paidStatus: 'completed',
+                });
+            }
+        ],
     },
     fields: [
         {
@@ -57,6 +71,15 @@ export const WebSubscription: CollectionConfig = {
                                 {
                                     name: 'nextPaymentDate',
                                     type: 'date',
+                                },
+                                {
+                                    name: 'email',
+                                    label: 'Customer Email',
+                                    type: 'text',
+                                    admin: {
+                                        description: 'Stored at checkout for guest-to-user linking.',
+                                        readOnly: true,
+                                    },
                                 },
                             ],
                         },
@@ -215,7 +238,7 @@ export const WebSubscription: CollectionConfig = {
                                     options: [
                                         { label: 'Pending', value: 'pending' },
                                         { label: 'Completed', value: 'completed' },
-                                        { label: 'Refunded', value: 'refunded' },
+                                        { label: 'Failed', value: 'failed' },
                                     ],
                                 },
                                 {

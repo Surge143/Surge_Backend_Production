@@ -2,6 +2,8 @@ import type { CollectionConfig } from "payload";
 import { beforeValidateHook } from "./hooks/beforeValidate";
 import { afterChangeHook } from "./hooks/afterChange";
 import { afterDeleteHook } from "./hooks/afterDelete";
+import { refundHandler } from "./endpoints/refundHandler";
+import { linkGuestOrderToUser } from "../WebOrders/hooks/linkGuestToUser";
 
 export const AppOrders: CollectionConfig = {
     slug: "app-orders",
@@ -14,10 +16,28 @@ export const AppOrders: CollectionConfig = {
         defaultColumns: ["name", "shop", "updatedAt"],
         group: 'App',
     },
+    endpoints: [
+        {
+            path: '/:id/cancel',
+            method: 'get',
+            handler: refundHandler,
+        },
+    ],
     hooks: {
         beforeValidate: [beforeValidateHook],
         beforeChange: [],
-        afterChange: [afterChangeHook],
+        afterChange: [
+            afterChangeHook,
+            async ({ doc, previousDoc, req: { payload } }) => {
+                await linkGuestOrderToUser({
+                    payload,
+                    doc,
+                    previousDoc,
+                    collection: 'app-orders',
+                    paidStatus: 'paid',
+                });
+            }
+        ],
         afterDelete: [afterDeleteHook]
     },
     access: {
@@ -37,7 +57,16 @@ export const AppOrders: CollectionConfig = {
                             name: 'user',
                             type: 'relationship',
                             relationTo: 'users',
-                            required: true,
+                            required: false,
+                        },
+                        {
+                            name: 'email',
+                            label: 'Customer Email',
+                            type: 'text',
+                            admin: {
+                                description: 'Stored at checkout for guest-to-user linking.',
+                                readOnly: true,
+                            },
                         },
                         {
                             type: 'row',
@@ -65,8 +94,8 @@ export const AppOrders: CollectionConfig = {
                                 { label: 'Pending', value: 'pending' },
                                 { label: 'Preparing', value: 'preparing' },
                                 { label: 'Pickup', value: 'pickup' },
-                                { label: 'Refunded', value: 'refunded' },
                                 { label: 'Order Pickedup', value: 'pickedup' },
+                                { label: 'Cancelled', value: 'cancelled' },
                             ],
                             admin: {
                                 condition: (data) => data?.orderAcceptance === 'accepted'
@@ -81,6 +110,7 @@ export const AppOrders: CollectionConfig = {
                                 { label: 'Pending', value: 'pending' },
                                 { label: 'Paid', value: 'paid' },
                                 { label: 'Failed', value: 'failed' },
+                                { label: 'Refund Initiated', value: 'refund-initiated' },
                                 { label: 'Refunded', value: 'refunded' },
                             ],
                         },

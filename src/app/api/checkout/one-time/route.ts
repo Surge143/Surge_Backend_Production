@@ -217,6 +217,7 @@ export async function POST(req: NextRequest) {
                 data: {
                     customerType: user ? 'user' : 'guest',
                     user: user?.id,
+                    email: (user as any)?.email || email,
                     deliveryOption,
                     origin: 'one-time',
                     items: orderItems,
@@ -242,23 +243,47 @@ export async function POST(req: NextRequest) {
                     return NextResponse.json({ error: 'Email is required for checkout' }, { status: 400 });
                 }
 
-                // Get or Create Customer
-                const existingCustomers = await stripe.customers.list({ email: customerEmail, limit: 1 });
+                // Get or Create Stripe Customer
+                // Priority: 1) stripeCustomerId saved on user, 2) search by email, 3) create new
                 let stripeCustomerId: string;
+                const savedStripeId = user ? (user as any).stripeCustomerId : null;
 
-                if (existingCustomers.data.length > 0) {
-                    stripeCustomerId = existingCustomers.data[0].id;
+                if (savedStripeId) {
+                    // Use the already-linked Stripe customer — fastest path, no duplicates
+                    stripeCustomerId = savedStripeId;
                     await stripe.paymentMethods.attach(paymentMethodId, { customer: stripeCustomerId });
                     await stripe.customers.update(stripeCustomerId, {
                         invoice_settings: { default_payment_method: paymentMethodId },
                     });
                 } else {
-                    const customer = await stripe.customers.create({
-                        email: customerEmail,
-                        payment_method: paymentMethodId,
-                        invoice_settings: { default_payment_method: paymentMethodId },
+                    // Fallback: search by email (guest or first-time user)
+                    const existingCustomers = await stripe.customers.list({ email: customerEmail, limit: 1 });
+
+                    if (existingCustomers.data.length > 0) {
+                        stripeCustomerId = existingCustomers.data[0].id;
+                        await stripe.paymentMethods.attach(paymentMethodId, { customer: stripeCustomerId });
+                        await stripe.customers.update(stripeCustomerId, {
+                            invoice_settings: { default_payment_method: paymentMethodId },
+                        });
+                    } else {
+                        const customer = await stripe.customers.create({
+                            email: customerEmail,
+                            payment_method: paymentMethodId,
+                            invoice_settings: { default_payment_method: paymentMethodId },
+                        });
+                        stripeCustomerId = customer.id;
+                    }
+                }
+
+                // Save Stripe customer ID to user record (if authenticated)
+                if (user) {
+                    await payload.update({
+                        collection: 'users',
+                        id: user.id,
+                        data: { stripeCustomerId },
+                        overrideAccess: true,
+                        depth: 0,
                     });
-                    stripeCustomerId = customer.id;
                 }
 
                 const paymentIntent = await stripe.paymentIntents.create({
@@ -266,6 +291,7 @@ export async function POST(req: NextRequest) {
                     currency: 'aed',
                     customer: stripeCustomerId,
                     payment_method: paymentMethodId,
+                    setup_future_usage: 'off_session',
                     off_session: false,
                     confirm: true,
                     metadata: {
@@ -280,6 +306,7 @@ export async function POST(req: NextRequest) {
                     message: "Order created successfully",
                     clientSecret: paymentIntent.client_secret,
                     dbOrderId: orderDoc.id,
+                    stripeCustomerId,
                 }, { status: 200 });
 
             } catch (stripeError: any) {

@@ -36,7 +36,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const loadCart = async () => {
         try {
-            const response = await fetch('/api/cart')
+            const response = await fetch('/api/website/cart')
             if (response.ok) {
                 const data = await response.json()
                 setItems(data.items || [])
@@ -50,7 +50,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const addItem = async (item: Partial<CartItem> & { product: string; quantity?: number }) => {
         try {
-            const response = await fetch('/api/cart', {
+            const response = await fetch('/api/website/cart', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(item),
@@ -67,7 +67,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const removeItem = async (productId: string, vId?: string) => {
         try {
-            const response = await fetch('/api/cart', {
+            const response = await fetch('/api/website/cart', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ product: productId, vId }),
@@ -89,7 +89,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
 
         try {
-            const response = await fetch('/api/cart', {
+            const response = await fetch('/api/website/cart', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ product: productId, vId, quantity, action }),
@@ -106,7 +106,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const clearCart = async () => {
         try {
-            const response = await fetch('/api/cart/clear', {
+            const response = await fetch('/api/website/cart/clear', {
                 method: 'POST',
             })
 

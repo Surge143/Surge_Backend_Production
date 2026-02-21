@@ -1,10 +1,14 @@
 import type { CollectionConfig } from 'payload'
+import { afterUserCreated } from './hooks/afterUserCreated';
 
 export const Users: CollectionConfig = {
     slug: 'users',
 
     auth: true,
 
+    hooks: {
+        afterChange: [afterUserCreated],
+    },
     access: {
         create: ({ req, id }) => {
             if (req.user?.role === 'super-admin') return true
@@ -73,6 +77,15 @@ export const Users: CollectionConfig = {
             label: "Profile Image",
             type: "upload",
             relationTo: "media",
+        },
+        {
+            name: 'stripeCustomerId',
+            label: 'Stripe Customer ID',
+            type: 'text',
+            admin: {
+                readOnly: true,
+                description: 'Automatically set when the user completes their first checkout.',
+            },
         },
         {
             name: "addresses",
@@ -146,5 +159,5 @@ export const Users: CollectionConfig = {
             ],
         }
     ],
-    lockDocuments: false,   
+    lockDocuments: false,
 }

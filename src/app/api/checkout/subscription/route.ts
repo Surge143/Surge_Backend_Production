@@ -212,6 +212,7 @@ export async function POST(req: NextRequest) {
                     data: {
                         customerType: user ? 'user' : 'guest',
                         user: user?.id,
+                        email: (user as any)?.email || email,
                         deliveryOption: deliveryOption,
                         items: [
                             {
@@ -250,32 +251,45 @@ export async function POST(req: NextRequest) {
 
                 try {
 
-                    const existingCustomers = await stripe.customers.list({
-                        email: email,
-                        limit: 1,
-                    });
-
+                    // Get or Create Stripe Customer
+                    // Priority: 1) stripeCustomerId saved on user, 2) search by email, 3) create new
                     let stripeCustomerId: any;
+                    const savedStripeId = user ? (user as any).stripeCustomerId : null;
 
-                    if (existingCustomers.data.length > 0) {
-                        // Customer exists - get their ID
-                        stripeCustomerId = existingCustomers.data[0].id;
-
-                        await stripe.paymentMethods.attach(paymentMethodId, {
-                            customer: stripeCustomerId,
-                        });
-
+                    if (savedStripeId) {
+                        stripeCustomerId = savedStripeId;
+                        await stripe.paymentMethods.attach(paymentMethodId, { customer: stripeCustomerId });
                         await stripe.customers.update(stripeCustomerId, {
                             invoice_settings: { default_payment_method: paymentMethodId },
                         });
                     } else {
-                        // Create new customer
-                        const customer = await stripe.customers.create({
-                            email: email,
-                            payment_method: paymentMethodId,
-                            invoice_settings: { default_payment_method: paymentMethodId },
+                        const existingCustomers = await stripe.customers.list({ email, limit: 1 });
+
+                        if (existingCustomers.data.length > 0) {
+                            stripeCustomerId = existingCustomers.data[0].id;
+                            await stripe.paymentMethods.attach(paymentMethodId, { customer: stripeCustomerId });
+                            await stripe.customers.update(stripeCustomerId, {
+                                invoice_settings: { default_payment_method: paymentMethodId },
+                            });
+                        } else {
+                            const customer = await stripe.customers.create({
+                                email,
+                                payment_method: paymentMethodId,
+                                invoice_settings: { default_payment_method: paymentMethodId },
+                            });
+                            stripeCustomerId = customer.id;
+                        }
+                    }
+
+                    // Save Stripe customer ID to user record (if authenticated)
+                    if (user) {
+                        await payload.update({
+                            collection: 'users',
+                            id: user.id,
+                            data: { stripeCustomerId },
+                            overrideAccess: true,
+                            depth: 0,
                         });
-                        stripeCustomerId = customer.id;
                     }
 
                     // CREATE STRIPE SUBSCRIPTION

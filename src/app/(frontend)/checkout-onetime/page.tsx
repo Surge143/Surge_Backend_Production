@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import {
     Elements,
@@ -14,12 +14,23 @@ import styles from "./checkout-test.module.css";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 
-function CheckoutForm() {
+interface SavedCard {
+    id: string;
+    brand: string;
+    last4: string;
+    expMonth: number | undefined;
+    expYear: number | undefined;
+}
+
+function CheckoutForm({ savedCards }: { savedCards: SavedCard[] }) {
     const stripe = useStripe();
     const elements = useElements();
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>(
+        savedCards.length > 0 ? savedCards[0].id : 'new'
+    );
 
     // USER PROVIDED DATA
     const [email, setEmail] = useState("testuser@example.com");
@@ -60,29 +71,34 @@ function CheckoutForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!stripe || !elements) return;
+        if (!stripe) return;
 
         setIsProcessing(true);
         setMessage(null);
 
         try {
-            const cardElement = elements.getElement(CardNumberElement);
-            if (!cardElement) throw new Error("Card element not found");
+            let paymentMethodId: string;
 
-            const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
-                type: "card",
-                card: cardElement,
-                billing_details: {
-                    email,
-                    name: billingAddress.addressFirstName + " " + billingAddress.addressLastName,
-                    address: {
-                        city: billingAddress.city,
-                        country: "AE", // Stripe expects ISO codes
+            if (selectedPaymentMethod !== 'new') {
+                paymentMethodId = selectedPaymentMethod;
+            } else {
+                if (!elements) throw new Error('Elements not loaded');
+                const cardElement = elements.getElement(CardNumberElement);
+                if (!cardElement) throw new Error("Card element not found");
+
+                const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
+                    type: "card",
+                    card: cardElement,
+                    billing_details: {
+                        email,
+                        name: billingAddress.addressFirstName + " " + billingAddress.addressLastName,
+                        address: { city: billingAddress.city, country: "AE" },
                     },
-                },
-            });
+                });
 
-            if (pmError) throw new Error(pmError.message);
+                if (pmError) throw new Error(pmError.message);
+                paymentMethodId = paymentMethod!.id;
+            }
 
             const response = await fetch("/api/checkout/one-time", {
                 method: "POST",
@@ -90,7 +106,7 @@ function CheckoutForm() {
                 body: JSON.stringify({
                     email,
                     deliveryOption,
-                    paymentMethodId: paymentMethod.id,
+                    paymentMethodId,
                     useWTCoins,
                     shippingAddressAsBillingAddress: shippingAsBilling,
                     shippingAddress,
@@ -201,13 +217,42 @@ function CheckoutForm() {
                         </div>
 
                         <div className={styles.SectionTitle} style={{ marginTop: '30px' }}>Payment Method</div>
-                        <div className={styles.StripeElementContainer}>
-                            <div className={styles.StripeElement}><CardNumberElement options={{ style: { base: { fontSize: '16px' } } }} /></div>
-                            <div className={styles.Grid}>
-                                <div className={styles.StripeElement}><CardExpiryElement options={{ style: { base: { fontSize: '16px' } } }} /></div>
-                                <div className={styles.StripeElement}><CardCvcElement options={{ style: { base: { fontSize: '16px' } } }} /></div>
+
+                        {/* Saved card picker */}
+                        {savedCards.length > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+                                {savedCards.map(card => (
+                                    <label key={card.id} style={{
+                                        display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                                        borderRadius: 8, cursor: 'pointer', border: `2px solid ${selectedPaymentMethod === card.id ? '#4f46e5' : '#e5e7eb'}`,
+                                        background: selectedPaymentMethod === card.id ? '#eef2ff' : '#fff',
+                                    }}>
+                                        <input type="radio" name="pm" value={card.id} checked={selectedPaymentMethod === card.id} onChange={() => setSelectedPaymentMethod(card.id)} />
+                                        <span>💳 {card.brand.charAt(0).toUpperCase() + card.brand.slice(1)}</span>
+                                        <span style={{ color: '#6b7280' }}>•••• {card.last4} &nbsp; {card.expMonth?.toString().padStart(2, '0')}/{card.expYear}</span>
+                                    </label>
+                                ))}
+                                <label style={{
+                                    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                                    borderRadius: 8, cursor: 'pointer', border: `2px solid ${selectedPaymentMethod === 'new' ? '#4f46e5' : '#e5e7eb'}`,
+                                    background: selectedPaymentMethod === 'new' ? '#eef2ff' : '#fff',
+                                }}>
+                                    <input type="radio" name="pm" value="new" checked={selectedPaymentMethod === 'new'} onChange={() => setSelectedPaymentMethod('new')} />
+                                    <span>➕ Use a new card</span>
+                                </label>
                             </div>
-                        </div>
+                        )}
+
+                        {/* New card elements */}
+                        {selectedPaymentMethod === 'new' && (
+                            <div className={styles.StripeElementContainer}>
+                                <div className={styles.StripeElement}><CardNumberElement options={{ style: { base: { fontSize: '16px' } } }} /></div>
+                                <div className={styles.Grid}>
+                                    <div className={styles.StripeElement}><CardExpiryElement options={{ style: { base: { fontSize: '16px' } } }} /></div>
+                                    <div className={styles.StripeElement}><CardCvcElement options={{ style: { base: { fontSize: '16px' } } }} /></div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className={styles.SectionTitle} style={{ marginTop: '30px' }}>Options</div>
                         <label className={styles.CheckboxRow}>
@@ -282,9 +327,22 @@ function CheckoutForm() {
 }
 
 export default function CheckoutTestPage() {
+    const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+    const [ready, setReady] = useState(false);
+
+    useEffect(() => {
+        fetch('/api/stripe/payment-methods')
+            .then(r => r.ok ? r.json() : { paymentMethods: [] })
+            .then(data => setSavedCards(data.paymentMethods ?? []))
+            .catch(() => setSavedCards([]))
+            .finally(() => setReady(true));
+    }, []);
+
+    if (!ready) return <div style={{ padding: '2rem' }}>Loading payment options...</div>;
+
     return (
         <Elements stripe={stripePromise}>
-            <CheckoutForm />
+            <CheckoutForm savedCards={savedCards} />
         </Elements>
     );
 }
