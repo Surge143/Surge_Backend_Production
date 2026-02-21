@@ -1,13 +1,42 @@
 import type { CollectionConfig } from 'payload'
 import { afterUserCreated } from './hooks/afterUserCreated';
+import { beforeUserDelete } from './hooks/beforeUserDelete';
+import { changeEmailOtpApp } from './endpoints/changeEmailOtpApp';
+import { changeEmailOtpWeb } from './endpoints/changeEmailOtpWeb';
+import { verifyChangeEmailApp } from './endpoints/verifyChangeEmailApp';
+import { verifyChangeEmailWeb } from './endpoints/verifyChangeEmailWeb';
 
 export const Users: CollectionConfig = {
     slug: 'users',
 
     auth: true,
 
+    endpoints: [
+        {
+            path: '/app-change-email',
+            method: 'post',
+            handler: changeEmailOtpApp,
+        },
+        {
+            path: '/web-change-email',
+            method: 'post',
+            handler: changeEmailOtpWeb,
+        },
+        {
+            path: '/app-verify-change-email',
+            method: 'post',
+            handler: verifyChangeEmailApp,
+        },
+        {
+            path: '/web-verify-change-email',
+            method: 'post',
+            handler: verifyChangeEmailWeb,
+        }
+    ],
+
     hooks: {
         afterChange: [afterUserCreated],
+        beforeDelete: [beforeUserDelete],
     },
     access: {
         create: ({ req, id }) => {

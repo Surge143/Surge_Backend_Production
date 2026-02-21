@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
             billingAddress,
             deliveryOption,
             shippingAddressAsBillingAddress,
-            paymentMethodId,
             email,
             product,
             useWTCoins,
@@ -38,7 +37,7 @@ export async function POST(req: NextRequest) {
             billingAddress.phoneNumber = (billingAddress as any).phone
         }
 
-        if (!deliveryOption || !paymentMethodId || !product) {
+        if (!deliveryOption || !product) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
@@ -258,24 +257,14 @@ export async function POST(req: NextRequest) {
 
                     if (savedStripeId) {
                         stripeCustomerId = savedStripeId;
-                        await stripe.paymentMethods.attach(paymentMethodId, { customer: stripeCustomerId });
-                        await stripe.customers.update(stripeCustomerId, {
-                            invoice_settings: { default_payment_method: paymentMethodId },
-                        });
                     } else {
                         const existingCustomers = await stripe.customers.list({ email, limit: 1 });
 
                         if (existingCustomers.data.length > 0) {
                             stripeCustomerId = existingCustomers.data[0].id;
-                            await stripe.paymentMethods.attach(paymentMethodId, { customer: stripeCustomerId });
-                            await stripe.customers.update(stripeCustomerId, {
-                                invoice_settings: { default_payment_method: paymentMethodId },
-                            });
                         } else {
                             const customer = await stripe.customers.create({
                                 email,
-                                payment_method: paymentMethodId,
-                                invoice_settings: { default_payment_method: paymentMethodId },
                             });
                             stripeCustomerId = customer.id;
                         }

@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
             billingAddress,
             deliveryOption,
             shippingAddressAsBillingAddress,
-            paymentMethodId,
             email,
             products, // Expect array of { productId, variantId, quantity }
             useWTCoins,
@@ -39,7 +38,7 @@ export async function POST(req: NextRequest) {
             billingAddress.phoneNumber = (billingAddress as any).phone
         }
 
-        if (!deliveryOption || !paymentMethodId) {
+        if (!deliveryOption) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
@@ -251,25 +250,15 @@ export async function POST(req: NextRequest) {
                 if (savedStripeId) {
                     // Use the already-linked Stripe customer — fastest path, no duplicates
                     stripeCustomerId = savedStripeId;
-                    await stripe.paymentMethods.attach(paymentMethodId, { customer: stripeCustomerId });
-                    await stripe.customers.update(stripeCustomerId, {
-                        invoice_settings: { default_payment_method: paymentMethodId },
-                    });
                 } else {
                     // Fallback: search by email (guest or first-time user)
                     const existingCustomers = await stripe.customers.list({ email: customerEmail, limit: 1 });
 
                     if (existingCustomers.data.length > 0) {
                         stripeCustomerId = existingCustomers.data[0].id;
-                        await stripe.paymentMethods.attach(paymentMethodId, { customer: stripeCustomerId });
-                        await stripe.customers.update(stripeCustomerId, {
-                            invoice_settings: { default_payment_method: paymentMethodId },
-                        });
                     } else {
                         const customer = await stripe.customers.create({
                             email: customerEmail,
-                            payment_method: paymentMethodId,
-                            invoice_settings: { default_payment_method: paymentMethodId },
                         });
                         stripeCustomerId = customer.id;
                     }
@@ -290,15 +279,12 @@ export async function POST(req: NextRequest) {
                     amount: Math.round(finalTotal * 100),
                     currency: 'aed',
                     customer: stripeCustomerId,
-                    payment_method: paymentMethodId,
-                    setup_future_usage: 'off_session',
-                    off_session: false,
-                    confirm: true,
+                    // If user is logged in, enable saving for future use
+                    setup_future_usage: user ? 'off_session' : undefined,
                     metadata: {
                         db_order_id: orderDoc.id,
                         order_type: 'store',
                     },
-                    return_url: `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/checkout/success?orderId=${orderDoc.id}`,
                 });
 
                 return NextResponse.json({

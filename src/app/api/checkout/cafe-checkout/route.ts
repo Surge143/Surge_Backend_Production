@@ -115,7 +115,7 @@ export const POST = async (req: NextRequest) => {
             });
         }
 
-        if (!orderType || !shopId || !paymentMethodId || !menuItems || menuItems.length === 0) {
+        if (!orderType || !shopId || !menuItems || menuItems.length === 0) {
             return NextResponse.json({ error: 'Missing required fields or empty menu items' }, { status: 400 })
         }
 
@@ -316,31 +316,20 @@ export const POST = async (req: NextRequest) => {
             }
         }
 
-        // --- STRIPE ---
-        // Priority: 1) stripeCustomerId saved on user, 2) search by email, 3) create new
+        // --- STRIPE CUSTOMER ---
         let stripeCustomerId: string;
         const savedStripeId = (user as any).stripeCustomerId;
 
         if (savedStripeId) {
             stripeCustomerId = savedStripeId;
-            await stripe.paymentMethods.attach(paymentMethodId, { customer: stripeCustomerId });
-            await stripe.customers.update(stripeCustomerId, {
-                invoice_settings: { default_payment_method: paymentMethodId },
-            });
         } else {
             const existingCustomers = await stripe.customers.list({ email: user.email, limit: 1 });
-
             if (existingCustomers.data.length > 0) {
                 stripeCustomerId = existingCustomers.data[0].id;
-                await stripe.paymentMethods.attach(paymentMethodId, { customer: stripeCustomerId });
-                await stripe.customers.update(stripeCustomerId, {
-                    invoice_settings: { default_payment_method: paymentMethodId },
-                });
             } else {
                 const customer = await stripe.customers.create({
                     email: user.email,
-                    payment_method: paymentMethodId,
-                    invoice_settings: { default_payment_method: paymentMethodId },
+                    name: `${(user as any).firstName || ''} ${(user as any).lastName || ''}`.trim(),
                 });
                 stripeCustomerId = customer.id;
             }
@@ -389,20 +378,16 @@ export const POST = async (req: NextRequest) => {
             select: { id: true },
         });
 
-        // Create Payment Intent
+        // Create Payment Intent (Deferred Flow)
         const paymentIntent = await stripe.paymentIntents.create({
             amount: Math.round(finalTotal * 100),
             currency: 'aed',
             customer: stripeCustomerId,
-            payment_method: paymentMethodId,
             setup_future_usage: 'off_session',
-            off_session: false,
-            confirm: true,
             metadata: {
                 db_order_id: orderDoc.id,
                 order_type: 'cafe',
             },
-            return_url: `${process.env.PAYLOAD_PUBLIC_SERVER_URL}/checkout/success?orderId=${orderDoc.id}`,
         });
 
         // Update order with stripe info

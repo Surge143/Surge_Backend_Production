@@ -7,9 +7,7 @@ import {
     Elements,
     useStripe,
     useElements,
-    CardNumberElement,
-    CardExpiryElement,
-    CardCvcElement,
+    PaymentElement,
 } from '@stripe/react-stripe-js'
 import { useCart } from '../components/CartContext'
 import styles from './checkout.module.css'
@@ -17,24 +15,239 @@ import styles from './checkout.module.css'
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 // ------------------------------------------------------------------
-// Saved card type
+// Inner form — renders the actual UI and handles payment confirmation
 // ------------------------------------------------------------------
-interface SavedCard {
-    id: string
-    brand: string
-    last4: string
-    expMonth: number | undefined
-    expYear: number | undefined
-}
-
-// ------------------------------------------------------------------
-// Inner form — rendered inside <Elements>
-// ------------------------------------------------------------------
-function CheckoutForm({ savedCards }: { savedCards: SavedCard[] }) {
+function CheckoutFormUI({
+    isProcessing,
+    setIsProcessing,
+    user,
+    email,
+    setEmail,
+    useWTCoins,
+    setUseWTCoins,
+    wtCoinsBalance,
+    deliveryOption,
+    setDeliveryOption,
+    shippingAsBilling,
+    setShippingAsBilling,
+    couponCode,
+    setCouponCode,
+    couponData,
+    handleApplyCoupon,
+    calculateWTCoinsDiscount,
+    calculateFinalTotal,
+    taxStats,
+    shippingAddress,
+    setShippingAddress,
+    billingAddress,
+    setBillingAddress,
+}: any) {
     const stripe = useStripe()
     const elements = useElements()
     const router = useRouter()
-    const { items, totalPrice, clearCart } = useCart()
+    const { items, clearCart, totalPrice } = useCart()
+
+    const handlePayment = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!stripe || !elements || items.length === 0) return
+
+        setIsProcessing(true)
+
+        try {
+            // 1. Trigger form validation via Stripe Elements
+            const { error: submitError } = await elements.submit()
+            if (submitError) throw new Error(submitError.message)
+
+            // 2. Create Order and PaymentIntent on our server
+            const checkoutBody = {
+                email,
+                deliveryOption,
+                useWTCoins,
+                appliedCouponCode: couponData?.code,
+                shippingAddressAsBillingAddress: shippingAsBilling,
+                products: items.map(item => ({
+                    productId: item.product,
+                    variantId: item.vId, // CartItem uses vId
+                    quantity: item.quantity,
+                })),
+                shippingAddress,
+                billingAddress: shippingAsBilling ? shippingAddress : billingAddress,
+            }
+
+            const response = await fetch('/api/checkout/one-time', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(checkoutBody),
+            })
+
+            const data = await response.json()
+            if (!response.ok) throw new Error(data.error || 'Checkout failed')
+
+            const { clientSecret, dbOrderId } = data
+
+            // 3. Confirm the payment with Stripe
+            // This will handle 3DS, saved cards, and redirect to return_url
+            const { error: confirmError } = await stripe.confirmPayment({
+                elements,
+                clientSecret,
+                confirmParams: {
+                    return_url: `${window.location.origin}/checkout/success?orderId=${dbOrderId}`,
+                },
+            })
+
+            // Clear Cart locally if successful (though redirect usually happens)
+            if (!confirmError) {
+                clearCart()
+            } else {
+                throw new Error(confirmError.message)
+            }
+        } catch (err: any) {
+            alert(err.message)
+            setIsProcessing(false)
+        }
+    }
+
+    return (
+        <form onSubmit={handlePayment} className={styles.checkoutGrid}>
+            {/* Left: Info */}
+            <div className={styles.infoContent}>
+                <h1 className={styles.pageTitle}>Checkout</h1>
+
+                <section className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Contact Information</h2>
+                    <div className={styles.formGrid}>
+                        <div className={styles.inputGroup}>
+                            <label>Email Address</label>
+                            <input
+                                type="email"
+                                placeholder="your@email.com"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className={styles.input}
+                            />
+                        </div>
+                        <div className={styles.inputGroup}>
+                            <label>First Name</label>
+                            <input placeholder="First Name" required value={shippingAddress.addressFirstName}
+                                onChange={(e) => setShippingAddress((prev: any) => ({ ...prev, addressFirstName: e.target.value }))}
+                                className={styles.input} />
+                        </div>
+                        <div className={styles.inputGroup}>
+                            <label>Last Name</label>
+                            <input placeholder="Last Name" required value={shippingAddress.addressLastName}
+                                onChange={(e) => setShippingAddress((prev: any) => ({ ...prev, addressLastName: e.target.value }))}
+                                className={styles.input} />
+                        </div>
+                        <div className={styles.inputGroup}>
+                            <label>Phone Number</label>
+                            <input placeholder="Phone Number" required value={shippingAddress.phoneNumber}
+                                onChange={(e) => setShippingAddress((prev: any) => ({ ...prev, phoneNumber: e.target.value }))}
+                                className={styles.input} />
+                        </div>
+                    </div>
+                </section>
+
+                <section className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Delivery Method</h2>
+                    <div className={styles.deliveryToggle}>
+                        <button type="button" className={`${styles.toggleBtn} ${deliveryOption === 'delivery' ? styles.active : ''}`} onClick={() => setDeliveryOption('delivery')}>Home Delivery</button>
+                        <button type="button" className={`${styles.toggleBtn} ${deliveryOption === 'pickup' ? styles.active : ''}`} onClick={() => setDeliveryOption('pickup')}>Store Pickup</button>
+                    </div>
+                </section>
+
+                {deliveryOption === 'delivery' && (
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>Shipping Address</h2>
+                        <div className={styles.formGrid}>
+                            <input placeholder="Address Line 1" required value={shippingAddress.addressLine1} onChange={(e) => setShippingAddress((prev: any) => ({ ...prev, addressLine1: e.target.value }))} className={`${styles.input} span-2`} />
+                            <input placeholder="Address Line 2 (Optional)" value={shippingAddress.addressLine2} onChange={(e) => setShippingAddress((prev: any) => ({ ...prev, addressLine2: e.target.value }))} className={`${styles.input} span-2`} />
+                            <input placeholder="City" required value={shippingAddress.city} onChange={(e) => setShippingAddress((prev: any) => ({ ...prev, city: e.target.value }))} className={styles.input} />
+                            <select value={shippingAddress.emirates} onChange={(e) => setShippingAddress((prev: any) => ({ ...prev, emirates: e.target.value }))} className={styles.input}>
+                                <option value="abu_dhabi">Abu Dhabi</option>
+                                <option value="dubai">Dubai</option>
+                                <option value="sharjah">Sharjah</option>
+                                <option value="ajman">Ajman</option>
+                                <option value="umm_al_quwain">Umm Al Quwain</option>
+                                <option value="ras_al_khaimah">Ras Al Khaimah</option>
+                                <option value="fujairah">Fujairah</option>
+                            </select>
+                        </div>
+                    </section>
+                )}
+
+                <section className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Payment Details</h2>
+                    <div className={styles.paymentBox}>
+                        <PaymentElement />
+                    </div>
+                </section>
+            </div>
+
+            {/* Right: Summary */}
+            <div className={styles.summaryContent}>
+                <div className={styles.stickySummary}>
+                    <h3 className={styles.summaryTitle}>Order Summary</h3>
+                    <div className={styles.cartItems}>
+                        {items.map((item, i) => (
+                            <div key={i} className={styles.summaryItem}>
+                                <div className={styles.siDetails}>
+                                    <span className={styles.siName}>{item.name}</span>
+                                    <span className={styles.siVariant}>{item.variantName} x {item.quantity}</span>
+                                </div>
+                                <span className={styles.siPrice}>AED {(item.price * item.quantity).toFixed(2)}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className={styles.couponCode}>
+                        <input placeholder="Coupon Code" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className={styles.couponInput} />
+                        <button type="button" onClick={handleApplyCoupon} className={styles.applyBtn}>Apply</button>
+                    </div>
+
+                    <div className={styles.calculation}>
+                        <div className={styles.calcRow}><span>Subtotal</span><span>AED {totalPrice.toFixed(2)}</span></div>
+                        {couponData && (
+                            <div className={`${styles.calcRow} ${styles.discount}`}>
+                                <span>Discount ({couponData.code})</span>
+                                <span>-AED {(couponData.discountType === 'fixed' ? couponData.discountAmount : totalPrice * (couponData.discountAmount / 100)).toFixed(2)}</span>
+                            </div>
+                        )}
+                        {useWTCoins && wtCoinsBalance && calculateWTCoinsDiscount() > 0 && (
+                            <div className={`${styles.calcRow} ${styles.discount}`}>
+                                <span>WT Coins Discount</span>
+                                <span>-AED {calculateWTCoinsDiscount().toFixed(2)}</span>
+                            </div>
+                        )}
+                        <div className={styles.calcRow}><span>Shipping</span><span>{taxStats.shippingCharge > 0 ? `AED ${taxStats.shippingCharge.toFixed(2)}` : 'FREE'}</span></div>
+                        <div className={styles.calcRow}>
+                            <span>Tax ({taxStats.taxRate}%)</span>
+                            <span>AED {(((totalPrice - (couponData ? (couponData.discountType === 'fixed' ? couponData.discountAmount : totalPrice * (couponData.discountAmount / 100)) : 0) - calculateWTCoinsDiscount()) + taxStats.shippingCharge) * (taxStats.taxRate / 100)).toFixed(2)}</span>
+                        </div>
+                        <div className={styles.totalRow}><span>Total</span><span>AED {calculateFinalTotal().toFixed(2)}</span></div>
+                    </div>
+
+                    <div className={styles.wtCoins}>
+                        <label className={styles.checkboxLabel}>
+                            <input type="checkbox" checked={useWTCoins} onChange={() => setUseWTCoins(!useWTCoins)} disabled={!user || !wtCoinsBalance || wtCoinsBalance.balance === 0} />
+                            {user && wtCoinsBalance ? `Use WT Coins (Balance: ${wtCoinsBalance.balance} ≈ AED ${wtCoinsBalance.estimatedValue})` : user ? 'Use WT Coins (Loading...)' : 'Use WT Coins (Login required)'}
+                        </label>
+                    </div>
+
+                    <button disabled={isProcessing || !stripe} className={styles.payBtn}>
+                        {isProcessing ? 'Processing...' : `Pay AED ${calculateFinalTotal().toFixed(2)}`}
+                    </button>
+                </div>
+            </div>
+        </form>
+    )
+}
+
+// ------------------------------------------------------------------
+// Main Checkout Form — manages state and wraps UI with Elements
+// ------------------------------------------------------------------
+function CheckoutForm() {
+    const { items, totalPrice } = useCart()
 
     const [isProcessing, setIsProcessing] = useState(false)
     const [user, setUser] = useState<any>(null)
@@ -46,11 +259,6 @@ function CheckoutForm({ savedCards }: { savedCards: SavedCard[] }) {
     const [couponCode, setCouponCode] = useState('')
     const [couponData, setCouponData] = useState<any>(null)
     const [taxStats, setTaxStats] = useState({ taxRate: 0, shippingCharge: 0 })
-
-    // 'new' = entering a new card, otherwise the id of a SavedCard
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>(
-        savedCards.length > 0 ? savedCards[0].id : 'new'
-    )
 
     const [shippingAddress, setShippingAddress] = useState({
         addressFirstName: '',
@@ -113,6 +321,13 @@ function CheckoutForm({ savedCards }: { savedCards: SavedCard[] }) {
         }
         fetchUserData()
     }, [])
+
+    // Guest email autofill logic
+    useEffect(() => {
+        if (!user && !email && shippingAddress.addressFirstName && shippingAddress.addressLastName) {
+            setEmail(`${shippingAddress.addressFirstName.toLowerCase()}${shippingAddress.addressLastName.toLowerCase()}@whitemantis.guest`.replace(/\s+/g, ''))
+        }
+    }, [shippingAddress.addressFirstName, shippingAddress.addressLastName, user, email])
 
     useEffect(() => {
         const updateStats = async () => {
@@ -177,299 +392,70 @@ function CheckoutForm({ savedCards }: { savedCards: SavedCard[] }) {
         return total + total * (taxStats.taxRate / 100)
     }
 
-    const handlePayment = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!stripe || items.length === 0) return
-
-        setIsProcessing(true)
-
-        try {
-            let paymentMethodId: string
-
-            if (selectedPaymentMethod !== 'new') {
-                // User chose a saved card — use it directly
-                paymentMethodId = selectedPaymentMethod
-            } else {
-                // User is entering a new card
-                if (!elements) throw new Error('Elements not loaded')
-                const cardElement = elements.getElement(CardNumberElement)
-                if (!cardElement) throw new Error('Card element not found')
-
-                const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
-                    type: 'card',
-                    card: cardElement,
-                    billing_details: {
-                        email,
-                        name: shippingAsBilling
-                            ? `${shippingAddress.addressFirstName} ${shippingAddress.addressLastName}`
-                            : `${billingAddress.addressFirstName} ${billingAddress.addressLastName}`,
-                        phone: shippingAsBilling ? shippingAddress.phoneNumber : billingAddress.phoneNumber,
-                    },
-                })
-
-                if (pmError) throw new Error(pmError.message)
-                paymentMethodId = paymentMethod!.id
-            }
-
-            const checkoutBody = {
-                email,
-                paymentMethodId,
-                deliveryOption,
-                useWTCoins,
-                appliedCouponCode: couponData?.code,
-                shippingAddressAsBillingAddress: shippingAsBilling,
-                products: items.map(item => ({
-                    productId: item.product,
-                    variantId: item.vId,
-                    quantity: item.quantity,
-                    price: item.price,
-                })),
-                shippingAddress,
-                billingAddress: shippingAsBilling ? shippingAddress : billingAddress,
-            }
-
-            const response = await fetch('/api/checkout/one-time', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(checkoutBody),
-            })
-
-            const data = await response.json()
-            if (!response.ok) throw new Error(data.error || 'Checkout failed')
-
-            const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret)
-
-            if (confirmError) throw new Error(confirmError.message)
-
-            if (paymentIntent?.status === 'succeeded') {
-                clearCart()
-                router.push('/checkout/success')
-            }
-        } catch (err: any) {
-            alert(err.message)
-        } finally {
-            setIsProcessing(false)
-        }
-    }
-
-    const cardBrandIcon: Record<string, string> = {
-        visa: '💳',
-        mastercard: '💳',
-        amex: '💳',
-        discover: '💳',
-    }
-
     if (items.length === 0) {
         return (
             <div className={styles.emptyCart}>
                 <h2>Your cart is empty</h2>
-                <button onClick={() => router.push('/products')} className="btn btn-primary">Start Shopping</button>
+                <button onClick={() => window.location.href = '/products'} className="btn btn-primary">Start Shopping</button>
             </div>
         )
     }
 
+    const finalTotal = calculateFinalTotal()
+    // Stripe amount must be at least 1 (in the smallest unit)
+    const stripeAmount = Math.max(1, Math.round(finalTotal * 100))
+
     return (
         <div className={styles.container}>
             <div className="container">
-                <form onSubmit={handlePayment} className={styles.checkoutGrid}>
-                    {/* Left: Info */}
-                    <div className={styles.infoContent}>
-                        <h1 className={styles.pageTitle}>Checkout</h1>
-
-                        <section className={styles.section}>
-                            <h2 className={styles.sectionTitle}>Contact Information</h2>
-                            <div className={styles.formGrid}>
-                                <div className={styles.inputGroup}>
-                                    <label>Email Address</label>
-                                    <input
-                                        type="email"
-                                        placeholder="your@email.com"
-                                        required
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className={styles.input}
-                                    />
-                                </div>
-                                <div className={styles.inputGroup}>
-                                    <label>First Name</label>
-                                    <input placeholder="First Name" required value={shippingAddress.addressFirstName}
-                                        onChange={(e) => { const v = e.target.value; setShippingAddress({ ...shippingAddress, addressFirstName: v }); setBillingAddress({ ...billingAddress, addressFirstName: v }) }}
-                                        className={styles.input} />
-                                </div>
-                                <div className={styles.inputGroup}>
-                                    <label>Last Name</label>
-                                    <input placeholder="Last Name" required value={shippingAddress.addressLastName}
-                                        onChange={(e) => { const v = e.target.value; setShippingAddress({ ...shippingAddress, addressLastName: v }); setBillingAddress({ ...billingAddress, addressLastName: v }) }}
-                                        className={styles.input} />
-                                </div>
-                                <div className={styles.inputGroup}>
-                                    <label>Phone Number</label>
-                                    <input placeholder="Phone Number" required value={shippingAddress.phoneNumber}
-                                        onChange={(e) => { const v = e.target.value; setShippingAddress({ ...shippingAddress, phoneNumber: v }); setBillingAddress({ ...billingAddress, phoneNumber: v }) }}
-                                        className={styles.input} />
-                                </div>
-                            </div>
-                        </section>
-
-                        <section className={styles.section}>
-                            <h2 className={styles.sectionTitle}>Delivery Method</h2>
-                            <div className={styles.deliveryToggle}>
-                                <button type="button" className={`${styles.toggleBtn} ${deliveryOption === 'delivery' ? styles.active : ''}`} onClick={() => setDeliveryOption('delivery')}>Home Delivery</button>
-                                <button type="button" className={`${styles.toggleBtn} ${deliveryOption === 'pickup' ? styles.active : ''}`} onClick={() => setDeliveryOption('pickup')}>Store Pickup</button>
-                            </div>
-                        </section>
-
-                        {deliveryOption === 'delivery' && (
-                            <section className={styles.section}>
-                                <h2 className={styles.sectionTitle}>Shipping Address</h2>
-                                <div className={styles.formGrid}>
-                                    <input placeholder="Address Line 1" required value={shippingAddress.addressLine1} onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine1: e.target.value })} className={`${styles.input} span-2`} />
-                                    <input placeholder="Address Line 2 (Optional)" value={shippingAddress.addressLine2} onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine2: e.target.value })} className={`${styles.input} span-2`} />
-                                    <input placeholder="City" required value={shippingAddress.city} onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })} className={styles.input} />
-                                    <select value={shippingAddress.emirates} onChange={(e) => setShippingAddress({ ...shippingAddress, emirates: e.target.value })} className={styles.input}>
-                                        <option value="abu_dhabi">Abu Dhabi</option>
-                                        <option value="dubai">Dubai</option>
-                                        <option value="sharjah">Sharjah</option>
-                                        <option value="ajman">Ajman</option>
-                                        <option value="umm_al_quwain">Umm Al Quwain</option>
-                                        <option value="ras_al_khaimah">Ras Al Khaimah</option>
-                                        <option value="fujairah">Fujairah</option>
-                                    </select>
-                                </div>
-                            </section>
-                        )}
-
-                        <section className={styles.section}>
-                            <h2 className={styles.sectionTitle}>Payment Details</h2>
-
-                            {/* ── Saved cards picker ── */}
-                            {savedCards.length > 0 && (
-                                <div className={styles.savedCards}>
-                                    {savedCards.map(card => (
-                                        <label key={card.id} className={`${styles.savedCard} ${selectedPaymentMethod === card.id ? styles.savedCardActive : ''}`}>
-                                            <input
-                                                type="radio"
-                                                name="paymentMethod"
-                                                value={card.id}
-                                                checked={selectedPaymentMethod === card.id}
-                                                onChange={() => setSelectedPaymentMethod(card.id)}
-                                            />
-                                            <span className={styles.cardBrand}>{cardBrandIcon[card.brand] ?? '💳'} {card.brand.charAt(0).toUpperCase() + card.brand.slice(1)}</span>
-                                            <span className={styles.cardDetails}>•••• {card.last4} &nbsp; {card.expMonth?.toString().padStart(2, '0')}/{card.expYear}</span>
-                                        </label>
-                                    ))}
-                                    <label className={`${styles.savedCard} ${selectedPaymentMethod === 'new' ? styles.savedCardActive : ''}`}>
-                                        <input type="radio" name="paymentMethod" value="new" checked={selectedPaymentMethod === 'new'} onChange={() => setSelectedPaymentMethod('new')} />
-                                        <span>➕ Use a new card</span>
-                                    </label>
-                                </div>
-                            )}
-
-                            {/* ── New card entry elements (shown when no saved cards or "new card" chosen) ── */}
-                            {selectedPaymentMethod === 'new' && (
-                                <div className={styles.paymentBox}>
-                                    <div className={styles.stripeElement}>
-                                        <label>Card Number</label>
-                                        <div className={styles.elementWrapper}><CardNumberElement /></div>
-                                    </div>
-                                    <div className={styles.elementRow}>
-                                        <div className={styles.stripeElement}>
-                                            <label>Expiry Date</label>
-                                            <div className={styles.elementWrapper}><CardExpiryElement /></div>
-                                        </div>
-                                        <div className={styles.stripeElement}>
-                                            <label>CVC</label>
-                                            <div className={styles.elementWrapper}><CardCvcElement /></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </section>
-                    </div>
-
-                    {/* Right: Summary */}
-                    <div className={styles.summaryContent}>
-                        <div className={styles.stickySummary}>
-                            <h3 className={styles.summaryTitle}>Order Summary</h3>
-                            <div className={styles.cartItems}>
-                                {items.map((item, i) => (
-                                    <div key={i} className={styles.summaryItem}>
-                                        <div className={styles.siDetails}>
-                                            <span className={styles.siName}>{item.name}</span>
-                                            <span className={styles.siVariant}>{item.variantName} x {item.quantity}</span>
-                                        </div>
-                                        <span className={styles.siPrice}>AED {(item.price * item.quantity).toFixed(2)}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className={styles.couponCode}>
-                                <input placeholder="Coupon Code" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className={styles.couponInput} />
-                                <button type="button" onClick={handleApplyCoupon} className={styles.applyBtn}>Apply</button>
-                            </div>
-
-                            <div className={styles.calculation}>
-                                <div className={styles.calcRow}><span>Subtotal</span><span>AED {totalPrice.toFixed(2)}</span></div>
-                                {couponData && (
-                                    <div className={`${styles.calcRow} ${styles.discount}`}>
-                                        <span>Discount ({couponData.code})</span>
-                                        <span>-AED {(couponData.discountType === 'fixed' ? couponData.discountAmount : totalPrice * (couponData.discountAmount / 100)).toFixed(2)}</span>
-                                    </div>
-                                )}
-                                {useWTCoins && wtCoinsBalance && calculateWTCoinsDiscount() > 0 && (
-                                    <div className={`${styles.calcRow} ${styles.discount}`}>
-                                        <span>WT Coins Discount</span>
-                                        <span>-AED {calculateWTCoinsDiscount().toFixed(2)}</span>
-                                    </div>
-                                )}
-                                <div className={styles.calcRow}><span>Shipping</span><span>{taxStats.shippingCharge > 0 ? `AED ${taxStats.shippingCharge.toFixed(2)}` : 'FREE'}</span></div>
-                                <div className={styles.calcRow}>
-                                    <span>Tax ({taxStats.taxRate}%)</span>
-                                    <span>AED {(((totalPrice - (couponData ? (couponData.discountType === 'fixed' ? couponData.discountAmount : totalPrice * (couponData.discountAmount / 100)) : 0) - calculateWTCoinsDiscount()) + taxStats.shippingCharge) * (taxStats.taxRate / 100)).toFixed(2)}</span>
-                                </div>
-                                <div className={styles.totalRow}><span>Total</span><span>AED {calculateFinalTotal().toFixed(2)}</span></div>
-                            </div>
-
-                            <div className={styles.wtCoins}>
-                                <label className={styles.checkboxLabel}>
-                                    <input type="checkbox" checked={useWTCoins} onChange={() => setUseWTCoins(!useWTCoins)} disabled={!user || !wtCoinsBalance || wtCoinsBalance.balance === 0} />
-                                    {user && wtCoinsBalance ? `Use WT Coins (Balance: ${wtCoinsBalance.balance} ≈ AED ${wtCoinsBalance.estimatedValue})` : user ? 'Use WT Coins (Loading...)' : 'Use WT Coins (Login required)'}
-                                </label>
-                            </div>
-
-                            <button disabled={isProcessing || !stripe} className={styles.payBtn}>
-                                {isProcessing ? 'Processing...' : `Pay AED ${calculateFinalTotal().toFixed(2)}`}
-                            </button>
-                        </div>
-                    </div>
-                </form>
+                <Elements
+                    key={`${user?.id || 'guest'}-${email}`}
+                    stripe={stripePromise}
+                    options={{
+                        mode: 'payment',
+                        amount: stripeAmount,
+                        currency: 'aed',
+                        setup_future_usage: (user ? 'off_session' : undefined) as any,
+                        defaultValues: {
+                            billingDetails: {
+                                email: email,
+                                name: `${shippingAddress.addressFirstName} ${shippingAddress.addressLastName}`.trim(),
+                                phone: shippingAddress.phoneNumber,
+                            }
+                        }
+                    } as any}
+                >
+                    <CheckoutFormUI
+                        isProcessing={isProcessing}
+                        setIsProcessing={setIsProcessing}
+                        user={user}
+                        email={email}
+                        setEmail={setEmail}
+                        useWTCoins={useWTCoins}
+                        setUseWTCoins={setUseWTCoins}
+                        wtCoinsBalance={wtCoinsBalance}
+                        deliveryOption={deliveryOption}
+                        setDeliveryOption={setDeliveryOption}
+                        shippingAsBilling={shippingAsBilling}
+                        setShippingAsBilling={setShippingAsBilling}
+                        couponCode={couponCode}
+                        setCouponCode={setCouponCode}
+                        couponData={couponData}
+                        handleApplyCoupon={handleApplyCoupon}
+                        calculateWTCoinsDiscount={calculateWTCoinsDiscount}
+                        calculateFinalTotal={calculateFinalTotal}
+                        taxStats={taxStats}
+                        shippingAddress={shippingAddress}
+                        setShippingAddress={setShippingAddress}
+                        billingAddress={billingAddress}
+                        setBillingAddress={setBillingAddress}
+                    />
+                </Elements>
             </div>
         </div>
     )
 }
 
-// ------------------------------------------------------------------
-// Outer wrapper — fetches saved cards, then mounts <Elements>
-// ------------------------------------------------------------------
 export default function CheckoutPage() {
-    const [savedCards, setSavedCards] = useState<SavedCard[]>([])
-    const [ready, setReady] = useState(false)
-
-    useEffect(() => {
-        fetch('/api/stripe/payment-methods')
-            .then(r => r.ok ? r.json() : { paymentMethods: [] })
-            .then(data => setSavedCards(data.paymentMethods ?? []))
-            .catch(() => setSavedCards([]))
-            .finally(() => setReady(true))
-    }, [])
-
-    if (!ready) {
-        return <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}><p>Loading payment options...</p></div>
-    }
-
-    return (
-        <Elements stripe={stripePromise}>
-            <CheckoutForm savedCards={savedCards} />
-        </Elements>
-    )
+    return <CheckoutForm />
 }

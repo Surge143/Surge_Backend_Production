@@ -7,24 +7,14 @@ import {
     Elements,
     useStripe,
     useElements,
-    CardNumberElement,
-    CardExpiryElement,
-    CardCvcElement,
+    PaymentElement,
 } from '@stripe/react-stripe-js'
 import styles from '../checkout/checkout.module.css'
 import { Product, ProductVariant, SubscriptionFrequency } from '../types/product'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-interface SavedCard {
-    id: string
-    brand: string
-    last4: string
-    expMonth: number | undefined
-    expYear: number | undefined
-}
-
-function CheckoutSubscriptionForm({ savedCards }: { savedCards: SavedCard[] }) {
+function CheckoutSubscriptionForm() {
     const stripe = useStripe()
     const elements = useElements()
     const router = useRouter()
@@ -48,10 +38,6 @@ function CheckoutSubscriptionForm({ savedCards }: { savedCards: SavedCard[] }) {
     const [deliveryOption, setDeliveryOption] = useState<'delivery' | 'pickup'>('delivery')
     const [shippingAsBilling, setShippingAsBilling] = useState(true)
     const [taxStats, setTaxStats] = useState({ taxRate: 0, shippingCharge: 0 })
-
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>(
-        savedCards.length > 0 ? savedCards[0].id : 'new'
-    )
 
     const [shippingAddress, setShippingAddress] = useState({
         addressFirstName: '',
@@ -156,6 +142,14 @@ function CheckoutSubscriptionForm({ savedCards }: { savedCards: SavedCard[] }) {
         updateStats()
     }, [deliveryOption, shippingAddress.emirates, shippingAddress])
 
+    // Guest Email Autofill logic
+    useEffect(() => {
+        if (!user && shippingAddress.addressFirstName && shippingAddress.addressLastName && !email.includes('@')) {
+            const suggestedEmail = `${shippingAddress.addressFirstName.toLowerCase()}.${shippingAddress.addressLastName.toLowerCase()}@whitemantis.guest`
+            setEmail(suggestedEmail)
+        }
+    }, [user, shippingAddress.addressFirstName, shippingAddress.addressLastName, email])
+
     const getBasePrice = () => selectedVariant ? (selectedVariant.variantSalePrice || selectedVariant.variantRegularPrice) : (product?.salePrice || product?.regularPrice || 0)
     const calculateSubscriptionDiscount = () => (getBasePrice() * quantity) * ((selectedVariant?.subscriptionDiscount || product?.subscriptionDiscount || 0) / 100)
     const calculateWTCoinsDiscount = () => {
@@ -172,39 +166,13 @@ function CheckoutSubscriptionForm({ savedCards }: { savedCards: SavedCard[] }) {
 
     const handlePayment = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!stripe || !product) return
+        if (!stripe || !elements || !product) return
 
         setIsProcessing(true)
 
         try {
-            let paymentMethodId: string
-
-            if (selectedPaymentMethod !== 'new') {
-                paymentMethodId = selectedPaymentMethod
-            } else {
-                if (!elements) throw new Error('Elements not loaded')
-                const cardElement = elements.getElement(CardNumberElement)
-                if (!cardElement) throw new Error('Card element not found')
-
-                const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
-                    type: 'card',
-                    card: cardElement,
-                    billing_details: {
-                        email,
-                        name: shippingAsBilling
-                            ? `${shippingAddress.addressFirstName} ${shippingAddress.addressLastName}`
-                            : `${billingAddress.addressFirstName} ${billingAddress.addressLastName}`,
-                        phone: shippingAsBilling ? shippingAddress.phoneNumber : billingAddress.phoneNumber,
-                    },
-                })
-
-                if (pmError) throw new Error(pmError.message)
-                paymentMethodId = paymentMethod!.id
-            }
-
             const checkoutBody = {
                 email,
-                paymentMethodId,
                 deliveryOption,
                 useWTCoins,
                 shippingAddressAsBillingAddress: shippingAsBilling,
@@ -227,13 +195,21 @@ function CheckoutSubscriptionForm({ savedCards }: { savedCards: SavedCard[] }) {
             const data = await response.json()
             if (!response.ok) throw new Error(data.error || 'Checkout failed')
 
-            const { error: confirmError } = await stripe.confirmCardPayment(data.clientSecret)
+            const { clientSecret, dbSubscriptionId } = data
+
+            // Confirm payment with Stripe (handles 3DS, saved cards, and redirect)
+            const { error: confirmError } = await stripe.confirmPayment({
+                elements,
+                clientSecret,
+                confirmParams: {
+                    return_url: `${window.location.origin}/checkout/success?subscriptionId=${dbSubscriptionId}`,
+                },
+            })
+
             if (confirmError) throw new Error(confirmError.message)
 
-            router.push('/checkout/success')
         } catch (err: any) {
             alert(err.message)
-        } finally {
             setIsProcessing(false)
         }
     }
@@ -305,41 +281,9 @@ function CheckoutSubscriptionForm({ savedCards }: { savedCards: SavedCard[] }) {
 
                         <section className={styles.section}>
                             <h2 className={styles.sectionTitle}>Payment Details</h2>
-
-                            {savedCards.length > 0 && (
-                                <div className={styles.savedCards}>
-                                    {savedCards.map(card => (
-                                        <label key={card.id} className={`${styles.savedCard} ${selectedPaymentMethod === card.id ? styles.savedCardActive : ''}`}>
-                                            <input type="radio" name="paymentMethod" value={card.id} checked={selectedPaymentMethod === card.id} onChange={() => setSelectedPaymentMethod(card.id)} />
-                                            <span className={styles.cardBrand}>💳 {card.brand.charAt(0).toUpperCase() + card.brand.slice(1)}</span>
-                                            <span className={styles.cardDetails}>•••• {card.last4} &nbsp; {card.expMonth?.toString().padStart(2, '0')}/{card.expYear}</span>
-                                        </label>
-                                    ))}
-                                    <label className={`${styles.savedCard} ${selectedPaymentMethod === 'new' ? styles.savedCardActive : ''}`}>
-                                        <input type="radio" name="paymentMethod" value="new" checked={selectedPaymentMethod === 'new'} onChange={() => setSelectedPaymentMethod('new')} />
-                                        <span>➕ Use a new card</span>
-                                    </label>
-                                </div>
-                            )}
-
-                            {selectedPaymentMethod === 'new' && (
-                                <div className={styles.paymentBox}>
-                                    <div className={styles.stripeElement}>
-                                        <label>Card Number</label>
-                                        <div className={styles.elementWrapper}><CardNumberElement /></div>
-                                    </div>
-                                    <div className={styles.elementRow}>
-                                        <div className={styles.stripeElement}>
-                                            <label>Expiry Date</label>
-                                            <div className={styles.elementWrapper}><CardExpiryElement /></div>
-                                        </div>
-                                        <div className={styles.stripeElement}>
-                                            <label>CVC</label>
-                                            <div className={styles.elementWrapper}><CardCvcElement /></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                            <div className={styles.paymentBox}>
+                                <PaymentElement />
+                            </div>
                         </section>
                     </div>
 
@@ -397,23 +341,35 @@ function CheckoutSubscriptionForm({ savedCards }: { savedCards: SavedCard[] }) {
 }
 
 export default function CheckoutSubscriptionPage() {
-    const [savedCards, setSavedCards] = useState<SavedCard[]>([])
-    const [ready, setReady] = useState(false)
+    const [user, setUser] = useState<any>(null)
+    const [email, setEmail] = useState('')
 
     useEffect(() => {
-        fetch('/api/stripe/payment-methods')
-            .then(r => r.ok ? r.json() : { paymentMethods: [] })
-            .then(data => setSavedCards(data.paymentMethods ?? []))
-            .catch(() => setSavedCards([]))
-            .finally(() => setReady(true))
+        fetch('/api/users/me').then(r => r.json()).then(data => {
+            if (data.user) {
+                setUser(data.user)
+                setEmail(data.user.email || '')
+            }
+        })
     }, [])
 
-    if (!ready) return <div style={{ padding: '4rem', textAlign: 'center' }}>Loading payment options...</div>
-
     return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <Elements stripe={stripePromise}>
-                <CheckoutSubscriptionForm savedCards={savedCards} />
+        <Suspense fallback={<div style={{ padding: '4rem', textAlign: 'center' }}>Loading...</div>}>
+            <Elements
+                key={`${user?.id || 'guest'}-${email}`}
+                stripe={stripePromise}
+                options={{
+                    mode: 'payment', // Required for pre-confirming/Stripe Link even if subscription
+                    amount: 1, // Placeholder
+                    currency: 'aed',
+                    defaultValues: {
+                        billingDetails: {
+                            email: email,
+                        }
+                    }
+                } as any}
+            >
+                <CheckoutSubscriptionForm />
             </Elements>
         </Suspense>
     )

@@ -35,10 +35,29 @@ export async function GET(_req: NextRequest) {
         const pmList = await stripe.paymentMethods.list({
             customer: stripeCustomerId,
             type: 'card',
-            limit: 3,
+            limit: 20, // Fetch more to allow for unique filtering
         });
 
-        const paymentMethods = pmList.data.map((pm) => ({
+        // Filter for unique cards using fingerprint
+        const uniqueFingerprints = new Set();
+        const uniquePaymentMethods: any[] = [];
+
+        for (const pm of pmList.data) {
+            const fingerprint = pm.card?.fingerprint;
+            // Fallback key if fingerprint is missing (rare for cards)
+            const fallbackKey = `${pm.card?.brand}-${pm.card?.last4}-${pm.card?.exp_month}-${pm.card?.exp_year}`;
+            const key = fingerprint || fallbackKey;
+
+            if (!uniqueFingerprints.has(key)) {
+                uniqueFingerprints.add(key);
+                uniquePaymentMethods.push(pm);
+            }
+
+            // Limit the final output to 3 unique cards
+            if (uniquePaymentMethods.length >= 3) break;
+        }
+
+        const paymentMethods = uniquePaymentMethods.map((pm) => ({
             id: pm.id,
             brand: pm.card?.brand ?? 'card',
             last4: pm.card?.last4 ?? '****',

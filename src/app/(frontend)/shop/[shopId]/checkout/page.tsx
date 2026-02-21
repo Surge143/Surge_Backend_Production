@@ -6,9 +6,7 @@ import {
     Elements,
     useStripe,
     useElements,
-    CardNumberElement,
-    CardExpiryElement,
-    CardCvcElement,
+    PaymentElement
 } from '@stripe/react-stripe-js'
 import styles from './checkout.module.css'
 import { useParams } from 'next/navigation'
@@ -41,6 +39,7 @@ function ShopCheckoutForm() {
         paymentMethodId: string
     }
 
+    const [user, setUser] = useState<any>(null)
     const [form, setForm] = useState<FormState>({
         email: '',
         orderType: 'take-away',
@@ -52,6 +51,21 @@ function ShopCheckoutForm() {
         specialInstructions: '',
         paymentMethodId: ''
     })
+
+    // Fetch User Data
+    useEffect(() => {
+        const fetchUser = async () => {
+            const res = await fetch('/api/users/me')
+            if (res.ok) {
+                const data = await res.json()
+                if (data.user) {
+                    setUser(data.user)
+                    setForm(prev => ({ ...prev, email: data.user.email || '' }))
+                }
+            }
+        }
+        fetchUser()
+    }, [])
 
     // Initialization: Fetch Shop Details, Slots, Menu Items, AND Cart
     useEffect(() => {
@@ -254,22 +268,13 @@ function ShopCheckoutForm() {
         setProcessing(true)
 
         try {
-            const cardElement = elements.getElement(CardNumberElement)
-            let pmId = form.paymentMethodId
-
-            if (cardElement && !pmId) {
-                const { error, paymentMethod } = await stripe.createPaymentMethod({
-                    type: 'card',
-                    card: cardElement
-                })
-                if (error) throw new Error(error.message)
-                pmId = paymentMethod.id
-            }
+            // 1. Trigger form validation via Stripe Elements
+            const { error: submitError } = await elements.submit()
+            if (submitError) throw new Error(submitError.message)
 
             const payload = {
                 ...form,
                 shopId,
-                paymentMethodId: pmId || 'pm_card_visa', // Fallback for manual testing
                 menuItems: form.menuItems.map(item => ({
                     product: item.product,
                     quantity: item.quantity,
@@ -279,7 +284,7 @@ function ShopCheckoutForm() {
 
             console.log('Sending Payload:', payload)
 
-            const res = await fetch('/api/checkout/cafeCheckout', {
+            const res = await fetch('/api/checkout/cafe-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -288,13 +293,17 @@ function ShopCheckoutForm() {
             const data = await res.json()
             if (!res.ok) throw new Error(data.error || 'Checkout failed')
 
-            alert('Order Created Successfully! Check your console and Payload admin.')
             console.log('Success:', data)
 
             if (data.clientSecret) {
-                const { error: confirmError } = await stripe.confirmCardPayment(data.clientSecret)
-                if (confirmError) alert('Payment confirmation failed: ' + confirmError.message)
-                else alert('Payment Successful!')
+                const { error: confirmError } = await stripe.confirmPayment({
+                    elements,
+                    clientSecret: data.clientSecret,
+                    confirmParams: {
+                        return_url: `${window.location.origin}/checkout/success?orderId=${data.dbOrderId}`,
+                    },
+                })
+                if (confirmError) throw new Error(confirmError.message)
             }
 
         } catch (error: any) {
@@ -452,24 +461,10 @@ function ShopCheckoutForm() {
                         <button type="button" className={styles.addItemBtn} onClick={addItem}>+ Add Item</button>
                     </div>
 
-                    {/* Payment */}
                     <div className={styles.card}>
                         <h2 className={styles.sectionTitle}>4. Payment Information</h2>
-                        <div className={styles.inputGroup} style={{ marginBottom: '20px' }}>
-                            <label className={styles.label}>Direct Payment Method ID (Optional)</label>
-                            <input
-                                className={styles.input}
-                                value={form.paymentMethodId}
-                                onChange={e => setForm({ ...form, paymentMethodId: e.target.value })}
-                                placeholder="pm_card_visa"
-                            />
-                        </div>
-                        <div style={{ padding: '15px', border: '1.5px solid #e5e7eb', borderRadius: '10px' }}>
-                            <CardNumberElement options={{ style: { base: { fontSize: '16px' } } }} />
-                            <div style={{ display: 'flex', gap: '20px', marginTop: '15px' }}>
-                                <div style={{ flex: 1 }}><CardExpiryElement options={{ style: { base: { fontSize: '16px' } } }} /></div>
-                                <div style={{ flex: 1 }}><CardCvcElement options={{ style: { base: { fontSize: '16px' } } }} /></div>
-                            </div>
+                        <div className={styles.paymentBox}>
+                            <PaymentElement />
                         </div>
                     </div>
                 </div>
@@ -615,9 +610,38 @@ function ShopCheckoutForm() {
     )
 }
 
-export default function ShopCheckoutMockup() {
+export default function ShopCheckoutPage() {
+    const params = useParams()
+    const shopId = params.shopId as string
+    const [user, setUser] = useState<any>(null)
+    const [email, setEmail] = useState('')
+
+    useEffect(() => {
+        fetch('/api/users/me').then(r => r.json()).then(data => {
+            if (data.user) {
+                setUser(data.user)
+                setEmail(data.user.email || '')
+            }
+        })
+    }, [])
+
     return (
-        <Elements stripe={stripePromise}>
+        <Elements
+            key={`${user?.id || 'guest'}-${email}`}
+            stripe={stripePromise}
+            options={{
+                mode: 'payment',
+                amount: 1, // Placeholder, actual amount handled by intent creation
+                currency: 'aed',
+                setup_future_usage: user ? 'off_session' : undefined,
+                defaultValues: {
+                    billingDetails: {
+                        email: email,
+                        name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : undefined
+                    }
+                }
+            } as any}
+        >
             <ShopCheckoutForm />
         </Elements>
     )
