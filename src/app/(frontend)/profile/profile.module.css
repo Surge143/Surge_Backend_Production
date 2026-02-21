@@ -1,0 +1,223 @@
+.container {
+    padding: 4rem 0;
+    min-height: 80vh;
+}
+
+.profileCard {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 2.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.header {
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid #f5f5f5;
+    padding-bottom: 1.5rem;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c1810;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: #666;
+}
+
+.section {
+    margin-bottom: 3rem;
+}
+
+.sectionTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c1810;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.formGroup label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #444;
+}
+
+.input,
+.select {
+    padding: 0.75rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.input:focus,
+.select:focus {
+    outline: none;
+    border-color: #c7a17a;
+}
+
+/* Address Cards */
+.addressGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.addressCard {
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 1.5rem;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.addressCard:hover {
+    border-color: #c7a17a;
+}
+
+.addressLabel {
+    font-weight: 700;
+    color: #2c1810;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.addressText {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.addressActions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.textBtn {
+    background: none;
+    border: none;
+    color: #c7a17a;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+}
+
+.textBtnDanger {
+    color: #ff5252;
+}
+
+.addBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1.5rem;
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    background: #fafafa;
+    color: #666;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.addBtn:hover {
+    border-color: #c7a17a;
+    color: #c7a17a;
+    background: #fff;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #f5f5f5;
+}
+
+.saveBtn {
+    padding: 0.8rem 2.5rem;
+    background: #2c1810;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.saveBtn:hover {
+    background: #3d2318;
+}
+
+.saveBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Modal for Address Edit */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: #fff;
+    padding: 2.5rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.loading {
+    text-align: center;
+    padding: 5rem;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+
+    .grid,
+    .addressGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .profileCard {
+        padding: 1.5rem;
+    }
+}
