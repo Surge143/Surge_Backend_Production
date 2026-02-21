@@ -56,6 +56,10 @@ export default function ProductDetailsPage() {
             product: product.id.toString(),
             vId: product.hasVariantOptions ? selectedVariant?.id : undefined,
             quantity: quantity,
+            name: product.name,
+            price: currentPrice,
+            image: displayImage,
+            variantName: selectedVariant?.variantName || '',
         })
 
         setTimeout(() => setAdding(false), 500)

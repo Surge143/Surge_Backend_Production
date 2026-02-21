@@ -25,7 +25,7 @@ export const refundHandler: PayloadHandler = async (req) => {
             return Response.json({ error: 'Order not found' }, { status: 404 })
         }
 
-        if (order.paymentStatus === 'refunded' || order.paymentStatus === 'refunded-initiated') {
+        if (order.paymentStatus === 'refunded' || order.paymentStatus === 'refund-initiated') {
             return Response.json({ error: 'Order has already been refunded' }, { status: 400 })
         }
 
@@ -33,7 +33,7 @@ export const refundHandler: PayloadHandler = async (req) => {
             return Response.json({ error: 'You are not authorized to refund this order' }, { status: 403 })
         }
 
-        if (order.deliveryStatus === 'placed') {
+        if (order.appOrderStatus === 'pending' && order.paymentStatus === 'paid') {
             if (!order.stripeData.paymentIntentId) {
                 return Response.json({ error: 'Order cannot be refunded as it is not paid' }, { status: 400 })
             }
@@ -43,7 +43,15 @@ export const refundHandler: PayloadHandler = async (req) => {
                     payment_intent: order.stripeData.paymentIntentId,
                 });
 
-                return Response.json({ success: true, message: 'Order refunded successfully', refund }, { status: 200 })
+                // Mark order as refund initiated — full reversal happens via charge.refunded webhook
+                await payload.update({
+                    collection: 'app-orders',
+                    id,
+                    data: { paymentStatus: 'refund-initiated' },
+                    overrideAccess: true,
+                })
+
+                return Response.json({ success: true, message: 'Refund initiated successfully' }, { status: 200 })
 
             } catch (err) {
                 switch (err.type) {

@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { linkGuestOrderToUser } from "../WebOrders/hooks/linkGuestToUser";
+import { refundHandler } from "./endpoints/refundHandler";
 
 export const WebSubscription: CollectionConfig = {
     slug: 'web-subscription',
@@ -7,6 +8,13 @@ export const WebSubscription: CollectionConfig = {
         useAsTitle: 'id',
         group: 'Website',
     },
+    endpoints: [
+        {
+            path: '/:id/cancel',
+            method: 'get',
+            handler: refundHandler,
+        },
+    ],
     hooks: {
         afterChange: [
             async ({ doc, previousDoc, req: { payload } }) => {

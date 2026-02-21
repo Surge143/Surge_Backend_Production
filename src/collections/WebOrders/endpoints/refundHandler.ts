@@ -43,7 +43,15 @@ export const refundHandler: PayloadHandler = async (req) => {
                     payment_intent: order.stripeData.paymentIntentId,
                 });
 
-                return Response.json({ success: true, message: 'Order refunded successfully', refund }, { status: 200 })
+                // Mark order as refund initiated — full reversal happens via charge.refunded webhook
+                await payload.update({
+                    collection: 'web-orders',
+                    id,
+                    data: { paymentStatus: 'refund-initiated' },
+                    overrideAccess: true,
+                })
+
+                return Response.json({ success: true, message: 'Refund initiated successfully' }, { status: 200 })
 
             } catch (err) {
                 switch (err.type) {

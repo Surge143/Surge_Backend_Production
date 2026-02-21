@@ -35,6 +35,7 @@ export async function GET(_req: NextRequest) {
         const pmList = await stripe.paymentMethods.list({
             customer: stripeCustomerId,
             type: 'card',
+            limit: 3,
         });
 
         const paymentMethods = pmList.data.map((pm) => ({

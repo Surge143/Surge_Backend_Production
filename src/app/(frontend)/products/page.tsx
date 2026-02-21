@@ -33,10 +33,18 @@ export default function ProductsPage() {
     }, [])
 
     const handleAddToCart = (product: Product) => {
+        const variant = product.hasVariantOptions ? product.variants?.[0] : undefined
+        const price = variant
+            ? (variant.variantSalePrice || variant.variantRegularPrice || 0)
+            : (product.salePrice || product.regularPrice || 0)
         addItem({
             product: product.id.toString(),
-            vId: product.hasVariantOptions ? product.variants?.[0]?.id : undefined,
+            vId: variant?.id,
             quantity: 1,
+            name: product.name,
+            price,
+            image: (product.productImage as any)?.url || '',
+            variantName: variant?.variantName || '',
         })
     }
 

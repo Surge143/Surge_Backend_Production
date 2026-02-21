@@ -3,6 +3,8 @@ import { stripe } from '@/lib/stripe';
 import { handleInvoicePaid } from './_components/invoicePaid';
 import { handleWebPaymentIntentSucceeded } from './_components/webPaymentIntentSucceeded';
 import { handleAppPaymentIntentSucceeded } from './_components/appPaymentIntentSucceeded';
+import { handleChargeRefunded } from './_components/chargeRefunded';
+import { handleSubscriptionDeleted } from './_components/subscriptionDeleted';
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -36,17 +38,24 @@ export async function POST(req: NextRequest) {
         }
         break;
 
-      case 'refund.created':
-        console.log('Refund Created:', event.data.object);
+      case 'charge.refunded': {
+        const charge = event.data.object as any;
+        const orderType = charge.metadata?.order_type;
+        console.log(`🔄 Charge Refunded: order_type=${orderType}, db_order_id=${charge.metadata?.db_order_id}`);
+        if (orderType === 'store' || orderType === 'cafe') {
+          await handleChargeRefunded(charge);
+        } else {
+          console.log(`[charge.refunded] Unknown or missing order_type: ${orderType}, skipping`);
+        }
         break;
+      }
 
-      case 'charge.refunded':
-        console.log('Charge Refunded:', event.data.object);
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object as any;
+        console.log(`🔴 Customer Subscription Deleted: ${sub.id}`);
+        await handleSubscriptionDeleted(sub);
         break;
-
-      case 'customer.subscription.deleted':
-        console.log('Customer Subscription Deleted:', event.data.object);
-        break;
+      }
 
       default:
         console.log('Unhandled event type:', event.type);
