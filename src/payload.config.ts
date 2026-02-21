@@ -11,7 +11,6 @@ import { collections, globals } from './collections'
 import { getServerSideURL } from '@/utilities/getURL'
 import { s3Storage } from '@payloadcms/storage-s3'
 import sharp from 'sharp'
-import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -68,7 +67,6 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
       options: '-c timezone=Asia/Dubai',
     },
-    prodMigrations: migrations,
   }),
   sharp,
   plugins: [
