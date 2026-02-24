@@ -6,7 +6,7 @@ export const WebSubscription: CollectionConfig = {
     slug: 'web-subscription',
     admin: {
         useAsTitle: 'id',
-        group: 'Website',
+        group: 'Store',
     },
     endpoints: [
         {
@@ -271,14 +271,59 @@ export const WebSubscription: CollectionConfig = {
                         {
                             name: 'financials',
                             type: 'group',
+                            label: 'Financial Breakdown',
                             fields: [
                                 {
                                     type: 'row',
                                     fields: [
-                                        { name: 'subtotal', type: 'number', required: true },
-                                        { name: 'discountAmount', type: 'number' },
-                                        { name: 'wtDiscount', type: 'number', label: 'WT Coins Discount' },
-                                        { name: 'total', type: 'number', required: true },
+                                        {
+                                            name: 'subtotal',
+                                            label: 'Subtotal (Base Price × Qty)',
+                                            type: 'number',
+                                            required: true,
+                                            admin: { width: '50%', description: 'Product base price multiplied by quantity, before any discounts' }
+                                        },
+                                        {
+                                            name: 'subscriptionDiscount',
+                                            label: 'Subscription Discount',
+                                            type: 'number',
+                                            admin: { width: '50%', description: 'Discount from the subscription plan percentage' }
+                                        },
+                                    ],
+                                },
+                                {
+                                    type: 'row',
+                                    fields: [
+                                        {
+                                            name: 'wtCoinsDiscount',
+                                            label: 'WT Coins Discount',
+                                            type: 'number',
+                                            admin: { width: '50%', description: 'Discount applied via WT Coins redemption' }
+                                        },
+                                        {
+                                            name: 'shippingCharge',
+                                            label: 'Shipping Charge',
+                                            type: 'number',
+                                            admin: { width: '50%', description: 'Shipping fee (0 for pickup orders)' }
+                                        },
+                                    ],
+                                },
+                                {
+                                    type: 'row',
+                                    fields: [
+                                        {
+                                            name: 'taxAmount',
+                                            label: 'Tax',
+                                            type: 'number',
+                                            admin: { width: '50%', description: 'Tax applied on (subtotal − discounts + shipping)' }
+                                        },
+                                        {
+                                            name: 'total',
+                                            label: 'Grand Total',
+                                            type: 'number',
+                                            required: true,
+                                            admin: { width: '50%', description: 'Final recurring amount charged (first payment may differ due to WT Coins)' }
+                                        },
                                     ],
                                 },
                             ],

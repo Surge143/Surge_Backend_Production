@@ -9,7 +9,6 @@ import { calculateTaxAndShipping } from '../_components/calculateTaxAndShipping'
 
 export async function POST(req: NextRequest) {
     try {
-
         const payloadConfig = await config
         const payload = await getPayload({ config: payloadConfig })
 
@@ -229,8 +228,10 @@ export async function POST(req: NextRequest) {
                         guestAccessToken: guestAccessToken,
                         financials: {
                             subtotal: totalPrice,
-                            discountAmount: totalDiscount,
-                            wtDiscount: wtDiscount,
+                            subscriptionDiscount: totalDiscount,
+                            wtCoinsDiscount: wtDiscount,
+                            shippingCharge,
+                            taxAmount,
                             total: finalTotal,
                         }
                     },

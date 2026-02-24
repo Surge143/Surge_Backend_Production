@@ -9,12 +9,12 @@ export const AppOrders: CollectionConfig = {
     slug: "app-orders",
 
     labels: {
-        singular: "App Order",
-        plural: "App Orders"
+        singular: "Order",
+        plural: "Orders"
     },
     admin: {
-        defaultColumns: ["name", "shop", "updatedAt"],
-        group: 'App',
+        defaultColumns: ["id", "shop", "updatedAt"],
+        group: 'Cafe',
     },
     endpoints: [
         {
@@ -58,6 +58,9 @@ export const AppOrders: CollectionConfig = {
                             type: 'relationship',
                             relationTo: 'users',
                             required: false,
+                            admin: {
+                                readOnly: true,
+                            }
                         },
                         {
                             name: 'email',
@@ -81,7 +84,7 @@ export const AppOrders: CollectionConfig = {
                                         { label: 'Rejected', value: 'rejected' },
                                     ],
                                     required: true,
-                                    admin: { width: '50%' }
+                                    admin: { width: '50%', readOnly: true }
                                 },
                             ]
                         },
@@ -98,7 +101,8 @@ export const AppOrders: CollectionConfig = {
                                 { label: 'Cancelled', value: 'cancelled' },
                             ],
                             admin: {
-                                condition: (data) => data?.orderAcceptance === 'accepted'
+                                condition: (data) => data?.orderAcceptance === 'accepted',
+                                readOnly: true,
                             }
                         },
                         {
@@ -113,6 +117,9 @@ export const AppOrders: CollectionConfig = {
                                 { label: 'Refund Initiated', value: 'refund-initiated' },
                                 { label: 'Refunded', value: 'refunded' },
                             ],
+                            admin: {
+                                readOnly: true,
+                            }
                         },
                         {
                             type: 'row',
@@ -122,13 +129,13 @@ export const AppOrders: CollectionConfig = {
                                     type: "relationship",
                                     relationTo: "shop",
                                     required: true,
-                                    admin: { width: '50%' },
+                                    admin: { width: '50%', readOnly: true },
                                 },
                                 {
                                     name: 'barista',
                                     type: 'relationship',
                                     relationTo: 'admins',
-                                    admin: { width: '50%' },
+                                    admin: { width: '50%', readOnly: true },
                                     filterOptions: {
                                         role: { equals: 'barista' }
                                     }
@@ -139,6 +146,9 @@ export const AppOrders: CollectionConfig = {
                             name: "items",
                             type: "array",
                             required: true,
+                            admin: {
+                                readOnly: true,
+                            },
                             fields: [
                                 {
                                     name: 'product',
@@ -161,6 +171,9 @@ export const AppOrders: CollectionConfig = {
                         {
                             name: 'specialInstructions',
                             type: 'textarea',
+                            admin: {
+                                readOnly: true,
+                            },
                         },
                     ]
                 },
@@ -178,7 +191,7 @@ export const AppOrders: CollectionConfig = {
                                         { label: 'Dine In', value: 'dine-in' },
                                     ],
                                     required: true,
-                                    admin: { width: '50%' }
+                                    admin: { width: '50%', readOnly: true }
                                 },
                                 {
                                     name: 'timeSelection',
@@ -190,6 +203,7 @@ export const AppOrders: CollectionConfig = {
                                     ],
                                     admin: {
                                         width: '50%',
+                                        readOnly: true,
                                         condition: (data) => data?.orderType === 'take-away',
                                     }
                                 },
@@ -201,6 +215,7 @@ export const AppOrders: CollectionConfig = {
                             relationTo: 'slots',
                             required: false,
                             admin: {
+                                readOnly: true,
                                 condition: (data) => data?.timeSelection === 'custom' && data?.orderType === 'take-away',
                             },
                         },
@@ -215,7 +230,7 @@ export const AppOrders: CollectionConfig = {
                                 {
                                     name: 'isCouponUsed',
                                     type: 'checkbox',
-                                    admin: { width: '30%', style: { marginTop: '35px' } }
+                                    admin: { width: '30%', style: { marginTop: '35px' }, readOnly: true }
                                 },
                                 {
                                     name: 'coupon',
@@ -223,6 +238,7 @@ export const AppOrders: CollectionConfig = {
                                     relationTo: 'shop-coupon',
                                     admin: {
                                         width: '70%',
+                                        readOnly: true,
                                         condition: (data) => Boolean(data?.isCouponUsed)
                                     },
                                 },
@@ -234,7 +250,7 @@ export const AppOrders: CollectionConfig = {
                                 {
                                     name: 'coinsUsed',
                                     type: 'number',
-                                    admin: { width: '50%' }
+                                    admin: { width: '50%', readOnly: true }
                                 },
                                 {
                                     name: 'stampRewards',
@@ -253,22 +269,60 @@ export const AppOrders: CollectionConfig = {
                                             id: { in: validStampProductIds }
                                         };
                                     },
-                                    admin: { width: '50%' },
+                                    admin: { width: '50%', readOnly: true },
                                 },
                             ]
                         },
                         {
                             name: 'financials',
                             type: 'group',
+                            label: 'Financial Breakdown',
                             fields: [
                                 {
                                     type: 'row',
                                     fields: [
-                                        { name: 'subtotal', type: 'number', admin: { width: '33%' } },
-                                        { name: 'discountAmount', type: 'number', admin: { width: '33%' } },
-                                        { name: 'total', type: 'number', admin: { width: '34%' } },
+                                        {
+                                            name: 'subtotal',
+                                            label: 'Subtotal (Before Discounts)',
+                                            type: 'number',
+                                            admin: { width: '50%', readOnly: true, description: 'Sum of all item prices × quantities' }
+                                        },
+                                        {
+                                            name: 'couponDiscount',
+                                            label: 'Coupon Discount',
+                                            type: 'number',
+                                            admin: { width: '50%', readOnly: true, description: 'Discount applied via coupon code' }
+                                        },
                                     ]
-                                }
+                                },
+                                {
+                                    type: 'row',
+                                    fields: [
+                                        {
+                                            name: 'wtCoinsDiscount',
+                                            label: 'WT Coins Discount',
+                                            type: 'number',
+                                            admin: { width: '50%', readOnly: true, description: 'Discount applied via WT Coins redemption' }
+                                        },
+                                        {
+                                            name: 'taxAmount',
+                                            label: 'Tax',
+                                            type: 'number',
+                                            admin: { width: '50%', readOnly: true, description: 'Tax applied on order total after discounts' }
+                                        },
+                                    ]
+                                },
+                                {
+                                    type: 'row',
+                                    fields: [
+                                        {
+                                            name: 'total',
+                                            label: 'Grand Total',
+                                            type: 'number',
+                                            admin: { width: '100%', readOnly: true, description: 'Final amount charged to the customer (subtotal − discounts + tax)' }
+                                        },
+                                    ]
+                                },
                             ]
                         },
                         {

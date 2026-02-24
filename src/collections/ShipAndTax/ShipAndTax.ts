@@ -1,15 +1,5 @@
 import type { GlobalConfig } from "payload";
 
-const emiratesList = [
-    'Abu Dhabi',
-    'Dubai',
-    'Sharjah',
-    'Ajman',
-    'Umm Al Quwain',
-    'Ras Al Khaimah',
-    'Fujairah'
-];
-
 export const ShipAndTax: GlobalConfig = {
     slug: 'ship-and-tax',
     admin: {
@@ -24,8 +14,10 @@ export const ShipAndTax: GlobalConfig = {
             name: 'tax',
             label: 'Tax',
             type: 'number',
+            min: 0,
+            max: 100,
             admin: {
-                width: '50%',
+                width: '30%',
                 description: 'Add tax percentage here (e.g., 5 for 5%)'
             },
         },
@@ -45,12 +37,14 @@ export const ShipAndTax: GlobalConfig = {
                             name: 'abu_dhabi',
                             label: 'Abu Dhabi',
                             type: 'number',
+                            min: 0,
                             admin: { width: '50%' },
                         },
                         {
                             name: 'dubai',
                             label: 'Dubai',
                             type: 'number',
+                            min: 0,
                             admin: { width: '50%' },
                         },
                     ],
@@ -62,12 +56,14 @@ export const ShipAndTax: GlobalConfig = {
                             name: 'sharjah',
                             label: 'Sharjah',
                             type: 'number',
+                            min: 0,
                             admin: { width: '50%' },
                         },
                         {
                             name: 'ajman',
                             label: 'Ajman',
                             type: 'number',
+                            min: 0,
                             admin: { width: '50%' },
                         },
                     ],
@@ -79,12 +75,14 @@ export const ShipAndTax: GlobalConfig = {
                             name: 'umm_al_quwain',
                             label: 'Umm Al Quwain',
                             type: 'number',
+                            min: 0,
                             admin: { width: '50%' },
                         },
                         {
                             name: 'ras_al_khaimah',
                             label: 'Ras Al Khaimah',
                             type: 'number',
+                            min: 0,
                             admin: { width: '50%' },
                         },
                     ],
@@ -96,6 +94,7 @@ export const ShipAndTax: GlobalConfig = {
                             name: 'fujairah',
                             label: 'Fujairah',
                             type: 'number',
+                            min: 0,
                             admin: { width: '50%' },
                         },
                     ],

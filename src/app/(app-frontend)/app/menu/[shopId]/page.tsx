@@ -295,34 +295,19 @@ export default function MenuPage() {
                                 <h2 className={pageStyles.sheetTitle}>{selectedProduct.name}</h2>
                                 {selectedProduct.tagline && <p className={pageStyles.sheetSub}>{selectedProduct.tagline}</p>}
 
-                                {selectedProduct.customizations?.[0]?.sections?.map((section: any) => (
-                                    <div key={section.id} className={pageStyles.customSection}>
-                                        <div className={pageStyles.customSectionTitle}>{section.title}</div>
-                                        <div className={pageStyles.optionList}>
-                                            {section.options?.map((opt: any) => {
-                                                const active = currentSelections.some(s => s.sectionTitle === section.title && s.label === opt.label)
-                                                return (
-                                                    <button
-                                                        key={opt.id}
-                                                        className={`${pageStyles.optionItem} ${active ? pageStyles.optionActive : ''}`}
-                                                        onClick={() => toggleOption(section.title, opt)}
-                                                    >
-                                                        <span>{opt.label}</span>
-                                                        {opt.price > 0 && <span className={pageStyles.optionPrice}>+AED {opt.price}</span>}
-                                                    </button>
-                                                )
-                                            })}
-                                            {section.groups?.map((group: any) => (
-                                                <div key={group.id}>
-                                                    <div className={pageStyles.groupTitle}>{group.groupTitle}</div>
-                                                    {group.options?.map((opt: any) => {
-                                                        const fullLabel = `${group.groupTitle} - ${opt.label}`
-                                                        const active = currentSelections.some(s => s.sectionTitle === section.title && s.label === fullLabel)
+                                {selectedProduct.customizations?.map((panel: any) => (
+                                    <React.Fragment key={panel.id}>
+                                        {panel.sections?.map((section: any) => (
+                                            <div key={section.id} className={pageStyles.customSection}>
+                                                <div className={pageStyles.customSectionTitle}>{section.title}</div>
+                                                <div className={pageStyles.optionList}>
+                                                    {section.options?.map((opt: any) => {
+                                                        const active = currentSelections.some(s => s.sectionTitle === section.title && s.label === opt.label)
                                                         return (
                                                             <button
                                                                 key={opt.id}
                                                                 className={`${pageStyles.optionItem} ${active ? pageStyles.optionActive : ''}`}
-                                                                onClick={() => toggleOption(section.title, { label: fullLabel, price: opt.price })}
+                                                                onClick={() => toggleOption(section.title, opt)}
                                                             >
                                                                 <span>{opt.label}</span>
                                                                 {opt.price > 0 && <span className={pageStyles.optionPrice}>+AED {opt.price}</span>}
@@ -330,9 +315,9 @@ export default function MenuPage() {
                                                         )
                                                     })}
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                            </div>
+                                        ))}
+                                    </React.Fragment>
                                 ))}
 
                                 <div style={{ height: 16 }} />

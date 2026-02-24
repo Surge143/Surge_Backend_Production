@@ -16,7 +16,7 @@ export const WebCategories: CollectionConfig = {
     },
     admin: {
         useAsTitle: 'title',
-        group: 'Website',
+        group: 'Store',
         defaultColumns: ['id', 'title', 'slug'],
     },
     fields: [

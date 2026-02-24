@@ -4,7 +4,7 @@ export const WTCoins: GlobalConfig = {
     slug: 'wt-coins',
     admin: {
         description: "White Mantis Coins Configuration",
-        group: 'WTCoins',
+        group: 'Loyalty Program',
     },
     access: {
         read: () => true,

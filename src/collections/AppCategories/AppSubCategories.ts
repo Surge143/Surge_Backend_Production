@@ -1,7 +1,11 @@
-import type { CollectionConfig } from 'payload'
+import { slugField, type CollectionConfig } from 'payload'
 
 export const AppSubCategories: CollectionConfig = {
     slug: 'app-sub-categories',
+    labels: {
+        singular: 'Sub Category',
+        plural: 'Sub Categories',
+    },
     access: {
         read: () => true,
         update: ({ req: { user } }) => {
@@ -16,7 +20,7 @@ export const AppSubCategories: CollectionConfig = {
     },
     admin: {
         useAsTitle: 'title',
-        group: 'App',
+        group: 'Cafe',
         // Helps you see the hierarchy in the admin dashboard list
         defaultColumns: ['id', 'title', 'parentCategory', 'slug'],
     },
@@ -33,21 +37,8 @@ export const AppSubCategories: CollectionConfig = {
             relationTo: 'app-categories', // Reference this same collection
             hasMany: false,
         },
-        {
-            name: 'slug',
-            type: 'text',
-            index: true,
-            unique: true,
-            required: true,
-            admin: {
-                position: 'sidebar',
-            },
-            hooks: {
-                beforeValidate: [({ value, data }) => {
-                    if (value) return value;
-                    return (data?.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-                }],
-            },
-        },
+        slugField({
+            useAsSlug: 'title',
+        })
     ],
 }

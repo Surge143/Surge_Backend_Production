@@ -13,7 +13,7 @@ import { ShopCoupons } from "./ShopCoupons/ShopCoupons";
 import { ShopMenu } from "./ShopMenu/ShopMenu";
 import { WebCategories } from "./WebCategories/WebCategories";
 import { WebSubCategories } from "./WebCategories/WebSubCategories";
-import { AppWishlist } from './AppWishlist/AppWishlist'
+import { Wishlist } from './Wishlist/Wishlist'
 import { Users } from "./Users/Users";
 import { WebProducts } from "./WebProducts/WebProducts";
 import { WebCart } from "./WebCart/WebCart";
@@ -23,7 +23,6 @@ import { WebOrders } from "./WebOrders/WebOrders";
 import { Slots } from "./Slots/Slots";
 import { ShipAndTax } from "./ShipAndTax/ShipAndTax";
 import { WebSubscription } from "./WebSubscription/WebSubscription";
-import { WebWishlist } from "./WebWishlist/WebWishlist";
 import { WTStamps } from "./WTStamps/WTStamps";
 import { UserPreferences } from "./UserPreferences/UserPreferences";
 import { StampRewardProducts } from "./StampRewardProducts/StampRewardProducts";
@@ -42,7 +41,7 @@ export const collections = [
     ShopCoupons,
     Otp,
     AppCart,
-    AppWishlist,
+    Wishlist,
     AppOrders,
     WebCategories,
     WebSubCategories,
@@ -52,7 +51,6 @@ export const collections = [
     WebOrders,
     Slots,
     WebSubscription,
-    WebWishlist,
     WTStamps,
     UserPreferences,
 ]

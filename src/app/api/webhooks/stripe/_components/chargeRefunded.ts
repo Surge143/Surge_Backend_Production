@@ -170,7 +170,10 @@ export async function handleChargeRefunded(charge: any) {
         })
 
         console.log(`✅ [ChargeRefunded] Order #${orderId} marked as refunded and cancelled`)
-    } catch (err) {
-        console.error('[ChargeRefunded] Error updating order status:', err)
+    } catch (err: any) {
+        console.error(`[ChargeRefunded] Error updating ${collection} #${orderId} status:`, err)
+        if (err.data && Array.isArray(err.data)) {
+            console.error('[ChargeRefunded] Detailed Validation Errors:', JSON.stringify(err.data, null, 2))
+        }
     }
 }

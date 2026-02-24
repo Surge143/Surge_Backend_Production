@@ -91,7 +91,7 @@ export default buildConfig({
       },
     }),
     importExportPlugin({
-      collections: ['web-products'],
+      collections: ['web-products','app-orders'],
     }),
     seoPlugin({
       generateTitle,

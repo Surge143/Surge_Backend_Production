@@ -1,12 +1,13 @@
-import type { CollectionConfig } from "payload";
+import type { CollectionConfig } from 'payload'
 
-const AppWishlist: CollectionConfig = {
-    slug: 'app-wishlist',
+const Wishlist: CollectionConfig = {
+    slug: 'wishlist',
     admin: {
-        hidden: true,
+        group: 'Common',
+        defaultColumns: ['user', 'updatedAt'],
     },
     access: {
-        read: () => true,
+        read: () => true, // Access control is handled at document level or via custom API
         update: () => true,
         delete: () => true,
         create: () => true,
@@ -18,6 +19,7 @@ const AppWishlist: CollectionConfig = {
             relationTo: 'users',
             required: true,
             unique: true,
+            index: true,
         },
         {
             name: 'items',
@@ -32,6 +34,6 @@ const AppWishlist: CollectionConfig = {
             ],
         },
     ],
-};
+}
 
-export { AppWishlist };
+export { Wishlist }

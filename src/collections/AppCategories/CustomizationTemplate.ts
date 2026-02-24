@@ -1,10 +1,14 @@
 import type { CollectionConfig } from 'payload'
+import { syncTemplates } from './hooks/syncTemplates'
 
 export const CustomizationTemplate: CollectionConfig = {
     slug: 'customization-template',
     admin: {
         useAsTitle: 'title',
-        group: 'App',
+        group: 'Cafe',
+    },
+    hooks: {
+        afterChange: [syncTemplates],
     },
     fields: [
         // Internal name
@@ -14,12 +18,17 @@ export const CustomizationTemplate: CollectionConfig = {
             required: true,
             label: 'Template Name',
         },
-
         // SECTIONS
         {
             name: 'sections',
             type: 'array',
             label: 'Customization Sections',
+            admin: {
+                components: {
+                    RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
+                },
+                description: 'Add sections for customization',
+            },
             fields: [
                 {
                     name: 'title',
@@ -44,6 +53,11 @@ export const CustomizationTemplate: CollectionConfig = {
                     name: 'groups',
                     type: 'array',
                     label: 'Option Groups',
+                    admin: {
+                        components: {
+                            RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
+                        },
+                    },
                     fields: [
                         {
                             name: 'groupTitle',
@@ -76,6 +90,9 @@ export const CustomizationTemplate: CollectionConfig = {
                     label: 'Options',
                     admin: {
                         condition: (_, siblingData) => !siblingData.groups?.length,
+                        components: {
+                            RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
+                        },
                     },
                     fields: [
                         {

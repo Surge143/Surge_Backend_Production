@@ -28,7 +28,7 @@ interface CouponPickerGridProps {
     onToggle: (coupon: CouponItem) => void
     searchTerm: string
     excludedIds?: string[]
-    shopId?: string // Add shopId to fetch existing shop-coupons
+    shopId?: string
 }
 
 export const CouponPickerGrid: React.FC<CouponPickerGridProps> = ({
@@ -40,40 +40,51 @@ export const CouponPickerGrid: React.FC<CouponPickerGridProps> = ({
 }) => {
     const [coupons, setCoupons] = useState<CouponItem[]>([])
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     const [alreadyAddedCouponIds, setAlreadyAddedCouponIds] = useState<string[]>([])
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true)
+            setError(null)
             try {
                 // Fetch existing shop-coupons for this shop to exclude already-added coupons
                 if (shopId) {
-                    const shopCouponsRes = await fetch(`/api/shop-coupon?limit=1000&where[shop][equals]=${shopId}&depth=1`)
+                    const shopCouponsRes = await fetch(
+                        `/api/shop-coupon?limit=1000&where[shop][equals]=${shopId}&depth=1`
+                    )
+                    if (!shopCouponsRes.ok) throw new Error('Failed to fetch existing shop coupons')
                     const shopCouponsData = await shopCouponsRes.json()
 
                     if (shopCouponsData.docs) {
-                        // Extract coupon IDs from the couponRelation field
                         const existingCouponIds: string[] = []
                         shopCouponsData.docs.forEach((shopCoupon: any) => {
                             if (Array.isArray(shopCoupon.couponRelation)) {
                                 shopCoupon.couponRelation.forEach((coupon: any) => {
                                     const couponId = typeof coupon === 'object' ? coupon.id : coupon
-                                    if (couponId) existingCouponIds.push(couponId)
+                                    if (couponId) existingCouponIds.push(String(couponId))
                                 })
                             }
                         })
                         setAlreadyAddedCouponIds(existingCouponIds)
                     }
+                } else {
+                    setAlreadyAddedCouponIds([])
                 }
 
-                // Fetch coupons that have 'app: true' in 'couponFor' group
-                const res = await fetch('/api/coupon?limit=1000&where[couponFor.app][equals]=true')
+                // Fetch active, published coupons that apply to the app.
+                // draft=false ensures only published docs are returned (Versions/Drafts is enabled on Coupon).
+                const res = await fetch(
+                    '/api/coupon?limit=1000&where[couponFor.app][equals]=true&where[status][equals]=active&draft=false'
+                )
+                if (!res.ok) throw new Error('Failed to fetch coupons')
                 const data = await res.json()
                 if (data.docs) {
                     setCoupons(data.docs)
                 }
-            } catch (err) {
+            } catch (err: any) {
                 console.error('Failed to fetch coupons:', err)
+                setError(err?.message || 'Failed to load coupons. Please try again.')
             } finally {
                 setLoading(false)
             }
@@ -82,15 +93,29 @@ export const CouponPickerGrid: React.FC<CouponPickerGridProps> = ({
     }, [shopId])
 
     const filteredCoupons = coupons.filter(c => {
-        // Exclude coupons that are already added to this shop
-        if (alreadyAddedCouponIds.includes(c.id)) return false
-        // Exclude coupons from the excludedIds prop
-        if (excludedIds.includes(c.id)) return false
-        // Filter by search term
+        if (alreadyAddedCouponIds.includes(String(c.id))) return false
+        if (excludedIds.includes(String(c.id))) return false
         return c.code.toLowerCase().includes(searchTerm.toLowerCase())
     })
 
     if (loading) return <div className={styles.loader}>Loading coupons...</div>
+
+    if (error) return (
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--theme-error-500)', fontWeight: 600 }}>
+            ⚠️ {error}
+        </div>
+    )
+
+    const availableCoupons = coupons.filter(c =>
+        !alreadyAddedCouponIds.includes(String(c.id)) && !excludedIds.includes(String(c.id))
+    )
+
+    const emptyMessage = (() => {
+        if (coupons.length === 0) return 'No active app-supported coupons found.'
+        if (availableCoupons.length === 0) return 'All available coupons have already been added to this shop.'
+        if (filteredCoupons.length === 0) return `No coupons match "${searchTerm}".`
+        return null
+    })()
 
     return (
         <div className={styles.productTableWrapper}>
@@ -107,7 +132,10 @@ export const CouponPickerGrid: React.FC<CouponPickerGridProps> = ({
                 </thead>
                 <tbody>
                     {filteredCoupons.map((coupon) => {
-                        const isSelected = selectedItems.some(i => i.couponId === coupon.id)
+                        const isSelected = selectedItems.some(i => String(i.couponId) === String(coupon.id))
+                        const discountLabel = coupon.discountType === 'percentage'
+                            ? `${coupon.discountAmount}%`
+                            : `AED ${coupon.discountAmount}`
                         return (
                             <tr key={coupon.id} className={isSelected ? styles.selected : ''}>
                                 <td className={styles.colSelect} onClick={() => onToggle(coupon)}>
@@ -119,27 +147,35 @@ export const CouponPickerGrid: React.FC<CouponPickerGridProps> = ({
                                     <span className={styles.productName}>{coupon.code}</span>
                                 </td>
                                 <td className={styles.colType} onClick={() => onToggle(coupon)}>
-                                    {coupon.discountType}
+                                    {coupon.discountType === 'percentage' ? 'Percentage' : 'Fixed Amount'}
                                 </td>
                                 <td className={styles.colAmount} onClick={() => onToggle(coupon)}>
-                                    {coupon.discountAmount}
+                                    {discountLabel}
                                 </td>
                                 <td className={styles.colExpiry} onClick={() => onToggle(coupon)}>
                                     {coupon.expiryDate ? new Date(coupon.expiryDate).toLocaleDateString() : 'N/A'}
                                 </td>
                                 <td className={styles.colStatus} onClick={() => onToggle(coupon)}>
-                                    {coupon.status}
+                                    <span style={{
+                                        padding: '3px 8px',
+                                        borderRadius: '4px',
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        textTransform: 'uppercase',
+                                        background: coupon.status === 'active' ? 'var(--theme-success-100)' : 'var(--theme-elevation-100)',
+                                        color: coupon.status === 'active' ? 'var(--theme-success-500)' : 'var(--theme-elevation-500)',
+                                    }}>
+                                        {coupon.status}
+                                    </span>
                                 </td>
                             </tr>
                         )
                     })}
                 </tbody>
             </table>
-            {filteredCoupons.length === 0 && !loading && (
+            {emptyMessage && (
                 <div style={{ padding: '40px', textAlign: 'center', color: 'var(--theme-elevation-500)' }}>
-                    {alreadyAddedCouponIds.length > 0
-                        ? 'All available coupons have already been added to this shop.'
-                        : 'No app-supported coupons found.'}
+                    {emptyMessage}
                 </div>
             )}
         </div>

@@ -100,8 +100,11 @@ export async function handleInvoicePaid(invoice: any) {
             deliveryStatus: subscriptionDoc.deliveryOption === "delivery" ? "placed" : "delivered",
             pointsUsed: isFirstInvoice ? (subscriptionDoc.pointsUsed || 0) : 0,
             financials: {
-                subtotal: subscriptionDoc.financials.subtotal,
-                discountAmount: isFirstInvoice ? (subscriptionDoc.financials.discountAmount || 0) : 0,
+                subtotal: subscriptionDoc.financials?.subtotal ?? 0,
+                couponDiscount: 0, // Subscriptions don't use coupons
+                wtCoinsDiscount: isFirstInvoice ? (subscriptionDoc.financials?.wtCoinsDiscount ?? 0) : 0,
+                shippingCharge: subscriptionDoc.financials?.shippingCharge ?? 0,
+                taxAmount: invoice.tax ? invoice.tax / 100 : (subscriptionDoc.financials?.taxAmount ?? 0),
                 total: invoice.amount_paid / 100,
             },
             stripeOrderId: invoice.id,

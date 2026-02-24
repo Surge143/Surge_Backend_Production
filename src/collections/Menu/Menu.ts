@@ -1,10 +1,10 @@
-import { CollectionConfig } from 'payload';
+import { CollectionConfig, slugField } from 'payload';
 
 export const Menu: CollectionConfig = {
     slug: 'menu',
     admin: {
         useAsTitle: 'name',
-        group: 'App',
+        group: 'Management',
     },
     access: {
         read: ({ req: { user } }) => {
@@ -135,6 +135,7 @@ export const Menu: CollectionConfig = {
                             required: true,
                             admin: {
                                 position: 'sidebar',
+                                width: '50%',
                             },
                         },
                         {
@@ -166,6 +167,7 @@ export const Menu: CollectionConfig = {
                             name: 'regularPrice',
                             type: 'number',
                             required: true,
+                            min: 0,
                             admin: {
                                 placeholder: 'Enter Food Item Price'
                             }
@@ -173,6 +175,7 @@ export const Menu: CollectionConfig = {
                         {
                             name: 'salePrice',
                             type: 'number',
+                            min: 0,
                             admin: {
                                 placeholder: 'Enter Food Item Sale Price'
                             }
@@ -180,6 +183,8 @@ export const Menu: CollectionConfig = {
                         {
                             name: 'dietaryType',
                             type: 'select',
+                            required: true,
+                            defaultValue: "veg",
                             options: [
                                 { label: 'Veg', value: 'veg' },
                                 { label: 'Non-Veg', value: 'non-veg' },
@@ -196,35 +201,130 @@ export const Menu: CollectionConfig = {
                 {
                     fields: [
                         {
-                            name: 'customizations',
-                            type: 'json',
-                            label: 'Customizations',
+                            name: 'injectTemplate',
+                            type: 'ui',
                             admin: {
                                 components: {
-                                    Field: '@/collections/Menu/components/CustomizationsManager#CustomizationsManager',
+                                    Field: '@/collections/Menu/components/TemplateInjector#TemplateInjector',
                                 }
                             }
+                        },
+                        {
+                            name: 'customizations',
+                            type: 'array',
+                            label: 'Customization Panels',
+                            minRows: 0,
+                            maxRows: 1,
+                            admin: {
+                                components: {
+                                    RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
+                                },
+                            },
+                            fields: [
+                                {
+                                    name: 'title',
+                                    type: 'text',
+                                    admin: {
+                                        hidden: true,
+                                    },
+                                },
+                                {
+                                    name: 'template',
+                                    type: 'relationship',
+                                    relationTo: 'customization-template',
+                                    admin: {
+                                        readOnly: true,
+                                    }
+                                },
+                                {
+                                    name: 'sections',
+                                    type: 'array',
+                                    label: 'Sections',
+                                    admin: {
+                                        components: {
+                                            RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
+                                        },
+                                    },
+                                    fields: [
+                                        {
+                                            name: 'title',
+                                            type: 'text',
+                                            required: true,
+                                        },
+                                        {
+                                            name: 'selectionType',
+                                            type: 'radio',
+                                            options: [
+                                                { label: 'Single', value: 'single' },
+                                                { label: 'Multiple', value: 'multiple' },
+                                            ],
+                                        },
+                                        {
+                                            name: 'groups',
+                                            type: 'array',
+                                            label: 'Option Groups',
+                                            admin: {
+                                                components: {
+                                                    RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
+                                                },
+                                            },
+                                            fields: [
+                                                {
+                                                    name: 'groupTitle',
+                                                    type: 'text',
+                                                    required: true,
+                                                },
+                                                {
+                                                    name: 'options',
+                                                    type: 'array',
+                                                    fields: [
+                                                        {
+                                                            name: 'label',
+                                                            type: 'text',
+                                                            required: true,
+                                                        },
+                                                        {
+                                                            name: 'price',
+                                                            type: 'number',
+                                                            defaultValue: 0,
+                                                        },
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                        {
+                                            name: 'options',
+                                            type: 'array',
+                                            admin: {
+                                                condition: (_, siblingData) => !siblingData.groups?.length,
+                                                components: {
+                                                    RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
+                                                },
+                                            },
+                                            fields: [
+                                                {
+                                                    name: 'label',
+                                                    type: 'text',
+                                                    required: true,
+                                                },
+                                                {
+                                                    name: 'price',
+                                                    type: 'number',
+                                                    defaultValue: 0,
+                                                },
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
                         }
                     ],
                     label: 'Customization Panel'
                 }
             ]
         },
-        {
-            name: 'slug',
-            type: 'text',
-            index: true,
-            unique: true,
-            required: true,
-            admin: {
-                position: 'sidebar',
-            },
-            hooks: {
-                beforeValidate: [({ value, data }) => {
-                    if (value) return value;
-                    return (data?.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-                }],
-            },
-        },
+        slugField({
+            useAsSlug: 'name',
+        })
     ],
 }

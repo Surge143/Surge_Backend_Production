@@ -7,7 +7,7 @@ export const WebOrders: CollectionConfig = {
     slug: 'web-orders',
     admin: {
         useAsTitle: 'id',
-        group: 'Website',
+        group: 'Store',
     },
     endpoints: [
         {
@@ -281,8 +281,8 @@ export const WebOrders: CollectionConfig = {
                                     type: 'select',
                                     required: true,
                                     validate: (val, { data }) => {
-                                        if (val === 'refunded' && data?.deliveryStatus !== 'placed') {
-                                            return 'Refunds are only allowed while the delivery status is "Placed".';
+                                        if (val === 'refunded' && data?.deliveryStatus !== 'placed' && data?.deliveryStatus !== 'cancelled') {
+                                            return 'Refunds are only allowed while the delivery status is "Placed" or "Cancelled".';
                                         }
                                         return true;
                                     },
@@ -325,13 +325,59 @@ export const WebOrders: CollectionConfig = {
                         {
                             name: 'financials',
                             type: 'group',
+                            label: 'Financial Breakdown',
                             fields: [
                                 {
                                     type: 'row',
                                     fields: [
-                                        { name: 'subtotal', type: 'number', required: true },
-                                        { name: 'discountAmount', type: 'number' },
-                                        { name: 'total', type: 'number', required: true },
+                                        {
+                                            name: 'subtotal',
+                                            label: 'Subtotal (Before Discounts)',
+                                            type: 'number',
+                                            required: true,
+                                            admin: { width: '50%', description: 'Sum of all item prices × quantities' }
+                                        },
+                                        {
+                                            name: 'couponDiscount',
+                                            label: 'Coupon Discount',
+                                            type: 'number',
+                                            admin: { width: '50%', description: 'Discount applied via coupon code' }
+                                        },
+                                    ],
+                                },
+                                {
+                                    type: 'row',
+                                    fields: [
+                                        {
+                                            name: 'wtCoinsDiscount',
+                                            label: 'WT Coins Discount',
+                                            type: 'number',
+                                            admin: { width: '50%', description: 'Discount applied via WT Coins redemption' }
+                                        },
+                                        {
+                                            name: 'shippingCharge',
+                                            label: 'Shipping Charge',
+                                            type: 'number',
+                                            admin: { width: '50%', description: 'Shipping fee (0 for pickup orders)' }
+                                        },
+                                    ],
+                                },
+                                {
+                                    type: 'row',
+                                    fields: [
+                                        {
+                                            name: 'taxAmount',
+                                            label: 'Tax',
+                                            type: 'number',
+                                            admin: { width: '50%', description: 'Tax applied on (subtotal − discounts + shipping)' }
+                                        },
+                                        {
+                                            name: 'total',
+                                            label: 'Grand Total',
+                                            type: 'number',
+                                            required: true,
+                                            admin: { width: '50%', description: 'Final amount charged (subtotal − discounts + shipping + tax)' }
+                                        },
                                     ],
                                 },
                             ],

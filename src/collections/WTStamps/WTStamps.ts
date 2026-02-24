@@ -7,7 +7,7 @@ export const WTStamps: CollectionConfig = {
         plural: 'Stamps',
     },
     admin: {
-
+        group: 'Loyalty Program',
     },
     fields: [
         {

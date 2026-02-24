@@ -7,18 +7,26 @@ import { CouponItem, CouponPickerGrid } from './CouponPickerGrid'
 
 const modalSlug = 'quick-create-shop-coupon-modal'
 
+type SelectedCoupon = {
+    couponId: string
+    discountType: string
+    discountAmount: number
+    isPubliclyVisible: boolean
+}
+
 export const ShopCouponQuickCreate: React.FC = () => {
     const { openModal, closeModal } = useModal()
     const { user } = useAuth()
     const router = useRouter()
 
-    const [selectedItems, setSelectedItems] = useState<Array<{ couponId: string; discountType: string; discountAmount: number; isPubliclyVisible: boolean }>>([])
+    const [selectedItems, setSelectedItems] = useState<SelectedCoupon[]>([])
     const [searchTerm, setSearchTerm] = useState('')
-    const [name, setName] = useState('')
     const [isCreating, setIsCreating] = useState(false)
     const [shops, setShops] = useState<any[]>([])
     const [selectedShop, setSelectedShop] = useState<string>('')
+    const [createError, setCreateError] = useState<string | null>(null)
 
+    // Fetch shops on mount
     useEffect(() => {
         const fetchShops = async () => {
             try {
@@ -26,11 +34,12 @@ export const ShopCouponQuickCreate: React.FC = () => {
                 const data = await res.json()
                 if (data.docs) {
                     setShops(data.docs)
+                    // Auto-select the shop for shop-managers
                     if (user?.role === 'shop-manager') {
                         const myShop = data.docs.find((s: any) =>
-                            (typeof s.shopManager === 'object' ? s.shopManager.id : s.shopManager) === user.id
+                            String(typeof s.shopManager === 'object' ? s.shopManager.id : s.shopManager) === String(user.id)
                         )
-                        if (myShop) setSelectedShop(myShop.id)
+                        if (myShop) setSelectedShop(String(myShop.id))
                     }
                 }
             } catch (err) {
@@ -40,98 +49,122 @@ export const ShopCouponQuickCreate: React.FC = () => {
         fetchShops()
     }, [user])
 
+    // Clear coupon selections whenever the shop changes
+    useEffect(() => {
+        setSelectedItems([])
+        setSearchTerm('')
+        setCreateError(null)
+    }, [selectedShop])
+
     const toggleItem = (coupon: CouponItem) => {
         const next = [...selectedItems]
-        const index = next.findIndex(item => item.couponId === coupon.id)
-
+        const index = next.findIndex(item => String(item.couponId) === String(coupon.id))
         if (index > -1) {
             next.splice(index, 1)
         } else {
-            // Only store minimal data - the server hook will populate the rest
             next.push({
-                couponId: coupon.id,
+                couponId: String(coupon.id),
                 discountType: coupon.discountType,
                 discountAmount: coupon.discountAmount,
-                isPubliclyVisible: coupon.isPubliclyVisible !== undefined ? coupon.isPubliclyVisible : true
+                isPubliclyVisible: coupon.isPubliclyVisible !== undefined ? coupon.isPubliclyVisible : true,
             })
         }
         setSelectedItems(next)
     }
 
+    const handleShopChange = (val: any) => {
+        // SelectInput may return a string or { value: string } object
+        const newValue = val !== null && typeof val === 'object' ? String(val.value ?? '') : String(val ?? '')
+        setSelectedShop(newValue)
+    }
+
+    const resetModal = () => {
+        setSelectedItems([])
+        setSearchTerm('')
+        setCreateError(null)
+    }
+
+    const handleClose = () => {
+        resetModal()
+        closeModal(modalSlug)
+    }
+
     const handleCreate = async () => {
         if (selectedItems.length === 0) {
-            alert('Please select at least one coupon.')
+            setCreateError('Please select at least one coupon.')
             return
         }
-
         if (!selectedShop) {
-            alert('Please select a shop first.')
+            setCreateError('Please select a shop first.')
             return
         }
 
         setIsCreating(true)
+        setCreateError(null)
 
         try {
-            // 1. Fetch full coupon data for all selected items
-            const couponIds = selectedItems.map((item, i) => item.couponId || i)
-            const couponDataPromises = couponIds.map(id =>
-                fetch(`/api/coupon/${id}`).then(res => res.json())
+            // Fetch full coupon data for all selected items
+            const fullCoupons = await Promise.all(
+                selectedItems.map(item =>
+                    fetch(`/api/coupon/${item.couponId}?draft=false`).then(res => {
+                        if (!res.ok) throw new Error(`Failed to fetch coupon ${item.couponId}`)
+                        return res.json()
+                    })
+                )
             )
-            const fullCoupons = await Promise.all(couponDataPromises)
 
-            // 2. Map through each selected coupon to create individual POST requests
-            const creationPromises = fullCoupons.map(async (couponData: any) => {
-                const coupon = couponData // API returns the coupon object directly
+            // Normalise shop ID
+            const shopId: string | number = isNaN(Number(selectedShop)) ? selectedShop : Number(selectedShop)
 
-                const shopId = selectedShop ? (isNaN(Number(selectedShop)) ? selectedShop : Number(selectedShop)) : undefined;
+            // Create one shop-coupon per selected coupon
+            const results = await Promise.all(
+                fullCoupons.map(async (coupon: any) => {
+                    const payload = {
+                        shop: shopId,
+                        // couponRelation links back to the source coupon
+                        couponRelation: [typeof coupon.id === 'string' && !isNaN(Number(coupon.id)) ? Number(coupon.id) : coupon.id],
+                        code: coupon.code,
+                        status: 'active',
+                        // Shop coupons are always app-only — override whatever the source has
+                        couponFor: { website: false, app: true },
+                        isPubliclyVisible: coupon.isPubliclyVisible !== undefined ? coupon.isPubliclyVisible : true,
+                        applicability: coupon.applicability ?? 'all',
+                        // Extract IDs from populated relationship arrays
+                        products: Array.isArray(coupon.products)
+                            ? coupon.products.map((p: any) => (typeof p === 'object' ? p.id : p))
+                            : [],
+                        discountType: coupon.discountType,
+                        discountAmount: coupon.discountAmount,
+                        expiryDate: coupon.expiryDate,
+                        minimumAmount: coupon.minimumAmount ?? 0,
+                        usageLimit: coupon.usageLimit ?? null,
+                        usageLimitPerUser: coupon.usageLimitPerUser ?? 1,
+                        usageCount: 0,
+                    }
 
-                const payload = {
-                    // Link to the specific shop
-                    shop: shopId,
-                    couponRelation: [coupon.id], // Use the coupon ID and wrap in array for hasMany relationship
-                    // Copy all data fields from the 'Coupon' to 'Shop Coupon'
-                    code: coupon.code,
-                    status: 'active', // You can keep it 'active' by default
-                    couponFor: coupon.couponFor,
-                    isPubliclyVisible: coupon.isPubliclyVisible !== undefined ? coupon.isPubliclyVisible : true,
-                    applicability: coupon.applicability,
-
-                    // Handle relationship arrays (extracting IDs if they are objects)
-                    products: coupon.products?.map((p: any) => (typeof p === 'object' ? p.id : p)),
-
-                    discountType: coupon.discountType,
-                    discountAmount: coupon.discountAmount,
-                    expiryDate: coupon.expiryDate,
-                    minimumAmount: coupon.minimumAmount,
-                    usageLimit: coupon.usageLimit,
-                    usageLimitPerUser: coupon.usageLimitPerUser,
-                    usageCount: 0, // Reset usage for the new shop-specific record
-                }
-
-                return fetch('/api/shop-coupon', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
+                    return fetch('/api/shop-coupon', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    })
                 })
-            })
+            )
 
-            // 2. Execute all requests in parallel
-            const results = await Promise.all(creationPromises)
-
-            // 3. Execute all requests in parallel and check if all succeeded
-            const failedRequests = results.filter(res => !res.ok)
-
-            if (failedRequests.length === 0) {
+            const failed = results.filter(res => !res.ok)
+            if (failed.length === 0) {
+                resetModal()
                 closeModal(modalSlug)
-                // Redirect to the list view so the user can see the new separate rows
-                router.push(`/admin/collections/shop-coupon`)
+                router.push('/admin/collections/shop-coupon')
                 router.refresh()
             } else {
-                alert(`Failed to create ${failedRequests.length} coupons. Check console for details.`)
+                // Try to extract error messages from failed responses
+                const errorBodies = await Promise.all(failed.map(r => r.json().catch(() => null)))
+                const messages = errorBodies.map(b => b?.errors?.[0]?.message || b?.message || 'Unknown error').join('; ')
+                setCreateError(`Failed to create ${failed.length} coupon(s): ${messages}`)
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error during batch coupon creation:', err)
-            alert('An unexpected error occurred.')
+            setCreateError(err?.message || 'An unexpected error occurred.')
         } finally {
             setIsCreating(false)
         }
@@ -141,32 +174,34 @@ export const ShopCouponQuickCreate: React.FC = () => {
         <div className={styles.quickCreateContainer} style={{ marginBottom: '1rem' }}>
             <Button
                 buttonStyle="primary"
-                className="shop-menu-quick-create-btn" // Reusing class for CSS hiding logic
-                onClick={() => openModal(modalSlug)}
+                onClick={() => { resetModal(); openModal(modalSlug) }}
                 type="button"
             >
-                + Select Coupons & Create
+                + Select Coupons &amp; Create
             </Button>
 
             <Modal slug={modalSlug} className={styles.productPickerModal}>
                 <div className={styles.modalContainer}>
                     <div className={styles.modalHeader}>
                         <h2>Select Coupons for Shop</h2>
+
+                        {/* Shop selector — hidden for shop-managers since their shop is auto-selected */}
                         {user?.role !== 'shop-manager' && (
                             <div className={styles.shopSelectWrapper} style={{ width: '250px' }}>
                                 <SelectInput
                                     path="shopSelect"
                                     name="shopSelect"
                                     label="Select Shop"
-                                    options={shops.map(s => ({ label: String(s.title || s.name || s.id), value: String(s.id) }))}
+                                    options={shops.map(s => ({
+                                        label: String(s.title || s.name || s.id),
+                                        value: String(s.id),
+                                    }))}
                                     value={selectedShop}
-                                    onChange={(val: any) => {
-                                        const newValue = typeof val === 'object' && val !== null ? val.value : val;
-                                        setSelectedShop(newValue);
-                                    }}
+                                    onChange={handleShopChange}
                                 />
                             </div>
                         )}
+
                         <div className={styles.searchWrapper} style={{ flexGrow: 1, display: 'flex', gap: '15px', alignItems: 'flex-end' }}>
                             <div style={{ flex: 1 }}>
                                 <TextInput
@@ -178,30 +213,55 @@ export const ShopCouponQuickCreate: React.FC = () => {
                                 />
                             </div>
                         </div>
+
                         <div style={{ display: 'flex', gap: '10px' }}>
-                            <Button buttonStyle="secondary" onClick={() => closeModal(modalSlug)} type="button">Cancel</Button>
+                            <Button buttonStyle="secondary" onClick={handleClose} type="button">
+                                Cancel
+                            </Button>
                             <Button
                                 buttonStyle="primary"
                                 onClick={handleCreate}
                                 type="button"
-                                disabled={isCreating || selectedItems.length === 0}
+                                disabled={isCreating || selectedItems.length === 0 || !selectedShop}
                             >
-                                {isCreating ? 'Creating...' : 'Create Shop Coupons'}
+                                {isCreating
+                                    ? 'Creating...'
+                                    : `Create${selectedItems.length > 0 ? ` (${selectedItems.length})` : ''}`}
                             </Button>
                         </div>
                     </div>
 
-                    <div className={styles.modalContent}>
-                        <CouponPickerGrid
-                            selectedItems={selectedItems}
-                            onToggle={toggleItem}
-                            searchTerm={searchTerm}
-                            shopId={selectedShop}
-                        />
-                    </div>
+                    {/* Inline error message */}
+                    {createError && (
+                        <div style={{
+                            padding: '10px 40px',
+                            background: 'var(--theme-error-100)',
+                            color: 'var(--theme-error-500)',
+                            borderBottom: '1px solid var(--theme-error-200)',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                        }}>
+                            ⚠️ {createError}
+                        </div>
+                    )}
+
+                    {/* Prompt user to select a shop before showing the grid */}
+                    {!selectedShop ? (
+                        <div style={{ padding: '60px', textAlign: 'center', color: 'var(--theme-elevation-500)' }}>
+                            Please select a shop to see available coupons.
+                        </div>
+                    ) : (
+                        <div className={styles.modalContent}>
+                            <CouponPickerGrid
+                                selectedItems={selectedItems}
+                                onToggle={toggleItem}
+                                searchTerm={searchTerm}
+                                shopId={selectedShop}
+                            />
+                        </div>
+                    )}
                 </div>
             </Modal>
         </div>
     )
 }
-

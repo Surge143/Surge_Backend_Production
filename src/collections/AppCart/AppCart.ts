@@ -5,9 +5,14 @@ import { afterCartChange } from './hooks/afterCartChange';
 
 const AppCart: CollectionConfig = {
     slug: 'app-cart',
+    labels: {
+        singular: 'Cart',
+        plural: 'Carts',
+    },
     admin: {
-        group: 'Common',
+        group: 'Cafe',
         defaultColumns: ['user', 'origin', 'updatedAt'],
+        hidden: true,
     },
     access: {
         read: canReadCart,

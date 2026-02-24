@@ -1,7 +1,11 @@
-import type { CollectionConfig } from 'payload'
+import { slugField, type CollectionConfig } from 'payload'
 
 export const AppCategories: CollectionConfig = {
   slug: 'app-categories',
+  labels: {
+    singular: 'Category',
+    plural: 'Categories',
+  },
   access: {
     read: () => true,
     update: ({ req: { user } }) => {
@@ -16,7 +20,7 @@ export const AppCategories: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    group: 'App',
+    group: 'Cafe',
     defaultColumns: ['id', 'title', 'slug'],
   },
   fields: [
@@ -25,21 +29,8 @@ export const AppCategories: CollectionConfig = {
       type: 'text',
       required: true,
     },
-    {
-      name: 'slug',
-      type: 'text',
-      index: true,
-      unique: true,
-      required: true,
-      admin: {
-        position: 'sidebar',
-      },
-      hooks: {
-        beforeValidate: [({ value, data }) => {
-          if (value) return value;
-          return (data?.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-        }],
-      },
-    },
+    slugField({
+      useAsSlug: 'title'
+    })
   ],
 }

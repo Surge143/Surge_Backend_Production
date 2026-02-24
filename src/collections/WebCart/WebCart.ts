@@ -5,7 +5,7 @@ export const WebCart: CollectionConfig = {
     slug: 'web-cart',
     admin: {
         defaultColumns: ['user', 'items'],
-        group: 'Website',
+        group: 'Store',
     },
     hooks: {
         beforeChange: [beforeWebCartChange],

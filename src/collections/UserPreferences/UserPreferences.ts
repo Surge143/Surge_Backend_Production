@@ -5,6 +5,7 @@ const UserPreferences: CollectionConfig = {
     admin: {
         group: 'Common',
         defaultColumns: ['user', 'updatedAt'],
+        hidden: true,
         description: 'Stores per-user product customization preferences for the cafe app.',
     },
     access: {

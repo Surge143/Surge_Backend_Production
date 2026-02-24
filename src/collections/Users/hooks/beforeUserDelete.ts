@@ -8,8 +8,7 @@ export const beforeUserDelete: CollectionBeforeDeleteHook = async ({ id, req }) 
     const collectionsToClean = [
         'web-cart',
         'app-cart',
-        'web-wishlist',
-        'app-wishlist',
+        'wishlist',
         'user-wt-coins',
         'user-preferences',
     ]

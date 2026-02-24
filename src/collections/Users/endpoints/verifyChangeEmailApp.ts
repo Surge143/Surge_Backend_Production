@@ -97,13 +97,6 @@ export const verifyChangeEmailApp: PayloadHandler = async (req) => {
             );
         }
 
-        if (!req.user) {
-            return Response.json(
-                { success: false, message: 'Authentication required' },
-                { status: 401 }
-            );
-        }
-
         const randomPassword = Math.random().toString(36).slice(-10);
 
         // 1. Update the user's email and password

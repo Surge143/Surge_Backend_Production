@@ -4,7 +4,7 @@ export const UserWTCoins: CollectionConfig = {
     slug: 'user-wt-coins',
     admin: {
         description: "Aggregated User WT Coins Balance",
-        group: 'WTCoins',
+        group: 'Loyalty Program',
         useAsTitle: 'user',
     },
     access: {

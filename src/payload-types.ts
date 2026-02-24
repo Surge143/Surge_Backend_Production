@@ -81,7 +81,7 @@ export interface Config {
     'shop-coupon': ShopCoupon;
     otp: Otp;
     'app-cart': AppCart;
-    'app-wishlist': AppWishlist;
+    wishlist: Wishlist;
     'app-orders': AppOrder;
     'web-categories': WebCategory;
     'web-sub-categories': WebSubCategory;
@@ -91,7 +91,6 @@ export interface Config {
     'web-orders': WebOrder;
     slots: Slot;
     'web-subscription': WebSubscription;
-    'web-wishlist': WebWishlist;
     'wt-stamps': WtStamp;
     'user-preferences': UserPreference;
     exports: Export;
@@ -122,7 +121,7 @@ export interface Config {
     'shop-coupon': ShopCouponSelect<false> | ShopCouponSelect<true>;
     otp: OtpSelect<false> | OtpSelect<true>;
     'app-cart': AppCartSelect<false> | AppCartSelect<true>;
-    'app-wishlist': AppWishlistSelect<false> | AppWishlistSelect<true>;
+    wishlist: WishlistSelect<false> | WishlistSelect<true>;
     'app-orders': AppOrdersSelect<false> | AppOrdersSelect<true>;
     'web-categories': WebCategoriesSelect<false> | WebCategoriesSelect<true>;
     'web-sub-categories': WebSubCategoriesSelect<false> | WebSubCategoriesSelect<true>;
@@ -132,7 +131,6 @@ export interface Config {
     'web-orders': WebOrdersSelect<false> | WebOrdersSelect<true>;
     slots: SlotsSelect<false> | SlotsSelect<true>;
     'web-subscription': WebSubscriptionSelect<false> | WebSubscriptionSelect<true>;
-    'web-wishlist': WebWishlistSelect<false> | WebWishlistSelect<true>;
     'wt-stamps': WtStampsSelect<false> | WtStampsSelect<true>;
     'user-preferences': UserPreferencesSelect<false> | UserPreferencesSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
@@ -365,18 +363,36 @@ export interface Admin {
  */
 export interface Shop {
   id: number;
-  name: string;
-  tagline?: string | null;
-  image?: (number | null) | Media;
-  openingTime: string;
-  closingTime: string;
+  operationalSettings: {
+    openingTime: string;
+    closingTime: string;
+    /**
+     * Select which days the shop is open for business.
+     */
+    operatingDays?: {
+      monday?: boolean | null;
+      tuesday?: boolean | null;
+      wednesday?: boolean | null;
+      thursday?: boolean | null;
+      friday?: boolean | null;
+      saturday?: boolean | null;
+      sunday?: boolean | null;
+    };
+  };
   address: {
     street?: string | null;
     apartment?: string | null;
     city?: string | null;
     emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
+    /**
+     * Country is fixed to UAE for this cafe group.
+     */
     country?: string | null;
   };
+  /**
+   * Immediately opens/closes shop for customers.
+   */
+  isShopOpen?: boolean | null;
   shopManager: number | Admin;
   updatedAt: string;
   createdAt: string;
@@ -388,6 +404,10 @@ export interface Shop {
 export interface AppCategory {
   id: number;
   title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -400,6 +420,10 @@ export interface AppSubCategory {
   id: number;
   title: string;
   parentCategory?: (number | null) | AppCategory;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -411,6 +435,9 @@ export interface AppSubCategory {
 export interface CustomizationTemplate {
   id: number;
   title: string;
+  /**
+   * Add sections for customization
+   */
   sections?:
     | {
         title: string;
@@ -464,16 +491,45 @@ export interface Menu {
   /**
    * Select dietary type of the food item
    */
-  dietaryType?: ('veg' | 'non-veg' | 'vegan') | null;
+  dietaryType: 'veg' | 'non-veg' | 'vegan';
   customizations?:
     | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
+        title?: string | null;
+        template?: (number | null) | CustomizationTemplate;
+        sections?:
+          | {
+              title: string;
+              selectionType?: ('single' | 'multiple') | null;
+              groups?:
+                | {
+                    groupTitle: string;
+                    options?:
+                      | {
+                          label: string;
+                          price?: number | null;
+                          id?: string | null;
+                        }[]
+                      | null;
+                    id?: string | null;
+                  }[]
+                | null;
+              options?:
+                | {
+                    label: string;
+                    price?: number | null;
+                    id?: string | null;
+                  }[]
+                | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
     | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -512,13 +568,42 @@ export interface ShopMenu {
   inStock?: boolean | null;
   customizations?:
     | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
+        title?: string | null;
+        template?: (number | null) | CustomizationTemplate;
+        sections?:
+          | {
+              title: string;
+              selectionType?: ('single' | 'multiple') | null;
+              groups?:
+                | {
+                    groupTitle: string;
+                    options?:
+                      | {
+                          label: string;
+                          price?: number | null;
+                          id?: string | null;
+                        }[]
+                      | null;
+                    id?: string | null;
+                  }[]
+                | null;
+              options?:
+                | {
+                    label: string;
+                    price?: number | null;
+                    id?: string | null;
+                  }[]
+                | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
     | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -529,29 +614,29 @@ export interface ShopMenu {
  */
 export interface Coupon {
   id: number;
-  createdBy?: (number | null) | Admin;
   /**
-   * Select status
-   */
-  status: 'active' | 'inactive';
-  /**
-   * Enter coupon code
+   * Unique code customers enter at checkout. Use uppercase letters and numbers only.
    */
   code: string;
   /**
-   * Please select at least one option.
+   * Inactive coupons cannot be applied at checkout even if the code is correct.
    */
-  couponFor?: {
-    website?: boolean | null;
-    app?: boolean | null;
-  };
+  couponStatus: 'active' | 'inactive';
   /**
-   * Toggle on to show this coupon in the "Available Offers" section on both Web and App.
+   * Percentage deducts a % of the order total; Fixed Amount deducts a flat dollar value.
    */
-  isPubliclyVisible?: boolean | null;
+  discountType: 'percentage' | 'fixed';
+  discountAmount: number;
+  /**
+   * Choose whether this coupon applies to the entire cart or only specific products.
+   */
   applicability: 'all' | 'products';
   /**
-   * Select products
+   * Coupon will be automatically invalidated after this date.
+   */
+  expiryDate: string;
+  /**
+   * Select the specific products or menu items this coupon applies to.
    */
   products?:
     | (
@@ -566,35 +651,39 @@ export interface Coupon {
       )[]
     | null;
   /**
-   * Select discount type
-   */
-  discountType: 'percentage' | 'fixed';
-  /**
-   * Enter discount amount
-   */
-  discountAmount: number;
-  /**
-   * Select expiry date
-   */
-  expiryDate: string;
-  /**
-   * Enter minimum amount
+   * Minimum cart total (in $) required to apply this coupon. Set to 0 for no minimum.
    */
   minimumAmount: number;
   /**
-   * The maximum number of times this coupon can be used across all customers (e.g., "First 100 people").
+   * Max number of times this coupon can be used in total. Leave blank for unlimited.
    */
   usageLimit?: number | null;
   /**
-   * How many times a single customer can use this specific coupon.
+   * Max number of times a single customer can use this coupon.
    */
   usageLimitPerUser: number;
+  createdBy?: (number | null) | Admin;
   /**
-   * Internal counter of how many times this coupon has been successfully redeemed.
+   * Toggle on to show this coupon in "Available Offers".
    */
+  isPubliclyVisible?: boolean | null;
+  /**
+   * Choose which platform(s) this coupon is valid on.
+   */
+  couponFor?: {
+    /**
+     * Check to enable this coupon on the website.
+     */
+    website?: boolean | null;
+    /**
+     * Check to enable this coupon on the mobile app.
+     */
+    app?: boolean | null;
+  };
   usageCount?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -737,31 +826,29 @@ export interface WebSubCategory {
  */
 export interface ShopCoupon {
   id: number;
-  shop?: (number | null) | Shop;
-  couponRelation: (number | Coupon)[];
-  createdBy?: (number | null) | Admin;
   /**
-   * Select status
-   */
-  status: 'active' | 'inactive';
-  /**
-   * Enter coupon code
+   * Unique code customers enter at checkout. Use uppercase letters and numbers only.
    */
   code: string;
   /**
-   * Please select at least one option.
+   * Inactive coupons cannot be applied at checkout even if the code is correct.
    */
-  couponFor?: {
-    website?: boolean | null;
-    app?: boolean | null;
-  };
+  couponStatus: 'active' | 'inactive';
   /**
-   * Toggle on to show this coupon in the "Available Offers" section on both Web and App.
+   * Percentage deducts a % of the order total; Fixed Amount deducts a flat dollar value.
    */
-  isPubliclyVisible?: boolean | null;
+  discountType: 'percentage' | 'fixed';
+  discountAmount: number;
+  /**
+   * Choose whether this coupon applies to the entire cart or only specific products.
+   */
   applicability: 'all' | 'products';
   /**
-   * Select products
+   * Coupon will be automatically invalidated after this date.
+   */
+  expiryDate: string;
+  /**
+   * Select the specific products or menu items this coupon applies to.
    */
   products?:
     | (
@@ -776,31 +863,30 @@ export interface ShopCoupon {
       )[]
     | null;
   /**
-   * Select discount type
-   */
-  discountType: 'percentage' | 'fixed';
-  /**
-   * Enter discount amount
-   */
-  discountAmount: number;
-  /**
-   * Select expiry date
-   */
-  expiryDate: string;
-  /**
-   * Enter minimum amount
+   * Minimum cart total required to apply this coupon. Set to 0 for no minimum.
    */
   minimumAmount: number;
   /**
-   * The maximum number of times this coupon can be used across all customers (e.g., "First 100 people").
+   * Max number of times this coupon can be used across all users.
    */
   usageLimit?: number | null;
   /**
-   * How many times a single customer can use this specific coupon.
+   * Max number of times a single customer can use this coupon.
    */
   usageLimitPerUser: number;
+  shop?: (number | null) | Shop;
+  couponRelation: (number | Coupon)[];
+  createdBy?: (number | null) | Admin;
+  couponFor?: {
+    website?: boolean | null;
+    app?: boolean | null;
+  };
   /**
-   * Internal counter of how many times this coupon has been successfully redeemed.
+   * Toggle on to show this coupon in "Available Offers".
+   */
+  isPubliclyVisible?: boolean | null;
+  /**
+   * Internal counter of how many times this coupon has been used.
    */
   usageCount?: number | null;
   updatedAt: string;
@@ -870,9 +956,9 @@ export interface AppCart {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "app-wishlist".
+ * via the `definition` "wishlist".
  */
-export interface AppWishlist {
+export interface Wishlist {
   id: number;
   user: number | User;
   items?:
@@ -931,8 +1017,25 @@ export interface AppOrder {
   coinsUsed?: number | null;
   stampRewards?: (number | ShopMenu)[] | null;
   financials?: {
+    /**
+     * Sum of all item prices × quantities
+     */
     subtotal?: number | null;
-    discountAmount?: number | null;
+    /**
+     * Discount applied via coupon code
+     */
+    couponDiscount?: number | null;
+    /**
+     * Discount applied via WT Coins redemption
+     */
+    wtCoinsDiscount?: number | null;
+    /**
+     * Tax applied on order total after discounts
+     */
+    taxAmount?: number | null;
+    /**
+     * Final amount charged to the customer (subtotal − discounts + tax)
+     */
     total?: number | null;
   };
   stripeOrderId?: string | null;
@@ -949,23 +1052,40 @@ export interface AppOrder {
   createdAt: string;
 }
 /**
+ * Define time slots for customer order bookings. Control availability and capacity per slot.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "slots".
  */
 export interface Slot {
   id: number;
+  /**
+   * Uncheck to temporarily pause bookings for this slot.
+   */
   isActive?: boolean | null;
+  /**
+   * "Now" is auto-set to the current time on save. Only one slot collection-wide can use this mode.
+   */
   timeSelection?: ('now' | 'custom') | null;
+  /**
+   * Select a fixed time in 30-minute increments.
+   */
   slot?: string | null;
   /**
-   * Total number of orders allowed for this slot.
+   * Total number of orders this slot can accept.
    */
   maxCapacity: number;
   /**
-   * Total count of accepted orders in this slot.
+   * Live count of accepted orders. Updated automatically.
    */
   currentLoad?: number | null;
+  /**
+   * Auto-assigned based on your manager account.
+   */
   shop?: (number | null) | Shop;
+  /**
+   * The manager who created this slot.
+   */
   shopManager?: (number | null) | Admin;
   updatedAt: string;
   createdAt: string;
@@ -1100,8 +1220,29 @@ export interface WebOrder {
   couponCode?: (number | null) | Coupon;
   pointsUsed?: number | null;
   financials: {
+    /**
+     * Sum of all item prices × quantities
+     */
     subtotal: number;
-    discountAmount?: number | null;
+    /**
+     * Discount applied via coupon code
+     */
+    couponDiscount?: number | null;
+    /**
+     * Discount applied via WT Coins redemption
+     */
+    wtCoinsDiscount?: number | null;
+    /**
+     * Shipping fee (0 for pickup orders)
+     */
+    shippingCharge?: number | null;
+    /**
+     * Tax applied on (subtotal − discounts + shipping)
+     */
+    taxAmount?: number | null;
+    /**
+     * Final amount charged (subtotal − discounts + shipping + tax)
+     */
     total: number;
   };
   /**
@@ -1177,9 +1318,29 @@ export interface WebSubscription {
   subsStatus?: ('active' | 'inactive' | 'cancelled') | null;
   pointsUsed?: number | null;
   financials: {
+    /**
+     * Product base price multiplied by quantity, before any discounts
+     */
     subtotal: number;
-    discountAmount?: number | null;
-    wtDiscount?: number | null;
+    /**
+     * Discount from the subscription plan percentage
+     */
+    subscriptionDiscount?: number | null;
+    /**
+     * Discount applied via WT Coins redemption
+     */
+    wtCoinsDiscount?: number | null;
+    /**
+     * Shipping fee (0 for pickup orders)
+     */
+    shippingCharge?: number | null;
+    /**
+     * Tax applied on (subtotal − discounts + shipping)
+     */
+    taxAmount?: number | null;
+    /**
+     * Final recurring amount charged (first payment may differ due to WT Coins)
+     */
     total: number;
   };
   stripeData?:
@@ -1192,22 +1353,6 @@ export interface WebSubscription {
     | boolean
     | null;
   guestAccessToken?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "web-wishlist".
- */
-export interface WebWishlist {
-  id: number;
-  user: number | User;
-  items?:
-    | {
-        product: number | WebProduct;
-        id?: string | null;
-      }[]
-    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1531,8 +1676,8 @@ export interface PayloadLockedDocument {
         value: number | AppCart;
       } | null)
     | ({
-        relationTo: 'app-wishlist';
-        value: number | AppWishlist;
+        relationTo: 'wishlist';
+        value: number | Wishlist;
       } | null)
     | ({
         relationTo: 'app-orders';
@@ -1569,10 +1714,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'web-subscription';
         value: number | WebSubscription;
-      } | null)
-    | ({
-        relationTo: 'web-wishlist';
-        value: number | WebWishlist;
       } | null)
     | ({
         relationTo: 'wt-stamps';
@@ -1723,6 +1864,7 @@ export interface AdminsSelect<T extends boolean = true> {
  */
 export interface AppCategoriesSelect<T extends boolean = true> {
   title?: T;
+  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1769,6 +1911,7 @@ export interface MediaSelect<T extends boolean = true> {
 export interface AppSubCategoriesSelect<T extends boolean = true> {
   title?: T;
   parentCategory?: T;
+  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1823,7 +1966,41 @@ export interface MenuSelect<T extends boolean = true> {
   regularPrice?: T;
   salePrice?: T;
   dietaryType?: T;
-  customizations?: T;
+  customizations?:
+    | T
+    | {
+        title?: T;
+        template?: T;
+        sections?:
+          | T
+          | {
+              title?: T;
+              selectionType?: T;
+              groups?:
+                | T
+                | {
+                    groupTitle?: T;
+                    options?:
+                      | T
+                      | {
+                          label?: T;
+                          price?: T;
+                          id?: T;
+                        };
+                    id?: T;
+                  };
+              options?:
+                | T
+                | {
+                    label?: T;
+                    price?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+        id?: T;
+      };
+  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1833,11 +2010,23 @@ export interface MenuSelect<T extends boolean = true> {
  * via the `definition` "shop_select".
  */
 export interface ShopSelect<T extends boolean = true> {
-  name?: T;
-  tagline?: T;
-  image?: T;
-  openingTime?: T;
-  closingTime?: T;
+  operationalSettings?:
+    | T
+    | {
+        openingTime?: T;
+        closingTime?: T;
+        operatingDays?:
+          | T
+          | {
+              monday?: T;
+              tuesday?: T;
+              wednesday?: T;
+              thursday?: T;
+              friday?: T;
+              saturday?: T;
+              sunday?: T;
+            };
+      };
   address?:
     | T
     | {
@@ -1847,6 +2036,7 @@ export interface ShopSelect<T extends boolean = true> {
         emirates?: T;
         country?: T;
       };
+  isShopOpen?: T;
   shopManager?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1870,7 +2060,41 @@ export interface ShopMenuSelect<T extends boolean = true> {
   dietaryType?: T;
   stockCount?: T;
   inStock?: T;
-  customizations?: T;
+  customizations?:
+    | T
+    | {
+        title?: T;
+        template?: T;
+        sections?:
+          | T
+          | {
+              title?: T;
+              selectionType?: T;
+              groups?:
+                | T
+                | {
+                    groupTitle?: T;
+                    options?:
+                      | T
+                      | {
+                          label?: T;
+                          price?: T;
+                          id?: T;
+                        };
+                    id?: T;
+                  };
+              options?:
+                | T
+                | {
+                    label?: T;
+                    price?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+        id?: T;
+      };
+  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1880,38 +2104,47 @@ export interface ShopMenuSelect<T extends boolean = true> {
  * via the `definition` "coupon_select".
  */
 export interface CouponSelect<T extends boolean = true> {
-  createdBy?: T;
-  status?: T;
   code?: T;
+  couponStatus?: T;
+  discountType?: T;
+  discountAmount?: T;
+  applicability?: T;
+  expiryDate?: T;
+  products?: T;
+  minimumAmount?: T;
+  usageLimit?: T;
+  usageLimitPerUser?: T;
+  createdBy?: T;
+  isPubliclyVisible?: T;
   couponFor?:
     | T
     | {
         website?: T;
         app?: T;
       };
-  isPubliclyVisible?: T;
-  applicability?: T;
-  products?: T;
-  discountType?: T;
-  discountAmount?: T;
-  expiryDate?: T;
-  minimumAmount?: T;
-  usageLimit?: T;
-  usageLimitPerUser?: T;
   usageCount?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "shop-coupon_select".
  */
 export interface ShopCouponSelect<T extends boolean = true> {
+  code?: T;
+  couponStatus?: T;
+  discountType?: T;
+  discountAmount?: T;
+  applicability?: T;
+  expiryDate?: T;
+  products?: T;
+  minimumAmount?: T;
+  usageLimit?: T;
+  usageLimitPerUser?: T;
   shop?: T;
   couponRelation?: T;
   createdBy?: T;
-  status?: T;
-  code?: T;
   couponFor?:
     | T
     | {
@@ -1919,14 +2152,6 @@ export interface ShopCouponSelect<T extends boolean = true> {
         app?: T;
       };
   isPubliclyVisible?: T;
-  applicability?: T;
-  products?: T;
-  discountType?: T;
-  discountAmount?: T;
-  expiryDate?: T;
-  minimumAmount?: T;
-  usageLimit?: T;
-  usageLimitPerUser?: T;
   usageCount?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1966,9 +2191,9 @@ export interface AppCartSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "app-wishlist_select".
+ * via the `definition` "wishlist_select".
  */
-export interface AppWishlistSelect<T extends boolean = true> {
+export interface WishlistSelect<T extends boolean = true> {
   user?: T;
   items?:
     | T
@@ -2011,7 +2236,9 @@ export interface AppOrdersSelect<T extends boolean = true> {
     | T
     | {
         subtotal?: T;
-        discountAmount?: T;
+        couponDiscount?: T;
+        wtCoinsDiscount?: T;
+        taxAmount?: T;
         total?: T;
       };
   stripeOrderId?: T;
@@ -2209,7 +2436,10 @@ export interface WebOrdersSelect<T extends boolean = true> {
     | T
     | {
         subtotal?: T;
-        discountAmount?: T;
+        couponDiscount?: T;
+        wtCoinsDiscount?: T;
+        shippingCharge?: T;
+        taxAmount?: T;
         total?: T;
       };
   wtCoinsAwarded?: T;
@@ -2282,27 +2512,14 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
     | T
     | {
         subtotal?: T;
-        discountAmount?: T;
-        wtDiscount?: T;
+        subscriptionDiscount?: T;
+        wtCoinsDiscount?: T;
+        shippingCharge?: T;
+        taxAmount?: T;
         total?: T;
       };
   stripeData?: T;
   guestAccessToken?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "web-wishlist_select".
- */
-export interface WebWishlistSelect<T extends boolean = true> {
-  user?: T;
-  items?:
-    | T
-    | {
-        product?: T;
-        id?: T;
-      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2537,6 +2754,8 @@ export interface ShipAndTax {
   createdAt?: string | null;
 }
 /**
+ * Set the stamp reward products for the loyalty program.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "stamp-reward-products".
  */

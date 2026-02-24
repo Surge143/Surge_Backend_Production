@@ -213,16 +213,6 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
                                             availableOptions.set(`${sectionTitle}:${opt.label}`, opt.price || 0);
                                         });
                                     }
-                                    if (section.groups && Array.isArray(section.groups)) {
-                                        section.groups.forEach((group: any) => {
-                                            if (group.options && Array.isArray(group.options)) {
-                                                group.options.forEach((opt: any) => {
-                                                    const fullLabel = `${group.groupTitle} - ${opt.label}`;
-                                                    availableOptions.set(`${sectionTitle}:${fullLabel}`, opt.price || 0);
-                                                });
-                                            }
-                                        });
-                                    }
                                 });
                             }
                         });

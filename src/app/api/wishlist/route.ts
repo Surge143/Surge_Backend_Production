@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
-import config from '@/payload.config' // :white_check_mark: correct path
+import config from '@/payload.config'
 import { headers as getNextHeaders } from 'next/headers';
 
 // ---------------- POST (Add to wishlist) ----------------
@@ -8,11 +8,22 @@ import { headers as getNextHeaders } from 'next/headers';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
+        const { collection } = body;
         let { productId } = body;
 
         if (!productId) {
             return NextResponse.json(
                 { message: 'productId required', success: false },
+                { status: 400 }
+            );
+        }
+
+        // Default to web-products if collection not specified
+        const targetCollection = collection || 'web-products';
+
+        if (!['web-products', 'shop-menu'].includes(targetCollection)) {
+            return NextResponse.json(
+                { message: 'Invalid collection specified. Must be web-products or shop-menu.', success: false },
                 { status: 400 }
             );
         }
@@ -40,44 +51,45 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Validate that the product exists
+        // Validate that the product exists in the specified collection
         try {
             const product = await payload.findByID({
-                collection: 'web-products',
+                collection: targetCollection,
                 id: productId,
             });
 
             if (!product) {
                 return NextResponse.json(
-                    { message: 'Product not found', success: false },
+                    { message: `Product not found in ${targetCollection}`, success: false },
                     { status: 404 }
                 );
             }
         } catch (error) {
             console.error('Product validation error:', error);
             return NextResponse.json(
-                { message: 'Invalid product ID', success: false },
+                { message: 'Invalid product ID or collection', success: false },
                 { status: 400 }
             );
         }
 
-        // :white_check_mark: Find wishlist for the user
+        // Find wishlist for the user
         const wishlists = await payload.find({
-            collection: 'web-wishlist',
+            collection: 'wishlist',
             where: { user: { equals: user.id } },
             limit: 1,
         });
 
         const wishlist = wishlists.docs?.[0];
+
         // ---------------- If wishlist exists ----------------
         if (wishlist) {
-            // Check for duplicate
+            // Check for duplicate (matching both collection and id)
             const exists = wishlist.items?.some((item: any) => {
-                const id =
-                    typeof item.product === 'string'
-                        ? item.product
-                        : item.product?.id;
-                return id === productId;
+                const itemProd = item.product;
+                const itemCollection = typeof itemProd === 'object' && itemProd !== null ? itemProd.relationTo : targetCollection; // Fallback if not populated
+                const itemId = typeof itemProd === 'object' && itemProd !== null ? (typeof itemProd.value === 'object' ? itemProd.value.id : itemProd.value) : itemProd;
+
+                return itemCollection === targetCollection && itemId === productId;
             });
 
             if (exists) {
@@ -89,10 +101,18 @@ export async function POST(request: NextRequest) {
 
             // Update wishlist
             await payload.update({
-                collection: 'web-wishlist',
+                collection: 'wishlist',
                 id: wishlist.id,
                 data: {
-                    items: [...(wishlist.items || []), { product: productId }],
+                    items: [
+                        ...(wishlist.items || []),
+                        {
+                            product: {
+                                relationTo: targetCollection,
+                                value: productId
+                            }
+                        }
+                    ],
                 },
             });
 
@@ -105,12 +125,19 @@ export async function POST(request: NextRequest) {
         // ---------------- Create new wishlist ----------------
         const createData = {
             user: user.id,
-            items: [{ product: productId }],
+            items: [
+                {
+                    product: {
+                        relationTo: targetCollection,
+                        value: productId
+                    }
+                }
+            ],
         };
 
         await payload.create({
-            collection: 'web-wishlist',
-            data: createData,
+            collection: 'wishlist',
+            data: createData as any,
         });
 
         return NextResponse.json(
@@ -130,7 +157,6 @@ export async function GET(req: NextRequest) {
     try {
         const payload = await getPayload({ config });
 
-        // Get the logged-in user from auth headers
         const { user } = await payload.auth({
             headers: await getNextHeaders(),
         });
@@ -142,19 +168,18 @@ export async function GET(req: NextRequest) {
             );
         }
 
-        // Find wishlist for the logged-in user
         const wishlists = await payload.find({
-            collection: 'web-wishlist' as any,
+            collection: 'wishlist',
             where: {
                 user: { equals: user.id },
             },
-            depth: 1, // populate related product data
+            depth: 2, // populate related product data
         });
 
         const wishlist = wishlists.docs?.[0];
 
         if (!wishlist) {
-            return NextResponse.json({ items: [] });
+            return NextResponse.json({ success: true, wishlist: { items: [] } });
         }
 
         return NextResponse.json({ success: true, wishlist });
@@ -172,6 +197,7 @@ export async function GET(req: NextRequest) {
 export async function DELETE(request: NextRequest) {
     try {
         const body = await request.json();
+        const { collection } = body;
         let { productId } = body;
 
         if (!productId) {
@@ -181,7 +207,8 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Convert to number if it's a string (PostgreSQL uses numeric IDs)
+        const targetCollection = collection || 'web-products';
+
         productId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
 
         if (isNaN(productId)) {
@@ -192,7 +219,6 @@ export async function DELETE(request: NextRequest) {
         }
 
         const payload = await getPayload({ config });
-
         const { user } = await payload.auth({ headers: await getNextHeaders() });
 
         if (!user) {
@@ -203,12 +229,12 @@ export async function DELETE(request: NextRequest) {
         }
 
         const wishlists = await payload.find({
-            collection: 'web-wishlist' as any,
+            collection: 'wishlist',
             where: { user: { equals: user.id } },
             limit: 1,
         });
 
-        const wishlist = wishlists.docs?.[0];
+        const wishlist: any = wishlists.docs?.[0];
 
         if (!wishlist) {
             return NextResponse.json(
@@ -217,20 +243,13 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // ---------------- Check if product exists ----------------
+        // Check if item exists
         const exists = (wishlist.items || []).some((item: any) => {
-            const product = item.product;
-            let id: string | number | undefined;
+            const itemProd = item.product;
+            const itemCollection = typeof itemProd === 'object' && itemProd !== null ? itemProd.relationTo : targetCollection;
+            const itemId = typeof itemProd === 'object' && itemProd !== null ? (typeof itemProd.value === 'object' ? itemProd.value.id : itemProd.value) : itemProd;
 
-            if (!product) return false;
-
-            if (typeof product === 'string' || typeof product === 'number') {
-                id = product;
-            } else if ('id' in product) {
-                id = product.id;
-            }
-
-            return id === productId;
+            return itemCollection === targetCollection && itemId === productId;
         });
 
         if (!exists) {
@@ -240,24 +259,17 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // ---------------- Filter product ----------------
+        // Filter out the product
         const updatedItems = (wishlist.items || []).filter((item: any) => {
-            const product = item.product;
-            let id: string | number | undefined;
+            const itemProd = item.product;
+            const itemCollection = typeof itemProd === 'object' && itemProd !== null ? itemProd.relationTo : targetCollection;
+            const itemId = typeof itemProd === 'object' && itemProd !== null ? (typeof itemProd.value === 'object' ? itemProd.value.id : itemProd.value) : itemProd;
 
-            if (!product) return true;
-
-            if (typeof product === 'string' || typeof product === 'number') {
-                id = product;
-            } else if ('id' in product) {
-                id = product.id;
-            }
-
-            return id !== productId;
+            return !(itemCollection === targetCollection && itemId === productId);
         });
 
         await payload.update({
-            collection: 'web-wishlist' as any,
+            collection: 'wishlist',
             id: wishlist.id,
             data: { items: updatedItems },
         });

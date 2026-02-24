@@ -11,7 +11,7 @@ export const WebProducts: CollectionConfig = {
     slug: 'web-products',
     admin: {
         useAsTitle: 'name',
-        group: 'Website',
+        group: 'Store',
         defaultColumns: ['name', 'regularPrice', 'salePrice', 'inStock', 'stock', 'slug']
     },
     versions: {
@@ -303,7 +303,7 @@ export const WebProducts: CollectionConfig = {
                     label: 'SEO',
                     fields: [
                         OverviewField({ titlePath: 'meta.title', descriptionPath: 'meta.description', imagePath: 'meta.image' }),
-                        MetaTitleField({ hasGenerateFn: true }),
+                        MetaTitleField({ hasGenerateFn: false }),
                         MetaImageField({ relationTo: 'media' }),
                         MetaDescriptionField({}),
                         PreviewField({ hasGenerateFn: true, titlePath: 'meta.title', descriptionPath: 'meta.description' }),

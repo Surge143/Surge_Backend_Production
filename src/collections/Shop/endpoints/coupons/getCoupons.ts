@@ -48,7 +48,7 @@ export const getShopCouponsHandler: PayloadHandler = async (req) => {
             docs: shopCoupons.docs.map(coupon => ({
                 id: coupon.id,
                 code: coupon.code,
-                status: coupon.status,
+                status: coupon.couponStatus,
                 expiryDate: coupon.expiryDate,
                 discountType: coupon.discountType,
                 discountAmount: coupon.discountAmount,

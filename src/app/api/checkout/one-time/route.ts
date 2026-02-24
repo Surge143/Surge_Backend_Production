@@ -227,7 +227,10 @@ export async function POST(req: NextRequest) {
                     pointsUsed: wtPointsUsed,
                     financials: {
                         subtotal,
-                        discountAmount: wtDiscount + couponDiscount,
+                        couponDiscount,
+                        wtCoinsDiscount: wtDiscount,
+                        shippingCharge,
+                        taxAmount,
                         total: finalTotal,
                     },
                 },

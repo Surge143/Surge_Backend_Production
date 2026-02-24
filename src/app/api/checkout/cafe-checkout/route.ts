@@ -177,31 +177,27 @@ export const POST = async (req: NextRequest) => {
             if (item.customizations && Array.isArray(item.customizations)) {
                 const sourceCustomizations = productDoc.customizations as any[];
                 if (sourceCustomizations && Array.isArray(sourceCustomizations)) {
-                    for (const userPanel of item.customizations) {
-                        if (!userPanel.sections) continue;
-                        for (const userSection of userPanel.sections) {
-                            if (!userSection.options) continue;
-                            for (const userOption of userSection.options) {
-                                if (userOption.enabled) {
-                                    let sourceOption: any = null;
-                                    outerLoop:
-                                    for (const srcPanel of sourceCustomizations) {
-                                        if (!srcPanel.sections) continue;
-                                        for (const srcSection of srcPanel.sections) {
-                                            if (!srcSection.options) continue;
-                                            const found = srcSection.options.find((opt: any) => opt.label === userOption.label);
-                                            if (found) {
-                                                sourceOption = found;
-                                                break outerLoop;
-                                            }
-                                        }
-                                    }
-                                    if (sourceOption) {
-                                        itemPrice += (sourceOption.price || 0);
-                                    } else {
-                                        return NextResponse.json({ error: `Invalid customization option selected: ${userOption.label}` }, { status: 400 });
-                                    }
+                    // Create a flat map of available options: "Section Title:Option Label" -> Price
+                    const availableOptions = new Map<string, number>();
+                    sourceCustomizations.forEach((panel: any) => {
+                        if (panel.sections && Array.isArray(panel.sections)) {
+                            panel.sections.forEach((section: any) => {
+                                if (section.options && Array.isArray(section.options)) {
+                                    section.options.forEach((opt: any) => {
+                                        availableOptions.set(`${section.title}:${opt.label}`, opt.price || 0);
+                                    });
                                 }
+                            });
+                        }
+                    });
+
+                    for (const selection of item.customizations) {
+                        if (selection.sectionTitle && selection.label) {
+                            const key = `${selection.sectionTitle}:${selection.label}`;
+                            if (availableOptions.has(key)) {
+                                itemPrice += availableOptions.get(key)!;
+                            } else {
+                                return NextResponse.json({ error: `Invalid customization option selected: ${selection.label} in ${selection.sectionTitle}` }, { status: 400 });
                             }
                         }
                     }
@@ -358,7 +354,9 @@ export const POST = async (req: NextRequest) => {
             orderAcceptance: 'pending',
             financials: {
                 subtotal,
-                discountAmount: wtDiscount + couponDiscount,
+                couponDiscount,
+                wtCoinsDiscount: wtDiscount,
+                taxAmount,
                 total: finalTotal,
             },
             isCouponUsed: !!couponId,

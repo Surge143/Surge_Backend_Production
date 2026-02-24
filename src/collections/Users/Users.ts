@@ -10,6 +10,9 @@ export const Users: CollectionConfig = {
     slug: 'users',
 
     auth: true,
+    admin: {
+        useAsTitle: 'email',
+    },
 
     endpoints: [
         {

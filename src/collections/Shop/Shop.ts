@@ -10,118 +10,131 @@ export const Shop: CollectionConfig = {
         singular: "Shop",
         plural: "Shops"
     },
-
     endpoints: [
-        {
-            path: '/:shopId/coupons/:couponCode',
-            method: 'get',
-            handler: validateAppCouponHandler,
-        },
-        {
-            path: '/:shopId/coupons',
-            method: 'get',
-            handler: getShopCouponsHandler,
-        },
-        {
-            path: '/:shopId/menu-items',
-            method: 'get',
-            handler: getAllItemsHandler,
-        },
-        {
-            path: '/:shopId/menu-items/:itemId',
-            method: 'get',
-            handler: individualItemHandler,
-        }
+        { path: '/:shopId/coupons/:couponCode', method: 'get', handler: validateAppCouponHandler },
+        { path: '/:shopId/coupons', method: 'get', handler: getShopCouponsHandler },
+        { path: '/:shopId/menu-items', method: 'get', handler: getAllItemsHandler },
+        { path: '/:shopId/menu-items/:itemId', method: 'get', handler: individualItemHandler }
     ],
-
     admin: {
-        useAsTitle: 'name',
-        defaultColumns: ['name', 'shopManager', 'closingTime', 'openingTime'],
-        group: 'App',
+        useAsTitle: 'shopManager',
+        defaultColumns: ['isShopOpen', 'shopManager', 'address.city', 'openingTime', 'closingTime'],
+        group: 'Cafe',
     },
     access: {
-        read: () => { return true },
-        update: ({ req: { user } }) => {
-            return user?.role === 'admin' || user?.role === 'super-admin';
-        },
-        delete: ({ req: { user } }) => {
-            return user?.role === 'admin' || user?.role === 'super-admin';
-        },
-        create: ({ req: { user } }) => {
-            return user?.role === 'admin' || user?.role === 'super-admin';
-        },
+        read: () => true,
+        update: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+        delete: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+        create: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
     },
     fields: [
         {
-            name: "name",
-            type: "text",
-            required: true
-        },
-        {
-            name: 'tagline',
-            type: 'text',
-        },
-        {
-            name: 'image',
-            type: 'upload',
-            relationTo: 'media',
-        },
-        {
-            name: "openingTime",
-            type: 'date',
-            admin: {
-                date: {
-                    pickerAppearance: 'timeOnly',
-                    displayFormat: 'HH:mm',
+            name: 'operationalSettings',
+            type: 'group',
+            label: 'Operational Settings',
+            fields: [
+                {
+                    type: 'row',
+                    fields: [
+                        {
+                            name: "openingTime",
+                            type: 'date',
+                            required: true,
+                            admin: {
+                                width: '50%',
+                                date: {
+                                    pickerAppearance: 'timeOnly',
+                                    displayFormat: 'HH:mm',
+                                },
+                            },
+                        },
+                        {
+                            name: "closingTime",
+                            type: 'date',
+                            required: true,
+                            admin: {
+                                width: '50%',
+                                date: {
+                                    pickerAppearance: 'timeOnly',
+                                    displayFormat: 'HH:mm',
+                                },
+                            },
+                        },
+                    ]
                 },
-            },
-            required: true,
-        },
-        {
-            name: "closingTime",
-            type: 'date',
-            admin: {
-                date: {
-                    pickerAppearance: 'timeOnly',
-                    displayFormat: 'HH:mm',
+                {
+                    name: 'operatingDays',
+                    type: 'group',
+                    label: 'Days of Operation',
+                    admin: {
+                        description: 'Select which days the shop is open for business.'
+                    },
+                    fields: [
+                        {
+                            type: 'row',
+                            fields: [
+                                { name: 'monday', type: 'checkbox', label: 'Mon', defaultValue: true, admin: { width: '14%' } },
+                                { name: 'tuesday', type: 'checkbox', label: 'Tue', defaultValue: true, admin: { width: '14%' } },
+                                { name: 'wednesday', type: 'checkbox', label: 'Wed', defaultValue: true, admin: { width: '14%' } },
+                                { name: 'thursday', type: 'checkbox', label: 'Thu', defaultValue: true, admin: { width: '14%' } },
+                                { name: 'friday', type: 'checkbox', label: 'Fri', defaultValue: true, admin: { width: '14%' } },
+                                { name: 'saturday', type: 'checkbox', label: 'Sat', defaultValue: false, admin: { width: '15%' } },
+                                { name: 'sunday', type: 'checkbox', label: 'Sun', defaultValue: false, admin: { width: '15%' } },
+                            ]
+                        }
+                    ]
                 },
-            },
-            required: true,
+            ]
         },
         {
             name: "address",
             type: 'group',
+            label: 'Location & Address',
             required: true,
             fields: [
                 {
-                    name: "street",
-                    label: "Street",
-                    type: "text",
+                    type: 'row',
+                    fields: [
+                        {
+                            name: "street",
+                            label: "Street Address",
+                            type: "text",
+                            admin: { width: '70%' }
+                        },
+                        {
+                            name: "apartment",
+                            label: "Apt / Suite",
+                            type: "text",
+                            admin: { width: '30%' }
+                        },
+                    ]
                 },
                 {
-                    name: "apartment",
-                    label: "Apartment",
-                    type: "text",
-                },
-                {
-                    name: "city",
-                    label: "City",
-                    type: "text",
-                },
-                {
-                    name: "emirates",
-                    label: "Emirates",
-                    type: "select",
-                    required: true,
-                    options: [
-                        { label: 'Abu Dhabi', value: 'abu_dhabi' },
-                        { label: 'Dubai', value: 'dubai' },
-                        { label: 'Sharjah', value: 'sharjah' },
-                        { label: 'Ajman', value: 'ajman' },
-                        { label: 'Umm Al Quwain', value: 'umm_al_quwain' },
-                        { label: 'Ras Al Khaimah', value: 'ras_al_khaimah' },
-                        { label: 'Fujairah', value: 'fujairah' },
-                    ],
+                    type: 'row',
+                    fields: [
+                        {
+                            name: "city",
+                            label: "City",
+                            type: "text",
+                            admin: { width: '50%' }
+                        },
+                        {
+                            name: "emirates",
+                            label: "Emirate",
+                            type: "select",
+                            required: true,
+                            admin: { width: '50%' },
+                            options: [
+                                { label: 'Abu Dhabi', value: 'abu_dhabi' },
+                                { label: 'Dubai', value: 'dubai' },
+                                { label: 'Sharjah', value: 'sharjah' },
+                                { label: 'Ajman', value: 'ajman' },
+                                { label: 'Umm Al Quwain', value: 'umm_al_quwain' },
+                                { label: 'Ras Al Khaimah', value: 'ras_al_khaimah' },
+                                { label: 'Fujairah', value: 'fujairah' },
+                            ],
+                        },
+                    ]
                 },
                 {
                     name: "country",
@@ -130,22 +143,33 @@ export const Shop: CollectionConfig = {
                     defaultValue: "United Arab Emirates",
                     admin: {
                         readOnly: true,
+                        description: 'Country is fixed to UAE for this cafe group.'
                     }
                 },
             ]
+        },
+        // --- Sidebar (Logic Kept Untouched) ---
+        {
+            name: 'isShopOpen',
+            label: 'Live Shop Status',
+            type: 'checkbox',
+            defaultValue: true,
+            admin: {
+                position: 'sidebar',
+                description: 'Immediately opens/closes shop for customers.',
+            },
         },
         {
             name: 'shopManager',
             type: 'relationship',
             relationTo: 'admins',
             required: true,
-            filterOptions: () => {
-                return {
-                    role: {
-                        equals: 'shop-manager',
-                    },
-                }
-            },
+            filterOptions: () => ({
+                role: { equals: 'shop-manager' },
+            }),
+            admin: {
+                position: 'sidebar',
+            }
         }
     ]
 }
