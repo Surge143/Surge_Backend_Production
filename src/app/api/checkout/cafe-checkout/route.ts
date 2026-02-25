@@ -177,14 +177,26 @@ export const POST = async (req: NextRequest) => {
             if (item.customizations && Array.isArray(item.customizations)) {
                 const sourceCustomizations = productDoc.customizations as any[];
                 if (sourceCustomizations && Array.isArray(sourceCustomizations)) {
-                    // Create a flat map of available options: "Section Title:Option Label" -> Price
+                    // Build a flat map of available options: "Section Title:Option Label" -> Price
+                    // Supports BOTH grouped options (groups[].options) and flat options (options)
                     const availableOptions = new Map<string, number>();
                     sourceCustomizations.forEach((panel: any) => {
                         if (panel.sections && Array.isArray(panel.sections)) {
                             panel.sections.forEach((section: any) => {
+                                // Case 1: grouped options
+                                if (section.groups && Array.isArray(section.groups) && section.groups.length > 0) {
+                                    section.groups.forEach((group: any) => {
+                                        if (group.options && Array.isArray(group.options)) {
+                                            group.options.forEach((opt: any) => {
+                                                availableOptions.set(`${section.title}:${opt.label}`, opt.price ?? 0);
+                                            });
+                                        }
+                                    });
+                                }
+                                // Case 2: flat options (no groups)
                                 if (section.options && Array.isArray(section.options)) {
                                     section.options.forEach((opt: any) => {
-                                        availableOptions.set(`${section.title}:${opt.label}`, opt.price || 0);
+                                        availableOptions.set(`${section.title}:${opt.label}`, opt.price ?? 0);
                                     });
                                 }
                             });

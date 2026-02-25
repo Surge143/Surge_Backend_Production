@@ -22,47 +22,50 @@ export const Menu: CollectionConfig = {
     },
     hooks: {
         afterChange: [
-            async ({ doc, req, operation }) => {
+            async ({ doc, req, context, operation }) => {
                 const { payload } = req;
                 if (operation === 'update') {
-                    // Update all related shop menu items
+                    // fromTemplateSync is true when this update was triggered by syncTemplates.
+                    // In that case we also push customizations down to ShopMenu.
+                    // On direct admin saves, we skip customizations so per-shop edits are not reverted.
+                    const isTemplateSync = !!(context as any)?.fromTemplateSync;
+
                     const shopMenuItems = await payload.find({
                         collection: 'shop-menu',
-                        where: {
-                            menuRelation: {
-                                contains: doc.id,
-                            },
-                        },
+                        where: { menuRelation: { contains: doc.id } },
                         depth: 0,
                         req,
                         overrideAccess: true,
                     });
 
                     if (shopMenuItems.docs.length > 0) {
-                        // Batch updates to avoid sequential waiting, but with depth: 0 and overrideAccess
                         await Promise.all(
-                            shopMenuItems.docs.map((item) =>
-                                payload.update({
+                            shopMenuItems.docs.map((item) => {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                const data: any = {
+                                    name: doc.name,
+                                    tagline: doc.tagline,
+                                    image: doc.image && typeof doc.image === 'object' ? doc.image.id : doc.image,
+                                    description: doc.description,
+                                    category: doc.category && typeof doc.category === 'object' ? doc.category.id : doc.category,
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    subCategories: doc.subCategories?.map((s: any) => (typeof s === 'object' ? s.id : s)),
+                                    slug: doc.slug,
+                                    dietaryType: doc.dietaryType,
+                                };
+                                // Only propagate customizations when triggered by template sync
+                                if (isTemplateSync) {
+                                    data.customizations = doc.customizations;
+                                }
+                                return payload.update({
                                     collection: 'shop-menu',
                                     id: item.id,
-                                    data: {
-                                        name: doc.name,
-                                        tagline: doc.tagline,
-                                        image: typeof doc.image === 'object' ? doc.image.id : doc.image,
-                                        description: doc.description,
-                                        category: typeof doc.category === 'object' ? doc.category.id : doc.category,
-                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                        subCategories: doc.subCategories?.map((s: any) => (typeof s === 'object' ? s.id : s)),
-                                        slug: doc.slug,
-                                        dietaryType: doc.dietaryType,
-                                        customizations: doc.customizations,
-                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    } as any,
+                                    data,
                                     req,
                                     depth: 0,
                                     overrideAccess: true,
-                                })
-                            )
+                                });
+                            })
                         );
                     }
                 }

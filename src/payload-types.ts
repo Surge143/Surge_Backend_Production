@@ -93,6 +93,10 @@ export interface Config {
     'web-subscription': WebSubscription;
     'wt-stamps': WtStamp;
     'user-preferences': UserPreference;
+    'app-contact-form': AppContactForm;
+    'web-contact-form': WebContactForm;
+    notifications: Notification;
+    'app-best-seller': AppBestSeller;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -133,6 +137,10 @@ export interface Config {
     'web-subscription': WebSubscriptionSelect<false> | WebSubscriptionSelect<true>;
     'wt-stamps': WtStampsSelect<false> | WtStampsSelect<true>;
     'user-preferences': UserPreferencesSelect<false> | UserPreferencesSelect<true>;
+    'app-contact-form': AppContactFormSelect<false> | AppContactFormSelect<true>;
+    'web-contact-form': WebContactFormSelect<false> | WebContactFormSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    'app-best-seller': AppBestSellerSelect<false> | AppBestSellerSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -235,6 +243,7 @@ export interface User {
         id?: string | null;
       }[]
     | null;
+  pushToken?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -972,6 +981,7 @@ export interface Wishlist {
               relationTo: 'web-products';
               value: number | WebProduct;
             };
+        shop?: (number | null) | Shop;
         id?: string | null;
       }[]
     | null;
@@ -1447,6 +1457,85 @@ export interface UserPreference {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-contact-form".
+ */
+export interface AppContactForm {
+  id: number;
+  fullName: string;
+  email: string;
+  /**
+   * Please select the type of inquiry for this ticket.
+   */
+  inquiryType:
+    | 'order_issue'
+    | 'payment_refund'
+    | 'rewards_stamps'
+    | 'barista_selection'
+    | 'pickup_timing'
+    | 'menu_availability'
+    | 'other';
+  phone: string;
+  message: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-contact-form".
+ */
+export interface WebContactForm {
+  id: number;
+  fullName: string;
+  email: string;
+  /**
+   * Please select the type of inquiry for this ticket.
+   */
+  inquiryType:
+    | 'order_issue'
+    | 'payment_refund'
+    | 'rewards_stamps'
+    | 'barista_selection'
+    | 'pickup_timing'
+    | 'menu_availability'
+    | 'other';
+  phone: string;
+  message: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: number;
+  user: number | User;
+  notificationEnabled?: boolean | null;
+  notifications?:
+    | {
+        title: string;
+        description: string;
+        origin: 'cafe' | 'store';
+        notificationType: 'general' | 'order' | 'reward';
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-best-seller".
+ */
+export interface AppBestSeller {
+  id: number;
+  shop: number | Shop;
+  products: (number | ShopMenu)[];
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
 export interface Export {
@@ -1724,6 +1813,22 @@ export interface PayloadLockedDocument {
         value: number | UserPreference;
       } | null)
     | ({
+        relationTo: 'app-contact-form';
+        value: number | AppContactForm;
+      } | null)
+    | ({
+        relationTo: 'web-contact-form';
+        value: number | WebContactForm;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: number | Notification;
+      } | null)
+    | ({
+        relationTo: 'app-best-seller';
+        value: number | AppBestSeller;
+      } | null)
+    | ({
         relationTo: 'exports';
         value: number | Export;
       } | null)
@@ -1813,6 +1918,7 @@ export interface UsersSelect<T extends boolean = true> {
         phoneNumber?: T;
         id?: T;
       };
+  pushToken?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -2199,6 +2305,7 @@ export interface WishlistSelect<T extends boolean = true> {
     | T
     | {
         product?: T;
+        shop?: T;
         id?: T;
       };
   updatedAt?: T;
@@ -2563,6 +2670,61 @@ export interface UserPreferencesSelect<T extends boolean = true> {
         savedAt?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-contact-form_select".
+ */
+export interface AppContactFormSelect<T extends boolean = true> {
+  fullName?: T;
+  email?: T;
+  inquiryType?: T;
+  phone?: T;
+  message?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-contact-form_select".
+ */
+export interface WebContactFormSelect<T extends boolean = true> {
+  fullName?: T;
+  email?: T;
+  inquiryType?: T;
+  phone?: T;
+  message?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  user?: T;
+  notificationEnabled?: T;
+  notifications?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        origin?: T;
+        notificationType?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-best-seller_select".
+ */
+export interface AppBestSellerSelect<T extends boolean = true> {
+  shop?: T;
+  products?: T;
   updatedAt?: T;
   createdAt?: T;
 }

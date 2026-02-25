@@ -8,7 +8,7 @@ import { headers as getNextHeaders } from 'next/headers';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { collection } = body;
+        const { collection, origin } = body;
         let { productId } = body;
 
         if (!productId) {
@@ -18,12 +18,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Map origin to collection
+        let targetCollection = collection;
+        if (origin === 'cafe') targetCollection = 'shop-menu';
+        if (origin === 'store') targetCollection = 'web-products';
+
         // Default to web-products if collection not specified
-        const targetCollection = collection || 'web-products';
+        if (!targetCollection) targetCollection = 'web-products';
 
         if (!['web-products', 'shop-menu'].includes(targetCollection)) {
             return NextResponse.json(
-                { message: 'Invalid collection specified. Must be web-products or shop-menu.', success: false },
+                { message: 'Invalid origin or collection specified.', success: false },
                 { status: 400 }
             );
         }
@@ -52,10 +57,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate that the product exists in the specified collection
+        let product: any;
         try {
-            const product = await payload.findByID({
+            product = await payload.findByID({
                 collection: targetCollection,
                 id: productId,
+                depth: 1, // Need shop ID which is a relationship
             });
 
             if (!product) {
@@ -110,7 +117,8 @@ export async function POST(request: NextRequest) {
                             product: {
                                 relationTo: targetCollection,
                                 value: productId
-                            }
+                            },
+                            shop: targetCollection === 'shop-menu' ? (typeof product.shop === 'object' ? product.shop.id : product.shop) : undefined
                         }
                     ],
                 },
@@ -130,7 +138,8 @@ export async function POST(request: NextRequest) {
                     product: {
                         relationTo: targetCollection,
                         value: productId
-                    }
+                    },
+                    shop: targetCollection === 'shop-menu' ? (typeof product.shop === 'object' ? product.shop.id : product.shop) : undefined
                 }
             ],
         };
@@ -197,7 +206,7 @@ export async function GET(req: NextRequest) {
 export async function DELETE(request: NextRequest) {
     try {
         const body = await request.json();
-        const { collection } = body;
+        const { collection, origin } = body;
         let { productId } = body;
 
         if (!productId) {
@@ -207,7 +216,12 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        const targetCollection = collection || 'web-products';
+        // Map origin to collection
+        let targetCollection = collection;
+        if (origin === 'cafe') targetCollection = 'shop-menu';
+        if (origin === 'store') targetCollection = 'web-products';
+
+        if (!targetCollection) targetCollection = 'web-products';
 
         productId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
 

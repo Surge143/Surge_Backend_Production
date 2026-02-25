@@ -189,7 +189,14 @@ export const Users: CollectionConfig = {
                     type: "text",
                 },
             ],
-        }
+        },
+        {
+            name: 'pushToken',
+            type: 'text',
+            admin: {
+                readOnly: true,
+            },
+        },
     ],
     lockDocuments: false,
 }

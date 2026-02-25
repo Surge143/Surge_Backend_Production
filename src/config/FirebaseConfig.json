@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "white-mantis-76517",
+  "private_key_id": "2bc383a13314e8fd10768afe4e8e55c84e6b954d",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDESi9d1VWrS5Qx\nmQI6b3CtX/UJ9wyv0Y/xqzKxO6Ig93I4Z+RZUGVPfCwLmQGBi4NZzYKd5Iji9NeP\n0Yxs5oPXn4Jwug9p8rsQctIQkgm7s2Wmh0zbNigvyGs00Mw9/3GJaI+OKezvffSD\nRNH7+dRebkdoSlATn4XJgSN7v8bnlTV4jmG2vVnsto3mW0SadlPb59knKkpHGMDJ\nDLFRtdZUWnMNu/z6JO6LyTiw3zV4S14WSkxn2QSZ4rJp8H0iKKqx4jiEnzbMRMwP\n6FosvzhRRiAJ5TVGFIJmUiXsJ8i/59rpg7V6iqswWyyYd+Fs0tLuJLE+cBiVbQVN\nc6FQMzNDAgMBAAECggEAStGuKVmaXH8j/x2//C8jJ2rGl6RL+S5rbCYh3e2JmIBJ\nUNfE8ghTfY8qqMcLDGp1yEKt8Wo9hSjni6HHoXDiO0vJKBe7rVpA1H23tWo8/Ide\njTHQaVRE0CXYO1sFJvKZv9MTuRAhCI6dp3WRhrbNLKtjW4zL5hbto4euU0qf0gBi\naY3e2j7O4wFn7DJslmEM4qRqRk6pZWOuxZNASon8HIHETXAGLHznany2E7bDFPSc\nU02OVBI947Ig1wLNECpDdmMsUuBryRS3ZJcZFCtknRc391lJJrxILgj5iHUNnNRf\nVq0msiF5qNTd8QTiftGIYQqNgpANAmA2bQKeGslRpQKBgQDiXHiUL3GELkLP0SHd\n5YpEhYDxGqftvPQ9rKLmv8nq3OweNgGzodp5mOTmQRPakr6qm9qRFO2nQxfiqTy3\nNUNWiyBn56I0wMQjr0KpmtH5Q7cUUDEegjy4LqyMLTN7JB1h+43jR5jfmk5JH2dT\nfln5qQv+mgtYxrOlpWkKUnkZvwKBgQDd/bubKI6YGVvr+jzaE1Xgw3aSRAiTznhm\njBSMwuoVd8+4VU7xWGHdPmXV43Mh1rgC5/5sZx4Sc9Rp3aLRLELMorCXSmMQ63zh\nsQB4R7n3skQocyio6/L6jH0JzvSmn7NfJnPQ/KIuRWs6kl+1s7B1GaKr0NlF+Emm\n7c3b6OyffQKBgCGu0OJ8DNA2cgqqe/eg6Go5024NIV/m9hEXV0Yu08T3CsuUDbzF\nINVnQuhgVqv3mheZCXT9QD/bY/p+ZGJ+sn52RWQwu5pN9OG6epjySLxmrx9+r1By\n4MYna9WQBFEWlqi13e8sADuFopCO87kg3BKibP59vaKALss/SdoXW53RAoGAOXVK\nUM+/kMjHjR25EGz+xm1xTEyFt9QyP8C0NPbiZeob/sc95qQMuJpE+4airziHamEn\n7mEGXJpUeY5fbSq6o4LcmFwtphx9t2D8ESXnkaA3mgyskoR34LfqSVai5lnhsJgg\nVBB/3eAj8AYg9cPrwXOAMl6dTkoErktRBEGWtXUCgYBkzbE6BsCbztydklKJQyMg\nSWkL7w6RRuM5AWVJnuvxsrcQoQc/blImkTMtK4jT9Oih9PnVScj1iznHGK2HaWW7\nE1aZhzsmRFdDd4XFglFmLWrdpLmzflugnQGlg4i9Jyj6HP05FCO5HHRZQMzQRa64\nhZgmem/Y1T0aex9hSLBjyQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@white-mantis-76517.iam.gserviceaccount.com",
+  "client_id": "107079682781130370630",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40white-mantis-76517.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

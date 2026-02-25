@@ -26,6 +26,10 @@ import { WebSubscription } from "./WebSubscription/WebSubscription";
 import { WTStamps } from "./WTStamps/WTStamps";
 import { UserPreferences } from "./UserPreferences/UserPreferences";
 import { StampRewardProducts } from "./StampRewardProducts/StampRewardProducts";
+import { AppContactForm } from "./AppContactForm/AppContactForm";
+import { WebContactForm } from "./WebContactForm/WebContactForm";
+import { Notifications } from "./Notifications/Notifications";
+import { AppBestSeller } from "./AppBestSeller/AppBestSeller";
 
 export const collections = [
     Users,
@@ -53,6 +57,10 @@ export const collections = [
     WebSubscription,
     WTStamps,
     UserPreferences,
+    AppContactForm,
+    WebContactForm,
+    Notifications,
+    AppBestSeller
 ]
 
 export const globals = [

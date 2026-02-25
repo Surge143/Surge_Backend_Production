@@ -262,7 +262,6 @@ export const ShopMenu: CollectionConfig = {
                                             name: 'title',
                                             type: 'text',
                                             required: true,
-                                            admin: { readOnly: true },
                                         },
                                         {
                                             name: 'selectionType',
@@ -271,7 +270,6 @@ export const ShopMenu: CollectionConfig = {
                                                 { label: 'Single', value: 'single' },
                                                 { label: 'Multiple', value: 'multiple' },
                                             ],
-                                            admin: { readOnly: true },
                                         },
                                         {
                                             name: 'groups',
@@ -281,31 +279,26 @@ export const ShopMenu: CollectionConfig = {
                                                 components: {
                                                     RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
                                                 },
-                                                readOnly: true,
                                             },
                                             fields: [
                                                 {
                                                     name: 'groupTitle',
                                                     type: 'text',
                                                     required: true,
-                                                    admin: { readOnly: true },
                                                 },
                                                 {
                                                     name: 'options',
                                                     type: 'array',
-                                                    admin: { readOnly: true },
                                                     fields: [
                                                         {
                                                             name: 'label',
                                                             type: 'text',
                                                             required: true,
-                                                            admin: { readOnly: true },
                                                         },
                                                         {
                                                             name: 'price',
                                                             type: 'number',
                                                             defaultValue: 0,
-                                                            admin: { readOnly: true },
                                                         },
                                                     ],
                                                 },
@@ -319,20 +312,17 @@ export const ShopMenu: CollectionConfig = {
                                                 components: {
                                                     RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
                                                 },
-                                                readOnly: true,
                                             },
                                             fields: [
                                                 {
                                                     name: 'label',
                                                     type: 'text',
                                                     required: true,
-                                                    admin: { readOnly: true },
                                                 },
                                                 {
                                                     name: 'price',
                                                     type: 'number',
                                                     defaultValue: 0,
-                                                    admin: { readOnly: true },
                                                 },
                                             ]
                                         }

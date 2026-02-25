@@ -301,19 +301,43 @@ export default function MenuPage() {
                                             <div key={section.id} className={pageStyles.customSection}>
                                                 <div className={pageStyles.customSectionTitle}>{section.title}</div>
                                                 <div className={pageStyles.optionList}>
-                                                    {section.options?.map((opt: any) => {
-                                                        const active = currentSelections.some(s => s.sectionTitle === section.title && s.label === opt.label)
-                                                        return (
-                                                            <button
-                                                                key={opt.id}
-                                                                className={`${pageStyles.optionItem} ${active ? pageStyles.optionActive : ''}`}
-                                                                onClick={() => toggleOption(section.title, opt)}
-                                                            >
-                                                                <span>{opt.label}</span>
-                                                                {opt.price > 0 && <span className={pageStyles.optionPrice}>+AED {opt.price}</span>}
-                                                            </button>
-                                                        )
-                                                    })}
+                                                    {/* Case 1: Grouped options (e.g. "Milk" / "Non-Dairy") */}
+                                                    {section.groups?.length > 0
+                                                        ? section.groups.map((group: any) => (
+                                                            <React.Fragment key={group.id}>
+                                                                {group.groupTitle && (
+                                                                    <div className={pageStyles.groupTitle}>{group.groupTitle}</div>
+                                                                )}
+                                                                {group.options?.map((opt: any) => {
+                                                                    const active = currentSelections.some(s => s.sectionTitle === section.title && s.label === opt.label)
+                                                                    return (
+                                                                        <button
+                                                                            key={opt.id}
+                                                                            className={`${pageStyles.optionItem} ${active ? pageStyles.optionActive : ''}`}
+                                                                            onClick={() => toggleOption(section.title, opt)}
+                                                                        >
+                                                                            <span>{opt.label}</span>
+                                                                            {opt.price > 0 && <span className={pageStyles.optionPrice}>+AED {opt.price}</span>}
+                                                                        </button>
+                                                                    )
+                                                                })}
+                                                            </React.Fragment>
+                                                        ))
+                                                        : /* Case 2: Flat options (no groups) */
+                                                        section.options?.map((opt: any) => {
+                                                            const active = currentSelections.some(s => s.sectionTitle === section.title && s.label === opt.label)
+                                                            return (
+                                                                <button
+                                                                    key={opt.id}
+                                                                    className={`${pageStyles.optionItem} ${active ? pageStyles.optionActive : ''}`}
+                                                                    onClick={() => toggleOption(section.title, opt)}
+                                                                >
+                                                                    <span>{opt.label}</span>
+                                                                    {opt.price > 0 && <span className={pageStyles.optionPrice}>+AED {opt.price}</span>}
+                                                                </button>
+                                                            )
+                                                        })
+                                                    }
                                                 </div>
                                             </div>
                                         ))}

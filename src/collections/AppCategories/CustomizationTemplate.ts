@@ -36,7 +36,6 @@ export const CustomizationTemplate: CollectionConfig = {
                     required: true,
                     label: 'Section Title',
                 },
-
                 // single or multiple selection
                 {
                     name: 'selectionType',

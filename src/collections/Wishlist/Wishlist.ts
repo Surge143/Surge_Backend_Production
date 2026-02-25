@@ -31,6 +31,17 @@ const Wishlist: CollectionConfig = {
                     relationTo: ['shop-menu', 'web-products'],
                     required: true,
                 },
+                {
+                    name: 'shop',
+                    type: 'relationship',
+                    relationTo: 'shop',
+                    admin: {
+                        condition: (data, siblingData) => {
+                            // Only show if the product relationship is to shop-menu
+                            return siblingData?.product?.relationTo === 'shop-menu';
+                        }
+                    }
+                },
             ],
         },
     ],

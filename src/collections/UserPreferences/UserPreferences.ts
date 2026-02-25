@@ -10,10 +10,7 @@ const UserPreferences: CollectionConfig = {
     },
     access: {
         // Only the owning user or admins can read
-        read: ({ req }) => {
-            if (!req.user) return false;
-            return true; // row-level filtering is done in the API route
-        },
+        read: () => true,  // row-level filtering is done in the API route
         create: () => false,  // managed exclusively via the afterCartChange hook
         update: () => false,  // managed exclusively via the afterCartChange hook
         delete: ({ req }) => req.user?.collection === 'admins',
