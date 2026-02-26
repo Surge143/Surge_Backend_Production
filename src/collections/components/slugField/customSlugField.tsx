@@ -9,10 +9,12 @@ const SlugField: React.FC<{ path: string; label: string; required?: boolean }> =
 }) => {
     const { value, setValue } = useField<string>({ path })
     const nameValue = useFormFields(([fields]) => fields.name?.value as string)
+    const taglineValue = useFormFields(([fields]) => fields.tagline?.value as string)
 
     useEffect(() => {
-        if (nameValue !== undefined && nameValue !== null) {
-            const generatedSlug = nameValue
+        const base = `${nameValue || ''} ${taglineValue || ''}`.trim()
+        if (base) {
+            const generatedSlug = base
                 .toLowerCase()
                 .trim()
                 .replace(/\s+/g, '-')
@@ -22,7 +24,7 @@ const SlugField: React.FC<{ path: string; label: string; required?: boolean }> =
                 setValue(generatedSlug)
             }
         }
-    }, [nameValue, value, setValue])
+    }, [nameValue, taglineValue, value, setValue])
 
     return (
         <div className="field-type text">

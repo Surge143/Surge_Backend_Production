@@ -171,8 +171,30 @@ export const WebProducts: CollectionConfig = {
                             type: 'row',
                             admin: { condition: (data) => !data?.hasVariantOptions },
                             fields: [
-                                { name: 'regularPrice', label: 'Regular Price', type: 'number', required: true, admin: { width: '50%' } },
-                                { name: 'salePrice', label: 'Sale Price', type: 'number', admin: { width: '50%' } },
+                                {
+                                    name: 'regularPrice',
+                                    label: 'Regular Price',
+                                    type: 'number',
+                                    min: 0,
+                                    required: true,
+                                    admin: { width: '50%' },
+                                },
+                                {
+                                    name: 'salePrice',
+                                    label: 'Sale Price',
+                                    type: 'number',
+                                    min: 0,
+                                    admin: { width: '50%' },
+                                    validate: (val, { siblingData }) => {
+                                        if (!val) return true;
+                                        const regularPrice = siblingData?.regularPrice;
+                                        if (regularPrice && Number(val) > Number(regularPrice)) {
+                                            return 'The Sale Price cannot be higher than the Regular Price.';
+                                        }
+
+                                        return true;
+                                    },
+                                },
                             ]
                         },
                         {
@@ -184,6 +206,7 @@ export const WebProducts: CollectionConfig = {
                                     name: 'stockQuantity',
                                     label: 'Stock Quantity',
                                     type: 'number',
+                                    min: 0,
                                     required: true,
                                     admin: {
                                         width: '50%',
@@ -201,7 +224,17 @@ export const WebProducts: CollectionConfig = {
                                 condition: (data) => !data?.hasVariantOptions,
                             }
                         },
-                        { name: 'subscriptionDiscount', label: 'Subscription Discount', type: 'number', required: true, admin: { condition: (_, siblingData) => Boolean(siblingData?.hasSimpleSub) } },
+                        {
+                            name: 'subscriptionDiscount',
+                            label: 'Subscription Discount',
+                            type: 'number',
+                            min: 0,
+                            max: 100,
+                            required: true,
+                            admin: {
+                                condition: (data) => Boolean(data?.hasSimpleSub) && !data?.hasVariantOptions,
+                            }
+                        },
                         {
                             name: 'subFreq',
                             label: 'Repeat Every',
@@ -342,8 +375,12 @@ export const WebProducts: CollectionConfig = {
             hooks: {
                 beforeValidate: [
                     ({ data, value }) => {
-                        if (data?.name) {
-                            return data.name
+                        if (data?.name || data?.tagline) {
+                            const name = data.name || '';
+                            const tagline = data.tagline || '';
+                            const combined = `${name} ${tagline}`.trim();
+
+                            return combined
                                 .toLowerCase()
                                 .trim()
                                 .replace(/\s+/g, "-")

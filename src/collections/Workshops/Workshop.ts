@@ -45,6 +45,12 @@ export const Workshop: CollectionConfig = {
             },
         },
         {
+            name: 'calendyLink',
+            label: 'Calendy Link',
+            type: 'text',
+            required: true,
+        },
+        {
             name: 'eventTime',
             label: 'Event Time (7:00 PM GST)',
             type: 'date',

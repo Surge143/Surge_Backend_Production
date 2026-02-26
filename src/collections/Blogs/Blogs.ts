@@ -8,72 +8,164 @@ import {
     AlignFeature,
     RelationshipFeature,
 } from '@payloadcms/richtext-lexical'
+import {
+    MetaDescriptionField,
+    MetaImageField,
+    MetaTitleField,
+    OverviewField,
+    PreviewField,
+} from '@payloadcms/plugin-seo/fields';
+import { calculateReadTime } from '@/utilities/calculateReadTime';
 
 export const Blogs: CollectionConfig = {
     slug: 'blogs',
     admin: {
         useAsTitle: 'title',
         group: 'Marketing',
+        description: 'Create and manage editorial articles for the company blog.',
+    },
+    versions: {
+        drafts: true,
+    },
+    hooks: {
+        beforeValidate: [
+            ({ data }) => {
+                if (data?.content) {
+                    data.readTime = calculateReadTime(data.content)
+                }
+                return data
+            },
+        ],
     },
     access: {
         read: () => true,
-        update: ({ req: { user } }) => {
-            return user?.role === 'admin' || user?.role === 'super-admin';
-        },
-        delete: ({ req: { user } }) => {
-            return user?.role === 'admin' || user?.role === 'super-admin';
-        },
-        create: ({ req: { user } }) => {
-            return user?.role === 'admin' || user?.role === 'super-admin';
-        },
+        update: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+        delete: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+        create: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
     },
     fields: [
         {
-            name: 'title',
-            type: 'text',
-            required: true,
+            type: 'tabs',
+            tabs: [
+                {
+                    label: "Blog Content",
+                    fields: [
+                        {
+                            name: 'title',
+                            label: 'Article Title',
+                            type: 'text',
+                            required: true,
+                            admin: {
+                                placeholder: 'e.g., Behind the Roast: The Art of Sourcing Coffee',
+                            }
+                        },
+                        {
+                            name: 'featuredImage',
+                            label: 'Featured Hero Image',
+                            type: 'upload',
+                            relationTo: 'media',
+                            required: true,
+                            admin: {
+                                description: 'This image appears at the top of the blog and in social share previews.',
+                            }
+                        },
+                        {
+                            name: 'content',
+                            label: 'Body Content',
+                            type: 'richText',
+                            required: true,
+                            editor: lexicalEditor({
+                                features: ({ defaultFeatures }) => [
+                                    ...defaultFeatures.filter((feature) => feature.key !== RelationshipFeature({}).key),
+                                    FixedToolbarFeature(),
+                                    InlineToolbarFeature(),
+                                    AlignFeature(),
+                                    HTMLConverterFeature({}),
+                                    UploadFeature({
+                                        collections: {
+                                            media: {
+                                                fields: [
+                                                    {
+                                                        name: 'caption',
+                                                        label: 'Image Caption',
+                                                        type: 'text',
+                                                        admin: {
+                                                            placeholder: 'Add a brief description of this image...',
+                                                        }
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    }),
+                                ],
+                            }),
+                        },
+                        {
+                            name: 'relatedBlogs',
+                            label: 'Related Blogs',
+                            type: 'relationship',
+                            relationTo: 'blogs',
+                            hasMany: true,
+                            filterOptions: ({ id }) => {
+                                return {
+                                    id: {
+                                        not_equals: id,
+                                    },
+                                }
+                            },
+                            admin: {
+                                description: 'Select up to 3 other blogs to recommend to readers.',
+                            },
+                            validate: (val) => {
+                                if (Array.isArray(val) && val.length > 3) {
+                                    return 'You can only select up to 3 related blogs.';
+                                }
+                                return true;
+                            },
+                        },
+                    ],
+                },
+                {
+                    name: 'meta',
+                    label: 'SEO & Social',
+                    fields: [
+                        OverviewField({ titlePath: 'meta.title', descriptionPath: 'meta.description', imagePath: 'meta.image' }),
+                        MetaTitleField({ hasGenerateFn: false }),
+                        MetaImageField({ relationTo: 'media' }),
+                        MetaDescriptionField({}),
+                        PreviewField({ hasGenerateFn: true, titlePath: 'meta.title', descriptionPath: 'meta.description' }),
+                    ],
+                }
+            ]
         },
         {
-            name: 'featuredImage',
-            label: 'Main Featured Image',
-            type: 'upload',
-            relationTo: 'media',
-            required: true,
+            name: 'scheduledFor',
+            label: 'Publication Schedule',
+            type: 'date',
+            admin: {
+                position: 'sidebar',
+                description: 'Set a future date to automate when this post goes live on the website.',
+                date: {
+                    pickerAppearance: 'dayAndTime',
+                    displayFormat: 'MMM d, yyyy HH:mm',
+                },
+            },
         },
         {
             name: 'readTime',
-            label: 'Read Time (minutes)',
-            min:0,
+            label: 'Reading Time',
             type: 'number',
-        },
-        {
-            name: 'content',
-            type: 'richText',
-            editor: lexicalEditor({
-                features: ({ defaultFeatures }) => [
-                    ...defaultFeatures.filter((feature) => feature.key !== RelationshipFeature({}).key),
-                    FixedToolbarFeature(),
-                    InlineToolbarFeature(),
-                    AlignFeature(),
-                    HTMLConverterFeature({}),
-                    UploadFeature({
-                        collections: {
-                            media: {
-                                fields: [
-                                    {
-                                        name: 'caption',
-                                        type: 'text',
-                                    },
-                                ],
-                            },
-                        },
-                    }),
-                ],
-            }),
+            min: 0,
+            admin: {
+                readOnly: true,
+                position: 'sidebar',
+                description: 'Estimated minutes to read. Auto-calculated from content word count.',
+                placeholder: 'Calculated on save...',
+            }
         },
         slugField({
             useAsSlug: 'title',
-        })
+        }),
     ],
     timestamps: true,
 }

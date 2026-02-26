@@ -181,7 +181,15 @@ export const Menu: CollectionConfig = {
                             min: 0,
                             admin: {
                                 placeholder: 'Enter Food Item Sale Price'
-                            }
+                            },
+                            validate: (val, { siblingData }) => {
+                                if (!val) return true;
+                                const regularPrice = siblingData?.regularPrice;
+                                if (regularPrice && Number(val) > Number(regularPrice)) {
+                                    return 'The Sale Price cannot be higher than the Regular Price.';
+                                }
+                                return true;
+                            },
                         },
                         {
                             name: 'dietaryType',

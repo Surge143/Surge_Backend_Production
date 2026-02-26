@@ -278,27 +278,14 @@ export interface User {
   collection: 'users';
 }
 /**
+ * Upload media files
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
   id: number;
   alt: string;
-  caption?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
   prefix?: string | null;
   folder?: (number | null) | FolderInterface;
   updatedAt: string;
@@ -1345,7 +1332,6 @@ export interface WebSubscription {
     price: number;
     id?: string | null;
   }[];
-  newsAndOffers?: boolean | null;
   shippingAddress?: {
     addressFirstName?: string | null;
     addressLastName?: string | null;
@@ -1582,6 +1568,7 @@ export interface Workshop {
   title: string;
   workshopImage: number | Media;
   eventDate: string;
+  calendyLink: string;
   eventTime: string;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
@@ -1592,15 +1579,19 @@ export interface Workshop {
   createdAt: string;
 }
 /**
+ * Create and manage editorial articles for the company blog.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "blogs".
  */
 export interface Blog {
   id: number;
   title: string;
+  /**
+   * This image appears at the top of the blog and in social share previews.
+   */
   featuredImage: number | Media;
-  readTime?: number | null;
-  content?: {
+  content: {
     root: {
       type: string;
       children: {
@@ -1614,7 +1605,27 @@ export interface Blog {
       version: number;
     };
     [k: string]: unknown;
-  } | null;
+  };
+  /**
+   * Select up to 3 other blogs to recommend to readers.
+   */
+  relatedBlogs?: (number | Blog)[] | null;
+  meta?: {
+    title?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+    description?: string | null;
+  };
+  /**
+   * Set a future date to automate when this post goes live on the website.
+   */
+  scheduledFor?: string | null;
+  /**
+   * Estimated minutes to read. Auto-calculated from content word count.
+   */
+  readTime?: number | null;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -1622,6 +1633,7 @@ export interface Blog {
   slug: string;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2082,7 +2094,6 @@ export interface AppCategoriesSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
-  caption?: T;
   prefix?: T;
   folder?: T;
   updatedAt?: T;
@@ -2710,7 +2721,6 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
         price?: T;
         id?: T;
       };
-  newsAndOffers?: T;
   shippingAddress?:
     | T
     | {
@@ -2856,6 +2866,7 @@ export interface WorkshopSelect<T extends boolean = true> {
   title?: T;
   workshopImage?: T;
   eventDate?: T;
+  calendyLink?: T;
   eventTime?: T;
   generateSlug?: T;
   slug?: T;
@@ -2869,12 +2880,22 @@ export interface WorkshopSelect<T extends boolean = true> {
 export interface BlogsSelect<T extends boolean = true> {
   title?: T;
   featuredImage?: T;
-  readTime?: T;
   content?: T;
+  relatedBlogs?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        image?: T;
+        description?: T;
+      };
+  scheduledFor?: T;
+  readTime?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
