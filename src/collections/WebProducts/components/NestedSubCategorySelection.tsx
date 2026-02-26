@@ -79,14 +79,15 @@ export const NestedSubCategorySelection: React.FC<{ path: string }> = ({ path })
         })
     }, [subCategories, selectedCategoryIds])
 
-    const handleToggle = (categoryId: string, level1Id: string, level2Id?: string, level3Id?: string) => {
+    const handleToggle = (categoryId: string, level1Id: string, level2Id?: string, level3Id?: string, slug?: string) => {
         const current = Array.isArray(selectedSubCategories) ? [...selectedSubCategories] : []
 
         const selection = {
             subCategoryId: categoryId,
             level1Id,
             level2Id,
-            level3Id
+            level3Id,
+            slug
         }
 
         const index = current.findIndex(item =>
@@ -151,7 +152,7 @@ export const NestedSubCategorySelection: React.FC<{ path: string }> = ({ path })
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                                         <CheckboxInput
                                             checked={isChecked(sub.id, l1.id)}
-                                            onToggle={() => handleToggle(sub.id, l1.id)}
+                                            onToggle={() => handleToggle(sub.id, l1.id, undefined, undefined, l1.slug)}
                                             id={`check-${l1.id}`}
                                         />
                                         <label htmlFor={`check-${l1.id}`} style={{ cursor: 'pointer', fontWeight: '500' }}>{l1.name}</label>
@@ -164,7 +165,7 @@ export const NestedSubCategorySelection: React.FC<{ path: string }> = ({ path })
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                                                         <CheckboxInput
                                                             checked={isChecked(sub.id, l1.id, l2.id)}
-                                                            onToggle={() => handleToggle(sub.id, l1.id, l2.id)}
+                                                            onToggle={() => handleToggle(sub.id, l1.id, l2.id, undefined, l2.slug)}
                                                             id={`check-${l2.id}`}
                                                         />
                                                         <label htmlFor={`check-${l2.id}`} style={{ cursor: 'pointer' }}>{l2.name}</label>
@@ -176,7 +177,7 @@ export const NestedSubCategorySelection: React.FC<{ path: string }> = ({ path })
                                                                 <div key={l3.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                                     <CheckboxInput
                                                                         checked={isChecked(sub.id, l1.id, l2.id, l3.id)}
-                                                                        onToggle={() => handleToggle(sub.id, l1.id, l2.id, l3.id)}
+                                                                        onToggle={() => handleToggle(sub.id, l1.id, l2.id, l3.id, l3.slug)}
                                                                         id={`check-${l3.id}`}
                                                                     />
                                                                     <label htmlFor={`check-${l3.id}`} style={{ cursor: 'pointer', fontSize: '0.9rem' }}>{l3.name}</label>
