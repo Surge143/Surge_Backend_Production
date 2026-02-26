@@ -163,6 +163,15 @@ export const Blogs: CollectionConfig = {
                 placeholder: 'Calculated on save...',
             }
         },
+        {
+            name: 'isFeatured',
+            label: 'Is Featured',
+            type: 'checkbox',
+            admin: {
+                position: 'sidebar',
+                description: 'Mark this blog as featured.',
+            }
+        },
         slugField({
             useAsSlug: 'title',
         }),

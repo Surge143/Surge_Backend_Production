@@ -1629,6 +1629,10 @@ export interface Blog {
    */
   readTime?: number | null;
   /**
+   * Mark this blog as featured.
+   */
+  isFeatured?: boolean | null;
+  /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
   generateSlug?: boolean | null;
@@ -2921,6 +2925,7 @@ export interface BlogsSelect<T extends boolean = true> {
       };
   scheduledFor?: T;
   readTime?: T;
+  isFeatured?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
