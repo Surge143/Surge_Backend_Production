@@ -53,6 +53,7 @@ export default buildConfig({
     'https://localhost',
     'capacitor://localhost',
     'https://whitemantis-app.vercel.app',
+    'http://localhost:3000',
     process.env.PAYLOAD_PUBLIC_SERVER_URL || '',
   ].filter(Boolean),
   collections: collections,
@@ -91,7 +92,7 @@ export default buildConfig({
       },
     }),
     importExportPlugin({
-      collections: ['web-products','app-orders'],
+      collections: ['web-products', 'app-orders'],
     }),
     seoPlugin({
       generateTitle,

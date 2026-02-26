@@ -121,15 +121,6 @@ export const sendOtpWeb: PayloadHandler = async (req) => {
 
         const res = NextResponse.json({ success: true, message: 'OTP sent successfully' }, { status: 200 });
 
-        res.cookies.set('pendingLogin', encryptedEmail, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 5 * 60,
-        });
-
-        console.log('Set pendingLogin cookie, encrypted length:', encryptedEmail.length);
-
         return res;
 
     } catch (error: any) {

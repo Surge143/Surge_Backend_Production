@@ -1,4 +1,5 @@
 import { CollectionAfterChangeHook } from 'payload';
+import { awardReferralCoins } from '@/utilities/awardReferralCoins';
 
 export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previousDoc, operation, req: { payload } }) => {
     // Import the socket utilities
@@ -19,6 +20,15 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
     // app-orders transaction commits, preventing a DB deadlock caused by
     // the wt-stamps polymorphic relationship resolving back into app-orders.
     setImmediate(async () => {
+        // --- REFERRAL REWARD LOGIC ---
+        // Fire when order becomes paid for the first time and a user is set
+        const isNowPaid = doc.paymentStatus === 'paid';
+        const wasPaid = previousDoc?.paymentStatus === 'paid';
+        const userId = typeof doc.user === 'object' ? doc.user?.id : doc.user;
+        if (isNowPaid && !wasPaid && userId) {
+            await awardReferralCoins(payload, userId);
+        }
+
         // --- STAMP ACCRUAL LOGIC ---
         // Fire only when order is picked up and NO coins were used
         console.log(`[afterChange] Checking stamp accrual. Status: ${doc.appOrderStatus}, Prev: ${previousDoc?.appOrderStatus}, Coins Used: ${doc.coinsUsed}`);

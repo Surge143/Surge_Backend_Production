@@ -75,6 +75,31 @@ export const WTCoins: GlobalConfig = {
                             }
                         },
                     ]
+                },
+                {
+                    label: 'Referral Rewards',
+                    fields: [
+                        {
+                            name: 'referralRewardForReferrer',
+                            label: 'Coins for Referrer',
+                            type: 'number',
+                            required: true,
+                            defaultValue: 0,
+                            admin: {
+                                description: 'WTCoins awarded to the user who shared their referral code when the referred user completes their first order.',
+                            }
+                        },
+                        {
+                            name: 'referralRewardForReferred',
+                            label: 'Coins for Referred User',
+                            type: 'number',
+                            required: true,
+                            defaultValue: 0,
+                            admin: {
+                                description: 'WTCoins awarded to the new user who used a referral code on their first order.',
+                            }
+                        },
+                    ]
                 }
             ]
         }

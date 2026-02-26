@@ -97,6 +97,8 @@ export interface Config {
     'web-contact-form': WebContactForm;
     notifications: Notification;
     'app-best-seller': AppBestSeller;
+    workshop: Workshop;
+    blogs: Blog;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -141,6 +143,8 @@ export interface Config {
     'web-contact-form': WebContactFormSelect<false> | WebContactFormSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     'app-best-seller': AppBestSellerSelect<false> | AppBestSellerSelect<true>;
+    workshop: WorkshopSelect<false> | WorkshopSelect<true>;
+    blogs: BlogsSelect<false> | BlogsSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -244,6 +248,16 @@ export interface User {
       }[]
     | null;
   pushToken?: string | null;
+  /**
+   * The unique code generated from the user’s first name.
+   */
+  referralCode?: string | null;
+  referredBy?: (number | null) | User;
+  referralCodeInput?: string | null;
+  /**
+   * Tracks the state of the referral reward for this user.
+   */
+  referralStatus?: ('pending' | 'rewarded' | 'not_eligible') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -743,23 +757,20 @@ export interface WebProduct {
    * Upload product image that will be visible on Product Listing
    */
   productImage: number | Media;
-  description: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
+  description: string;
+  /**
+   * Select category
+   */
+  categories: number | WebCategory;
+  subCategories?:
+    | {
         [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  categories: (number | WebCategory)[];
-  subCategories?: (number | WebSubCategory)[] | null;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   farm: string;
   tastingNotes: string;
   variety: string;
@@ -798,10 +809,7 @@ export interface WebProduct {
     image?: (number | null) | Media;
     description?: string | null;
   };
-  /**
-   * Auto-generated from product name. You can edit it manually.
-   */
-  slug?: string | null;
+  slug: string;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -813,18 +821,10 @@ export interface WebProduct {
 export interface WebCategory {
   id: number;
   title: string;
-  slug: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "web-sub-categories".
- */
-export interface WebSubCategory {
-  id: number;
-  title: string;
-  parentCategory?: (number | null) | WebCategory;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -1102,6 +1102,46 @@ export interface Slot {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "web-sub-categories".
+ */
+export interface WebSubCategory {
+  id: number;
+  parentCategory: number | WebCategory;
+  level1?:
+    | {
+        name: string;
+        /**
+         * Auto-generated from name
+         */
+        slug?: string | null;
+        level2?:
+          | {
+              name: string;
+              /**
+               * Auto-generated from name
+               */
+              slug?: string | null;
+              level3?:
+                | {
+                    name: string;
+                    /**
+                     * Auto-generated from name
+                     */
+                    slug?: string | null;
+                    id?: string | null;
+                  }[]
+                | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "web-cart".
  */
 export interface WebCart {
@@ -1206,7 +1246,6 @@ export interface WebOrder {
     price: number;
     id?: string | null;
   }[];
-  newsAndOffers?: boolean | null;
   shippingAddress?: {
     addressFirstName?: string | null;
     addressLastName?: string | null;
@@ -1536,6 +1575,56 @@ export interface AppBestSeller {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "workshop".
+ */
+export interface Workshop {
+  id: number;
+  title: string;
+  workshopImage: number | Media;
+  eventDate: string;
+  eventTime: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blogs".
+ */
+export interface Blog {
+  id: number;
+  title: string;
+  featuredImage: number | Media;
+  readTime?: number | null;
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
 export interface Export {
@@ -1829,6 +1918,14 @@ export interface PayloadLockedDocument {
         value: number | AppBestSeller;
       } | null)
     | ({
+        relationTo: 'workshop';
+        value: number | Workshop;
+      } | null)
+    | ({
+        relationTo: 'blogs';
+        value: number | Blog;
+      } | null)
+    | ({
         relationTo: 'exports';
         value: number | Export;
       } | null)
@@ -1919,6 +2016,10 @@ export interface UsersSelect<T extends boolean = true> {
         id?: T;
       };
   pushToken?: T;
+  referralCode?: T;
+  referredBy?: T;
+  referralCodeInput?: T;
+  referralStatus?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -2359,6 +2460,7 @@ export interface AppOrdersSelect<T extends boolean = true> {
  */
 export interface WebCategoriesSelect<T extends boolean = true> {
   title?: T;
+  generateSlug?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2368,9 +2470,28 @@ export interface WebCategoriesSelect<T extends boolean = true> {
  * via the `definition` "web-sub-categories_select".
  */
 export interface WebSubCategoriesSelect<T extends boolean = true> {
-  title?: T;
   parentCategory?: T;
-  slug?: T;
+  level1?:
+    | T
+    | {
+        name?: T;
+        slug?: T;
+        level2?:
+          | T
+          | {
+              name?: T;
+              slug?: T;
+              level3?:
+                | T
+                | {
+                    name?: T;
+                    slug?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2512,7 +2633,6 @@ export interface WebOrdersSelect<T extends boolean = true> {
         price?: T;
         id?: T;
       };
-  newsAndOffers?: T;
   shippingAddress?:
     | T
     | {
@@ -2730,6 +2850,34 @@ export interface AppBestSellerSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "workshop_select".
+ */
+export interface WorkshopSelect<T extends boolean = true> {
+  title?: T;
+  workshopImage?: T;
+  eventDate?: T;
+  eventTime?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blogs_select".
+ */
+export interface BlogsSelect<T extends boolean = true> {
+  title?: T;
+  featuredImage?: T;
+  readTime?: T;
+  content?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports_select".
  */
 export interface ExportsSelect<T extends boolean = true> {
@@ -2887,6 +3035,14 @@ export interface WtCoin {
    * Minimum points a user must have to use them in an order. Add 0 for no limit.
    */
   minPointsPerOrder: number;
+  /**
+   * WTCoins awarded to the user who shared their referral code when the referred user completes their first order.
+   */
+  referralRewardForReferrer: number;
+  /**
+   * WTCoins awarded to the new user who used a referral code on their first order.
+   */
+  referralRewardForReferred: number;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2937,6 +3093,8 @@ export interface WtCoinsSelect<T extends boolean = true> {
   rewardExpiry?: T;
   maxPointsPerOrder?: T;
   minPointsPerOrder?: T;
+  referralRewardForReferrer?: T;
+  referralRewardForReferred?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

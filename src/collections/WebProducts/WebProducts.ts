@@ -103,7 +103,7 @@ export const WebProducts: CollectionConfig = {
                                         {
                                             type: 'row',
                                             fields: [
-                                                { name: 'duration', label: 'Every', type: 'number', required: true, admin: { width: '50%' } },
+                                                { name: 'duration', label: 'Every', type: 'number', min: 0, required: true, admin: { width: '50%' } },
                                                 {
                                                     name: 'interval',
                                                     label: 'Interval',
@@ -124,8 +124,27 @@ export const WebProducts: CollectionConfig = {
                                 {
                                     type: 'row',
                                     fields: [
-                                        { name: 'variantRegularPrice', label: 'Regular Price', type: 'number', required: true, admin: { width: '50%' } },
-                                        { name: 'variantSalePrice', label: 'Sale Price', type: 'number', admin: { width: '50%' } },
+                                        { name: 'variantRegularPrice', label: 'Regular Price', min: 0, type: 'number', required: true, admin: { width: '50%' } },
+                                        {
+                                            name: 'variantSalePrice',
+                                            label: 'Sale Price',
+                                            type: 'number',
+                                            min: 0,
+                                            admin: { width: '50%' },
+                                            validate: (val, { siblingData }) => {
+                                                // 1. If no sale price is entered, it's valid (assuming it's not required)
+                                                if (!val) return true;
+
+                                                // 2. Compare against Regular Price
+                                                const regularPrice = siblingData?.variantRegularPrice;
+
+                                                if (regularPrice && Number(val) >= Number(regularPrice)) {
+                                                    return 'The Sale Price must be less than the Regular Price.';
+                                                }
+
+                                                return true;
+                                            },
+                                        },
                                     ]
                                 },
                                 {
@@ -229,24 +248,21 @@ export const WebProducts: CollectionConfig = {
                             },
                             filterOptions: { mimeType: { contains: 'image' } },
                         },
-                        { name: 'description', label: 'Description', type: 'richText', required: true },
+                        { name: 'description', label: 'Description', type: 'textarea', required: true },
+
+                        { name: 'categories', label: 'Categories', type: 'relationship', relationTo: 'web-categories', hasMany: false, required: true, admin: { description: 'Select category', position: 'sidebar' } },
                         {
-                            type: 'row',
-                            fields: [
-                                { name: 'categories', label: 'Categories', type: 'relationship', relationTo: 'web-categories', hasMany: true, required: true, admin: { width: '50%' } },
-                                {
-                                    name: 'subCategories',
-                                    label: 'Sub Categories',
-                                    type: 'relationship',
-                                    relationTo: 'web-sub-categories',
-                                    hasMany: true,
-                                    required: true,
-                                    admin: {
-                                        width: '50%',
-                                        condition: (data) => Array.isArray(data?.categories) && data.categories.length > 0
-                                    }
+                            name: 'subCategories',
+                            label: 'Sub Categories',
+                            type: 'json',
+                            required: true,
+                            admin: {
+                                condition: (data) => !!data?.categories,
+                                components: {
+                                    Field: '@/collections/WebProducts/components/NestedSubCategorySelection#NestedSubCategorySelection'
                                 },
-                            ]
+                                position: 'sidebar',
+                            }
                         },
                         {
                             type: 'row',
@@ -312,29 +328,31 @@ export const WebProducts: CollectionConfig = {
             ],
         },
         {
-            name: 'slug',
-            type: 'text',
-            index: true,
+            name: "slug",
+            type: "text",
+            required: true,
             unique: true,
+            index: true,
             admin: {
+                components: {
+                    Field: "@/collections/components/slugField/customSlugField#SlugField",
+                },
                 position: 'sidebar',
-                description: 'Auto-generated from product name. You can edit it manually.',
             },
             hooks: {
-                beforeValidate: [({ value, data }) => {
-                    if (value) return value; // Keep manual input
-                    const name = data?.name || '';
-                    if (!name) return undefined; // Let Payload handle empty case
-                    const tagline = data?.tagline || '';
-                    const source = tagline ? `${name} ${tagline}` : name;
-                    const slug = source
-                        .toLowerCase()
-                        .replace(/[^a-z0-9]+/g, '-')
-                        .replace(/^-+|-+$/g, '');
-                    // Add timestamp if slug is empty after sanitization
-                    return slug || `product-${Date.now()}`;
-                }],
+                beforeValidate: [
+                    ({ data, value }) => {
+                        if (data?.name) {
+                            return data.name
+                                .toLowerCase()
+                                .trim()
+                                .replace(/\s+/g, "-")
+                                .replace(/[^\w-]+/g, "");
+                        }
+                        return value;
+                    },
+                ],
             },
-        }
+        },
     ]
 }

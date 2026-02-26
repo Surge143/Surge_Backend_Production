@@ -31,11 +31,13 @@ import { ShopMenuQuickCreate as ShopMenuQuickCreate_98068d82267ea96f44e26a90051c
 import { ShopCouponQuickCreate as ShopCouponQuickCreate_47d2b66206e6260100d26bf1b04511f5 } from '@/collections/ShopCoupons/components/ShopCouponQuickCreate'
 import { ExportListMenuItem as ExportListMenuItem_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
 import { ImportListMenuItem as ImportListMenuItem_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
+import { NestedSubCategorySelection as NestedSubCategorySelection_b857d3801b37a2d09fca3a66188c8e8f } from '@/collections/WebProducts/components/NestedSubCategorySelection'
 import { OverviewComponent as OverviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { MetaTitleComponent as MetaTitleComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { MetaImageComponent as MetaImageComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { MetaDescriptionComponent as MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
+import { SlugField as SlugField_e4e93a17dcc1addf246cf16a27951ec3 } from '@/collections/components/slugField/customSlugField'
 import { Page as Page_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
 import { SortBy as SortBy_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
 import { SortOrder as SortOrder_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
@@ -88,11 +90,13 @@ export const importMap = {
   "@/collections/ShopCoupons/components/ShopCouponQuickCreate#ShopCouponQuickCreate": ShopCouponQuickCreate_47d2b66206e6260100d26bf1b04511f5,
   "payload-import-export/rsc#ExportListMenuItem": ExportListMenuItem_7d8c2ee66d868f2af498f46de2c9b2f8,
   "payload-import-export/rsc#ImportListMenuItem": ImportListMenuItem_7d8c2ee66d868f2af498f46de2c9b2f8,
+  "@/collections/WebProducts/components/NestedSubCategorySelection#NestedSubCategorySelection": NestedSubCategorySelection_b857d3801b37a2d09fca3a66188c8e8f,
   "@payloadcms/plugin-seo/client#OverviewComponent": OverviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#MetaTitleComponent": MetaTitleComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#MetaImageComponent": MetaImageComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#MetaDescriptionComponent": MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
+  "@/collections/components/slugField/customSlugField#SlugField": SlugField_e4e93a17dcc1addf246cf16a27951ec3,
   "payload-import-export/rsc#Page": Page_7d8c2ee66d868f2af498f46de2c9b2f8,
   "payload-import-export/rsc#SortBy": SortBy_7d8c2ee66d868f2af498f46de2c9b2f8,
   "payload-import-export/rsc#SortOrder": SortOrder_7d8c2ee66d868f2af498f46de2c9b2f8,

@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { afterUserCreated } from './hooks/afterUserCreated';
 import { beforeUserDelete } from './hooks/beforeUserDelete';
+import { validateReferralCode } from './hooks/validateReferralCode';
 import { changeEmailOtpApp } from './endpoints/changeEmailOtpApp';
 import { changeEmailOtpWeb } from './endpoints/changeEmailOtpWeb';
 import { verifyChangeEmailApp } from './endpoints/verifyChangeEmailApp';
@@ -38,6 +39,7 @@ export const Users: CollectionConfig = {
     ],
 
     hooks: {
+        beforeChange: [validateReferralCode],
         afterChange: [afterUserCreated],
         beforeDelete: [beforeUserDelete],
     },
@@ -195,6 +197,59 @@ export const Users: CollectionConfig = {
             type: 'text',
             admin: {
                 readOnly: true,
+            },
+        },
+        {
+            name: 'referralCode',
+            type: 'text',
+            unique: true,
+            admin: {
+                description: 'The unique code generated from the user’s first name.',
+                readOnly: true
+            },
+            hooks: {
+                beforeValidate: [
+                    async ({ data, operation, value }) => {
+                        // Only run on creation and if a value doesn't already exist
+                        if (operation === 'create' && !value) {
+                            const firstName = data?.firstName || 'user';
+
+                            // Clean the name: lowercase and remove non-alphanumeric chars
+                            const cleanName = firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                            // Add a random 4-digit suffix for uniqueness
+                            const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+
+                            return `${cleanName}${randomSuffix}`;
+                        }
+                        return value;
+                    }
+                ]
+            }
+        },
+        {
+            name: 'referredBy',
+            type: 'relationship',
+            relationTo: 'users',
+            admin: { readOnly: true },
+        },
+        {
+            name: 'referralCodeInput', // Only used during signup
+            type: 'text',
+            admin: { hidden: true }, // We use this in a hook, then discard or ignore
+        },
+        {
+            name: 'referralStatus',
+            type: 'select',
+            defaultValue: 'not_eligible',
+            options: [
+                { label: 'Pending', value: 'pending' },
+                { label: 'Rewarded', value: 'rewarded' },
+                { label: 'Not Eligible', value: 'not_eligible' },
+            ],
+            admin: {
+                readOnly: true,
+                description: 'Tracks the state of the referral reward for this user.',
             },
         },
     ],

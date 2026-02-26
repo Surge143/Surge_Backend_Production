@@ -30,6 +30,8 @@ import { AppContactForm } from "./AppContactForm/AppContactForm";
 import { WebContactForm } from "./WebContactForm/WebContactForm";
 import { Notifications } from "./Notifications/Notifications";
 import { AppBestSeller } from "./AppBestSeller/AppBestSeller";
+import { Workshop } from "./Workshops/Workshop";
+import { Blogs } from "./Blogs/Blogs";
 
 export const collections = [
     Users,
@@ -60,7 +62,9 @@ export const collections = [
     AppContactForm,
     WebContactForm,
     Notifications,
-    AppBestSeller
+    AppBestSeller,
+    Workshop,
+    Blogs,
 ]
 
 export const globals = [

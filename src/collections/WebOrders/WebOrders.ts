@@ -2,6 +2,7 @@ import type { CollectionConfig } from "payload";
 import { awardWTCoins, convertPointsToAED } from "./hooks/wtCoinsUtils";
 import { refundHandler } from "./endpoints/refundHandler";
 import { linkGuestOrderToUser } from "./hooks/linkGuestToUser";
+import { awardReferralCoins } from "@/utilities/awardReferralCoins";
 
 export const WebOrders: CollectionConfig = {
     slug: 'web-orders',
@@ -66,6 +67,16 @@ export const WebOrders: CollectionConfig = {
                     collection: 'web-orders',
                     paidStatus: 'completed',
                 });
+
+                // --- REFERRAL REWARD LOGIC ---
+                const isNowPaid = doc.paymentStatus === 'completed';
+                const wasPaid = previousDoc?.paymentStatus === 'completed';
+                const userId = typeof doc.user === 'object' ? doc.user?.id : doc.user;
+                if (isNowPaid && !wasPaid && userId) {
+                    setImmediate(async () => {
+                        await awardReferralCoins(payload, userId);
+                    });
+                }
             }
         ],
     },
@@ -89,6 +100,7 @@ export const WebOrders: CollectionConfig = {
                                     ],
                                     admin: {
                                         width: '50%',
+                                        readOnly: true,
                                     },
                                 },
                                 {
@@ -98,6 +110,8 @@ export const WebOrders: CollectionConfig = {
                                     required: false, // Optional because it's hidden for guests
                                     admin: {
                                         width: '50%',
+                                        readOnly: true,
+
                                         // This field ONLY shows up if customerType is 'user'
                                         condition: (data) => data?.customerType === 'user',
                                         description: 'Select the registered user account for this order.',
@@ -111,11 +125,14 @@ export const WebOrders: CollectionConfig = {
                                         { label: 'Delivery', value: 'delivery' },
                                         { label: 'Pickup', value: 'pickup' },
                                     ],
+                                    admin: {
+                                        readOnly: true,
+                                    },
                                 },
                                 {
                                     name: 'stripeOrderId',
                                     type: 'text',
-                                    admin: { description: 'The ID from Stripe' }
+                                    admin: { description: 'The ID from Stripe', readOnly: true }
                                 },
                                 {
                                     name: 'origin',
@@ -125,6 +142,9 @@ export const WebOrders: CollectionConfig = {
                                         { label: 'Subscription', value: 'subscription' },
                                         { label: 'One Time', value: 'one-time' },
                                     ],
+                                    admin: {
+                                        readOnly: true,
+                                    },
                                 },
                                 {
                                     name: 'email',
@@ -150,7 +170,7 @@ export const WebOrders: CollectionConfig = {
                                             type: 'relationship',
                                             relationTo: 'web-products',
                                             required: true,
-                                            admin: { width: '25%' }
+                                            admin: { width: '25%', readOnly: true }
                                         },
                                         {
                                             name: 'variantID',
@@ -159,6 +179,7 @@ export const WebOrders: CollectionConfig = {
                                             required: true,
                                             admin: {
                                                 width: '25%',
+                                                readOnly: true,
                                                 description: 'The ID of the row in the Product Variants array'
                                             }
                                         },
@@ -166,19 +187,18 @@ export const WebOrders: CollectionConfig = {
                                             name: 'quantity',
                                             type: 'number',
                                             required: true,
-                                            admin: { width: '10%' }
+                                            admin: { width: '10%', readOnly: true }
                                         },
                                         {
                                             name: 'price',
                                             type: 'number',
                                             required: true,
-                                            admin: { width: '15%' }
+                                            admin: { width: '15%', readOnly: true }
                                         },
                                     ],
                                 },
                             ],
                         },
-                        { name: 'newsAndOffers', type: 'checkbox', defaultValue: false },
                     ],
                 },
                 {
@@ -190,6 +210,7 @@ export const WebOrders: CollectionConfig = {
                             label: 'Shipping Address (For Delivery Only)',
                             admin: {
                                 condition: (data) => data?.deliveryOption === 'delivery',
+                                readOnly: true,
                             },
                             fields: [
                                 {
@@ -231,6 +252,9 @@ export const WebOrders: CollectionConfig = {
                         {
                             name: 'billingAddress',
                             type: 'group',
+                            admin: {
+                                readOnly: true,
+                            },
                             fields: [
                                 {
                                     type: 'row',
@@ -280,6 +304,9 @@ export const WebOrders: CollectionConfig = {
                                     name: 'paymentStatus',
                                     type: 'select',
                                     required: true,
+                                    admin: {
+                                        readOnly: true,
+                                    },
                                     validate: (val, { data }) => {
                                         if (val === 'refunded' && data?.deliveryStatus !== 'placed' && data?.deliveryStatus !== 'cancelled') {
                                             return 'Refunds are only allowed while the delivery status is "Placed" or "Cancelled".';
@@ -293,6 +320,7 @@ export const WebOrders: CollectionConfig = {
                                         { label: 'Refund Initiated', value: 'refund-initiated' },
                                         { label: 'Refunded', value: 'refunded' },
                                     ],
+
                                 },
                                 {
                                     name: 'deliveryStatus',
@@ -315,12 +343,16 @@ export const WebOrders: CollectionConfig = {
                             type: 'relationship',
                             relationTo: 'coupon',
                             admin: {
+                                readOnly: true,
                                 condition: (data) => data?.origin === 'one-time',
                             },
                         },
                         {
                             name: 'pointsUsed',
                             type: 'number',
+                            admin: {
+                                readOnly: true,
+                            },
                         },
                         {
                             name: 'financials',
@@ -335,13 +367,13 @@ export const WebOrders: CollectionConfig = {
                                             label: 'Subtotal (Before Discounts)',
                                             type: 'number',
                                             required: true,
-                                            admin: { width: '50%', description: 'Sum of all item prices × quantities' }
+                                            admin: { width: '50%', description: 'Sum of all item prices × quantities', readOnly: true }
                                         },
                                         {
                                             name: 'couponDiscount',
                                             label: 'Coupon Discount',
                                             type: 'number',
-                                            admin: { width: '50%', description: 'Discount applied via coupon code' }
+                                            admin: { width: '50%', description: 'Discount applied via coupon code', readOnly: true }
                                         },
                                     ],
                                 },
@@ -352,13 +384,13 @@ export const WebOrders: CollectionConfig = {
                                             name: 'wtCoinsDiscount',
                                             label: 'WT Coins Discount',
                                             type: 'number',
-                                            admin: { width: '50%', description: 'Discount applied via WT Coins redemption' }
+                                            admin: { width: '50%', description: 'Discount applied via WT Coins redemption', readOnly: true }
                                         },
                                         {
                                             name: 'shippingCharge',
                                             label: 'Shipping Charge',
                                             type: 'number',
-                                            admin: { width: '50%', description: 'Shipping fee (0 for pickup orders)' }
+                                            admin: { width: '50%', description: 'Shipping fee (0 for pickup orders)', readOnly: true }
                                         },
                                     ],
                                 },
@@ -369,14 +401,14 @@ export const WebOrders: CollectionConfig = {
                                             name: 'taxAmount',
                                             label: 'Tax',
                                             type: 'number',
-                                            admin: { width: '50%', description: 'Tax applied on (subtotal − discounts + shipping)' }
+                                            admin: { width: '50%', description: 'Tax applied on (subtotal − discounts + shipping)', readOnly: true }
                                         },
                                         {
                                             name: 'total',
                                             label: 'Grand Total',
                                             type: 'number',
                                             required: true,
-                                            admin: { width: '50%', description: 'Final amount charged (subtotal − discounts + shipping + tax)' }
+                                            admin: { width: '50%', description: 'Final amount charged (subtotal − discounts + shipping + tax)', readOnly: true }
                                         },
                                     ],
                                 },
@@ -392,7 +424,8 @@ export const WebOrders: CollectionConfig = {
             defaultValue: false,
             admin: {
                 hidden: true,
-                description: 'Tracks if WTCoins have been awarded for this order'
+                description: 'Tracks if WTCoins have been awarded for this order',
+                readOnly: true,
             },
         },
         {
@@ -400,6 +433,7 @@ export const WebOrders: CollectionConfig = {
             type: 'json',
             admin: {
                 hidden: true, // This hides the field from the Admin Panel entirely
+                readOnly: true,
             },
         },
     ],
