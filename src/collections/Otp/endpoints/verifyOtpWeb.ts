@@ -177,7 +177,6 @@ export const verifyOtpWeb: PayloadHandler = async (req) => {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     maxAge: 60 * 60 * 24 * 7,
-                    sameSite: true,
                 });
             }
 

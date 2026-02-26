@@ -99,6 +99,7 @@ export interface Config {
     'app-best-seller': AppBestSeller;
     workshop: Workshop;
     blogs: Blog;
+    wholesale: Wholesale;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -145,6 +146,7 @@ export interface Config {
     'app-best-seller': AppBestSellerSelect<false> | AppBestSellerSelect<true>;
     workshop: WorkshopSelect<false> | WorkshopSelect<true>;
     blogs: BlogsSelect<false> | BlogsSelect<true>;
+    wholesale: WholesaleSelect<false> | WholesaleSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1637,6 +1639,30 @@ export interface Blog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wholesale".
+ */
+export interface Wholesale {
+  id: number;
+  email: string;
+  phone: string;
+  company: string;
+  companyAddress: string;
+  branch?: string | null;
+  websiteInstagram?: string | null;
+  business_info_group?: {
+    office?: boolean | null;
+    bakery?: boolean | null;
+    coffee_shop?: boolean | null;
+    restaurant?: boolean | null;
+    other?: boolean | null;
+    other_specification?: string | null;
+  };
+  message: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
 export interface Export {
@@ -1936,6 +1962,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'blogs';
         value: number | Blog;
+      } | null)
+    | ({
+        relationTo: 'wholesale';
+        value: number | Wholesale;
       } | null)
     | ({
         relationTo: 'exports';
@@ -2896,6 +2926,31 @@ export interface BlogsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wholesale_select".
+ */
+export interface WholesaleSelect<T extends boolean = true> {
+  email?: T;
+  phone?: T;
+  company?: T;
+  companyAddress?: T;
+  branch?: T;
+  websiteInstagram?: T;
+  business_info_group?:
+    | T
+    | {
+        office?: T;
+        bakery?: T;
+        coffee_shop?: T;
+        restaurant?: T;
+        other?: T;
+        other_specification?: T;
+      };
+  message?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

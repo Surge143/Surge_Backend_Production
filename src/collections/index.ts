@@ -32,6 +32,7 @@ import { Notifications } from "./Notifications/Notifications";
 import { AppBestSeller } from "./AppBestSeller/AppBestSeller";
 import { Workshop } from "./Workshops/Workshop";
 import { Blogs } from "./Blogs/Blogs";
+import { Wholesale } from "./Wholesale/Wholesale";
 
 export const collections = [
     Users,
@@ -65,6 +66,7 @@ export const collections = [
     AppBestSeller,
     Workshop,
     Blogs,
+    Wholesale,
 ]
 
 export const globals = [
