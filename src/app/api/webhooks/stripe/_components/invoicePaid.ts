@@ -86,7 +86,6 @@ export async function handleInvoicePaid(invoice: any) {
                 : null,
             deliveryOption: subscriptionDoc.deliveryOption,
             origin: "subscription",
-            newsAndOffers: subscriptionDoc.newsAndOffers,
             stripeSubscriptionID: stripeSubscriptionId,
             items: subscriptionDoc.items.map((item: any) => ({
                 product: typeof item.product === "object" ? item.product.id : item.product,
