@@ -5,6 +5,10 @@ import { awardReferralCoins } from "@/utilities/awardReferralCoins";
 
 export const WebSubscription: CollectionConfig = {
     slug: 'web-subscription',
+    labels:{
+        singular: 'Store Subscription',
+        plural: 'Store Subscriptions'
+    },
     admin: {
         useAsTitle: 'id',
         group: 'Store',

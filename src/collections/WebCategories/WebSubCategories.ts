@@ -8,6 +8,10 @@ const formatSlug = (val: string): string =>
 
 export const WebSubCategories: CollectionConfig = {
     slug: 'web-sub-categories',
+    labels:{
+        singular: 'Store Sub-Category',
+        plural: 'Store Sub-Categories'
+    },
     admin: {
         group: 'Store',
         defaultColumns: ['slug', 'parentCategory'],

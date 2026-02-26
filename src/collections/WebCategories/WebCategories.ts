@@ -2,6 +2,10 @@ import { slugField, type CollectionConfig } from 'payload'
 
 export const WebCategories: CollectionConfig = {
     slug: 'web-categories',
+    labels: {
+        singular: 'Store Category',
+        plural: 'Store Categories',
+    },
     access: {
         read: () => true,
         update: ({ req: { user } }) => {

@@ -3,6 +3,8 @@ import { getShopCouponsHandler } from "./endpoints/coupons/getCoupons";
 import { validateAppCouponHandler } from "./endpoints/coupons/validateAppCouponHandler";
 import { getAllItemsHandler } from "./endpoints/menu/getAllItems";
 import { individualItemHandler } from "./endpoints/menu/individualItem";
+import { getBaristaHandler } from "./endpoints/barista/getBarista";
+
 
 export const Shop: CollectionConfig = {
     slug: "shop",
@@ -14,7 +16,8 @@ export const Shop: CollectionConfig = {
         { path: '/:shopId/coupons/:couponCode', method: 'get', handler: validateAppCouponHandler },
         { path: '/:shopId/coupons', method: 'get', handler: getShopCouponsHandler },
         { path: '/:shopId/menu-items', method: 'get', handler: getAllItemsHandler },
-        { path: '/:shopId/menu-items/:itemId', method: 'get', handler: individualItemHandler }
+        { path: '/:shopId/menu-items/:itemId', method: 'get', handler: individualItemHandler },
+        { path: '/:shopId/barista', method: 'get', handler: getBaristaHandler }
     ],
     admin: {
         useAsTitle: 'shopManager',

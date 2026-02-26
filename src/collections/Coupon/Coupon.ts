@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { validateWebCouponHandler } from "./endpoints/validateWebCoupon";
+import { validateFutureDate } from "@/utilities/validateFutureDate";
 
 export const Coupon: CollectionConfig = {
     slug: "coupon",
@@ -176,6 +177,7 @@ export const Coupon: CollectionConfig = {
                                     name: 'expiryDate',
                                     type: 'date',
                                     required: true,
+                                    validate: validateFutureDate,
                                     admin: {
                                         width: '50%',
                                         description: 'Coupon will be automatically invalidated after this date.',

@@ -1,4 +1,5 @@
 import { slugField, type CollectionConfig } from 'payload'
+import { validateFutureDate } from '@/utilities/validateFutureDate'
 
 export const Workshop: CollectionConfig = {
     slug: 'workshop',
@@ -37,6 +38,7 @@ export const Workshop: CollectionConfig = {
             label: 'Event Date',
             type: 'date',
             required: true,
+            validate: validateFutureDate,
             admin: {
                 date: {
                     pickerAppearance: 'dayOnly',
@@ -55,6 +57,7 @@ export const Workshop: CollectionConfig = {
             label: 'Event Time (7:00 PM GST)',
             type: 'date',
             required: true,
+            validate: validateFutureDate,
             admin: {
                 date: {
                     pickerAppearance: 'timeOnly',

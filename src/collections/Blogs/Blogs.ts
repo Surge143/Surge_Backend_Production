@@ -16,6 +16,7 @@ import {
     PreviewField,
 } from '@payloadcms/plugin-seo/fields';
 import { calculateReadTime } from '@/utilities/calculateReadTime';
+import { validateFutureDate } from '@/utilities/validateFutureDate';
 
 export const Blogs: CollectionConfig = {
     slug: 'blogs',
@@ -142,6 +143,7 @@ export const Blogs: CollectionConfig = {
             name: 'scheduledFor',
             label: 'Publication Schedule',
             type: 'date',
+            validate: validateFutureDate,
             admin: {
                 position: 'sidebar',
                 description: 'Set a future date to automate when this post goes live on the website.',

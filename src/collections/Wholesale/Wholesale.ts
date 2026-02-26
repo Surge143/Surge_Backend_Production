@@ -5,6 +5,8 @@ export const Wholesale: CollectionConfig = {
     admin: {
         useAsTitle: 'company',
         group: 'Marketing',
+        description: 'Manage and review wholesale partnership inquiries.',
+        defaultColumns: ['company', 'email', 'createdAt'],
     },
     access: {
         read: ({ req: { user } }) => {
@@ -16,41 +18,66 @@ export const Wholesale: CollectionConfig = {
         delete: ({ req: { user } }) => {
             return user?.role === 'admin' || user?.role === 'super-admin';
         },
-        create: () => true,
+        create: () => true, // Publicly accessible via frontend form
     },
     fields: [
         {
-            name: 'email',
-            type: 'email',
-            required: true,
+            type: 'row',
+            fields: [
+                {
+                    name: 'email',
+                    type: 'email',
+                    required: true,
+                    admin: { width: '50%', readOnly: true },
+                },
+                {
+                    name: 'phone',
+                    type: 'text',
+                    required: true,
+                    admin: { width: '50%', readOnly: true },
+                },
+            ],
         },
         {
-            name: 'phone',
-            type: 'text',
-            required: true,
+            type: 'row',
+            fields: [
+                {
+                    name: 'company',
+                    type: 'text',
+                    required: true,
+                    admin: { width: '50%', readOnly: true },
+                },
+                {
+                    name: 'branch',
+                    type: 'text',
+                    admin: { width: '50%', readOnly: true },
+                },
+            ],
         },
         {
-            name: 'company',
-            type: 'text',
-            required: true,
-        },
-        {
-            name: 'companyAddress',
-            type: 'text',
-            required: true,
-        },
-        {
-            name: 'branch',
-            type: 'text',
-        },
-        {
-            name: 'websiteInstagram',
-            type: 'text',
+            type: 'row',
+            fields: [
+                {
+                    name: 'companyAddress',
+                    type: 'text',
+                    required: true,
+                    admin: { width: '50%', readOnly: true },
+                },
+                {
+                    name: 'websiteInstagram',
+                    type: 'text',
+                    admin: { width: '50%', readOnly: true },
+                },
+            ],
         },
         {
             name: 'business_info_group',
             type: 'group',
-            label: 'Which category best describes your business? Select all which apply',
+            label: 'Business Category',
+            admin: {
+                readOnly: true,
+                description: 'Categories selected by the business during submission.',
+            },
             validate: (value: any) => {
                 if (!value) return 'Please select at least one category';
                 const hasSelection = value.office || value.bakery || value.coffee_shop || value.restaurant || value.other;
@@ -90,6 +117,7 @@ export const Wholesale: CollectionConfig = {
             name: 'message',
             type: 'textarea',
             required: true,
+            admin: { readOnly: true },
         },
     ],
     timestamps: true,

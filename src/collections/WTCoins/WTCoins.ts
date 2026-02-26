@@ -2,6 +2,10 @@ import type { GlobalConfig } from 'payload'
 
 export const WTCoins: GlobalConfig = {
     slug: 'wt-coins',
+    label: {
+        singular: 'WT Beans',
+        plural: 'WT Beans',
+    },
     admin: {
         description: "White Mantis Coins Configuration",
         group: 'Loyalty Program',

@@ -1642,6 +1642,8 @@ export interface Blog {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Manage and review wholesale partnership inquiries.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "wholesale".
  */
@@ -1650,9 +1652,12 @@ export interface Wholesale {
   email: string;
   phone: string;
   company: string;
-  companyAddress: string;
   branch?: string | null;
+  companyAddress: string;
   websiteInstagram?: string | null;
+  /**
+   * Categories selected by the business during submission.
+   */
   business_info_group?: {
     office?: boolean | null;
     bakery?: boolean | null;
@@ -2940,8 +2945,8 @@ export interface WholesaleSelect<T extends boolean = true> {
   email?: T;
   phone?: T;
   company?: T;
-  companyAddress?: T;
   branch?: T;
+  companyAddress?: T;
   websiteInstagram?: T;
   business_info_group?:
     | T

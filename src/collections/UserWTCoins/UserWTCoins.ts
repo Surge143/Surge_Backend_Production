@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { validateFutureDate } from '@/utilities/validateFutureDate';
 
 export const UserWTCoins: CollectionConfig = {
     slug: 'user-wt-coins',
@@ -45,7 +46,7 @@ export const UserWTCoins: CollectionConfig = {
                 { name: 'amount', type: 'number', required: true },
                 { name: 'earnedAt', type: 'date', defaultValue: () => new Date() },
                 { name: 'linkedOrder', type: 'relationship', relationTo: ['web-orders', 'app-orders'] },
-                { name: 'expiryDate', type: 'date' },
+                { name: 'expiryDate', type: 'date', validate: validateFutureDate },
             ]
         },
         {
