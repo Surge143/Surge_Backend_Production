@@ -84,7 +84,7 @@ export const AppOrders: CollectionConfig = {
                                         { label: 'Rejected', value: 'rejected' },
                                     ],
                                     required: true,
-                                    admin: { width: '50%', readOnly: true }
+                                    admin: { width: '50%' }
                                 },
                             ]
                         },
@@ -102,7 +102,6 @@ export const AppOrders: CollectionConfig = {
                             ],
                             admin: {
                                 condition: (data) => data?.orderAcceptance === 'accepted',
-                                readOnly: true,
                             }
                         },
                         {
@@ -118,7 +117,6 @@ export const AppOrders: CollectionConfig = {
                                 { label: 'Refunded', value: 'refunded' },
                             ],
                             admin: {
-                                readOnly: true,
                             }
                         },
                         {
