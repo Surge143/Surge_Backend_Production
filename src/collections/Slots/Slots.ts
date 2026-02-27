@@ -159,7 +159,6 @@ export const Slots: CollectionConfig = {
             label: "Shop",
             admin: {
                 position: "sidebar",
-                readOnly: true,
                 description: "Auto-assigned based on your manager account.",
             },
         },

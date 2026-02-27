@@ -29,6 +29,8 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: 'Invalid Google token payload' }, { status: 400 })
             }
 
+            console.log(googlePayload, "googlePayload")
+
             const { email, given_name, family_name, picture } = googlePayload;
 
             const firstName = given_name || ""
