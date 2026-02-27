@@ -6,7 +6,7 @@ import styles from './CouponPicker.module.css'
 export interface CouponItem {
     id: string
     code: string
-    status: string
+    couponStatus: string
     couponFor?: {
         website?: boolean
         app?: boolean
@@ -73,9 +73,9 @@ export const CouponPickerGrid: React.FC<CouponPickerGridProps> = ({
                 }
 
                 // Fetch active, published coupons that apply to the app.
-                // draft=false ensures only published docs are returned (Versions/Drafts is enabled on Coupon).
+                // using &where[_status][equals]=published ensures only published docs are returned.
                 const res = await fetch(
-                    '/api/coupon?limit=1000&where[couponFor.app][equals]=true&where[status][equals]=active&draft=false'
+                    '/api/coupon?limit=1000&where[couponFor.app][equals]=true&where[couponStatus][equals]=active&where[_status][equals]=published&draft=false'
                 )
                 if (!res.ok) throw new Error('Failed to fetch coupons')
                 const data = await res.json()
@@ -162,10 +162,10 @@ export const CouponPickerGrid: React.FC<CouponPickerGridProps> = ({
                                         fontSize: '11px',
                                         fontWeight: 600,
                                         textTransform: 'uppercase',
-                                        background: coupon.status === 'active' ? 'var(--theme-success-100)' : 'var(--theme-elevation-100)',
-                                        color: coupon.status === 'active' ? 'var(--theme-success-500)' : 'var(--theme-elevation-500)',
+                                        background: coupon.couponStatus === 'active' ? 'var(--theme-success-100)' : 'var(--theme-elevation-100)',
+                                        color: coupon.couponStatus === 'active' ? 'var(--theme-success-500)' : 'var(--theme-elevation-500)',
                                     }}>
-                                        {coupon.status}
+                                        {coupon.couponStatus}
                                     </span>
                                 </td>
                             </tr>

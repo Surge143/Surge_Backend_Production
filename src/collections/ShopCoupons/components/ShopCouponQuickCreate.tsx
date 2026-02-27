@@ -124,7 +124,7 @@ export const ShopCouponQuickCreate: React.FC = () => {
                         // couponRelation links back to the source coupon
                         couponRelation: [typeof coupon.id === 'string' && !isNaN(Number(coupon.id)) ? Number(coupon.id) : coupon.id],
                         code: coupon.code,
-                        status: 'active',
+                        couponStatus: 'active',
                         // Shop coupons are always app-only — override whatever the source has
                         couponFor: { website: false, app: true },
                         isPubliclyVisible: coupon.isPubliclyVisible !== undefined ? coupon.isPubliclyVisible : true,

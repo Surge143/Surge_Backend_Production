@@ -7,7 +7,10 @@ export const ShopCoupons: CollectionConfig = {
         singular: "Cafe Coupon",
         plural: "Cafe Coupons"
     },
-
+    versions: {
+        drafts: true,
+        maxPerDoc: 50,
+    },
     admin: {
         useAsTitle: "code",
         components: {
