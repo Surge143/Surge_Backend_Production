@@ -159,6 +159,8 @@ export const verifyOtpWeb: PayloadHandler = async (req) => {
                 req,
             });
 
+            const isProduction = process.env.NODE_ENV === 'production';
+
             const res = NextResponse.json(
                 {
                     success: true,
@@ -166,16 +168,19 @@ export const verifyOtpWeb: PayloadHandler = async (req) => {
                     isNewUser,
                     message: 'OTP verified and logged in successfully',
                     user: result.user,
+                    token: result.token,  // also in body so frontend can store in memory/localStorage
                 },
                 { status: 200 }
             );
 
-
-
             if (result.token) {
                 res.cookies.set('payload-token', result.token, {
                     httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production',
+                    secure: isProduction,
+                    // 'none' required for cross-origin cookies in production (HTTPS)
+                    // 'lax' works fine for cross-port localhost in development
+                    sameSite: isProduction ? 'none' : 'lax',
+                    path: '/',
                     maxAge: 60 * 60 * 24 * 7,
                 });
             }
