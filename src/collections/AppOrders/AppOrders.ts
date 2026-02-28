@@ -187,6 +187,20 @@ export const AppOrders: CollectionConfig = {
                                 readOnly: true,
                             },
                         },
+                        {
+                            name: 'orderRating',
+                            type: 'number',
+                            admin: {
+                                readOnly: true,
+                            },
+                        },
+                        {
+                            name: 'baristaRating',
+                            type: 'number',
+                            admin: {
+                                readOnly: true,
+                            },
+                        }
                     ]
                 },
                 {
