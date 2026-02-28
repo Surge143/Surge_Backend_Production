@@ -33,7 +33,9 @@ export const refundHandler: PayloadHandler = async (req) => {
             return Response.json({ error: 'You are not authorized to refund this order' }, { status: 403 })
         }
 
-        if (order.appOrderStatus === 'pending' && order.paymentStatus === 'paid') {
+        const orderStatus = order.orderType === 'dine-in' ? order.appOrderStatusDine : order.appOrderStatus;
+
+        if (orderStatus === 'pending' && order.paymentStatus === 'paid') {
             if (!order.stripeData.paymentIntentId) {
                 return Response.json({ error: 'Order cannot be refunded as it is not paid' }, { status: 400 })
             }

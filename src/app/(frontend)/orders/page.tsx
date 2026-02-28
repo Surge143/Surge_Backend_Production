@@ -27,6 +27,8 @@ interface WebOrder extends BaseOrder {
 
 interface AppOrder extends BaseOrder {
     appOrderStatus: string
+    appOrderStatusDine?: string
+    orderType: 'take-away' | 'dine-in'
     paymentStatus: string
     financials: {
         total: number
@@ -132,10 +134,10 @@ export default function OrdersPage() {
     }
 
     const renderBadge = (status: string) => {
-        const s = status.toLowerCase().replace('-', '')
+        const s = status.toLowerCase().replace(/\s+/g, '').replace('-', '')
         let className = styles.badge
-        if (s === 'pending') className += ` ${styles.badgePending}`
-        else if (s === 'completed' || s === 'paid' || s === 'active') className += ` ${styles.badgeCompleted}`
+        if (s === 'pending' || s === 'preparing') className += ` ${styles.badgePending}`
+        else if (s === 'completed' || s === 'paid' || s === 'active' || s === 'ready') className += ` ${styles.badgeCompleted}`
         else if (s === 'cancelled' || s === 'rejected') className += ` ${styles.badgeCancelled}`
         else if (s === 'refunded') className += ` ${styles.badgeRefunded}`
         else if (s === 'refundinitiated') className += ` ${styles.badgeRefundInitiated}`
@@ -204,7 +206,11 @@ export default function OrdersPage() {
                                     <div className={styles.statusBadges}>
                                         {renderBadge((order as any).paymentStatus)}
                                         {activeTab === 'website' && renderBadge((order as WebOrder).deliveryStatus)}
-                                        {activeTab === 'app' && renderBadge((order as AppOrder).appOrderStatus)}
+                                        {activeTab === 'app' && (
+                                            renderBadge((order as AppOrder).orderType === 'dine-in'
+                                                ? (order as AppOrder).appOrderStatusDine || 'Pending'
+                                                : (order as AppOrder).appOrderStatus)
+                                        )}
                                         {activeTab === 'subscription' && renderBadge((order as WebSubscription).subsStatus)}
                                     </div>
                                 </div>
@@ -229,7 +235,10 @@ export default function OrdersPage() {
                                             AED {order.financials?.total.toFixed(2)}
                                         </div>
                                         {((activeTab === 'website' && (order as WebOrder).deliveryStatus === 'placed') ||
-                                            (activeTab === 'app' && (order as AppOrder).appOrderStatus === 'pending') ||
+                                            (activeTab === 'app' && (
+                                                ((order as AppOrder).orderType === 'dine-in' && (order as AppOrder).appOrderStatusDine === 'pending') ||
+                                                ((order as AppOrder).orderType !== 'dine-in' && (order as AppOrder).appOrderStatus === 'pending')
+                                            )) ||
                                             (activeTab === 'subscription' && (order as WebSubscription).subsStatus === 'active')) && (
                                                 <button
                                                     className={styles.cancelBtn}

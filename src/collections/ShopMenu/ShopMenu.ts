@@ -59,6 +59,13 @@ export const ShopMenu: CollectionConfig = {
                         throw new Error('You do not have a shop assigned to your account.');
                     }
                 }
+
+                // Loyalty flags are controlled by admins only — strip them from shop-manager saves
+                if (user?.role === 'shop-manager') {
+                    delete data.isStampEligible;
+                    delete data.isStampFreeProduct;
+                }
+
                 return data;
             },
         ],
@@ -332,7 +339,34 @@ export const ShopMenu: CollectionConfig = {
                         }
                     ],
                     label: 'Customization Panel'
-                }
+                },
+                {
+                    label: 'Loyalty Program',
+                    fields: [
+                        {
+                            name: 'isStampEligible',
+                            label: 'Stamp Eligible',
+                            type: 'checkbox',
+                            defaultValue: false,
+                            admin: {
+                                description: 'Enable to allow customers to earn a loyalty stamp when purchasing this item. (Admin only — synced from Menu)',
+                                condition: (data, siblingData, { user }) => user?.role !== 'shop-manager',
+                                readOnly: true,
+                            },
+                        },
+                        {
+                            name: 'isStampFreeProduct',
+                            label: 'Stamp Free Product',
+                            type: 'checkbox',
+                            defaultValue: false,
+                            admin: {
+                                description: 'Enable if this item can be redeemed for free once a customer has collected enough stamps. (Admin only — synced from Menu)',
+                                condition: (data, siblingData, { user }) => user?.role !== 'shop-manager',
+                                readOnly: true,
+                            },
+                        },
+                    ],
+                },
             ]
         },
         slugField({

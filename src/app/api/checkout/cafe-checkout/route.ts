@@ -293,31 +293,31 @@ export const POST = async (req: NextRequest) => {
                 return NextResponse.json({ error: `Insufficient stamp rewards. You have ${availableRewards} available.` }, { status: 400 });
             }
 
-            const stampRewardProductsGlobal = await payload.findGlobal({
-                slug: 'stamp-reward-products',
-                depth: 0,
-            });
-
-            const validStampProductIds = (stampRewardProductsGlobal?.stampProducts || []).map((p: any) => typeof p === 'object' ? p.id : p);
-
+            // Single query: fetch reward products and verify they are eligible + belong to this shop
             const rewardsDetails = await payload.find({
                 collection: 'shop-menu',
-                where: { id: { in: rewardProductsRequested } },
+                where: {
+                    and: [
+                        { id: { in: rewardProductsRequested } },
+                        { isStampFreeProduct: { equals: true } },
+                    ]
+                },
                 depth: 0,
                 limit: 100,
-                select: { shop: true }
+                select: { id: true, shop: true }
             });
 
+            const foundRewardIds = new Set(rewardsDetails.docs.map(p => String(p.id)));
+
             for (const productId of rewardProductsRequested) {
+                if (!foundRewardIds.has(String(productId))) {
+                    return NextResponse.json({ error: `Product ${productId} is not found or not eligible for stamp rewards.` }, { status: 400 });
+                }
+
                 const productDoc = rewardsDetails.docs.find(p => String(p.id) === String(productId));
-                if (!productDoc) {
-                    return NextResponse.json({ error: `Reward product not found: ${productId}` }, { status: 404 });
-                }
-                if (!validStampProductIds.includes(productId)) {
-                    return NextResponse.json({ error: `Product ${productId} is not eligible for stamp rewards.` }, { status: 400 });
-                }
-                const rewardShopId = productDoc.shop && typeof productDoc.shop === 'object' ? productDoc.shop.id : productDoc.shop;
-                if (!rewardShopId || rewardShopId !== shopId) {
+                const rewardShopId = productDoc?.shop && typeof productDoc.shop === 'object' ? productDoc.shop.id : productDoc?.shop;
+
+                if (String(rewardShopId) !== String(shopId)) {
                     return NextResponse.json({ error: `Reward product ${productId} does not belong to the selected shop.` }, { status: 400 });
                 }
                 stampRewardIds.push(productId);
@@ -362,7 +362,8 @@ export const POST = async (req: NextRequest) => {
             timeSelection: timeSelection,
             slot: selectedSlot,
             specialInstructions,
-            appOrderStatus: 'pending',
+            appOrderStatus: orderType === 'take-away' ? 'pending' : undefined,
+            appOrderStatusDine: orderType === 'dine-in' ? 'pending' : undefined,
             orderAcceptance: 'pending',
             financials: {
                 subtotal,

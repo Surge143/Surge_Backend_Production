@@ -14,6 +14,7 @@ interface Address {
     emirates: string
     country: string
     phoneNumber: string
+    isDefaultAddress?: boolean
 }
 
 interface UserProfile {
@@ -53,7 +54,8 @@ export default function ProfilePage() {
         city: '',
         emirates: 'dubai',
         country: 'United Arab Emirates',
-        phoneNumber: ''
+        phoneNumber: '',
+        isDefaultAddress: false
     })
 
     useEffect(() => {
@@ -130,19 +132,25 @@ export default function ProfilePage() {
                 city: '',
                 emirates: 'dubai',
                 country: 'United Arab Emirates',
-                phoneNumber: personalInfo.phone
+                phoneNumber: personalInfo.phone,
+                isDefaultAddress: addresses.length === 0 // Default to true if it's the first address
             })
         }
         setIsAddressModalOpen(true)
     }
 
     const saveAddress = () => {
+        let newAddresses = [...addresses]
+        if (currentAddress.isDefaultAddress) {
+            // If new address is default, unmark others
+            newAddresses = newAddresses.map(addr => ({ ...addr, isDefaultAddress: false }))
+        }
+
         if (editingAddressIndex !== null) {
-            const newAddresses = [...addresses]
             newAddresses[editingAddressIndex] = currentAddress
             setAddresses(newAddresses)
         } else {
-            setAddresses([...addresses, currentAddress])
+            setAddresses([...newAddresses, currentAddress])
         }
         setIsAddressModalOpen(false)
     }
@@ -238,7 +246,10 @@ export default function ProfilePage() {
                         <div className={styles.addressGrid}>
                             {addresses.map((addr, idx) => (
                                 <div key={idx} className={styles.addressCard}>
-                                    <h4 className={styles.addressLabel}>{addr.label || 'Home'}</h4>
+                                    <h4 className={styles.addressLabel}>
+                                        {addr.label || 'Home'}
+                                        {addr.isDefaultAddress && <span className={styles.defaultBadge}>Default</span>}
+                                    </h4>
                                     <p className={styles.addressText}>
                                         {addr.addressFirstName} {addr.addressLastName}<br />
                                         {addr.street}, {addr.apartment}<br />
@@ -357,6 +368,16 @@ export default function ProfilePage() {
                                     value={currentAddress.phoneNumber}
                                     onChange={(e) => setCurrentAddress({ ...currentAddress, phoneNumber: e.target.value })}
                                 />
+                            </div>
+                            <div className={`${styles.formGroup} ${styles.checkboxGroup}`}>
+                                <label className={styles.checkboxLabel}>
+                                    <input
+                                        type="checkbox"
+                                        checked={currentAddress.isDefaultAddress}
+                                        onChange={(e) => setCurrentAddress({ ...currentAddress, isDefaultAddress: e.target.checked })}
+                                    />
+                                    Set as Default Address
+                                </label>
                             </div>
                         </div>
                         <div className={styles.actions}>

@@ -288,15 +288,16 @@ function CheckoutForm() {
                 if (userData.user) {
                     setUser(userData.user)
                     setEmail(userData.user.email || '')
+                    const defaultAddress = userData.user.addresses?.find((a: any) => a.isDefaultAddress);
                     setShippingAddress(prev => ({
                         ...prev,
-                        addressFirstName: userData.user.firstName || '',
-                        addressLastName: userData.user.lastName || '',
-                        phoneNumber: userData.user.phone || '',
-                        addressLine1: userData.user.address?.street || '',
-                        addressLine2: userData.user.address?.apartment || '',
-                        city: userData.user.address?.city || '',
-                        emirates: userData.user.address?.state || 'dubai'
+                        addressFirstName: defaultAddress?.addressFirstName || userData.user.firstName || '',
+                        addressLastName: defaultAddress?.addressLastName || userData.user.lastName || '',
+                        phoneNumber: defaultAddress?.phoneNumber || userData.user.phone || '',
+                        addressLine1: defaultAddress?.street || '',
+                        addressLine2: defaultAddress?.apartment || '',
+                        city: defaultAddress?.city || '',
+                        emirates: defaultAddress?.emirates || 'dubai'
                     }))
 
                     Promise.all([

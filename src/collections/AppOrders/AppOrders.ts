@@ -91,17 +91,31 @@ export const AppOrders: CollectionConfig = {
                         {
                             name: 'appOrderStatus',
                             type: 'select',
-                            required: true,
                             defaultValue: 'pending',
                             options: [
                                 { label: 'Pending', value: 'pending' },
                                 { label: 'Preparing', value: 'preparing' },
-                                { label: 'Pickup', value: 'pickup' },
-                                { label: 'Order Pickedup', value: 'pickedup' },
+                                { label: 'Ready For Pickup', value: 'ready' },
+                                { label: 'Order Completed', value: 'completed' },
                                 { label: 'Cancelled', value: 'cancelled' },
                             ],
                             admin: {
-                                condition: (data) => data?.orderAcceptance === 'accepted',
+                                condition: (data) => data?.orderAcceptance === 'accepted' && data?.orderType === 'take-away'
+                            }
+                        },
+                        {
+                            name: 'appOrderStatusDine',
+                            type: 'select',
+                            defaultValue: 'pending',
+                            options: [
+                                { label: 'Pending', value: 'pending' },
+                                { label: 'Preparing', value: 'preparing' },
+                                { label: 'Ready to serve', value: 'ready' },
+                                { label: 'Order Served', value: 'completed' },
+                                { label: 'Cancelled', value: 'cancelled' },
+                            ],
+                            admin: {
+                                condition: (data) => data?.orderAcceptance === 'accepted' && data?.orderType === 'dine-in'
                             }
                         },
                         {
@@ -255,17 +269,8 @@ export const AppOrders: CollectionConfig = {
                                     type: 'relationship',
                                     relationTo: 'shop-menu',
                                     hasMany: true,
-                                    filterOptions: async ({ req: { payload } }) => {
-                                        const stampRewardProductsGlobal = await payload.findGlobal({
-                                            slug: 'stamp-reward-products',
-                                            depth: 0,
-                                        });
-
-                                        const validStampProductIds = (stampRewardProductsGlobal?.stampProducts || []).map((p: any) => typeof p === 'object' ? p.id : p);
-
-                                        return {
-                                            id: { in: validStampProductIds }
-                                        };
+                                    filterOptions: {
+                                        isStampFreeProduct: { equals: true }
                                     },
                                     admin: { width: '50%', readOnly: true },
                                 },
@@ -331,6 +336,16 @@ export const AppOrders: CollectionConfig = {
                     ]
                 }
             ]
+        },
+        {
+            name: 'isStampsAwarded',
+            type: 'checkbox',
+            defaultValue: false,
+            admin: {
+                readOnly: true,
+                hidden: true,
+                description: 'Flag to track if stamps have been awarded for this order to avoid double-crediting.'
+            }
         },
         {
             name: 'stripeData',

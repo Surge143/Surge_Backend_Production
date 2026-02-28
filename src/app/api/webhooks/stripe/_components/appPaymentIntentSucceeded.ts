@@ -45,8 +45,13 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
                 if (order.coinsUsed && order.coinsUsed > 0) {
                     await deductWTCoins(payload, userId, order.coinsUsed, orderId)
                 }
+
+                // DEDUCT STAMP REWARDS IF USED (stampRewards in AppOrders)
+                if (order.stampRewards && Array.isArray(order.stampRewards) && order.stampRewards.length > 0) {
+                    await deductStampRewards(payload, userId, order.stampRewards.length, orderId)
+                }
             } catch (error) {
-                console.error('Error managing WTCoins:', error)
+                console.error('Error managing rewards:', error)
             }
         }
 
@@ -61,13 +66,28 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
             }
         }
 
-        // --- STOCK DEDUCTION ---
-        if (order.items && order.items.length > 0) {
-            for (const item of order.items) {
-                try {
-                    const productId = typeof item.product === 'object' ? item.product.id : item.product
-                    const quantity = item.quantity || 1
+        // --- STOCK DEDUCTION (Paid Items + Free Reward Items) ---
+        const allItemsToDeduct: { productId: string | number, quantity: number }[] = [];
 
+        // Add regular order items
+        if (order.items && order.items.length > 0) {
+            order.items.forEach((item: any) => {
+                const productId = typeof item.product === 'object' ? item.product.id : item.product;
+                allItemsToDeduct.push({ productId, quantity: item.quantity || 1 });
+            });
+        }
+
+        // Add stamp reward items (quantity is always 1 per reward item)
+        if (order.stampRewards && Array.isArray(order.stampRewards)) {
+            order.stampRewards.forEach((reward: any) => {
+                const productId = typeof reward === 'object' ? reward.id : reward;
+                allItemsToDeduct.push({ productId, quantity: 1 });
+            });
+        }
+
+        if (allItemsToDeduct.length > 0) {
+            for (const { productId, quantity } of allItemsToDeduct) {
+                try {
                     // Fetch the shop-menu product
                     const productDoc = await payload.findByID({
                         collection: 'shop-menu',
@@ -94,7 +114,7 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
 
                     console.log(`✅ Stock updated for shop-menu ${productId}: ${currentStock} → ${newStock}`)
                 } catch (error) {
-                    console.error(`Error updating stock for shop item:`, error)
+                    console.error(`Error updating stock for shop item ${productId}:`, error)
                 }
             }
         }
@@ -161,6 +181,7 @@ Team White Mantis Cafe`.trim(),
     }
 }
 
+
 async function deductWTCoins(payload: any, userId: string | number, pointsUsed: number, orderId: string | number) {
     try {
         const userRewards = await payload.find({
@@ -199,6 +220,52 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
         console.log(`✅ Deducted ${pointsUsed} WTCoins from user ${userId}. New balance: ${newBalance}`)
     } catch (error) {
         console.error('Error deducting WTCoins:', error)
+        throw error
+    }
+}
+async function deductStampRewards(payload: any, userId: string | number, rewardsUsed: number, orderId: string | number) {
+    try {
+        const stampResult = await payload.find({
+            collection: 'wt-stamps',
+            where: { user: { equals: userId } },
+            limit: 1,
+        })
+
+        if (stampResult.docs.length === 0) {
+            console.error(`[deductStampRewards] No WTStamps record found for user ${userId}`)
+            return
+        }
+
+        const userStamps = stampResult.docs[0]
+        const currentRewardBalance = userStamps.stampReward || 0
+        const newRewardBalance = Math.max(0, currentRewardBalance - rewardsUsed)
+
+        const processedHistory = (userStamps.stampsRedemptionHistory || []).map((h: any) => ({
+            redeemedStamps: h.redeemedStamps,
+            associatedOrder: typeof h.associatedOrder === 'object' ? h.associatedOrder.id : h.associatedOrder
+        }));
+
+        await payload.update({
+            collection: 'wt-stamps',
+            id: userStamps.id,
+            data: {
+                stampReward: newRewardBalance,
+                stampsRedemptionHistory: [
+                    ...processedHistory,
+                    {
+                        redeemedStamps: rewardsUsed,
+                        associatedOrder: {
+                            relationTo: 'app-orders',
+                            value: orderId,
+                        },
+                    }
+                ]
+            }
+        })
+
+        console.log(`✅ Deducted ${rewardsUsed} Stamp Rewards from user ${userId}. New balance: ${newRewardBalance}`)
+    } catch (error) {
+        console.error('Error deducting Stamp Rewards:', error)
         throw error
     }
 }

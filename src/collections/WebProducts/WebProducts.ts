@@ -9,10 +9,10 @@ import { type CollectionConfig } from "payload";
 
 export const WebProducts: CollectionConfig = {
     slug: 'web-products',
-    labels:{
-            singular: 'Store Product',
-            plural: 'Store Products'
-        },
+    labels: {
+        singular: 'Store Product',
+        plural: 'Store Products'
+    },
     admin: {
         useAsTitle: 'name',
         group: 'Store',

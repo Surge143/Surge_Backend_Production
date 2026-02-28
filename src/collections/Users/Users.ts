@@ -10,7 +10,9 @@ import { verifyChangeEmailWeb } from './endpoints/verifyChangeEmailWeb';
 export const Users: CollectionConfig = {
     slug: 'users',
 
-    auth: true,
+    auth: {
+        tokenExpiration: 60 * 60 * 24 * 5,
+    },
     admin: {
         useAsTitle: 'email',
     },
@@ -126,30 +128,59 @@ export const Users: CollectionConfig = {
             label: 'Addresses',
             type: "array",
             admin: {
-                initCollapsed: true, // Optional: keeps the UI tidy
+                initCollapsed: true,
+            },
+            hooks: {
+                beforeChange: [
+                    ({ value }) => {
+                        // If there's no data or it's not an array, just return
+                        if (!value || !Array.isArray(value)) return value;
+
+                        if (value.length === 0) return value;
+
+                        // Find the index of the last item the user checked as "Default"
+                        // We use findLastIndex so if multiple are checked at once, the newest one wins
+                        let newDefaultIndex = value.findLastIndex((addr) => addr.isDefaultAddress === true);
+
+                        // If no default is selected, but addresses exist, make the first one the default
+                        if (newDefaultIndex === -1 && value.length > 0) {
+                            newDefaultIndex = 0;
+                        }
+
+                        // Map through and ensure ONLY the newDefaultIndex is true, others become false
+                        return value.map((addr, index) => ({
+                            ...addr,
+                            isDefaultAddress: index === newDefaultIndex,
+                        }));
+                    },
+                ],
             },
             minRows: 0,
-            maxRows: 5, // This limits the array to a maximum of 5 items
+            maxRows: 5,
             fields: [
                 {
                     name: 'label',
                     label: "Label",
                     type: 'text',
                 },
+                // ... (Keep your other fields: firstName, lastName, street, etc.)
                 {
                     name: 'addressFirstName',
                     label: 'First Name',
                     type: 'text',
+                    required: true,
                 },
                 {
                     name: 'addressLastName',
                     label: 'Last Name',
                     type: 'text',
+                    required: true,
                 },
                 {
                     name: "street",
                     label: "Street",
                     type: "text",
+                    required: true,
                 },
                 {
                     name: "apartment",
@@ -160,6 +191,7 @@ export const Users: CollectionConfig = {
                     name: "city",
                     label: "City",
                     type: "text",
+                    required: true,
                 },
                 {
                     name: "emirates",
@@ -181,15 +213,19 @@ export const Users: CollectionConfig = {
                     label: "Country",
                     type: "text",
                     defaultValue: "United Arab Emirates",
-                    admin: {
-                        readOnly: true,
-                    }
+                    admin: { readOnly: true }
                 },
                 {
                     name: 'phoneNumber',
                     label: "Phone Number",
                     type: "text",
+                    required: true,
                 },
+                {
+                    name: 'isDefaultAddress',
+                    label: 'Is Default Address',
+                    type: 'checkbox',
+                }
             ],
         },
         {

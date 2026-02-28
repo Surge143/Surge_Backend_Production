@@ -25,7 +25,6 @@ import { ShipAndTax } from "./ShipAndTax/ShipAndTax";
 import { WebSubscription } from "./WebSubscription/WebSubscription";
 import { WTStamps } from "./WTStamps/WTStamps";
 import { UserPreferences } from "./UserPreferences/UserPreferences";
-import { StampRewardProducts } from "./StampRewardProducts/StampRewardProducts";
 import { AppContactForm } from "./AppContactForm/AppContactForm";
 import { WebContactForm } from "./WebContactForm/WebContactForm";
 import { Notifications } from "./Notifications/Notifications";
@@ -71,6 +70,5 @@ export const collections = [
 
 export const globals = [
     WTCoins,
-    ShipAndTax,
-    StampRewardProducts
+    ShipAndTax
 ]

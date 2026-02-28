@@ -157,7 +157,10 @@ export async function handleChargeRefunded(charge: any) {
 
     // --- 3. UPDATE ORDER STATUS ---
     try {
-        const statusField = orderType === 'cafe' ? 'appOrderStatus' : 'deliveryStatus'
+        let statusField = 'deliveryStatus' // Default for 'store' orders
+        if (orderType === 'cafe') {
+            statusField = order.orderType === 'dine-in' ? 'appOrderStatusDine' : 'appOrderStatus'
+        }
 
         await payload.update({
             collection,

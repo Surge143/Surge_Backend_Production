@@ -52,6 +52,9 @@ export const Menu: CollectionConfig = {
                                     subCategories: doc.subCategories?.map((s: any) => (typeof s === 'object' ? s.id : s)),
                                     slug: doc.slug,
                                     dietaryType: doc.dietaryType,
+                                    // Loyalty flags are authoritative on Menu; always push them down
+                                    isStampEligible: doc.isStampEligible ?? false,
+                                    isStampFreeProduct: doc.isStampFreeProduct ?? false,
                                 };
                                 // Only propagate customizations when triggered by template sync
                                 if (isTemplateSync) {
@@ -331,6 +334,27 @@ export const Menu: CollectionConfig = {
                         }
                     ],
                     label: 'Customization Panel'
+                },
+                {
+                    label: 'Loyalty Program',
+                    fields: [
+                        {
+                            name: 'isStampEligible',
+                            label: 'Stamp Eligible',
+                            type: 'checkbox',
+                            admin: {
+                                description: 'Enable this to allow customers to earn a loyalty stamp when they purchase this item.'
+                            },
+                        },
+                        {
+                            name: 'isStampFreeProduct',
+                            label: 'Stamp Free Product',
+                            type: 'checkbox',
+                            admin: {
+                                description: 'Enable this if this item can be redeemed for free once a customer has collected enough stamps.'
+                            }
+                        }
+                    ]
                 }
             ]
         },

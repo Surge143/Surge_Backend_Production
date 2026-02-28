@@ -163,12 +163,10 @@ export interface Config {
   globals: {
     'wt-coins': WtCoin;
     'ship-and-tax': ShipAndTax;
-    'stamp-reward-products': StampRewardProduct;
   };
   globalsSelect: {
     'wt-coins': WtCoinsSelect<false> | WtCoinsSelect<true>;
     'ship-and-tax': ShipAndTaxSelect<false> | ShipAndTaxSelect<true>;
-    'stamp-reward-products': StampRewardProductsSelect<false> | StampRewardProductsSelect<true>;
   };
   locale: null;
   user: User | Admin;
@@ -539,6 +537,14 @@ export interface Menu {
       }[]
     | null;
   /**
+   * Enable this to allow customers to earn a loyalty stamp when they purchase this item.
+   */
+  isStampEligible?: boolean | null;
+  /**
+   * Enable this if this item can be redeemed for free once a customer has collected enough stamps.
+   */
+  isStampFreeProduct?: boolean | null;
+  /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
   generateSlug?: boolean | null;
@@ -612,6 +618,14 @@ export interface ShopMenu {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Enable to allow customers to earn a loyalty stamp when purchasing this item. (Admin only — synced from Menu)
+   */
+  isStampEligible?: boolean | null;
+  /**
+   * Enable if this item can be redeemed for free once a customer has collected enough stamps. (Admin only — synced from Menu)
+   */
+  isStampFreeProduct?: boolean | null;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -990,7 +1004,8 @@ export interface AppOrder {
    */
   email?: string | null;
   orderAcceptance: 'pending' | 'accepted' | 'rejected';
-  appOrderStatus?: ('pending' | 'preparing' | 'pickup' | 'pickedup' | 'cancelled') | null;
+  appOrderStatus?: ('pending' | 'preparing' | 'ready' | 'completed' | 'cancelled') | null;
+  appOrderStatusDine?: ('pending' | 'preparing' | 'ready' | 'completed' | 'cancelled') | null;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refund-initiated' | 'refunded';
   shop: number | Shop;
   barista?: (number | null) | Admin;
@@ -1039,6 +1054,10 @@ export interface AppOrder {
     total?: number | null;
   };
   stripeOrderId?: string | null;
+  /**
+   * Flag to track if stamps have been awarded for this order to avoid double-crediting.
+   */
+  isStampsAwarded?: boolean | null;
   stripeData?:
     | {
         [k: string]: unknown;
@@ -2258,6 +2277,8 @@ export interface MenuSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  isStampEligible?: T;
+  isStampFreeProduct?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
@@ -2352,6 +2373,8 @@ export interface ShopMenuSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  isStampEligible?: T;
+  isStampFreeProduct?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
@@ -2473,6 +2496,7 @@ export interface AppOrdersSelect<T extends boolean = true> {
   email?: T;
   orderAcceptance?: T;
   appOrderStatus?: T;
+  appOrderStatusDine?: T;
   paymentStatus?: T;
   shop?: T;
   barista?: T;
@@ -2502,6 +2526,7 @@ export interface AppOrdersSelect<T extends boolean = true> {
         total?: T;
       };
   stripeOrderId?: T;
+  isStampsAwarded?: T;
   stripeData?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3160,18 +3185,6 @@ export interface ShipAndTax {
   createdAt?: string | null;
 }
 /**
- * Set the stamp reward products for the loyalty program.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "stamp-reward-products".
- */
-export interface StampRewardProduct {
-  id: number;
-  stampProducts: (number | ShopMenu)[];
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "wt-coins_select".
  */
@@ -3204,16 +3217,6 @@ export interface ShipAndTaxSelect<T extends boolean = true> {
         ras_al_khaimah?: T;
         fujairah?: T;
       };
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "stamp-reward-products_select".
- */
-export interface StampRewardProductsSelect<T extends boolean = true> {
-  stampProducts?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

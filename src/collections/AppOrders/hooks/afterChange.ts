@@ -30,19 +30,35 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
         }
 
         // --- STAMP ACCRUAL LOGIC ---
-        // Fire only when order is picked up and NO coins were used
-        console.log(`[afterChange] Checking stamp accrual. Status: ${doc.appOrderStatus}, Prev: ${previousDoc?.appOrderStatus}, Coins Used: ${doc.coinsUsed}`);
-        if (doc.appOrderStatus === 'pickedup' && previousDoc?.appOrderStatus !== 'pickedup' && !doc.coinsUsed) {
+        // Fire when order is picked up/completed and stamps HAVEN'T been awarded yet.
+        // We handle different status fields based on orderType: take-away vs dine-in
+        const orderStatus = doc.orderType === 'dine-in' ? doc.appOrderStatusDine : doc.appOrderStatus;
+        const prevOrderStatus = previousDoc?.orderType === 'dine-in' ? previousDoc?.appOrderStatusDine : previousDoc?.appOrderStatus;
+
+        console.log(`[afterChange] Checking stamp accrual. Type: ${doc.orderType}, Status: ${orderStatus}, Prev: ${prevOrderStatus}, Already Awarded: ${(doc as any).isStampsAwarded}`);
+        if (orderStatus === 'completed' && prevOrderStatus !== 'completed' && !(doc as any).isStampsAwarded) {
             try {
-                const stampRewardProductsGlobal = await payload.findGlobal({
-                    slug: 'stamp-reward-products',
+                // Collect all product IDs from the order items
+                const orderProductIds: (string | number)[] = (doc.items || []).map((item: any) =>
+                    typeof item.product === 'object' ? item.product.id : item.product
+                ).filter(Boolean);
+
+                // Single optimised query: only fetch stamp-eligible products that are in this order
+                const eligibleProductsResult = await payload.find({
+                    collection: 'shop-menu',
+                    where: {
+                        and: [
+                            { id: { in: orderProductIds } },
+                            { isStampEligible: { equals: true } },
+                        ],
+                    },
                     depth: 0,
+                    limit: orderProductIds.length || 1,
+                    overrideAccess: true,
                 });
 
-                const validStampProductIds = (stampRewardProductsGlobal?.stampProducts || []).map((p: any) =>
-                    typeof p === 'object' ? p.id : p
-                );
-                console.log(`[afterChange] Valid stamp product IDs:`, validStampProductIds);
+                const eligibleIds = new Set(eligibleProductsResult.docs.map((p: any) => String(p.id)));
+                console.log(`[afterChange] Stamp-eligible product IDs in this order:`, [...eligibleIds]);
 
                 let stampsEarned = 0;
                 if (doc.items && Array.isArray(doc.items)) {
@@ -50,7 +66,7 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
                         const productId = typeof item.product === 'object' ? item.product.id : item.product;
                         console.log(`[afterChange] Processing item product: ${productId}`);
 
-                        if (validStampProductIds.includes(productId)) {
+                        if (eligibleIds.has(String(productId))) {
                             stampsEarned += (item.quantity || 0);
                         }
                     }
@@ -99,7 +115,7 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
                     }
 
                     console.log(`[afterChange] Calling payload.update on wt-stamps...`);
-                    const updatedDoc = await payload.update({
+                    await payload.update({
                         collection: 'wt-stamps',
                         id: userStampsDoc.id,
                         data: {
@@ -120,7 +136,28 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
                         depth: 0,
                         overrideAccess: true,
                     });
-                    console.log(`[afterChange] Successfully updated WTStamps:`, updatedDoc.id);
+
+                    // CRITICAL: Mark the order as awarded so we never process it again for stamps
+                    await payload.update({
+                        collection: 'app-orders',
+                        id: doc.id,
+                        data: {
+                            isStampsAwarded: true,
+                        } as any,
+                        overrideAccess: true,
+                    });
+                    console.log(`[afterChange] Successfully updated WTStamps and marked order ${doc.id} as awarded.`);
+                } else if (orderProductIds.length > 0) {
+                    // Even if no stamps earned (e.g. products not eligible), mark as processed
+                    // to avoid re-running the eligible-check query on every status update
+                    await payload.update({
+                        collection: 'app-orders',
+                        id: doc.id,
+                        data: {
+                            isStampsAwarded: true,
+                        } as any,
+                        overrideAccess: true,
+                    });
                 }
             } catch (err) {
                 console.error(`[afterChange] Error in stamp accrual logic:`, err);
