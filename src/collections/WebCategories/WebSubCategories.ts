@@ -8,9 +8,12 @@ const formatSlug = (val: string): string =>
 
 export const WebSubCategories: CollectionConfig = {
     slug: 'web-sub-categories',
-    labels:{
+    labels: {
         singular: 'Store Sub-Category',
         plural: 'Store Sub-Categories'
+    },
+    access: {
+        read: () => true,
     },
     admin: {
         group: 'Store',
@@ -34,7 +37,7 @@ export const WebSubCategories: CollectionConfig = {
                 {
                     name: 'slug',
                     type: 'text',
-                    unique:true,
+                    unique: true,
                     admin: {
                         description: 'Auto-generated from name'
                     },
@@ -56,7 +59,7 @@ export const WebSubCategories: CollectionConfig = {
                         {
                             name: 'slug',
                             type: 'text',
-                            unique:true,
+                            unique: true,
                             admin: {
                                 description: 'Auto-generated from name'
                             },
@@ -78,7 +81,7 @@ export const WebSubCategories: CollectionConfig = {
                                 {
                                     name: 'slug',
                                     type: 'text',
-                                    unique:true,
+                                    unique: true,
                                     admin: {
                                         description: 'Auto-generated from name'
                                     },
