@@ -1025,6 +1025,8 @@ export interface AppOrder {
     id?: string | null;
   }[];
   specialInstructions?: string | null;
+  orderRating?: number | null;
+  baristaRating?: number | null;
   orderType: 'take-away' | 'dine-in';
   timeSelection?: ('now' | 'custom') | null;
   slot?: (number | null) | Slot;
@@ -2511,6 +2513,8 @@ export interface AppOrdersSelect<T extends boolean = true> {
         id?: T;
       };
   specialInstructions?: T;
+  orderRating?: T;
+  baristaRating?: T;
   orderType?: T;
   timeSelection?: T;
   slot?: T;

@@ -29,7 +29,7 @@ export const validateCoupon = async (
                 id: true,
                 code: true,
                 couponFor: true,
-                status: true,
+                couponStatus: true,
                 expiryDate: true,
                 usageLimit: true,
                 usageCount: true,
@@ -57,7 +57,7 @@ export const validateCoupon = async (
             return { success: false, error: 'This coupon is not applicable for website', status: 400 };
         }
 
-        if (coupon.status !== 'active') {
+        if (coupon.couponStatus !== 'active') {
             return { success: false, error: 'This coupon is no longer active', status: 400 };
         }
 

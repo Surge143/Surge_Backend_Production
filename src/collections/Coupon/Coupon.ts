@@ -48,7 +48,7 @@ export const Coupon: CollectionConfig = {
                 if (operation === 'update') {
                     const shopCoupons = await payload.find({
                         collection: 'shop-coupon',
-                        where: { couponRelation: { contains: doc.id } },
+                        where: { couponRelation: { equals: doc.id } },
                         depth: 0,
                     });
 
@@ -59,7 +59,7 @@ export const Coupon: CollectionConfig = {
                                     collection: 'shop-coupon',
                                     id: shopCoupon.id,
                                     data: {
-                                        couponStatus: doc.status,
+                                        couponStatus: doc.couponStatus,
                                         code: doc.code,
                                         couponFor: doc.couponFor,
                                         isPubliclyVisible: doc.isPubliclyVisible,
