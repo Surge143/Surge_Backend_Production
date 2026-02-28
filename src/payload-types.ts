@@ -236,14 +236,15 @@ export interface User {
   addresses?:
     | {
         label?: string | null;
-        addressFirstName?: string | null;
-        addressLastName?: string | null;
-        street?: string | null;
+        addressFirstName: string;
+        addressLastName: string;
+        street: string;
         apartment?: string | null;
-        city?: string | null;
+        city: string;
         emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
         country?: string | null;
-        phoneNumber?: string | null;
+        phoneNumber: string;
+        isDefaultAddress?: boolean | null;
         id?: string | null;
       }[]
     | null;
@@ -2084,6 +2085,7 @@ export interface UsersSelect<T extends boolean = true> {
         emirates?: T;
         country?: T;
         phoneNumber?: T;
+        isDefaultAddress?: T;
         id?: T;
       };
   pushToken?: T;

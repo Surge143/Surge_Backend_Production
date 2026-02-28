@@ -48,6 +48,8 @@ export const getAllItemsHandler: PayloadHandler = async (req) => {
                 stockCount: item.stockCount,
                 isAvailable: item.inStock,
                 dietaryType: item.dietaryType,
+                isStampEligible: item.isStampEligible,
+                isStampFreeProduct: item.isStampFreeProduct,
                 slug: item.slug,
             }
         })
