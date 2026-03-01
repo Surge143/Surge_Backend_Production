@@ -4,9 +4,11 @@ import React, { useEffect, useState, useMemo } from 'react'
 import {
     useField,
     FieldLabel,
-    CheckboxInput,
+    ReactSelect,
     useForm,
+    useDocumentInfo,
 } from '@payloadcms/ui'
+import { useParams } from 'next/navigation'
 
 interface Product {
     id: string
@@ -15,15 +17,15 @@ interface Product {
 }
 
 export const RecommendedProductsField: React.FC<{ path: string }> = ({ path }) => {
-    // Get the categories selected in the doc to filter products
+    const params = useParams();
+    const { id: infoId } = useDocumentInfo();
+    const docId = infoId || (Array.isArray(params?.segments) ? params.segments[params.segments.length - 1] : params?.id);
+
     const { value: categoryId } = useField<string | { id: string }>({ path: 'categories' })
     const {
         value: selectedProductIds,
         setValue: setSelectedProductIds
     } = useField<string[]>({ path })
-
-    const { getData } = useForm();
-    const docId = getData()?.id;
 
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(false)
@@ -50,7 +52,10 @@ export const RecommendedProductsField: React.FC<{ path: string }> = ({ path }) =
                 const data = await res.json()
 
                 // Filter out the current doc
-                const filteredProducts = data.docs.filter((p: Product) => p.id !== docId)
+                const filteredProducts = data.docs.filter((p: Product) => {
+                    const isSelf = String(p.id).trim() === String(docId).trim()
+                    return !isSelf
+                })
                 setProducts(filteredProducts)
             } catch (error) {
                 console.error('Error fetching recommended products:', error)
@@ -62,27 +67,46 @@ export const RecommendedProductsField: React.FC<{ path: string }> = ({ path }) =
         fetchProducts()
     }, [normalizedCategoryId, docId])
 
-    const handleToggle = (productId: string) => {
-        const current = Array.isArray(selectedProductIds) ? [...selectedProductIds] : []
-        const index = current.indexOf(productId)
+    const options = useMemo(() => {
+        return products
+            .filter(product => String(product.id).trim() !== String(docId).trim())
+            .map(product => ({
+                label: product.name,
+                value: product.id
+            }))
+    }, [products, docId])
 
-        if (index > -1) {
-            current.splice(index, 1)
-        } else {
-            if (current.length >= 3) {
-                // Limit to three
-                return
-            }
-            current.push(productId)
+    const selectedOptions = useMemo(() => {
+        if (!Array.isArray(selectedProductIds)) return []
+        return options.filter(opt => selectedProductIds.includes(opt.value))
+    }, [options, selectedProductIds])
+
+    const handleChange = (selected: any) => {
+        if (!selected) {
+            setSelectedProductIds([])
+            return
         }
 
-        setSelectedProductIds(current)
+        const newValues = Array.isArray(selected) ? selected.map((s: any) => s.value) : [selected.value]
+
+        if (newValues.length > 3) {
+            // This case should ideally be handled by the UI (disabling more selections)
+            // but we keep it here as a safety measure.
+            return
+        }
+
+        setSelectedProductIds(newValues)
     }
 
-    const isChecked = (productId: string) => {
-        if (!Array.isArray(selectedProductIds)) return false
-        return selectedProductIds.includes(productId)
-    }
+    const isLimitReached = Array.isArray(selectedProductIds) && selectedProductIds.length >= 3
+
+    const filteredOptions = useMemo(() => {
+        if (isLimitReached) {
+            // Only show already selected options so no new ones can be added
+            return options.filter(opt => selectedProductIds.includes(opt.value))
+        }
+        return options
+    }, [options, isLimitReached, selectedProductIds])
 
     if (!normalizedCategoryId) {
         return (
@@ -107,40 +131,14 @@ export const RecommendedProductsField: React.FC<{ path: string }> = ({ path }) =
     return (
         <div className="recommended-products-field" style={{ marginBottom: '20px' }}>
             <FieldLabel label="Recommended Products (Max 3)" />
-            <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-                border: '1px solid var(--theme-elevation-150)',
-                borderRadius: '8px',
-                background: 'var(--theme-elevation-50)',
-                padding: '1rem',
-                maxHeight: '300px',
-                overflowY: 'auto'
-            }}>
-                {products.length === 0 ? (
-                    <div style={{ opacity: 0.6, fontSize: '0.9rem' }}>No other products found in this category.</div>
-                ) : (
-                    products.map(product => (
-                        <div key={product.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <CheckboxInput
-                                checked={isChecked(product.id)}
-                                onToggle={() => handleToggle(product.id)}
-                                id={`rec-product-${product.id}`}
-                            />
-                            <label
-                                htmlFor={`rec-product-${product.id}`}
-                                style={{
-                                    cursor: (Array.isArray(selectedProductIds) && selectedProductIds.length >= 3 && !isChecked(product.id)) ? 'not-allowed' : 'pointer',
-                                    opacity: (Array.isArray(selectedProductIds) && selectedProductIds.length >= 3 && !isChecked(product.id)) ? 0.5 : 1
-                                }}
-                            >
-                                {product.name}
-                            </label>
-                        </div>
-                    ))
-                )}
-            </div>
+            <ReactSelect
+                isMulti
+                options={filteredOptions}
+                value={selectedOptions}
+                onChange={handleChange}
+                noOptionsMessage={() => isLimitReached ? "Maximum 3 products selected" : "No products found"}
+                placeholder={isLimitReached ? "Maximum 3 products selected" : "Select up to 3 products..."}
+            />
             {Array.isArray(selectedProductIds) && selectedProductIds.length > 0 && (
                 <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.7 }}>
                     Selected: {selectedProductIds.length} / 3
