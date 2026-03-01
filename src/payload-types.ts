@@ -784,6 +784,7 @@ export interface WebProduct {
   aroma: string;
   roast: string;
   finish: string;
+  brewing: string;
   farmDescription: {
     root: {
       type: string;
@@ -800,6 +801,7 @@ export interface WebProduct {
     [k: string]: unknown;
   };
   videoBanner: number | Media;
+  recommendedProducts?: (number | WebProduct)[] | null;
   brewGuide?: {
     filter?: boolean | null;
     espresso?: boolean | null;
@@ -2632,8 +2634,10 @@ export interface WebProductsSelect<T extends boolean = true> {
   aroma?: T;
   roast?: T;
   finish?: T;
+  brewing?: T;
   farmDescription?: T;
   videoBanner?: T;
+  recommendedProducts?: T;
   brewGuide?:
     | T
     | {

@@ -4,7 +4,6 @@ import { validateAppCoupon } from './components/shopCouponUtils'
 export const validateAppCouponHandler: PayloadHandler = async (req) => {
     const { payload, user } = req
     const { shopId, couponCode } = (req.routeParams || {}) as any
-
     if (!user) {
         return Response.json({ error: 'Login to use Coupons' }, { status: 401 })
     }

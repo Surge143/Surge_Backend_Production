@@ -324,7 +324,13 @@ export const WebProducts: CollectionConfig = {
                                 { name: 'roast', label: 'Roast', type: 'text', required: true, admin: { width: '33.33%' } },
                             ]
                         },
-                        { name: 'finish', label: 'Finish', type: 'text', required: true },
+                        {
+                            type: 'row',
+                            fields: [
+                                { name: 'finish', label: 'Finish', type: 'text', required: true, admin: { width: '50%' } },
+                                { name: 'brewing', label: 'Brewing', type: 'text', required: true, admin: { width: '50%' } },
+                            ]
+                        },
                         { name: 'farmDescription', label: 'Farm Description', type: 'richText', required: true },
                         {
                             name: 'videoBanner',
@@ -333,6 +339,18 @@ export const WebProducts: CollectionConfig = {
                             relationTo: 'media',
                             required: true,
                             filterOptions: { mimeType: { contains: 'video' } },
+                        },
+                        {
+                            name: 'recommendedProducts',
+                            label: 'Recommended Products',
+                            type: 'relationship',
+                            relationTo: 'web-products',
+                            hasMany: true,
+                            admin: {
+                                components: {
+                                    Field: '@/collections/WebProducts/components/RecommendedProductsField#RecommendedProductsField'
+                                },
+                            }
                         },
                         {
                             name: 'brewGuide',

@@ -44,12 +44,26 @@ export const Coupon: CollectionConfig = {
             },
         ],
         afterChange: [
-            async ({ doc, req: { payload }, operation }) => {
+            async ({ doc, previousDoc, req: { payload }, operation }) => {
                 if (operation === 'update') {
+                    // Prevent infinite loops and unnecessary updates by checking if relevant fields changed
+                    const changedFields = [
+                        'couponStatus', 'code', 'couponFor', 'isPubliclyVisible',
+                        'applicability', 'products', 'discountType', 'discountAmount',
+                        'expiryDate', 'minimumAmount', 'usageLimit', 'usageLimitPerUser', 'usageCount'
+                    ];
+
+                    const hasChanged = changedFields.some(field =>
+                        JSON.stringify(doc[field]) !== JSON.stringify(previousDoc[field])
+                    );
+
+                    if (!hasChanged) return doc;
+
                     const shopCoupons = await payload.find({
                         collection: 'shop-coupon',
                         where: { couponRelation: { equals: doc.id } },
                         depth: 0,
+                        limit: 1000, // Increase limit to ensure all linked coupons are updated
                     });
 
                     if (shopCoupons.docs.length > 0) {
@@ -72,7 +86,8 @@ export const Coupon: CollectionConfig = {
                                         usageLimit: doc.usageLimit,
                                         usageLimitPerUser: doc.usageLimitPerUser,
                                         usageCount: doc.usageCount,
-                                    },
+                                    } as any,
+                                    context: { fromCouponSync: true }, // Standard loop prevention in this project
                                 })
                             )
                         );
