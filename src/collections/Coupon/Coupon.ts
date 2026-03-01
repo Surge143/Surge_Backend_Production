@@ -14,6 +14,11 @@ export const Coupon: CollectionConfig = {
             method: 'get',
             handler: validateWebCouponHandler,
         },
+        {
+            path: '/coupons',
+            method: 'get',
+            handler: validateWebCouponHandler,
+        },
     ],
     versions: {
         drafts: {

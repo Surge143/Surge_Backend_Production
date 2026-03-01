@@ -1,8 +1,3 @@
-import {
-  FixedToolbarFeature,
-  InlineToolbarFeature,
-  lexicalEditor,
-} from '@payloadcms/richtext-lexical'
 import type { CollectionConfig } from 'payload'
 
 export const Media: CollectionConfig = {
@@ -12,7 +7,7 @@ export const Media: CollectionConfig = {
     group: 'Content',
     useAsTitle: 'alt',
     description: 'Upload media files',
-    defaultColumns: ['','alt', 'createdAt', 'updatedAt'],
+    defaultColumns: ['', 'alt', 'createdAt', 'updatedAt'],
   },
   access: {
     read: () => true,
