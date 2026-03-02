@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { headers as getNextHeaders } from 'next/headers';
+import { headers as getNextHeaders } from 'next/headers'
 import { getPayload } from 'payload'
-import config from '@/payload.config'
+import config from '../../../../payload.config'
 
-/**
- * Helper to get the authenticated user and Payload instance
- */
+export const dynamic = 'force-dynamic'
+
 async function getAuthContext() {
     try {
         const payload = await getPayload({ config })
 
         const { user } = await payload.auth({
             headers: await getNextHeaders(),
-        });
+        })
 
         return { user, payload }
     } catch (error) {
@@ -21,17 +20,19 @@ async function getAuthContext() {
 }
 
 async function mapCartItems(payload: any, items: any[]) {
-    if (!items || items.length === 0) return [];
+    if (!items || items.length === 0) return []
 
-    const productIds = Array.from(new Set(items.map(item =>
-        typeof item.product === 'object' ? item.product.id : item.product
-    )));
+    const productIds = Array.from(
+        new Set(
+            items.map((item) => (typeof item.product === 'object' ? item.product.id : item.product))
+        )
+    )
 
-    // Fetch essential product details in a single batch
+    // Fetch essential product details in a single batch to ensure fresh pricing
     const productsFetched = await payload.find({
         collection: 'web-products',
         where: { id: { in: productIds } },
-        depth: 0,
+        depth: 1, // Resolve productImage to get URL
         limit: 100,
         select: {
             name: true,
@@ -39,48 +40,44 @@ async function mapCartItems(payload: any, items: any[]) {
             regularPrice: true,
             productImage: true,
             variants: true,
-        }
-    });
+        },
+    })
 
-    const productMap = new Map(productsFetched.docs.map(p => [String(p.id), p as any]));
+    const productMap = new Map(productsFetched.docs.map((p) => [String(p.id), p as any]))
 
-    return items.map((item: any) => {
-        const productId = typeof item.product === 'object' ? item.product.id : item.product;
-        const product: any = productMap.get(String(productId));
+    return items
+        .map((item: any) => {
+            const productId = typeof item.product === 'object' ? item.product.id : item.product
+            const product: any = productMap.get(String(productId))
 
-        if (!product) return { product: productId, vId: item.vId, name: 'Unknown Product', price: 0, image: '', quantity: item.quantity };
+            if (!product) return null
 
-        const name = product.name;
-        let price = product.salePrice || product.regularPrice;
-        let image = product.productImage?.url || '';
-        let variantName = '';
+            let price = product.salePrice || product.regularPrice
+            let image = product.productImage?.url || ''
+            let displayName = product.name
 
-        if (item.vId && product.variants) {
-            const variant = product.variants.find((v: any) => v.id === item.vId);
-            if (variant) {
-                variantName = variant.variantName;
-                price = variant.variantSalePrice || variant.variantRegularPrice;
-                image = variant.variantImage?.url || image;
+            if (item.vId && product.variants) {
+                const variant = product.variants.find((v: any) => String(v.id) === String(item.vId))
+                if (variant) {
+                    price = variant.variantSalePrice || variant.variantRegularPrice
+                    image = variant.variantImage?.url || image
+                    displayName = `${product.name}, ${variant.variantName}`
+                }
             }
-        }
 
-        return {
-            product: productId,
-            vId: item.vId || '',
-            name,
-            price,
-            image,
-            variantName,
-            quantity: item.quantity,
-        };
-    });
+            return {
+                product: productId,
+                vId: item.vId || '',
+                name: displayName,
+                price: price || 0,
+                image,
+                quantity: item.quantity,
+            }
+        })
+        .filter(Boolean)
 }
 
-/**
- * GET /api/cart
- * Returns the items in the authenticated user's cart
- */
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
         const { user, payload } = await getAuthContext()
         if (!user || !payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -90,11 +87,20 @@ export async function GET() {
             where: { user: { equals: user.id } },
             limit: 1,
             depth: 0,
-            select: { items: true }
+            select: { items: true },
         })
 
-        const items = carts.docs[0]?.items || []
-        return NextResponse.json({ items: await mapCartItems(payload, items) })
+        const rawItems = carts.docs[0]?.items || []
+        const items = await mapCartItems(payload, rawItems)
+
+        const subtotal = items.reduce((acc: number, item: any) => acc + item.price * item.quantity, 0)
+        const totalItems = items.reduce((acc: number, item: any) => acc + item.quantity, 0)
+
+        return NextResponse.json({
+            items,
+            subtotal,
+            totalItems,
+        })
     } catch (error: any) {
         console.error('Cart GET Error:', error)
         return NextResponse.json({ error: error.message }, { status: 500 })
@@ -117,15 +123,13 @@ export async function POST(request: NextRequest) {
 
         if (isNaN(product)) return NextResponse.json({ error: 'Valid Product ID is required' }, { status: 400 })
 
-        const carts = await (payload as any).find({
+        const carts = await payload.find({
             collection: 'web-cart',
             where: { user: { equals: user.id } },
             limit: 1,
             depth: 0,
-            select: { id: true, items: true }
+            select: { id: true, items: true },
         })
-
-        // console.log(`DEBUG: Cart Find Result: ${carts.docs.length} found`);
 
         const cart = carts.docs[0]
         const items: any[] = cart?.items || []
@@ -213,7 +217,7 @@ export async function PATCH(request: NextRequest) {
             where: { user: { equals: user.id } },
             limit: 1,
             depth: 0,
-            select: { items: true }
+            select: { id: true, items: true },
         })
 
         const cart = carts.docs[0]
@@ -274,7 +278,7 @@ export async function DELETE(request: NextRequest) {
             where: { user: { equals: user.id } },
             limit: 1,
             depth: 0,
-            select: { items: true }
+            select: { id: true, items: true },
         })
 
         const cart = carts.docs[0]
