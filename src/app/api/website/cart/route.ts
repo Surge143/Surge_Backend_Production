@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { headers as getNextHeaders } from 'next/headers';
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 
@@ -8,29 +8,18 @@ import config from '@/payload.config'
  */
 async function getAuthContext() {
     try {
-        const cookieStore = await cookies()
-        const payloadConfig = await config
-        const payload = await getPayload({ config: payloadConfig })
+        const payload = await getPayload({ config })
 
-        const headers = new Headers()
-        cookieStore.getAll().forEach(cookie => {
-            headers.append('cookie', `${cookie.name}=${cookie.value}`)
-        })
+        const { user } = await payload.auth({
+            headers: await getNextHeaders(),
+        });
 
-        const { user } = await payload.auth({ headers })
         return { user, payload }
     } catch (error) {
         return { user: null, payload: null }
     }
 }
 
-/**
- * Maps raw backend cart items (with depth: 2) to flat frontend CartItem structure
- */
-/**
- * Maps raw backend cart items to flat frontend CartItem structure
- * Uses batch fetching for efficiency if items aren't already populated.
- */
 async function mapCartItems(payload: any, items: any[]) {
     if (!items || items.length === 0) return [];
 
