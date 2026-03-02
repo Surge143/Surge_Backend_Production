@@ -28,19 +28,11 @@ async function mapCartItems(payload: any, items: any[]) {
         )
     )
 
-    // Fetch essential product details in a single batch to ensure fresh pricing
     const productsFetched = await payload.find({
         collection: 'web-products',
         where: { id: { in: productIds } },
-        depth: 1, // Resolve productImage to get URL
+        depth: 1,
         limit: 100,
-        select: {
-            name: true,
-            salePrice: true,
-            regularPrice: true,
-            productImage: true,
-            variants: true,
-        },
     })
 
     const productMap = new Map(productsFetched.docs.map((p) => [String(p.id), p as any]))
@@ -53,14 +45,23 @@ async function mapCartItems(payload: any, items: any[]) {
             if (!product) return null
 
             let price = product.salePrice || product.regularPrice
-            let image = product.productImage?.url || ''
+
+            // Defensively resolve image — depth:1 returns an object, but select can strip it to an ID
+            let image = ''
+            if (typeof product.productImage === 'object' && product.productImage !== null) {
+                image = product.productImage.url || ''
+            }
+
             let displayName = product.name
 
             if (item.vId && product.variants) {
                 const variant = product.variants.find((v: any) => String(v.id) === String(item.vId))
                 if (variant) {
                     price = variant.variantSalePrice || variant.variantRegularPrice
-                    image = variant.variantImage?.url || image
+                    // Use variant image if it exists; otherwise keep product image
+                    if (typeof variant.variantImage === 'object' && variant.variantImage !== null) {
+                        image = variant.variantImage.url || image
+                    }
                     displayName = `${product.name}, ${variant.variantName}`
                 }
             }
