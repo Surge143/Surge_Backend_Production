@@ -44,32 +44,43 @@ export const beforeWebCartChange: CollectionBeforeChangeHook = async ({
 
         const consolidatedItems = Array.from(itemMap.values());
 
-        // 3. Stock validation
+        // 3. Stock Validation
         for (const item of consolidatedItems) {
-            const productDoc = await req.payload.findByID({
+            const productDoc: any = await req.payload.findByID({
                 collection: 'web-products',
                 id: item.product,
                 depth: 0,
             });
 
             if (productDoc) {
-                if (item.vId) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const variant = ((productDoc as any).variants as any[])?.find((v: any) => v.id === item.vId);
-                    if (variant) {
-                        if (!variant.variantInStock) {
-                            throw new Error(`${productDoc.name} (${variant.variantName}) is out of stock.`);
-                        }
-                        if (typeof variant.variantStockQuantity === 'number' && variant.variantStockQuantity < item.quantity) {
-                            throw new Error(`Only ${variant.variantStockQuantity} units of ${productDoc.name} (${variant.variantName}) are available.`);
-                        }
-                    } else {
-                        throw new Error(`Variant ${item.vId} not found for product ${productDoc.name}.`);
+                const hasVariants = Boolean(productDoc.hasVariantOptions);
+
+                if (hasVariants) {
+                    // If product has variants, vId is mandatory
+                    if (!item.vId) {
+                        throw new Error(`Please select a variant for ${productDoc.name}.`);
+                    }
+
+                    const variant = productDoc.variants?.find((v: any) => v.id === item.vId);
+
+                    if (!variant) {
+                        throw new Error(`Variant selection for ${productDoc.name} is no longer available.`);
+                    }
+
+                    // Validate variant stock
+                    if (!variant.variantInStock) {
+                        throw new Error(`${productDoc.name} (${variant.variantName}) is out of stock.`);
+                    }
+
+                    if (typeof variant.variantStockQuantity === 'number' && variant.variantStockQuantity < item.quantity) {
+                        throw new Error(`Only ${variant.variantStockQuantity} units of ${productDoc.name} (${variant.variantName}) are available.`);
                     }
                 } else {
+                    // No variants - validate base product stock
                     if (!productDoc.inStock) {
                         throw new Error(`${productDoc.name} is out of stock.`);
                     }
+
                     if (typeof productDoc.stockQuantity === 'number' && productDoc.stockQuantity < item.quantity) {
                         throw new Error(`Only ${productDoc.stockQuantity} units of ${productDoc.name} are available.`);
                     }
