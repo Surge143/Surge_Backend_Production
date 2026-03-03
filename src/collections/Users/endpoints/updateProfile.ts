@@ -56,7 +56,7 @@ export const updateProfile: PayloadHandler = async (req) => {
 
         const body = await req.json() as Record<string, unknown>
 
-        // ── 5. Strip any disallowed fields (non-admins only) ───────────────────
+        // ── 5. Strip any disallowed fields (non-admins only) ──────────────────
         let dataToUpdate: Record<string, unknown>
         if (isAdmin) {
             dataToUpdate = body
@@ -73,8 +73,59 @@ export const updateProfile: PayloadHandler = async (req) => {
             )
         }
 
-        // ── 6. Perform the update via local API (overrideAccess bypasses the ──
-        //       broken built-in PATCH pipeline for the users collection)  ──────
+        // ── 6. Smart address merge ─────────────────────────────────────────────
+        // If the body contains exactly ONE address, merge it with the user's
+        // existing addresses instead of replacing them all.
+        //   - Address has an `id`  → update that specific address in place
+        //   - Address has no `id`  → append as a new address
+        //   - Multiple addresses   → replace the whole array (intended bulk update)
+        if (Array.isArray(dataToUpdate.addresses) && dataToUpdate.addresses.length === 1) {
+            const incomingAddress = dataToUpdate.addresses[0] as Record<string, unknown>
+
+            // Fetch current user to get existing addresses
+            const currentUser = await payload.findByID({
+                collection: 'users',
+                id: targetId,
+                overrideAccess: true,
+                depth: 0,
+            })
+
+            const existingAddresses: any[] = Array.isArray(currentUser.addresses)
+                ? [...currentUser.addresses]
+                : []
+
+            if (incomingAddress.id) {
+                // Update the matching existing address in place
+                const matchIndex = existingAddresses.findIndex(
+                    (a: any) => String(a.id) === String(incomingAddress.id)
+                )
+
+                if (matchIndex === -1) {
+                    return Response.json(
+                        { success: false, errors: [{ message: `Address with id "${incomingAddress.id}" not found.` }] },
+                        { status: 404 }
+                    )
+                }
+
+                existingAddresses[matchIndex] = {
+                    ...existingAddresses[matchIndex],
+                    ...incomingAddress,
+                }
+            } else {
+                // Append as a brand-new address
+                if (existingAddresses.length >= 5) {
+                    return Response.json(
+                        { success: false, errors: [{ message: 'Maximum of 5 addresses allowed.' }] },
+                        { status: 400 }
+                    )
+                }
+                existingAddresses.push(incomingAddress)
+            }
+
+            dataToUpdate.addresses = existingAddresses
+        }
+
+        // ── 7. Perform the update via local API ───────────────────────────────
         const updatedUser = await payload.update({
             collection: 'users',
             id: targetId,
