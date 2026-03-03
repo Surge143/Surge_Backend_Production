@@ -6,6 +6,7 @@ import { changeEmailOtpApp } from './endpoints/changeEmailOtpApp';
 import { changeEmailOtpWeb } from './endpoints/changeEmailOtpWeb';
 import { verifyChangeEmailApp } from './endpoints/verifyChangeEmailApp';
 import { verifyChangeEmailWeb } from './endpoints/verifyChangeEmailWeb';
+import { updateProfile } from './endpoints/updateProfile';
 
 export const Users: CollectionConfig = {
     slug: 'users',
@@ -37,7 +38,12 @@ export const Users: CollectionConfig = {
             path: '/web-verify-change-email',
             method: 'post',
             handler: verifyChangeEmailWeb,
-        }
+        },
+        {
+            path: '/:id',
+            method: 'patch',
+            handler: updateProfile,
+        },
     ],
 
     hooks: {

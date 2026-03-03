@@ -67,6 +67,7 @@ async function mapCartItems(payload: any, items: any[]) {
                 product: productId,
                 vId: item.vId || '',
                 name: displayName,
+                tagline: product.tagline,
                 price: price || 0,
                 image,
                 quantity: item.quantity,
