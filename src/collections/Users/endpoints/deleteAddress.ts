@@ -34,58 +34,62 @@ export const deleteAddress: PayloadHandler = async (req) => {
         }
 
         // ── 4. Parse body ──────────────────────────────────────────────────────
-        if (!req.json) {
+        let body: { addressId?: string } = {}
+        try {
+            if (req.json) {
+                body = await req.json() as { addressId?: string }
+            }
+        } catch {
+            // Empty body is fine — means full account deletion
+        }
+
+        // ── 5a. DELETE ADDRESS — if addressId is provided ─────────────────────
+        if (body?.addressId) {
+            const currentUser = await payload.findByID({
+                collection: 'users',
+                id: targetId,
+                overrideAccess: true,
+                depth: 0,
+            })
+
+            const existingAddresses: any[] = Array.isArray(currentUser.addresses)
+                ? currentUser.addresses
+                : []
+
+            const filteredAddresses = existingAddresses.filter(
+                (a: any) => String(a.id) !== String(body.addressId)
+            )
+
+            if (filteredAddresses.length === existingAddresses.length) {
+                return Response.json(
+                    { success: false, errors: [{ message: `Address with id "${body.addressId}" not found.` }] },
+                    { status: 404 }
+                )
+            }
+
+            const updatedUser = await payload.update({
+                collection: 'users',
+                id: targetId,
+                data: { addresses: filteredAddresses },
+                overrideAccess: true,
+                depth: 1,
+            })
+
             return Response.json(
-                { success: false, errors: [{ message: 'Invalid request body.' }] },
-                { status: 400 }
+                { success: true, message: 'Address deleted.', doc: updatedUser },
+                { status: 200 }
             )
         }
 
-        const body = await req.json() as { addressId?: string }
-        const { addressId } = body
-
-        if (!addressId) {
-            return Response.json(
-                { success: false, errors: [{ message: 'addressId is required.' }] },
-                { status: 400 }
-            )
-        }
-
-        // ── 5. Fetch current user ──────────────────────────────────────────────
-        const currentUser = await payload.findByID({
+        // ── 5b. DELETE ACCOUNT — no addressId, delete the whole user ──────────
+        await payload.delete({
             collection: 'users',
             id: targetId,
             overrideAccess: true,
-            depth: 0,
-        })
-
-        const existingAddresses: any[] = Array.isArray(currentUser.addresses)
-            ? currentUser.addresses
-            : []
-
-        // ── 6. Filter out the address to delete ────────────────────────────────
-        const filteredAddresses = existingAddresses.filter(
-            (a: any) => String(a.id) !== String(addressId)
-        )
-
-        if (filteredAddresses.length === existingAddresses.length) {
-            return Response.json(
-                { success: false, errors: [{ message: `Address with id "${addressId}" not found.` }] },
-                { status: 404 }
-            )
-        }
-
-        // ── 7. Save the updated addresses ─────────────────────────────────────
-        const updatedUser = await payload.update({
-            collection: 'users',
-            id: targetId,
-            data: { addresses: filteredAddresses },
-            overrideAccess: true,
-            depth: 1,
         })
 
         return Response.json(
-            { success: true, doc: updatedUser },
+            { success: true, message: 'Account deleted successfully.' },
             { status: 200 }
         )
 

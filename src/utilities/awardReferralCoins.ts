@@ -1,4 +1,5 @@
 import type { Payload } from 'payload';
+import { sendNotification } from '@/utilities/sendNotification';
 
 /**
  * Checks if this is the referred user's first successful paid order (across ALL
@@ -106,11 +107,27 @@ export async function awardReferralCoins(payload: Payload, userId: number | stri
             // 4. Credit coins to referred user
             if (coinsForReferred > 0) {
                 await creditCoins(payload, userId, coinsForReferred, 'referral-reward-received');
+                await sendNotification({
+                    payload,
+                    userId,
+                    title: `🎉 You earned ${coinsForReferred} WTCoins!`,
+                    body: `You received ${coinsForReferred} coins as a referral bonus for your first order.`,
+                    notificationType: 'reward',
+                    data: { type: 'referral_coins_received', amount: String(coinsForReferred) },
+                });
             }
 
             // 5. Credit coins to referrer
             if (coinsForReferrer > 0) {
                 await creditCoins(payload, referredById, coinsForReferrer, 'referral-reward-given');
+                await sendNotification({
+                    payload,
+                    userId: referredById,
+                    title: `🎉 You earned ${coinsForReferrer} WTCoins!`,
+                    body: `A friend you referred placed their first order. You've been rewarded ${coinsForReferrer} coins!`,
+                    notificationType: 'reward',
+                    data: { type: 'referral_coins_given', amount: String(coinsForReferrer) },
+                });
             }
         }
 

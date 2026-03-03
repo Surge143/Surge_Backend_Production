@@ -50,6 +50,7 @@ async function mapCartItems(payload: any, items: any[]) {
             }
 
             let displayName = product.name
+            let variantName = ''
 
             if (item.vId && product.variants) {
                 const variant = product.variants.find((v: any) => String(v.id) === String(item.vId))
@@ -59,7 +60,8 @@ async function mapCartItems(payload: any, items: any[]) {
                     if (typeof variant.variantImage === 'object' && variant.variantImage !== null) {
                         image = variant.variantImage.url || image
                     }
-                    displayName = `${product.name}, ${variant.variantName}`
+                    displayName = `${product.name}`
+                    variantName = variant.variantName
                 }
             }
 
@@ -71,6 +73,7 @@ async function mapCartItems(payload: any, items: any[]) {
                 price: price || 0,
                 image,
                 quantity: item.quantity,
+                variantName: variantName,
             }
         })
         .filter(Boolean)
