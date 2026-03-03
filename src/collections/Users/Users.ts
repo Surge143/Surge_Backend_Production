@@ -46,27 +46,25 @@ export const Users: CollectionConfig = {
         beforeDelete: [beforeUserDelete],
     },
     access: {
-        create: ({ req, id }) => {
-            if (req.user?.role === 'super-admin') return true
-            if (req.user?.role === 'admin') return true
-            if (req.user && req.user.id === id) return true
-
-            return false
+        create: () => true,
+        read: () => true,
+        update: ({ req }) => {
+            if (!req.user) return false
+            if (req.user.role === 'super-admin') return true
+            if (req.user.role === 'admin') return true
+            // Regular customers can only update their own document
+            return {
+                id: { equals: req.user.id }
+            }
         },
-        read: () => { return true },
-        update: ({ req, id }) => {
-            if (req.user?.role === 'super-admin') return true
-            if (req.user?.role === 'admin') return true
-            if (req.user && req.user.id === id) return true
-
-            return false
-        },
-        delete: ({ req, id }) => {
-            if (req.user?.role === 'super-admin') return true
-            if (req.user?.role === 'admin') return true
-            if (req.user && req.user.id === id) return true
-
-            return false
+        delete: ({ req }) => {
+            if (!req.user) return false
+            if (req.user.role === 'super-admin') return true
+            if (req.user.role === 'admin') return true
+            // Regular customers can only delete their own document
+            return {
+                id: { equals: req.user.id }
+            }
         },
     },
 
