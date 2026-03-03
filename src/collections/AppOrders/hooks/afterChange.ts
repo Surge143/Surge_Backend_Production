@@ -1,5 +1,6 @@
 import { CollectionAfterChangeHook } from 'payload';
 import { awardReferralCoins } from '@/utilities/awardReferralCoins';
+import { createOrderPaidNotification } from '@/utilities/orderNotifications';
 
 export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previousDoc, operation, req: { payload } }) => {
     // Import the socket utilities
@@ -27,6 +28,7 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
         const userId = typeof doc.user === 'object' ? doc.user?.id : doc.user;
         if (isNowPaid && !wasPaid && userId) {
             await awardReferralCoins(payload, userId);
+            await createOrderPaidNotification(payload, userId, doc.id, 'cafe');
         }
 
         // --- STAMP ACCRUAL LOGIC ---

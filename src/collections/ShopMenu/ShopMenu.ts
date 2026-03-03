@@ -17,8 +17,8 @@ export const ShopMenu: CollectionConfig = {
     access: {
         read: async ({ req: { user, payload } }) => {
             if (!user) return false;
-            if (user.role === 'admin' || user.role === 'super-admin') return true;
-            if (user.role === 'shop-manager') {
+            if (user?.role === 'admin' || user?.role === 'super-admin') return true;
+            if (user?.role === 'shop-manager') {
                 const managedShop = await payload.find({
                     collection: 'shop',
                     where: { shopManager: { equals: user.id } },

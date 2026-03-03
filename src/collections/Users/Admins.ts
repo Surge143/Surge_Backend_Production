@@ -14,21 +14,21 @@ export const Admins: CollectionConfig = {
         // 1. CREATE: Can only create roles LOWER than their own
         create: ({ req: { user } }) => {
             if (!user) return false
-            if (user.role === 'super-admin') return true
-            if (user.role === 'barista') return false // Baristas can't create anyone
+            if (user?.role === 'super-admin') return true
+            if (user?.role === 'barista') return false // Baristas can't create anyone
             return true
         },
 
         read: async ({ req: { user, payload } }): Promise<boolean | Where> => {
             if (!user) return false
-            if (user.role === 'super-admin') return true
+            if (user?.role === 'super-admin') return true
 
             // Define the roles that are "below" the current user
             const lowerRoles = Object.keys(roleHierarchy).filter(
-                (r) => roleHierarchy[r] > roleHierarchy[user.role as string]
+                (r) => roleHierarchy[r] > roleHierarchy[user?.role as string]
             )
 
-            if (user.role === 'shop-manager') {
+            if (user?.role === 'shop-manager') {
                 const managedShops = await payload.find({
                     collection: 'shop',
                     where: { shopManager: { equals: user.id } },
@@ -61,17 +61,17 @@ export const Admins: CollectionConfig = {
 
         update: ({ req: { user } }) => {
             if (!user) return false
-            if (user.role === 'super-admin') return true
+            if (user?.role === 'super-admin') return true
 
             // Baristas can only edit themselves
-            if (user.role === 'barista') {
+            if (user?.role === 'barista') {
                 return {
                     id: { equals: user.id }
                 } as Where
             }
 
             const lowerRoles = Object.keys(roleHierarchy).filter(
-                (r) => roleHierarchy[r] > roleHierarchy[user.role as string]
+                (r) => roleHierarchy[r] > roleHierarchy[user?.role as string]
             )
 
             return {
@@ -84,11 +84,11 @@ export const Admins: CollectionConfig = {
 
         delete: ({ req: { user } }) => {
             if (!user) return false
-            if (user.role === 'super-admin') return true
+            if (user?.role === 'super-admin') return true
 
             return {
                 role: {
-                    in: Object.keys(roleHierarchy).filter(r => roleHierarchy[r] > roleHierarchy[user.role as string])
+                    in: Object.keys(roleHierarchy).filter(r => roleHierarchy[r] > roleHierarchy[user?.role as string])
                 }
             } as Where
         },
@@ -142,9 +142,9 @@ export const Admins: CollectionConfig = {
             filterOptions: async ({ req }) => {
                 const { user, payload } = req;
                 if (!user) return false;
-                if (user.role === 'super-admin' || user.role === 'admin') return true;
+                if (user?.role === 'super-admin' || user?.role === 'admin') return true;
 
-                if (user.role === 'shop-manager') {
+                if (user?.role === 'shop-manager') {
                     const managedShops = await payload.find({
                         collection: 'shop',
                         where: { shopManager: { equals: user.id } },
@@ -171,11 +171,11 @@ export const Admins: CollectionConfig = {
         beforeValidate: [
             ({ data, req, operation }) => {
                 if (req.user && data?.role) {
-                    const userLevel = roleHierarchy[req.user.role as string] || 999
+                    const userLevel = roleHierarchy[req.user?.role as string] || 999
                     const targetLevel = roleHierarchy[data.role as string] || 999
 
                     // BLOCK if trying to create/update someone to a level equal or higher than self
-                    if (targetLevel <= userLevel && req.user.role !== 'super-admin') {
+                    if (targetLevel <= userLevel && req.user?.role !== 'super-admin') {
                         throw new Error("You cannot assign a role equal to or higher than your own.")
                     }
                 }

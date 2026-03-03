@@ -11,7 +11,7 @@ export const UserWTCoins: CollectionConfig = {
     access: {
         read: ({ req: { user } }) => {
             if (!user) return false;
-            if (user.role === 'admin' || user.role === 'super-admin') return true;
+            if (user?.role === 'admin' || user?.role === 'super-admin') return true;
             return { user: { equals: user.id } };
         },
         create: ({ req: { user } }) => !!user,

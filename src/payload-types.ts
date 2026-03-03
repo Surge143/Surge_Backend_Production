@@ -236,14 +236,16 @@ export interface User {
   addresses?:
     | {
         label?: string | null;
-        addressFirstName: string;
-        addressLastName: string;
-        street: string;
+        addressFirstName?: string | null;
+        addressLastName?: string | null;
+        street?: string | null;
         apartment?: string | null;
-        city: string;
-        emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
+        city?: string | null;
+        emirates?:
+          | ('abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah')
+          | null;
         country?: string | null;
-        phoneNumber: string;
+        phoneNumber?: string | null;
         isDefaultAddress?: boolean | null;
         id?: string | null;
       }[]

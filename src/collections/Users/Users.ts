@@ -81,6 +81,7 @@ export const Users: CollectionConfig = {
             ],
             admin: {
                 hidden: true,
+                readOnly: true,
             }
         },
         {
@@ -133,14 +134,19 @@ export const Users: CollectionConfig = {
             hooks: {
                 beforeChange: [
                     ({ value }) => {
-                        // If there's no data or it's not an array, just return
                         if (!value || !Array.isArray(value)) return value;
 
                         if (value.length === 0) return value;
 
                         // Find the index of the last item the user checked as "Default"
                         // We use findLastIndex so if multiple are checked at once, the newest one wins
-                        let newDefaultIndex = value.findLastIndex((addr) => addr.isDefaultAddress === true);
+                        let newDefaultIndex = -1
+                        for (let i = value.length - 1; i >= 0; i--) {
+                            if (value[i]?.isDefaultAddress === true) {
+                                newDefaultIndex = i
+                                break
+                            }
+                        }
 
                         // If no default is selected, but addresses exist, make the first one the default
                         if (newDefaultIndex === -1 && value.length > 0) {
@@ -163,24 +169,20 @@ export const Users: CollectionConfig = {
                     label: "Label",
                     type: 'text',
                 },
-                // ... (Keep your other fields: firstName, lastName, street, etc.)
                 {
                     name: 'addressFirstName',
                     label: 'First Name',
                     type: 'text',
-                    required: true,
                 },
                 {
                     name: 'addressLastName',
                     label: 'Last Name',
                     type: 'text',
-                    required: true,
                 },
                 {
                     name: "street",
                     label: "Street",
                     type: "text",
-                    required: true,
                 },
                 {
                     name: "apartment",
@@ -191,13 +193,11 @@ export const Users: CollectionConfig = {
                     name: "city",
                     label: "City",
                     type: "text",
-                    required: true,
                 },
                 {
                     name: "emirates",
                     label: "Emirates",
                     type: "select",
-                    required: true,
                     options: [
                         { label: 'Abu Dhabi', value: 'abu_dhabi' },
                         { label: 'Dubai', value: 'dubai' },
@@ -219,7 +219,6 @@ export const Users: CollectionConfig = {
                     name: 'phoneNumber',
                     label: "Phone Number",
                     type: "text",
-                    required: true,
                 },
                 {
                     name: 'isDefaultAddress',

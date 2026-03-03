@@ -28,8 +28,8 @@ export const ShopCoupons: CollectionConfig = {
             user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager',
         update: async ({ req: { user, payload }, id }) => {
             if (!user) return false
-            if (user.role === 'admin' || user.role === 'super-admin') return true
-            if (user.role === 'shop-manager') {
+            if (user?.role === 'admin' || user?.role === 'super-admin') return true
+            if (user?.role === 'shop-manager') {
                 if (!id) return false
                 try {
                     const shopCoupon = await payload.findByID({
@@ -62,7 +62,7 @@ export const ShopCoupons: CollectionConfig = {
         },
         delete: async ({ req: { user } }) => {
             if (!user) return false
-            if (user.role === 'admin' || user.role === 'super-admin' || user.role === 'shop-manager') return true
+            if (user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager') return true
             return false
         },
     },
@@ -73,7 +73,7 @@ export const ShopCoupons: CollectionConfig = {
                 if (operation === 'create' && user) {
                     data.createdBy = user.id;
 
-                    if (user.role === 'shop-manager' && !data.shop) {
+                    if (user?.role === 'shop-manager' && !data.shop) {
                         try {
                             const shops = await payload.find({
                                 collection: 'shop',

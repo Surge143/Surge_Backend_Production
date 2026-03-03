@@ -3,10 +3,11 @@ import { awardWTCoins, convertPointsToAED } from "./hooks/wtCoinsUtils";
 import { refundHandler } from "./endpoints/refundHandler";
 import { linkGuestOrderToUser } from "./hooks/linkGuestToUser";
 import { awardReferralCoins } from "@/utilities/awardReferralCoins";
+import { createOrderPaidNotification } from "@/utilities/orderNotifications";
 
 export const WebOrders: CollectionConfig = {
     slug: 'web-orders',
-    labels:{
+    labels: {
         singular: 'Store Order',
         plural: 'Store Orders'
     },
@@ -79,6 +80,7 @@ export const WebOrders: CollectionConfig = {
                 if (isNowPaid && !wasPaid && userId) {
                     setImmediate(async () => {
                         await awardReferralCoins(payload, userId);
+                        await createOrderPaidNotification(payload, userId, doc.id, 'store');
                     });
                 }
             }
