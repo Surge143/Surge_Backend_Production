@@ -1,4 +1,5 @@
 import type { CollectionConfig, CollectionBeforeChangeHook } from "payload";
+import { getMyNotifications } from './endpoints/getMyNotifications';
 
 const beforeChangeHook: CollectionBeforeChangeHook = async ({
     data,
@@ -50,6 +51,13 @@ export const Notifications: CollectionConfig = {
     hooks: {
         beforeChange: [beforeChangeHook],
     },
+    endpoints: [
+        {
+            path: '/',
+            method: 'get',
+            handler: getMyNotifications,
+        },
+    ],
     fields: [
         {
             name: 'user',
