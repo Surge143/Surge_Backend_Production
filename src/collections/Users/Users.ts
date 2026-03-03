@@ -6,8 +6,7 @@ import { changeEmailOtpApp } from './endpoints/changeEmailOtpApp';
 import { changeEmailOtpWeb } from './endpoints/changeEmailOtpWeb';
 import { verifyChangeEmailApp } from './endpoints/verifyChangeEmailApp';
 import { verifyChangeEmailWeb } from './endpoints/verifyChangeEmailWeb';
-import { updateProfile } from './endpoints/updateProfile';
-import { deleteAddress } from './endpoints/deleteAddress';
+import { getAddresses, addAddress, updateAddress, deleteAddress } from './endpoints/manageAddresses';
 
 export const Users: CollectionConfig = {
     slug: 'users',
@@ -41,12 +40,22 @@ export const Users: CollectionConfig = {
             handler: verifyChangeEmailWeb,
         },
         {
-            path: '/:id',
-            method: 'patch',
-            handler: updateProfile,
+            path: '/:id/addresses',
+            method: 'get',
+            handler: getAddresses,
         },
         {
-            path: '/:id',
+            path: '/:id/addresses',
+            method: 'post',
+            handler: addAddress,
+        },
+        {
+            path: '/:id/addresses',
+            method: 'patch',
+            handler: updateAddress,
+        },
+        {
+            path: '/:id/addresses',
             method: 'delete',
             handler: deleteAddress,
         },
