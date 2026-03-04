@@ -143,22 +143,14 @@ export const addAddress: PayloadHandler = async (req) => {
     if (!auth.isAdmin && auth.userId !== targetId) return forbidden()
 
     try {
-        let newAddress: Record<string, unknown>
-        try {
-            const parsed = req.json ? await req.json() : null
-            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-                return Response.json(
-                    { success: false, errors: [{ message: 'Request body must be a JSON object.' }] },
-                    { status: 400 }
-                )
-            }
-            newAddress = parsed as Record<string, unknown>
-        } catch {
+        if (!req.json) {
             return Response.json(
-                { success: false, errors: [{ message: 'Invalid or missing JSON body.' }] },
+                { success: false, errors: [{ message: 'Request body is required.' }] },
                 { status: 400 }
             )
         }
+
+        const newAddress = await req.json() as Record<string, unknown>
 
         const currentUser = await payload.findByID({
             collection: 'users',
@@ -223,22 +215,14 @@ export const updateAddress: PayloadHandler = async (req) => {
     if (!auth.isAdmin && auth.userId !== targetId) return forbidden()
 
     try {
-        let body: Record<string, unknown>
-        try {
-            const parsed = req.json ? await req.json() : null
-            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-                return Response.json(
-                    { success: false, errors: [{ message: 'Request body must be a JSON object.' }] },
-                    { status: 400 }
-                )
-            }
-            body = parsed as Record<string, unknown>
-        } catch {
+        if (!req.json) {
             return Response.json(
-                { success: false, errors: [{ message: 'Invalid or missing JSON body.' }] },
+                { success: false, errors: [{ message: 'Request body is required.' }] },
                 { status: 400 }
             )
         }
+
+        const body = await req.json() as Record<string, unknown>
 
         if (!body.addressId) {
             return Response.json(
