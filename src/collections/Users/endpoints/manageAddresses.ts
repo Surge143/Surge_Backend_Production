@@ -1,5 +1,68 @@
 import { PayloadHandler } from 'payload'
 
+// ─── Address validation ──────────────────────────────────────────────────────
+
+const VALID_EMIRATES = [
+    'abu_dhabi', 'dubai', 'sharjah', 'ajman',
+    'umm_al_quwain', 'ras_al_khaimah', 'fujairah',
+] as const
+
+type AddressFields = {
+    label?: unknown
+    addressFirstName?: unknown
+    addressLastName?: unknown
+    street?: unknown
+    apartment?: unknown
+    city?: unknown
+    emirates?: unknown
+    phoneNumber?: unknown
+    isDefaultAddress?: unknown
+}
+
+/**
+ * Validates address fields.
+ * @param data        - The incoming body (or partial body for PATCH).
+ * @param fullCheck   - When true, all required fields must be present.
+ * @returns           - An error message string, or null if valid.
+ */
+function validateAddressFields(data: Record<string, unknown>, fullCheck: boolean): string | null {
+    const requiredStrings: Array<keyof AddressFields> = [
+        'addressFirstName', 'addressLastName', 'street', 'city', 'emirates', 'phoneNumber',
+    ]
+
+    for (const field of requiredStrings) {
+        const val = data[field]
+
+        // On full check (POST) the field must exist
+        if (fullCheck && (val === undefined || val === null)) {
+            return `"${field}" is required.`
+        }
+
+        // If the field is present, it must be a non-empty string
+        if (val !== undefined && val !== null) {
+            if (typeof val !== 'string' || val.trim() === '') {
+                return `"${field}" must be a non-empty string.`
+            }
+        }
+    }
+
+    // Validate emirates value if provided
+    if (data.emirates !== undefined && data.emirates !== null) {
+        if (!VALID_EMIRATES.includes(data.emirates as any)) {
+            return `"emirates" must be one of: ${VALID_EMIRATES.join(', ')}.`
+        }
+    }
+
+    // isDefaultAddress must be boolean if present
+    if (data.isDefaultAddress !== undefined && data.isDefaultAddress !== null) {
+        if (typeof data.isDefaultAddress !== 'boolean') {
+            return '"isDefaultAddress" must be true or false.'
+        }
+    }
+
+    return null
+}
+
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
 async function getAuth(req: Parameters<PayloadHandler>[0]) {
@@ -80,14 +143,22 @@ export const addAddress: PayloadHandler = async (req) => {
     if (!auth.isAdmin && auth.userId !== targetId) return forbidden()
 
     try {
-        if (!req.json) {
+        let newAddress: Record<string, unknown>
+        try {
+            const parsed = req.json ? await req.json() : null
+            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+                return Response.json(
+                    { success: false, errors: [{ message: 'Request body must be a JSON object.' }] },
+                    { status: 400 }
+                )
+            }
+            newAddress = parsed as Record<string, unknown>
+        } catch {
             return Response.json(
-                { success: false, errors: [{ message: 'Request body is required.' }] },
+                { success: false, errors: [{ message: 'Invalid or missing JSON body.' }] },
                 { status: 400 }
             )
         }
-
-        const newAddress = await req.json() as Record<string, unknown>
 
         const currentUser = await payload.findByID({
             collection: 'users',
@@ -103,6 +174,14 @@ export const addAddress: PayloadHandler = async (req) => {
         if (existingAddresses.length >= 5) {
             return Response.json(
                 { success: false, errors: [{ message: 'Maximum of 5 addresses allowed.' }] },
+                { status: 400 }
+            )
+        }
+
+        const validationError = validateAddressFields(newAddress, true)
+        if (validationError) {
+            return Response.json(
+                { success: false, errors: [{ message: validationError }] },
                 { status: 400 }
             )
         }
@@ -144,14 +223,22 @@ export const updateAddress: PayloadHandler = async (req) => {
     if (!auth.isAdmin && auth.userId !== targetId) return forbidden()
 
     try {
-        if (!req.json) {
+        let body: Record<string, unknown>
+        try {
+            const parsed = req.json ? await req.json() : null
+            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+                return Response.json(
+                    { success: false, errors: [{ message: 'Request body must be a JSON object.' }] },
+                    { status: 400 }
+                )
+            }
+            body = parsed as Record<string, unknown>
+        } catch {
             return Response.json(
-                { success: false, errors: [{ message: 'Request body is required.' }] },
+                { success: false, errors: [{ message: 'Invalid or missing JSON body.' }] },
                 { status: 400 }
             )
         }
-
-        const body = await req.json() as Record<string, unknown>
 
         if (!body.addressId) {
             return Response.json(
@@ -184,6 +271,15 @@ export const updateAddress: PayloadHandler = async (req) => {
 
         // Merge patch fields into the existing address (exclude the helper addressId key)
         const { addressId, ...fields } = body
+
+        const validationError = validateAddressFields(fields, false)
+        if (validationError) {
+            return Response.json(
+                { success: false, errors: [{ message: validationError }] },
+                { status: 400 }
+            )
+        }
+
         existingAddresses[matchIndex] = {
             ...existingAddresses[matchIndex],
             ...fields,
