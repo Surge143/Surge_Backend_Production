@@ -74,6 +74,26 @@ async function getAuth(req: Parameters<PayloadHandler>[0]) {
     }
 }
 
+/**
+ * Safely parses the request JSON body.
+ * Logs and returns null if parsing fails — callers must handle the null case.
+ */
+async function parseBody<T = Record<string, unknown>>(
+    req: Parameters<PayloadHandler>[0],
+    label: string
+): Promise<T | null> {
+    try {
+        if (!req.json) {
+            console.error(`[${label}] req.json is not available (no body parser?)`)
+            return null
+        }
+        return (await req.json()) as T
+    } catch (err: any) {
+        console.error(`[${label}] Failed to parse request body:`, err?.message ?? err)
+        return null
+    }
+}
+
 function unauthorized() {
     return Response.json(
         { success: false, errors: [{ message: 'You must be logged in.' }] },
@@ -143,14 +163,13 @@ export const addAddress: PayloadHandler = async (req) => {
     if (!auth.isAdmin && auth.userId !== targetId) return forbidden()
 
     try {
-        if (!req.json) {
+        const newAddress = await parseBody(req, 'addAddress')
+        if (!newAddress) {
             return Response.json(
-                { success: false, errors: [{ message: 'Request body is required.' }] },
+                { success: false, errors: [{ message: 'Request body is required or could not be parsed.' }] },
                 { status: 400 }
             )
         }
-
-        const newAddress = await req.json() as Record<string, unknown>
 
         const currentUser = await payload.findByID({
             collection: 'users',
@@ -215,14 +234,13 @@ export const updateAddress: PayloadHandler = async (req) => {
     if (!auth.isAdmin && auth.userId !== targetId) return forbidden()
 
     try {
-        if (!req.json) {
+        const body = await parseBody(req, 'updateAddress')
+        if (!body) {
             return Response.json(
-                { success: false, errors: [{ message: 'Request body is required.' }] },
+                { success: false, errors: [{ message: 'Request body is required or could not be parsed.' }] },
                 { status: 400 }
             )
         }
-
-        const body = await req.json() as Record<string, unknown>
 
         if (!body.addressId) {
             return Response.json(
@@ -305,10 +323,7 @@ export const deleteAddress: PayloadHandler = async (req) => {
     if (!auth.isAdmin && auth.userId !== targetId) return forbidden()
 
     try {
-        let body: { addressId?: string } = {}
-        try {
-            if (req.json) body = await req.json() as { addressId?: string }
-        } catch { /* ignore parse errors */ }
+        const body = await parseBody<{ addressId?: string }>(req, 'deleteAddress') ?? {}
 
         if (!body?.addressId) {
             return Response.json(
