@@ -7,6 +7,7 @@ import { changeEmailOtpWeb } from './endpoints/changeEmailOtpWeb';
 import { verifyChangeEmailApp } from './endpoints/verifyChangeEmailApp';
 import { verifyChangeEmailWeb } from './endpoints/verifyChangeEmailWeb';
 import { getAddresses, addAddress, updateAddress, deleteAddress } from './endpoints/manageAddresses';
+import { uploadProfileImage } from './endpoints/uploadProfileImage';
 
 export const Users: CollectionConfig = {
     slug: 'users',
@@ -58,6 +59,11 @@ export const Users: CollectionConfig = {
             path: '/:id/addresses',
             method: 'delete',
             handler: deleteAddress,
+        },
+        {
+            path: '/upload-profile-image',
+            method: 'post',
+            handler: uploadProfileImage,
         },
     ],
 
