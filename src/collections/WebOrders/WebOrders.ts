@@ -106,7 +106,7 @@ export const WebOrders: CollectionConfig = {
                                     ],
                                     admin: {
                                         width: '50%',
-                                        readOnly: true,
+                                        
                                     },
                                 },
                                 {
@@ -116,7 +116,7 @@ export const WebOrders: CollectionConfig = {
                                     required: false, // Optional because it's hidden for guests
                                     admin: {
                                         width: '50%',
-                                        readOnly: true,
+                                        
 
                                         // This field ONLY shows up if customerType is 'user'
                                         condition: (data) => data?.customerType === 'user',
@@ -132,7 +132,7 @@ export const WebOrders: CollectionConfig = {
                                         { label: 'Pickup', value: 'pickup' },
                                     ],
                                     admin: {
-                                        readOnly: true,
+                                        
                                     },
                                 },
                                 {
@@ -149,7 +149,7 @@ export const WebOrders: CollectionConfig = {
                                         { label: 'One Time', value: 'one-time' },
                                     ],
                                     admin: {
-                                        readOnly: true,
+                                        
                                     },
                                 },
                                 {
@@ -158,7 +158,7 @@ export const WebOrders: CollectionConfig = {
                                     type: 'text',
                                     admin: {
                                         description: 'Stored at checkout for guest-to-user linking.',
-                                        readOnly: true,
+                                        
                                     },
                                 },
                             ],
@@ -185,7 +185,7 @@ export const WebOrders: CollectionConfig = {
                                             required: true,
                                             admin: {
                                                 width: '25%',
-                                                readOnly: true,
+                                                
                                                 description: 'The ID of the row in the Product Variants array'
                                             }
                                         },
@@ -216,7 +216,7 @@ export const WebOrders: CollectionConfig = {
                             label: 'Shipping Address (For Delivery Only)',
                             admin: {
                                 condition: (data) => data?.deliveryOption === 'delivery',
-                                readOnly: true,
+                                
                             },
                             fields: [
                                 {
@@ -259,7 +259,7 @@ export const WebOrders: CollectionConfig = {
                             name: 'billingAddress',
                             type: 'group',
                             admin: {
-                                readOnly: true,
+                                
                             },
                             fields: [
                                 {
@@ -311,7 +311,7 @@ export const WebOrders: CollectionConfig = {
                                     type: 'select',
                                     required: true,
                                     admin: {
-                                        readOnly: true,
+                                        
                                     },
                                     validate: (val, { data }) => {
                                         if (val === 'refunded' && data?.deliveryStatus !== 'placed' && data?.deliveryStatus !== 'cancelled') {
@@ -349,7 +349,7 @@ export const WebOrders: CollectionConfig = {
                             type: 'relationship',
                             relationTo: 'coupon',
                             admin: {
-                                readOnly: true,
+                                
                                 condition: (data) => data?.origin === 'one-time',
                             },
                         },
@@ -357,7 +357,7 @@ export const WebOrders: CollectionConfig = {
                             name: 'pointsUsed',
                             type: 'number',
                             admin: {
-                                readOnly: true,
+                                
                             },
                         },
                         {
@@ -431,7 +431,7 @@ export const WebOrders: CollectionConfig = {
             admin: {
                 hidden: true,
                 description: 'Tracks if WTCoins have been awarded for this order',
-                readOnly: true,
+                
             },
         },
         {
@@ -439,7 +439,7 @@ export const WebOrders: CollectionConfig = {
             type: 'json',
             admin: {
                 hidden: true, // This hides the field from the Admin Panel entirely
-                readOnly: true,
+                
             },
         },
     ],
