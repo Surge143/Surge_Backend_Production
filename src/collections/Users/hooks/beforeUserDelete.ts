@@ -11,6 +11,8 @@ export const beforeUserDelete: CollectionBeforeDeleteHook = async ({ id, req }) 
         'wishlist',
         'user-wt-coins',
         'user-preferences',
+        'notifications',
+        'wt-stamps',
     ]
 
     console.log(`🗑️ Starting cleanup for user ${id} across related collections...`)
