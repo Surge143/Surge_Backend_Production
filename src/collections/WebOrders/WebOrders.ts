@@ -25,11 +25,31 @@ export const WebOrders: CollectionConfig = {
     access: {
         read: () => true,
         create: () => true,
-        update: ({ req: { user } }) =>
-            user?.role === 'admin' ||
-            user?.role === 'super-admin' ||
-            user?.role === 'shop-manager',
-        // Only super-admin can delete orders
+        update: async ({ req: { user, payload }, id }) => {
+            if (!user) return false
+            // Admins and shop-managers always allowed
+            if (
+                user.role === 'admin' ||
+                user.role === 'super-admin' ||
+                user.role === 'shop-manager'
+            ) return true
+            // Allow the order's owner to update their own order
+            if (id) {
+                try {
+                    const order = await payload.findByID({
+                        collection: 'web-orders',
+                        id,
+                        depth: 0,
+                        overrideAccess: true,
+                    })
+                    const orderUserId = typeof order.user === 'object' ? order.user?.id : order.user
+                    return String(orderUserId) === String(user.id)
+                } catch {
+                    return false
+                }
+            }
+            return false
+        },
         delete: ({ req: { user } }) =>
             user?.role === 'super-admin' || user?.role === 'admin',
     },
