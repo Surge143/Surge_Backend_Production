@@ -11,7 +11,6 @@ const ALLOWED_ORIGINS = [
     'capacitor://localhost',       // Capacitor native scheme (prod)
     process.env.PAYLOAD_PUBLIC_SERVER_URL,  // Production frontend URL
     process.env.FRONTEND_URL,
-    process.env.FRONTEND_URL,
 ].filter(Boolean) as string[]
 
 const CORS_HEADERS = {
