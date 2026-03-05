@@ -22,6 +22,17 @@ export const WebOrders: CollectionConfig = {
             handler: refundHandler,
         },
     ],
+    access: {
+        read: () => true,
+        create: () => true,
+        update: ({ req: { user } }) =>
+            user?.role === 'admin' ||
+            user?.role === 'super-admin' ||
+            user?.role === 'shop-manager',
+        // Only super-admin can delete orders
+        delete: ({ req: { user } }) =>
+            user?.role === 'super-admin' || user?.role === 'admin',
+    },
     hooks: {
         beforeChange: [
             async ({ data, req, originalDoc, operation }) => {
@@ -193,13 +204,13 @@ export const WebOrders: CollectionConfig = {
                                             name: 'quantity',
                                             type: 'number',
                                             required: true,
-                                            admin: { width: '10%',  }
+                                            admin: { width: '10%', }
                                         },
                                         {
                                             name: 'price',
                                             type: 'number',
                                             required: true,
-                                            admin: { width: '15%',  }
+                                            admin: { width: '15%', }
                                         },
                                     ],
                                 },
@@ -373,13 +384,13 @@ export const WebOrders: CollectionConfig = {
                                             label: 'Subtotal (Before Discounts)',
                                             type: 'number',
                                             required: true,
-                                            admin: { width: '50%', description: 'Sum of all item prices × quantities',  }
+                                            admin: { width: '50%', description: 'Sum of all item prices × quantities', }
                                         },
                                         {
                                             name: 'couponDiscount',
                                             label: 'Coupon Discount',
                                             type: 'number',
-                                            admin: { width: '50%', description: 'Discount applied via coupon code',  }
+                                            admin: { width: '50%', description: 'Discount applied via coupon code', }
                                         },
                                     ],
                                 },
@@ -390,13 +401,13 @@ export const WebOrders: CollectionConfig = {
                                             name: 'wtCoinsDiscount',
                                             label: 'WT Coins Discount',
                                             type: 'number',
-                                            admin: { width: '50%', description: 'Discount applied via WT Coins redemption',  }
+                                            admin: { width: '50%', description: 'Discount applied via WT Coins redemption', }
                                         },
                                         {
                                             name: 'shippingCharge',
                                             label: 'Shipping Charge',
                                             type: 'number',
-                                            admin: { width: '50%', description: 'Shipping fee (0 for pickup orders)',  }
+                                            admin: { width: '50%', description: 'Shipping fee (0 for pickup orders)', }
                                         },
                                     ],
                                 },
@@ -407,14 +418,14 @@ export const WebOrders: CollectionConfig = {
                                             name: 'taxAmount',
                                             label: 'Tax',
                                             type: 'number',
-                                            admin: { width: '50%', description: 'Tax applied on (subtotal − discounts + shipping)',  }
+                                            admin: { width: '50%', description: 'Tax applied on (subtotal − discounts + shipping)', }
                                         },
                                         {
                                             name: 'total',
                                             label: 'Grand Total',
                                             type: 'number',
                                             required: true,
-                                            admin: { width: '50%', description: 'Final amount charged (subtotal − discounts + shipping + tax)',  }
+                                            admin: { width: '50%', description: 'Final amount charged (subtotal − discounts + shipping + tax)', }
                                         },
                                     ],
                                 },
