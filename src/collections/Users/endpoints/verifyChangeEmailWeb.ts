@@ -13,19 +13,8 @@ export const verifyChangeEmailWeb: PayloadHandler = async (req) => {
             )
         }
 
-        const cookieHeader = req.headers.get('cookie') || '';
-        const encryptedEmail = cookieHeader
-            .split('; ')
-            .find(row => row.startsWith('pendingLogin'))
-            ?.split('=')[1];
-
-        if (!encryptedEmail) {
-            console.error('No pendingLogin cookie found in headers');
-            return Response.json({ success: false, message: 'Session expired. Please request a new OTP.' }, { status: 400 });
-        }
-
-        const body = (await req.json()) as { otp?: string }
-        const { otp } = body
+        const body = (await req.json()) as { otp?: string, email?: string }
+        const { otp, email } = body
 
         if (!otp) {
             return Response.json(
@@ -34,25 +23,9 @@ export const verifyChangeEmailWeb: PayloadHandler = async (req) => {
             );
         }
 
-        // URL-decode the cookie value (browser encodes it)
-        const decodedCookie = decodeURIComponent(encryptedEmail);
-
-        // Try to decrypt the email
-        let decryptedEmail: { email: string };
-        try {
-            decryptedEmail = decrypt<{ email: string }>(decodedCookie);
-        } catch (decryptError: any) {
-            console.error('Failed to decrypt pendingLogin cookie:', decryptError.message);
-            console.error('Cookie value (first 50 chars):', decodedCookie.substring(0, 50));
+        if (!email) {
             return Response.json(
-                { success: false, message: 'Invalid session. Please request a new OTP.' },
-                { status: 400 }
-            );
-        }
-
-        if (!decryptedEmail?.email) {
-            return Response.json(
-                { success: false, message: 'Invalid session data' },
+                { success: false, message: 'Email is required' },
                 { status: 400 }
             );
         }
@@ -60,12 +33,12 @@ export const verifyChangeEmailWeb: PayloadHandler = async (req) => {
         const now = new Date();
         const nowMs = now.getTime();
 
-        let existingRecords;
+        let existingRecords: any;
         try {
             existingRecords = await payload.find({
                 collection: 'otp',
                 where: {
-                    email: { equals: decryptedEmail.email },
+                    email: { equals: email },
                 },
                 limit: 1,
 
@@ -146,7 +119,7 @@ export const verifyChangeEmailWeb: PayloadHandler = async (req) => {
                 collection: 'users',
                 id: req.user.id,
                 data: {
-                    email: decryptedEmail.email,
+                    email: email,
                     password: randomPassword,
                 },
             });
@@ -160,7 +133,7 @@ export const verifyChangeEmailWeb: PayloadHandler = async (req) => {
             const result = await payload.login({
                 collection: 'users',
                 data: {
-                    email: decryptedEmail.email,
+                    email: email,
                     password: randomPassword,
                 },
                 req,
