@@ -223,7 +223,7 @@ export interface AdminAuthOperations {
  */
 export interface User {
   id: number;
-  role: 'customer';
+  role?: 'customer' | null;
   gender?: ('male' | 'female' | 'other') | null;
   phone?: string | null;
   firstName?: string | null;

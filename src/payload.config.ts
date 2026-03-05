@@ -55,6 +55,7 @@ export default buildConfig({
     'https://whitemantis-app.vercel.app',
     'https://whitemantis-frontend-bfag.vercel.app',
     'http://localhost:3000',
+    'http://localhost:3001',
     process.env.PAYLOAD_PUBLIC_SERVER_URL || '',
     process.env.FRONTEND_URL || '',
   ].filter(Boolean),
