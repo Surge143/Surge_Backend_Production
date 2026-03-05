@@ -147,13 +147,7 @@ export const verifyChangeEmailWeb: PayloadHandler = async (req) => {
                     user: result.user,
                 },
                 { status: 200 }
-            );
-
-            res.cookies.set('pendingLogin', '', {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: 0,
-            });
+            );  
 
             if (result.token) {
                 res.cookies.set('payload-token', result.token, {

@@ -13,7 +13,7 @@ export const Users: CollectionConfig = {
     slug: 'users',
 
     auth: {
-        tokenExpiration: 60 * 60 * 24 * 5,
+        tokenExpiration: 60 * 60 * 24 * 7,
     },
     admin: {
         useAsTitle: 'email',

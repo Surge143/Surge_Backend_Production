@@ -9,7 +9,9 @@ const roleHierarchy: Record<string, number> = {
 
 export const Admins: CollectionConfig = {
     slug: 'admins',
-    auth: true,
+    auth: {
+        tokenExpiration: 60 * 60 * 24 * 7,
+    },
     access: {
         // 1. CREATE: Can only create roles LOWER than their own
         create: ({ req: { user } }) => {
