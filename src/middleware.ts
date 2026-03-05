@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 const ALLOWED_ORIGINS = [
     'http://localhost:3000',       // Web frontend (dev)
+    'http://localhost:3001',       // Web frontend (dev)
     'http://localhost:8100',       // Ionic / Capacitor dev server
     'https://localhost',           // Capacitor iOS/Android (prod)
     'capacitor://localhost',       // Capacitor native scheme (prod)
