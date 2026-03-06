@@ -430,6 +430,15 @@ export const WebOrders: CollectionConfig = {
                                         },
                                     },
                                 },
+                                {
+                                    name: 'refundedAmount',
+                                    label: 'Refunded Amount',
+                                    type: 'number',
+                                    min: 0,
+                                    admin: {
+                                        readOnly: true,
+                                    },
+                                },
                             ],
                         },
                         {

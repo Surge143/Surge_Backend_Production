@@ -139,6 +139,14 @@ export const AppOrders: CollectionConfig = {
                             type: 'text',
                         },
                         {
+                            name: 'refundedAmount',
+                            label: 'Refunded Amount',
+                            type: 'number',
+                            admin: {
+                                readOnly: true,
+                            },
+                        },
+                        {
                             type: 'row',
                             fields: [
                                 {

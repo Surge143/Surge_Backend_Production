@@ -165,6 +165,7 @@ export async function handleChargeRefunded(charge: any) {
         const updateData: any = {
             paymentStatus: 'refunded',
             [statusField]: 'cancelled',
+            refundedAmount: (charge.amount_refunded || 0) / 100, // Convert from cents
         }
 
         if (orderType !== 'cafe') {
