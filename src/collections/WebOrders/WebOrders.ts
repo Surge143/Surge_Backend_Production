@@ -213,7 +213,6 @@ export const WebOrders: CollectionConfig = {
                                             name: 'variantID',
                                             label: 'Variation ID',
                                             type: 'text',
-                                            required: true,
                                             admin: {
                                                 width: '25%',
 

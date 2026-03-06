@@ -167,7 +167,7 @@ export const POST = async (req: NextRequest) => {
             subtotal += itemPrice * item.quantity;
             orderItems.push({
                 product: productDoc.id,
-                variantID: item.variantId || "",
+                variantID: item.variantId || null,
                 quantity: item.quantity,
                 price: itemPrice,
             });
