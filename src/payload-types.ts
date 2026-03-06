@@ -1257,7 +1257,7 @@ export interface WebOrder {
     /**
      * The ID of the row in the Product Variants array
      */
-    variantID: string;
+    variantID?: string | null;
     quantity: number;
     price: number;
     id?: string | null;

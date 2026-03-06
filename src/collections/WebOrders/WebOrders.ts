@@ -281,6 +281,15 @@ export const WebOrders: CollectionConfig = {
                                             ],
                                         },
                                         { name: 'phoneNumber', type: 'text' },
+                                        {
+                                            name: 'addressCountry',
+                                            label: 'Country',
+                                            type: 'text',
+                                            defaultValue: 'United Arab Emirates',
+                                            admin: {
+                                                readOnly: true,
+                                            },
+                                        }
                                     ],
                                 },
                             ],
@@ -370,8 +379,27 @@ export const WebOrders: CollectionConfig = {
                                         { label: 'Shipped', value: 'shipped' },
                                         { label: 'Delivered', value: 'delivered' },
                                         { label: 'Cancelled', value: 'cancelled' },
+                                        { label: 'Refund Initiated', value: 'refund-initiated' },
+                                        { label: 'Refunded', value: 'refunded' },
                                     ],
                                 },
+                                {
+                                    name: 'refundReason',
+                                    label: 'Refund Reason',
+                                    type: 'text',
+                                },
+                                {
+                                    name: 'deliveredBy',
+                                    label: 'Delivered On', // Renamed for clarity since it's now a date
+                                    type: 'date',
+                                    admin: {
+                                        readOnly: true,
+                                        date: {
+                                            displayFormat: 'MM/dd/yyyy', // Customize this format as needed
+                                            pickerAppearance: 'dayOnly',
+                                        },
+                                    },
+                                }
                             ],
                         },
                         {
