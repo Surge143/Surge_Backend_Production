@@ -333,6 +333,15 @@ export const WebOrders: CollectionConfig = {
                                             ],
                                         },
                                         { name: 'phoneNumber', type: 'text' },
+                                        {
+                                            name: 'addressCountry',
+                                            label: 'Country',
+                                            type: 'text',
+                                            defaultValue: 'United Arab Emirates',
+                                            admin: {
+                                                readOnly: true,
+                                            },
+                                        }
                                     ],
                                 },
                             ],
@@ -389,12 +398,23 @@ export const WebOrders: CollectionConfig = {
                                     type: 'text',
                                 },
                                 {
-                                    name: 'deliveredBy',
-                                    label: 'Delivered On', // Renamed for clarity since it's now a date
+                                    name: 'deliveringBy',
+                                    label: 'Delivering By',
                                     type: 'date',
                                     admin: {
                                         date: {
-                                            displayFormat: 'MM/dd/yyyy', // Customize this format as needed
+                                            displayFormat: 'MM/dd/yyyy',
+                                            pickerAppearance: 'dayOnly',
+                                        },
+                                    },
+                                },
+                                {
+                                    name: 'deliveredOn',
+                                    label: 'Delivered On',
+                                    type: 'date',
+                                    admin: {
+                                        date: {
+                                            displayFormat: 'MM/dd/yyyy',
                                             pickerAppearance: 'dayOnly',
                                         },
                                     },
@@ -406,7 +426,6 @@ export const WebOrders: CollectionConfig = {
                             type: 'relationship',
                             relationTo: 'coupon',
                             admin: {
-
                                 condition: (data) => data?.origin === 'one-time',
                             },
                         },
@@ -460,6 +479,14 @@ export const WebOrders: CollectionConfig = {
                                 {
                                     type: 'row',
                                     fields: [
+                                        {
+                                            name: 'taxPercentage',
+                                            label: 'Tax Percentage',
+                                            type: 'number',
+                                            min: 0,
+                                            max: 100,
+                                            admin: { width: '50%', description: 'Tax percentage applied on (subtotal − discounts + shipping)', }
+                                        },
                                         {
                                             name: 'taxAmount',
                                             label: 'Tax',

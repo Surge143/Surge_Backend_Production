@@ -5,7 +5,7 @@ import { awardReferralCoins } from "@/utilities/awardReferralCoins";
 
 export const WebSubscription: CollectionConfig = {
     slug: 'web-subscription',
-    labels:{
+    labels: {
         singular: 'Store Subscription',
         plural: 'Store Subscriptions'
     },
@@ -344,6 +344,14 @@ export const WebSubscription: CollectionConfig = {
                                 {
                                     type: 'row',
                                     fields: [
+                                        {
+                                            name: 'taxPercentage',
+                                            label: 'Tax Percentage',
+                                            type: 'number',
+                                            min: 0,
+                                            max: 100,
+                                            admin: { width: '50%', description: 'Tax percentage applied on (subtotal − discounts + shipping)', }
+                                        },
                                         {
                                             name: 'taxAmount',
                                             label: 'Tax',
