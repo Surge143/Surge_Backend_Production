@@ -1280,11 +1280,13 @@ export interface WebOrder {
     city?: string | null;
     emirates?: ('abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah') | null;
     phoneNumber?: string | null;
+    addressCountry?: string | null;
   };
   paymentStatus: 'pending' | 'completed' | 'failed' | 'refund-initiated' | 'refunded';
   deliveryStatus?: ('placed' | 'shipped' | 'delivered' | 'cancelled' | 'refund-initiated' | 'refunded') | null;
   refundReason?: string | null;
-  deliveredBy?: string | null;
+  deliveringBy?: string | null;
+  deliveredOn?: string | null;
   couponCode?: (number | null) | Coupon;
   pointsUsed?: number | null;
   financials: {
@@ -1304,6 +1306,10 @@ export interface WebOrder {
      * Shipping fee (0 for pickup orders)
      */
     shippingCharge?: number | null;
+    /**
+     * Tax percentage applied on (subtotal − discounts + shipping)
+     */
+    taxPercentage?: number | null;
     /**
      * Tax applied on (subtotal − discounts + shipping)
      */
@@ -1401,6 +1407,10 @@ export interface WebSubscription {
      * Shipping fee (0 for pickup orders)
      */
     shippingCharge?: number | null;
+    /**
+     * Tax percentage applied on (subtotal − discounts + shipping)
+     */
+    taxPercentage?: number | null;
     /**
      * Tax applied on (subtotal − discounts + shipping)
      */
@@ -2747,11 +2757,13 @@ export interface WebOrdersSelect<T extends boolean = true> {
         city?: T;
         emirates?: T;
         phoneNumber?: T;
+        addressCountry?: T;
       };
   paymentStatus?: T;
   deliveryStatus?: T;
   refundReason?: T;
-  deliveredBy?: T;
+  deliveringBy?: T;
+  deliveredOn?: T;
   couponCode?: T;
   pointsUsed?: T;
   financials?:
@@ -2761,6 +2773,7 @@ export interface WebOrdersSelect<T extends boolean = true> {
         couponDiscount?: T;
         wtCoinsDiscount?: T;
         shippingCharge?: T;
+        taxPercentage?: T;
         taxAmount?: T;
         total?: T;
       };
@@ -2836,6 +2849,7 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
         subscriptionDiscount?: T;
         wtCoinsDiscount?: T;
         shippingCharge?: T;
+        taxPercentage?: T;
         taxAmount?: T;
         total?: T;
       };
