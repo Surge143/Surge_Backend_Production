@@ -57,13 +57,13 @@ export const WebOrders: CollectionConfig = {
         beforeChange: [
             async ({ data, req, originalDoc, operation }) => {
                 if (operation === 'update') {
-                    // Award WTCoins when delivery status changes to 'shipped'
-                    const isNowShipped = data.deliveryStatus === 'shipped'
-                    const wasShipped = originalDoc?.deliveryStatus === 'shipped'
+                    // Award WTCoins when delivery status changes to 'delivered'
+                    const isNowDelivered = data.deliveryStatus === 'delivered'
+                    const wasDelivered = originalDoc?.deliveryStatus === 'delivered'
                     const alreadyAwarded = originalDoc?.wtCoinsAwarded
                     const hasUser = data.user || originalDoc?.user
 
-                    if (isNowShipped && !wasShipped && hasUser && !alreadyAwarded) {
+                    if (isNowDelivered && !wasDelivered && hasUser && !alreadyAwarded) {
                         try {
                             const userId = typeof (data.user || originalDoc.user) === 'object'
                                 ? (data.user || originalDoc.user).id

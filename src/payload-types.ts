@@ -1013,6 +1013,7 @@ export interface AppOrder {
   appOrderStatusDine?: ('pending' | 'preparing' | 'ready' | 'completed' | 'cancelled') | null;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refund-initiated' | 'refunded';
   refundReason?: string | null;
+  refundedAmount?: number | null;
   shop: number | Shop;
   barista?: (number | null) | Admin;
   items: {
@@ -1289,6 +1290,7 @@ export interface WebOrder {
   deliveringBy?: string | null;
   deliveredOn?: string | null;
   refundedOn?: string | null;
+  refundedAmount?: number | null;
   couponCode?: (number | null) | Coupon;
   pointsUsed?: number | null;
   financials: {
@@ -2523,6 +2525,7 @@ export interface AppOrdersSelect<T extends boolean = true> {
   appOrderStatusDine?: T;
   paymentStatus?: T;
   refundReason?: T;
+  refundedAmount?: T;
   shop?: T;
   barista?: T;
   items?:
@@ -2769,6 +2772,7 @@ export interface WebOrdersSelect<T extends boolean = true> {
   deliveringBy?: T;
   deliveredOn?: T;
   refundedOn?: T;
+  refundedAmount?: T;
   couponCode?: T;
   pointsUsed?: T;
   financials?:
