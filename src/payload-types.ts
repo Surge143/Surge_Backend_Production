@@ -1270,6 +1270,7 @@ export interface WebOrder {
     city?: string | null;
     emirates?: ('abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah') | null;
     phoneNumber?: string | null;
+    addressCountry?: string | null;
   };
   billingAddress?: {
     addressFirstName?: string | null;
@@ -1281,7 +1282,9 @@ export interface WebOrder {
     phoneNumber?: string | null;
   };
   paymentStatus: 'pending' | 'completed' | 'failed' | 'refund-initiated' | 'refunded';
-  deliveryStatus?: ('placed' | 'shipped' | 'delivered' | 'cancelled') | null;
+  deliveryStatus?: ('placed' | 'shipped' | 'delivered' | 'cancelled' | 'refund-initiated' | 'refunded') | null;
+  refundReason?: string | null;
+  deliveredBy?: string | null;
   couponCode?: (number | null) | Coupon;
   pointsUsed?: number | null;
   financials: {
@@ -2732,6 +2735,7 @@ export interface WebOrdersSelect<T extends boolean = true> {
         city?: T;
         emirates?: T;
         phoneNumber?: T;
+        addressCountry?: T;
       };
   billingAddress?:
     | T
@@ -2746,6 +2750,8 @@ export interface WebOrdersSelect<T extends boolean = true> {
       };
   paymentStatus?: T;
   deliveryStatus?: T;
+  refundReason?: T;
+  deliveredBy?: T;
   couponCode?: T;
   pointsUsed?: T;
   financials?:

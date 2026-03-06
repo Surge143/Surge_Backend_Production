@@ -393,7 +393,6 @@ export const WebOrders: CollectionConfig = {
                                     label: 'Delivered On', // Renamed for clarity since it's now a date
                                     type: 'date',
                                     admin: {
-                                        readOnly: true,
                                         date: {
                                             displayFormat: 'MM/dd/yyyy', // Customize this format as needed
                                             pickerAppearance: 'dayOnly',
