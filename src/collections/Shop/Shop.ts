@@ -6,7 +6,6 @@ import { getBestSellerHandler } from "./endpoints/menu/bestSeller";
 import { individualItemHandler } from "./endpoints/menu/individualItem";
 import { getBaristaHandler } from "./endpoints/barista/getBarista";
 
-
 export const Shop: CollectionConfig = {
     slug: "shop",
     labels: {
