@@ -162,13 +162,19 @@ export async function handleChargeRefunded(charge: any) {
             statusField = order.orderType === 'dine-in' ? 'appOrderStatusDine' : 'appOrderStatus'
         }
 
+        const updateData: any = {
+            paymentStatus: 'refunded',
+            [statusField]: 'cancelled',
+        }
+
+        if (orderType !== 'cafe') {
+            updateData.refundedOn = new Date().toISOString()
+        }
+
         await payload.update({
             collection,
             id: orderId,
-            data: {
-                paymentStatus: 'refunded',
-                [statusField]: 'cancelled',
-            },
+            data: updateData,
             overrideAccess: true,
         })
 

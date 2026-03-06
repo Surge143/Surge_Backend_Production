@@ -2,8 +2,9 @@ import { PayloadHandler } from 'payload'
 import { stripe } from '@/lib/stripe'
 
 export const refundHandler: PayloadHandler = async (req) => {
-    const { payload, user } = req
+    const { payload, user, query } = req
     const { id } = (req.routeParams || {}) as { id: string }
+    const reason = query?.reason as string || ''
 
     if (!user) {
         return Response.json({ error: 'User not found' }, { status: 404 })
@@ -47,7 +48,10 @@ export const refundHandler: PayloadHandler = async (req) => {
                 await payload.update({
                     collection: 'web-orders',
                     id,
-                    data: { paymentStatus: 'refund-initiated' },
+                    data: {
+                        paymentStatus: 'refund-initiated',
+                        refundReason: reason,
+                    },
                     overrideAccess: true,
                 })
 

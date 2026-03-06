@@ -1012,6 +1012,7 @@ export interface AppOrder {
   appOrderStatus?: ('pending' | 'preparing' | 'ready' | 'completed' | 'cancelled') | null;
   appOrderStatusDine?: ('pending' | 'preparing' | 'ready' | 'completed' | 'cancelled') | null;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refund-initiated' | 'refunded';
+  refundReason?: string | null;
   shop: number | Shop;
   barista?: (number | null) | Admin;
   items: {
@@ -1287,6 +1288,7 @@ export interface WebOrder {
   refundReason?: string | null;
   deliveringBy?: string | null;
   deliveredOn?: string | null;
+  refundedOn?: string | null;
   couponCode?: (number | null) | Coupon;
   pointsUsed?: number | null;
   financials: {
@@ -1389,6 +1391,7 @@ export interface WebSubscription {
   };
   paymentStatus: 'pending' | 'completed' | 'failed';
   subsStatus?: ('active' | 'inactive' | 'cancelled') | null;
+  cancelReason?: string | null;
   pointsUsed?: number | null;
   financials: {
     /**
@@ -2519,6 +2522,7 @@ export interface AppOrdersSelect<T extends boolean = true> {
   appOrderStatus?: T;
   appOrderStatusDine?: T;
   paymentStatus?: T;
+  refundReason?: T;
   shop?: T;
   barista?: T;
   items?:
@@ -2764,6 +2768,7 @@ export interface WebOrdersSelect<T extends boolean = true> {
   refundReason?: T;
   deliveringBy?: T;
   deliveredOn?: T;
+  refundedOn?: T;
   couponCode?: T;
   pointsUsed?: T;
   financials?:
@@ -2841,6 +2846,7 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
       };
   paymentStatus?: T;
   subsStatus?: T;
+  cancelReason?: T;
   pointsUsed?: T;
   financials?:
     | T

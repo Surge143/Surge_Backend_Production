@@ -134,6 +134,11 @@ export const AppOrders: CollectionConfig = {
                             }
                         },
                         {
+                            name: 'refundReason',
+                            label: 'Refund Reason',
+                            type: 'text',
+                        },
+                        {
                             type: 'row',
                             fields: [
                                 {

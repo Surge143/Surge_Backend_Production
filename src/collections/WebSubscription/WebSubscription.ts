@@ -63,7 +63,7 @@ export const WebSubscription: CollectionConfig = {
                                     ],
                                     admin: {
                                         width: '50%',
-                                        
+
                                     },
                                 },
                                 {
@@ -73,7 +73,7 @@ export const WebSubscription: CollectionConfig = {
                                     required: false, // Optional because it's hidden for guests
                                     admin: {
                                         width: '50%',
-                                        
+
                                         // This field ONLY shows up if customerType is 'user'
                                         condition: (data) => data?.customerType === 'user',
                                         description: 'Select the registered user account for this order.',
@@ -87,17 +87,17 @@ export const WebSubscription: CollectionConfig = {
                                         { label: 'Delivery', value: 'delivery' },
                                         { label: 'Pickup', value: 'pickup' },
                                     ],
-                                    admin: {  },
+                                    admin: {},
                                 },
                                 {
                                     name: 'stripeSubscriptionID',
                                     type: 'text',
-                                    admin: { description: 'The ID from Stripe',  }
+                                    admin: { description: 'The ID from Stripe', }
                                 },
                                 {
                                     name: 'nextPaymentDate',
                                     type: 'date',
-                                    admin: {  },
+                                    admin: {},
                                 },
                                 {
                                     name: 'email',
@@ -105,7 +105,7 @@ export const WebSubscription: CollectionConfig = {
                                     type: 'text',
                                     admin: {
                                         description: 'Stored at checkout for guest-to-user linking.',
-                                        
+
                                     },
                                 },
                             ],
@@ -114,7 +114,7 @@ export const WebSubscription: CollectionConfig = {
                             name: 'items',
                             type: 'array',
                             required: true,
-                            admin: {  },
+                            admin: {},
                             fields: [
                                 {
                                     type: 'row',
@@ -173,7 +173,7 @@ export const WebSubscription: CollectionConfig = {
                             label: 'Shipping Address (For Delivery Only)',
                             admin: {
                                 condition: (data) => data?.deliveryOption === 'delivery',
-                                
+
                             },
                             fields: [
                                 {
@@ -215,7 +215,7 @@ export const WebSubscription: CollectionConfig = {
                         {
                             name: 'billingAddress',
                             admin: {
-                                
+
                             },
                             type: 'group',
                             fields: [
@@ -272,7 +272,7 @@ export const WebSubscription: CollectionConfig = {
                                         { label: 'Failed', value: 'failed' },
                                     ],
                                     admin: {
-                                        
+
                                     }
                                 },
                                 {
@@ -281,13 +281,18 @@ export const WebSubscription: CollectionConfig = {
                                     defaultValue: 'active',
                                     admin: {
                                         condition: (data) => data?.paymentStatus === 'completed',
-                                        
+
                                     },
                                     options: [
                                         { label: 'Active', value: 'active' },
                                         { label: 'Inactive', value: 'inactive' },
-                                        { label: 'Cancalled', value: 'cancelled' },
+                                        { label: 'Cancelled', value: 'cancelled' },
                                     ],
+                                },
+                                {
+                                    name: 'cancelReason',
+                                    label: 'Cancel Reason',
+                                    type: 'text',
                                 },
                             ],
                         },
@@ -295,7 +300,7 @@ export const WebSubscription: CollectionConfig = {
                             name: 'pointsUsed',
                             type: 'number',
                             admin: {
-                                
+
                             }
                         },
                         {
@@ -303,7 +308,7 @@ export const WebSubscription: CollectionConfig = {
                             type: 'group',
                             label: 'Financial Breakdown',
                             admin: {
-                                
+
                             },
                             fields: [
                                 {
@@ -331,13 +336,13 @@ export const WebSubscription: CollectionConfig = {
                                             name: 'wtCoinsDiscount',
                                             label: 'WT Coins Discount',
                                             type: 'number',
-                                            admin: { width: '50%', description: 'Discount applied via WT Coins redemption',  }
+                                            admin: { width: '50%', description: 'Discount applied via WT Coins redemption', }
                                         },
                                         {
                                             name: 'shippingCharge',
                                             label: 'Shipping Charge',
                                             type: 'number',
-                                            admin: { width: '50%', description: 'Shipping fee (0 for pickup orders)',  }
+                                            admin: { width: '50%', description: 'Shipping fee (0 for pickup orders)', }
                                         },
                                     ],
                                 },
@@ -356,14 +361,14 @@ export const WebSubscription: CollectionConfig = {
                                             name: 'taxAmount',
                                             label: 'Tax',
                                             type: 'number',
-                                            admin: { width: '50%', description: 'Tax applied on (subtotal − discounts + shipping)',  }
+                                            admin: { width: '50%', description: 'Tax applied on (subtotal − discounts + shipping)', }
                                         },
                                         {
                                             name: 'total',
                                             label: 'Grand Total',
                                             type: 'number',
                                             required: true,
-                                            admin: { width: '50%', description: 'Final recurring amount charged (first payment may differ due to WT Coins)',  }
+                                            admin: { width: '50%', description: 'Final recurring amount charged (first payment may differ due to WT Coins)', }
                                         },
                                     ],
                                 },
@@ -378,7 +383,7 @@ export const WebSubscription: CollectionConfig = {
             type: 'json',
             admin: {
                 hidden: true,
-                
+
             },
         },
         {

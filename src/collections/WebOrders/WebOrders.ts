@@ -418,7 +418,18 @@ export const WebOrders: CollectionConfig = {
                                             pickerAppearance: 'dayOnly',
                                         },
                                     },
-                                }
+                                },
+                                {
+                                    name: 'refundedOn',
+                                    label: 'Refunded On',
+                                    type: 'date',
+                                    admin: {
+                                        date: {
+                                            displayFormat: 'MM/dd/yyyy',
+                                            pickerAppearance: 'dayOnly',
+                                        },
+                                    },
+                                },
                             ],
                         },
                         {
