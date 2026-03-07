@@ -1365,7 +1365,7 @@ export interface WebSubscription {
     /**
      * The ID of the row in the Product Variants array
      */
-    variantID: string;
+    variantID?: string | null;
     /**
      * The ID of the row in the subFreq array
      */

@@ -48,6 +48,21 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
             // --- STAMP ACCRUAL ---
             if (!(doc as any).isStampsAwarded) {
                 try {
+                    const coinsUsed = (doc as any).coinsUsed || 0;
+                    const wtCoinsDiscount = (doc as any).financials?.wtCoinsDiscount || 0;
+
+                    if (coinsUsed > 0 || wtCoinsDiscount > 0) {
+                        console.log(`[afterChange] Order ${doc.id} used WTCoins (${coinsUsed}) or has discount (${wtCoinsDiscount}). Skipping stamp accrual.`);
+
+                        await payload.update({
+                            collection: 'app-orders',
+                            id: doc.id,
+                            data: { isStampsAwarded: true } as any,
+                            overrideAccess: true,
+                        });
+                        return; // Exit the stamp accrual block
+                    }
+
                     console.log(`[afterChange] Checking stamp accrual. Type: ${doc.orderType}, Status: ${orderStatus}, Prev: ${prevOrderStatus}, Already Awarded: ${(doc as any).isStampsAwarded}`);
 
                     // Collect all product IDs from the order items

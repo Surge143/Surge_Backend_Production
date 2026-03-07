@@ -201,9 +201,11 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
         const newBalance = Math.max(0, (userWTCoins.totalBalance || 0) - pointsUsed)
 
         // Update balance and add to redemption history
-        const processedHistory = (userWTCoins.redeemedPointsHistory || []).map((h: any) => ({
+        const processedHistory = (userWTCoins.pointsRedemptionHistory || []).map((h: any) => ({
             redeemedPoints: h.redeemedPoints,
-            associatedOrder: typeof h.associatedOrder === 'object' ? h.associatedOrder.id : h.associatedOrder
+            associatedOrder: typeof h.associatedOrder === 'object'
+                ? { relationTo: h.associatedOrder.relationTo, value: h.associatedOrder.value }
+                : h.associatedOrder
         }));
 
         await payload.update({
@@ -211,11 +213,14 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
             id: userWTCoins.id,
             data: {
                 totalBalance: newBalance,
-                redeemedPointsHistory: [
+                pointsRedemptionHistory: [
                     ...processedHistory,
                     {
                         redeemedPoints: pointsUsed,
-                        associatedOrder: typeof orderId === 'string' && !isNaN(Number(orderId)) ? Number(orderId) : orderId,
+                        associatedOrder: {
+                            relationTo: 'web-orders',
+                            value: orderId,
+                        },
                     }
                 ]
             }

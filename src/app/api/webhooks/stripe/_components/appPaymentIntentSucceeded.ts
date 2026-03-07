@@ -196,7 +196,9 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
 
         const processedHistory = (userWTCoins.pointsRedemptionHistory || []).map((h: any) => ({
             redeemedPoints: h.redeemedPoints,
-            associatedOrder: typeof h.associatedOrder === 'object' ? h.associatedOrder.id : h.associatedOrder
+            associatedOrder: typeof h.associatedOrder === 'object'
+                ? { relationTo: h.associatedOrder.relationTo, value: h.associatedOrder.value }
+                : h.associatedOrder
         }));
 
         await payload.update({

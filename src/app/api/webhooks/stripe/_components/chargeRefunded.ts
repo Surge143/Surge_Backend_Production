@@ -117,7 +117,7 @@ export async function handleChargeRefunded(charge: any) {
 
     // --- 2. RESTORE WTCOINS (if they were deducted) ---
     const userId = typeof order.user === 'object' ? order.user?.id : order.user
-    const pointsUsed = order.pointsUsed || 0
+    const pointsUsed = (order.pointsUsed || order.coinsUsed || 0)
 
     if (userId && pointsUsed > 0) {
         try {
@@ -134,9 +134,12 @@ export async function handleChargeRefunded(charge: any) {
                 const updatedHistory = (userWTCoins.pointsRedemptionHistory || []).map((h: any) => ({
                     redeemedPoints: h.redeemedPoints,
                     associatedOrder: typeof h.associatedOrder === 'object'
-                        ? h.associatedOrder.id
+                        ? { relationTo: h.associatedOrder.relationTo, value: h.associatedOrder.value }
                         : h.associatedOrder,
-                })).filter((h: any) => String(h.associatedOrder) !== String(orderId))
+                })).filter((h: any) => {
+                    const orderValue = typeof h.associatedOrder === 'object' ? h.associatedOrder.value : h.associatedOrder;
+                    return String(orderValue) !== String(orderId);
+                })
 
                 await (payload.update as any)({
                     collection: 'user-wt-coins',

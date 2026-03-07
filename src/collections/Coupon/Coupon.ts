@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { validateWebCouponHandler } from "./endpoints/validateWebCoupon";
+import { getShopCouponsHandler as getWebCouponsHandler } from "./endpoints/getWebCoupons";
 import { validateFutureDate } from "@/utilities/validateFutureDate";
 
 export const Coupon: CollectionConfig = {
@@ -17,7 +18,7 @@ export const Coupon: CollectionConfig = {
         {
             path: '/coupons',
             method: 'get',
-            handler: validateWebCouponHandler,
+            handler: getWebCouponsHandler,
         },
     ],
     versions: {
