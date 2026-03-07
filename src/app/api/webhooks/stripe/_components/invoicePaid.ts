@@ -213,17 +213,27 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
     const record = userRewards.docs[0]
     const newBalance = Math.max(0, (record.totalBalance || 0) - pointsUsed)
 
+    // Properly format existing history to avoid structure issues
+    const processedHistory = (record.pointsRedemptionHistory || []).map((h: any) => ({
+        redeemedPoints: h.redeemedPoints,
+        associatedOrder: typeof h.associatedOrder === "object"
+            ? { relationTo: h.associatedOrder.relationTo, value: h.associatedOrder.value }
+            : h.associatedOrder
+    }))
+
     await payload.update({
         collection: "user-wt-coins",
         id: record.id,
         data: {
             totalBalance: newBalance,
-            redeemedPointsHistory: [
-                ...(record.redeemedPointsHistory || []),
+            pointsRedemptionHistory: [
+                ...processedHistory,
                 {
                     redeemedPoints: pointsUsed,
-                    associatedOrder: orderId,
-                    date: new Date().toISOString()
+                    associatedOrder: {
+                        relationTo: "web-orders",
+                        value: orderId,
+                    },
                 },
             ],
         },
