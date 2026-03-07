@@ -130,7 +130,6 @@ export const WebSubscription: CollectionConfig = {
                                             name: 'variantID',
                                             label: 'Variation ID',
                                             type: 'text',
-                                            required: true,
                                             admin: {
                                                 width: '25%',
                                                 description: 'The ID of the row in the Product Variants array'
