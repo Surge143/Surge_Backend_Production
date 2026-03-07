@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        if (!product.variantId || !product.quantity || !product.productId || !product.subscriptionId) {
+        if (!product.quantity || !product.productId || !product.subscriptionId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
