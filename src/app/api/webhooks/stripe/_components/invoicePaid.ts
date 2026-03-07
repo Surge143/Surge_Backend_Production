@@ -231,30 +231,42 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
     console.log("✅ WTCoins deducted")
 }
 
-async function updateProductStock(payload: any, productId: string | number, variantId: string, quantity: number) {
+async function updateProductStock(payload: any, productId: string | number, variantId: string | null | undefined, quantity: number) {
     const product = await payload.findByID({
         collection: "web-products",
         id: productId,
     })
 
-    if (!product?.variants) return
+    if (!product) return
 
-    const updatedVariants = product.variants.map((v: any) => {
-        if (v.id === variantId || v._id === variantId) {
-            const newQty = Math.max(0, (v.variantStockQuantity || 0) - quantity)
-            return {
-                ...v,
-                variantStockQuantity: newQty,
-                variantInStock: newQty > 0
+    let updateData: any = {}
+
+    if (variantId && product.variants) {
+        // Handle Variant Stock
+        const updatedVariants = product.variants.map((v: any) => {
+            if (v.id === variantId || v._id === variantId) {
+                const newQty = Math.max(0, (v.variantStockQuantity || 0) - quantity)
+                return {
+                    ...v,
+                    variantStockQuantity: newQty,
+                    variantInStock: newQty > 0
+                }
             }
-        }
-        return v
-    })
+            return v
+        })
+        updateData.variants = updatedVariants
+    } else {
+        // Handle Global Product Stock
+        const currentStock = product.stockQuantity || 0
+        const newQty = Math.max(0, currentStock - quantity)
+        updateData.stockQuantity = newQty
+        updateData.inStock = newQty > 0
+    }
 
     await payload.update({
         collection: "web-products",
         id: productId,
-        data: { variants: updatedVariants },
+        data: updateData,
     })
-    console.log(`✅ Stock updated for product ${productId}`)
+    console.log(`✅ Stock updated for product ${productId}${variantId ? ` (variant: ${variantId})` : ""}`)
 }
