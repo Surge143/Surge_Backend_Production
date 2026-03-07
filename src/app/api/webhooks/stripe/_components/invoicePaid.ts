@@ -3,6 +3,7 @@ import { getPayload } from "payload"
 import config from "@/payload.config"
 import { sendEmail } from "@/lib/emailConfig"
 import { orderConfirmationEmailTemplate } from "@/lib/emailTemplate"
+import { awardWTCoins, convertPointsToAED } from "@/collections/WebOrders/hooks/wtCoinsUtils"
 
 export async function handleInvoicePaid(invoice: any) {
     const payload = await getPayload({ config })
@@ -129,10 +130,32 @@ export async function handleInvoicePaid(invoice: any) {
         /* --------------------------------------------------
            6️⃣ WTCoins & Stock (Only if order created)
         ---------------------------------------------------*/
-        const userId = subscriptionDoc.user && (typeof subscriptionDoc.user === "object" ? subscriptionDoc.user.id : subscriptionDoc.user);
+        let userId = subscriptionDoc.user && (typeof subscriptionDoc.user === "object" ? subscriptionDoc.user.id : subscriptionDoc.user);
+        if (userId && !isNaN(Number(userId))) userId = Number(userId);
 
         if (isFirstInvoice && userId && (subscriptionDoc.pointsUsed ?? 0) > 0) {
             await deductWTCoins(payload, userId, subscriptionDoc.pointsUsed!, newOrder.id)
+        }
+
+        // Award WTCoins for pickup orders (immediately delivered)
+        if (newOrder.deliveryStatus === "delivered" && userId) {
+            try {
+                const totalAmount = newOrder.financials?.total || 0;
+                const pointsUsed = newOrder.pointsUsed || 0;
+                const wtCoinsDiscount = pointsUsed ? await convertPointsToAED(payload, pointsUsed) : 0;
+                const realMoneySpent = Math.max(0, totalAmount - wtCoinsDiscount);
+
+                if (realMoneySpent > 0) {
+                    await awardWTCoins(payload, userId as number, realMoneySpent, newOrder.id);
+                    await payload.update({
+                        collection: "web-orders",
+                        id: newOrder.id,
+                        data: { wtCoinsAwarded: true }
+                    });
+                }
+            } catch (err) {
+                console.error("❌ Failed awarding WTCoins for pickup subscription:", err);
+            }
         }
 
         for (const item of subscriptionDoc.items) {
@@ -249,7 +272,7 @@ async function updateProductStock(payload: any, productId: string | number, vari
 
     if (!product) return
 
-    let updateData: any = {}
+    const updateData: any = {}
 
     if (variantId && product.variants) {
         // Handle Variant Stock
