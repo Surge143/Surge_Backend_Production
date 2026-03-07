@@ -20,6 +20,37 @@ export const WebSubscription: CollectionConfig = {
             handler: refundHandler,
         },
     ],
+    access: {
+        read: () => true,
+        create: () => true,
+        update: async ({ req: { user, payload }, id }) => {
+            if (!user) return false
+            // Admins and shop-managers always allowed
+            if (
+                user.role === 'admin' ||
+                user.role === 'super-admin' ||
+                user.role === 'shop-manager'
+            ) return true
+            // Allow the order's owner to update their own order
+            if (id) {
+                try {
+                    const order = await payload.findByID({
+                        collection: 'web-subscription',
+                        id,
+                        depth: 0,
+                        overrideAccess: true,
+                    })
+                    const orderUserId = typeof order.user === 'object' ? order.user?.id : order.user
+                    return String(orderUserId) === String(user.id)
+                } catch {
+                    return false
+                }
+            }
+            return false
+        },
+        delete: ({ req: { user } }) =>
+            user?.role === 'super-admin' || user?.role === 'admin',
+    },
     hooks: {
         afterChange: [
             async ({ doc, previousDoc, req: { payload } }) => {
