@@ -35,7 +35,7 @@ export const Coupon: CollectionConfig = {
         group: "Management",
     },
     access: {
-        read: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager',
+        read: () => true,
         update: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
         delete: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
         create: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
