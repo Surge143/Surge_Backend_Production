@@ -234,7 +234,34 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
     if (userRewards.docs.length === 0) return
 
     const record = userRewards.docs[0]
-    const newBalance = Math.max(0, (record.totalBalance || 0) - pointsUsed)
+
+    // --- FIFO DEDUCTION LOGIC ---
+    let pointsToDeduct = pointsUsed;
+    const now = new Date();
+
+    // Sort history by earnedAt (oldest first) and filter for active ones
+    const earningHistory = [...(record.coinEarningHistory || [])].sort((a: any, b: any) =>
+        new Date(a.earnedAt).getTime() - new Date(b.earnedAt).getTime()
+    );
+
+    const updatedHistory = earningHistory.map((entry: any) => {
+        const expiryDate = entry.expiryDate ? new Date(entry.expiryDate) : null;
+        const isExpired = expiryDate && expiryDate <= now;
+
+        if (pointsToDeduct > 0 && !isExpired && (entry.remainingAmount || 0) > 0) {
+            const deduction = Math.min(entry.remainingAmount, pointsToDeduct);
+            pointsToDeduct -= deduction;
+            return {
+                ...entry,
+                remainingAmount: entry.remainingAmount - deduction
+            };
+        }
+        return entry;
+    });
+
+    if (pointsToDeduct > 0) {
+        console.warn(`Sub: User ${userId} requested to spend ${pointsUsed} but only ${pointsUsed - pointsToDeduct} were available/active.`);
+    }
 
     // Properly format existing history to avoid structure issues
     const processedHistory = (record.pointsRedemptionHistory || []).map((h: any) => ({
@@ -248,11 +275,11 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
         collection: "user-wt-coins",
         id: record.id,
         data: {
-            totalBalance: newBalance,
+            coinEarningHistory: updatedHistory,
             pointsRedemptionHistory: [
                 ...processedHistory,
                 {
-                    redeemedPoints: pointsUsed,
+                    redeemedPoints: pointsUsed - pointsToDeduct,
                     associatedOrder: {
                         relationTo: "web-orders",
                         value: orderId,
@@ -261,7 +288,7 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
             ],
         },
     })
-    console.log("✅ WTCoins deducted")
+    console.log("✅ WTCoins deducted using FIFO")
 }
 
 async function updateProductStock(payload: any, productId: string | number, variantId: string | null | undefined, quantity: number) {

@@ -12,33 +12,52 @@ import { sendNotification } from '@/utilities/sendNotification';
  * @param payload  - Payload instance
  * @param userId   - The ID of the user who just completed an order
  */
-export async function awardReferralCoins(payload: Payload, userId: number | string): Promise<void> {
+/**
+ * Checks if this is the referred user's first successful paid & delivered order,
+ * and if so credits WTCoins to both the referred user and their referrer.
+ *
+ * @param payload  - Payload instance
+ * @param userId   - The ID of the user who just completed an order
+ * @param orderId  - The ID of the order that triggered this reward
+ * @param collection - Which collection the order belongs to
+ */
+export async function awardReferralCoins(
+    payload: Payload,
+    userId: number | string,
+    orderId: string | number,
+    collection: 'app-orders' | 'web-orders' | 'web-subscription'
+): Promise<void> {
     try {
-        // 1. Fetch the user to check referral state
-        const user = await payload.findByID({
+        // 1. ATOMIC LOCK: Attempt to mark user as rewarded ONLY if they are currently 'pending'
+        // This prevents race conditions if multiple delivery hooks fire simultaneously.
+        const lockResult = await payload.update({
             collection: 'users',
-            id: userId,
+            where: {
+                and: [
+                    { id: { equals: userId } },
+                    { referralStatus: { equals: 'pending' } },
+                ]
+            },
+            data: { referralStatus: 'rewarded' } as any,
             depth: 0,
             overrideAccess: true,
-        }) as any;
+        });
 
-        if (!user) {
-            console.log(`[awardReferralCoins] User ${userId} not found.`);
+        if (!lockResult.docs || lockResult.docs.length === 0) {
+            // Either user isn't 'pending' (already rewarded/not referred) or doesn't exist.
             return;
         }
 
-        // Only proceed if user was referred and reward is still pending
-        if (user.referralStatus !== 'pending') {
-            return;
-        }
-
+        const user = lockResult.docs[0];
         const referredById = typeof user.referredBy === 'object' ? (user.referredBy as any)?.id : user.referredBy;
+
         if (!referredById) {
-            console.log(`[awardReferralCoins] User ${userId} has pending referralStatus but no referredBy. Skipping.`);
+            console.log(`[awardReferralCoins] User ${userId} was marked rewarded but has no referrer. Skipping coin credit.`);
             return;
         }
 
-        // 2. Count total paid orders across all three collections
+        // 2. Count total "completed/delivered" orders across all three collections
+        // We do this to double-check this is indeed their first order context.
         const [appOrdersResult, webOrdersResult, webSubResult] = await Promise.all([
             payload.find({
                 collection: 'app-orders',
@@ -46,9 +65,15 @@ export async function awardReferralCoins(payload: Payload, userId: number | stri
                     and: [
                         { user: { equals: userId } },
                         { paymentStatus: { equals: 'paid' } },
+                        {
+                            or: [
+                                { appOrderStatus: { equals: 'completed' } },
+                                { appOrderStatusDine: { equals: 'completed' } }
+                            ]
+                        }
                     ],
                 },
-                limit: 0, // only need totalDocs
+                limit: 0,
                 depth: 0,
                 overrideAccess: true,
             }),
@@ -58,6 +83,7 @@ export async function awardReferralCoins(payload: Payload, userId: number | stri
                     and: [
                         { user: { equals: userId } },
                         { paymentStatus: { equals: 'completed' } },
+                        { deliveryStatus: { equals: 'delivered' } },
                     ],
                 },
                 limit: 0,
@@ -83,12 +109,12 @@ export async function awardReferralCoins(payload: Payload, userId: number | stri
             (webOrdersResult.totalDocs ?? 0) +
             (webSubResult.totalDocs ?? 0);
 
-        console.log(`[awardReferralCoins] User ${userId} total paid orders: ${totalOrders}`);
+        console.log(`[awardReferralCoins] User ${userId} total completed orders: ${totalOrders}`);
 
-        // The afterChange hook fires after the order is saved, so totalOrders includes
-        // the current one. Exactly 1 means this IS the first order.
-        if (totalOrders !== 1) {
-            console.log(`[awardReferralCoins] Not the first order (count=${totalOrders}). Skipping referral reward.`);
+        // If totalOrders > 1, it means they already have other completed orders.
+        // Usually, the first hook to finish the update to 'rewarded' wins.
+        if (totalOrders > 1) {
+            console.log(`[awardReferralCoins] User ${userId} already has ${totalOrders} completed orders. Skipping reward.`);
             return;
         }
 
@@ -102,16 +128,16 @@ export async function awardReferralCoins(payload: Payload, userId: number | stri
         const coinsForReferrer: number = (wtCoinsConfig as any)?.referralRewardForReferrer ?? 0;
 
         if (coinsForReferred === 0 && coinsForReferrer === 0) {
-            console.log('[awardReferralCoins] Both referral reward amounts are 0. Updating status but skipping coin credit.');
+            console.log('[awardReferralCoins] Both referral reward amounts are 0.');
         } else {
             // 4. Credit coins to referred user
             if (coinsForReferred > 0) {
-                await creditCoins(payload, userId, coinsForReferred, 'referral-reward-received');
+                await creditCoins(payload, userId, coinsForReferred, 'referral-reward-received', orderId, collection);
                 await sendNotification({
                     payload,
                     userId,
-                    title: `🎉 You earned ${coinsForReferred} WTCoins!`,
-                    body: `You received ${coinsForReferred} coins as a referral bonus for your first order.`,
+                    title: `🎉 You earned ${coinsForReferred} WTBeans!`,
+                    body: `You received ${coinsForReferred} beans as a referral bonus for your first order.`,
                     notificationType: 'reward',
                     data: { type: 'referral_coins_received', amount: String(coinsForReferred) },
                 });
@@ -119,26 +145,17 @@ export async function awardReferralCoins(payload: Payload, userId: number | stri
 
             // 5. Credit coins to referrer
             if (coinsForReferrer > 0) {
-                await creditCoins(payload, referredById, coinsForReferrer, 'referral-reward-given');
+                await creditCoins(payload, referredById, coinsForReferrer, 'referral-reward-given', orderId, collection);
                 await sendNotification({
                     payload,
                     userId: referredById,
-                    title: `🎉 You earned ${coinsForReferrer} WTCoins!`,
-                    body: `A friend you referred placed their first order. You've been rewarded ${coinsForReferrer} coins!`,
+                    title: `🎉 You earned ${coinsForReferrer} WTBeans!`,
+                    body: `A friend you referred placed their first order. You've been rewarded ${coinsForReferrer} beans!`,
                     notificationType: 'reward',
                     data: { type: 'referral_coins_given', amount: String(coinsForReferrer) },
                 });
             }
         }
-
-        // 6. Mark referral as rewarded
-        await payload.update({
-            collection: 'users',
-            id: userId,
-            data: { referralStatus: 'rewarded' } as any,
-            depth: 0,
-            overrideAccess: true,
-        });
 
         console.log(`✅ [awardReferralCoins] Referral rewarded: user ${userId} +${coinsForReferred} coins, referrer ${referredById} +${coinsForReferrer} coins`);
 
@@ -150,7 +167,14 @@ export async function awardReferralCoins(payload: Payload, userId: number | stri
 /**
  * Finds or creates a user-wt-coins document and adds coins to the balance.
  */
-async function creditCoins(payload: Payload, userId: number | string, amount: number, reason: string): Promise<void> {
+async function creditCoins(
+    payload: Payload,
+    userId: number | string,
+    amount: number,
+    reason: string,
+    orderId: string | number,
+    collection: string
+): Promise<void> {
     // Find existing balance doc
     const existing = await payload.find({
         collection: 'user-wt-coins',
@@ -165,19 +189,22 @@ async function creditCoins(payload: Payload, userId: number | string, amount: nu
 
     const historyEntry = {
         amount,
+        remainingAmount: amount,
         earnedAt: new Date().toISOString(),
         expiryDate: expiryDate.toISOString(),
+        linkedOrder: {
+            relationTo: collection,
+            value: orderId,
+        }
     };
 
     if (existing.docs.length > 0) {
         const doc = existing.docs[0];
-        const newBalance = (doc.totalBalance ?? 0) + amount;
 
         await payload.update({
             collection: 'user-wt-coins',
             id: doc.id,
             data: {
-                totalBalance: newBalance,
                 coinEarningHistory: [
                     ...(doc.coinEarningHistory ?? []),
                     historyEntry,
@@ -199,5 +226,5 @@ async function creditCoins(payload: Payload, userId: number | string, amount: nu
         });
     }
 
-    console.log(`[awardReferralCoins] Credited ${amount} coins to user ${userId} (${reason})`);
+    console.log(`[awardReferralCoins] Credited ${amount} coins to user ${userId} (${reason}) linked to order ${orderId}`);
 }

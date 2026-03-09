@@ -68,7 +68,7 @@ export const WebSubscription: CollectionConfig = {
                 const userId = typeof doc.user === 'object' ? doc.user?.id : doc.user;
                 if (isNowPaid && !wasPaid && userId) {
                     setImmediate(async () => {
-                        await awardReferralCoins(payload, userId);
+                        await awardReferralCoins(payload, userId, doc.id, 'web-subscription');
                     });
                 }
             }

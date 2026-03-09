@@ -104,14 +104,24 @@ export const WebOrders: CollectionConfig = {
                     paidStatus: 'completed',
                 });
 
-                // --- REFERRAL REWARD LOGIC ---
+                // --- REFERRAL & NOTIFICATION LOGIC ---
                 const isNowPaid = doc.paymentStatus === 'completed';
                 const wasPaid = previousDoc?.paymentStatus === 'completed';
+                const isNowDelivered = doc.deliveryStatus === 'delivered';
+                const wasDelivered = previousDoc?.deliveryStatus === 'delivered';
                 const userId = typeof doc.user === 'object' ? doc.user?.id : doc.user;
-                if (isNowPaid && !wasPaid && userId) {
+
+                if (userId) {
                     setImmediate(async () => {
-                        await awardReferralCoins(payload, userId);
-                        await createOrderPaidNotification(payload, userId, doc.id, 'store');
+                        // 1. Referral Reward: Trigger only on DELIVERY
+                        if (isNowDelivered && !wasDelivered && doc.paymentStatus === 'completed') {
+                            await awardReferralCoins(payload, userId, doc.id, 'web-orders');
+                        }
+
+                        // 2. Notification: Trigger on PAYMENT
+                        if (isNowPaid && !wasPaid) {
+                            await createOrderPaidNotification(payload, userId, doc.id, 'store');
+                        }
                     });
                 }
             }

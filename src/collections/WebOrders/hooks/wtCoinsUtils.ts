@@ -54,6 +54,7 @@ export async function awardWTCoins(
                     coinEarningHistory: [
                         {
                             amount: pointsToAward,
+                            remainingAmount: pointsToAward,
                             earnedAt: new Date().toISOString(),
                             linkedOrder: {
                                 relationTo: collection,
@@ -70,17 +71,30 @@ export async function awardWTCoins(
         } else {
             // Update existing record
             userWTCoins = userRewards.docs[0]
-            const newBalance = (userWTCoins.totalBalance || 0) + pointsToAward
+
+            // --- IDEMPOTENCY CHECK: Check if this order has already earned points ---
+            const history = userWTCoins.coinEarningHistory || [];
+            const alreadyAwarded = history.some((entry: any) =>
+                entry.linkedOrder &&
+                entry.linkedOrder.relationTo === collection &&
+                String(entry.linkedOrder.value) === String(orderId)
+            );
+
+            if (alreadyAwarded) {
+                console.log(`⚠️ Order ${orderId} from ${collection} already has points awarded in history. Skipping.`);
+                return;
+            }
 
             await payload.update({
                 collection: 'user-wt-coins',
                 id: userWTCoins.id,
                 data: {
-                    totalBalance: newBalance,
+                    // totalBalance will be recalculated by UserWTCoins afterChange hook
                     coinEarningHistory: [
-                        ...(userWTCoins.coinEarningHistory || []),
+                        ...history,
                         {
                             amount: pointsToAward,
+                            remainingAmount: pointsToAward,
                             earnedAt: new Date().toISOString(),
                             linkedOrder: {
                                 relationTo: collection,
@@ -92,7 +106,7 @@ export async function awardWTCoins(
                 },
                 overrideAccess: true,
             })
-            console.log(`✅ Awarded ${pointsToAward} WTCoins to user ${userId}. New balance: ${newBalance}`)
+            console.log(`✅ Awarded ${pointsToAward} WTCoins to user ${userId}. History updated.`)
         }
     } catch (error) {
         console.error('Error awarding WTCoins:', error)

@@ -182,7 +182,7 @@ Team White Mantis`.trim(),
 }
 
 /**
- * Deduct WTCoins from user's balance and log the transaction
+ * Deduct WTCoins from user's balance using FIFO logic and log the transaction
  */
 async function deductWTCoins(payload: any, userId: string | number, pointsUsed: number, orderId: string | number) {
     try {
@@ -198,9 +198,36 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
         }
 
         const userWTCoins = userRewards.docs[0]
-        const newBalance = Math.max(0, (userWTCoins.totalBalance || 0) - pointsUsed)
 
-        // Update balance and add to redemption history
+        // --- FIFO DEDUCTION LOGIC ---
+        let pointsToDeduct = pointsUsed;
+        const now = new Date();
+
+        // Sort history by earnedAt (oldest first) and filter for active ones (non-expired and remainingAmount > 0)
+        const earningHistory = [...(userWTCoins.coinEarningHistory || [])].sort((a: any, b: any) =>
+            new Date(a.earnedAt).getTime() - new Date(b.earnedAt).getTime()
+        );
+
+        const updatedHistory = earningHistory.map((entry: any) => {
+            const expiryDate = entry.expiryDate ? new Date(entry.expiryDate) : null;
+            const isExpired = expiryDate && expiryDate <= now;
+
+            if (pointsToDeduct > 0 && !isExpired && (entry.remainingAmount || 0) > 0) {
+                const deduction = Math.min(entry.remainingAmount, pointsToDeduct);
+                pointsToDeduct -= deduction;
+                return {
+                    ...entry,
+                    remainingAmount: entry.remainingAmount - deduction
+                };
+            }
+            return entry;
+        });
+
+        if (pointsToDeduct > 0) {
+            console.warn(`⚠️ User ${userId} requested to spend ${pointsUsed} but only ${pointsUsed - pointsToDeduct} were available/active.`);
+        }
+
+        // Properly format existing history to avoid structure issues
         const processedHistory = (userWTCoins.pointsRedemptionHistory || []).map((h: any) => ({
             redeemedPoints: h.redeemedPoints,
             associatedOrder: typeof h.associatedOrder === 'object'
@@ -212,11 +239,12 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
             collection: 'user-wt-coins',
             id: userWTCoins.id,
             data: {
-                totalBalance: newBalance,
+                // totalBalance will be recalculated by UserWTCoins afterChange hook
+                coinEarningHistory: updatedHistory,
                 pointsRedemptionHistory: [
                     ...processedHistory,
                     {
-                        redeemedPoints: pointsUsed,
+                        redeemedPoints: pointsUsed - pointsToDeduct,
                         associatedOrder: {
                             relationTo: 'web-orders',
                             value: orderId,
@@ -226,7 +254,7 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
             }
         })
 
-        console.log(`✅ Deducted ${pointsUsed} WTCoins from user ${userId}. New balance: ${newBalance}`)
+        console.log(`✅ Deducted ${pointsUsed - pointsToDeduct} WTCoins from user ${userId} using FIFO.`)
     } catch (error) {
         console.error('Error deducting WTCoins:', error)
         throw error

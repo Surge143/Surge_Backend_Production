@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload';
+import type { CollectionConfig, CollectionAfterChangeHook } from 'payload';
 import { validateFutureDate } from '@/utilities/validateFutureDate';
 
 export const UserWTCoins: CollectionConfig = {
@@ -35,7 +35,8 @@ export const UserWTCoins: CollectionConfig = {
             defaultValue: 0,
             min: 0,
             admin: {
-                description: "Current spendable balance",
+                description: "Current spendable balance (calculated from active earnings)",
+                readOnly: true,
             }
         },
         {
@@ -44,6 +45,12 @@ export const UserWTCoins: CollectionConfig = {
             admin: { description: "Log of all points earned" },
             fields: [
                 { name: 'amount', type: 'number', required: true },
+                {
+                    name: 'remainingAmount',
+                    type: 'number',
+                    required: true,
+                    admin: { description: "Points remaining from this earning that haven't expired or been used" }
+                },
                 { name: 'earnedAt', type: 'date', defaultValue: () => new Date() },
                 { name: 'linkedOrder', type: 'relationship', relationTo: ['web-orders', 'app-orders'] },
                 { name: 'expiryDate', type: 'date', validate: validateFutureDate },
@@ -64,5 +71,33 @@ export const UserWTCoins: CollectionConfig = {
             ]
         },
     ],
+    hooks: {
+        afterChange: [
+            async ({ doc, req: { payload } }) => {
+                // Calculate total balance from non-expired earnings with remaining points
+                const now = new Date();
+                const totalBalance = (doc.coinEarningHistory || []).reduce((acc: number, entry: any) => {
+                    const expiryDate = entry.expiryDate ? new Date(entry.expiryDate) : null;
+                    if (!expiryDate || expiryDate > now) {
+                        return acc + (entry.remainingAmount || 0);
+                    }
+                    return acc;
+                }, 0);
+
+                // Update totalBalance if it differs (to avoid infinite hook loops)
+                if (doc.totalBalance !== totalBalance) {
+                    await payload.update({
+                        collection: 'user-wt-coins',
+                        id: doc.id,
+                        data: {
+                            totalBalance: totalBalance,
+                        },
+                        // Important: override access and skip hooks to avoid recursion
+                        overrideAccess: true,
+                    });
+                }
+            }
+        ]
+    },
     timestamps: true,
 }

@@ -285,6 +285,7 @@ export async function POST(req: NextRequest) {
                     customer: stripeCustomerId,
                     // If user is logged in, enable saving for future use
                     setup_future_usage: user ? 'off_session' : undefined,
+                    automatic_payment_methods: { enabled: true },
                     metadata: {
                         db_order_id: orderDoc.id,
                         order_type: 'store',

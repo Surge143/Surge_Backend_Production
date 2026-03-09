@@ -334,18 +334,21 @@ export async function POST(req: NextRequest) {
                         ],
                         discounts: stripeCouponId ? [{ coupon: stripeCouponId }] : [],
                         payment_behavior: "default_incomplete",
-                        payment_settings: { save_default_payment_method: "on_subscription" },
+                        payment_settings: { 
+                            save_default_payment_method: "on_subscription",
+                            payment_method_types: null,
+                        },
                         metadata: {
                             db_subscription_id: subscriptionDoc.id,
                             guest_access_token: guestAccessToken || "", // Store token in Stripe metadata
                             order_type: 'subscription'
                         },
                         expand: [
-                            "latest_invoice.confirmation_secret"
+                            "latest_invoice.payment_intent"
                         ]
                     });
 
-                    const clientSecret = subscription.latest_invoice?.confirmation_secret?.client_secret;
+                    const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
 
                     const responseData: any = {
                         success: true,

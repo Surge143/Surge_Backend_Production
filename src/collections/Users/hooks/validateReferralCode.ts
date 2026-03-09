@@ -62,6 +62,14 @@ export const validateReferralCode: CollectionBeforeChangeHook = async ({ data, o
     }
 
     const referrer = referrerResult.docs[0];
+
+    // BLOCK: Self-referral
+    if (operation === 'update' && String(referrer.id) === String(originalDoc?.id)) {
+        throw new ValidationError({
+            errors: [{ message: 'You cannot use your own referral code.', path: 'referralCodeInput' }],
+        });
+    }
+
     console.log(`[validateReferralCode] Valid code. Referrer: ${referrer.id}`);
 
     // Link them up

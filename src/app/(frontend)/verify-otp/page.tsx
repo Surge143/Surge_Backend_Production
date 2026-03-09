@@ -81,8 +81,12 @@ function VerifyOTPContent() {
             const data = await response.json()
 
             if (response.ok) {
-                // Redirect to home or previous page
-                router.push('/')
+                // If it's a new user, send them to the "Almost There" screen
+                if (data.isNewUser) {
+                    router.push('/almost-there')
+                } else {
+                    router.push('/')
+                }
             } else {
                 setError(data.message || 'Invalid verification code')
                 setOtp(['', '', '', ''])

@@ -8,6 +8,7 @@ import { verifyChangeEmailApp } from './endpoints/verifyChangeEmailApp';
 import { verifyChangeEmailWeb } from './endpoints/verifyChangeEmailWeb';
 import { getAddresses, addAddress, updateAddress, deleteAddress } from './endpoints/manageAddresses';
 import { uploadProfileImage } from './endpoints/uploadProfileImage';
+import { validateReferral } from './endpoints/validateReferral';
 
 export const Users: CollectionConfig = {
     slug: 'users',
@@ -64,6 +65,11 @@ export const Users: CollectionConfig = {
             path: '/upload-profile-image',
             method: 'post',
             handler: uploadProfileImage,
+        },
+        {
+            path: '/validate-referral',
+            method: 'post',
+            handler: validateReferral,
         },
     ],
 

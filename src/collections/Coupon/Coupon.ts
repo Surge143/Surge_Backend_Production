@@ -192,6 +192,7 @@ export const Coupon: CollectionConfig = {
                                     admin: {
                                         width: '50%',
                                         description: 'Choose whether this coupon applies to the entire cart or only specific products.',
+                                        hidden: true,
                                     }
                                 },
                                 {
@@ -215,6 +216,7 @@ export const Coupon: CollectionConfig = {
                             admin: {
                                 condition: (_, { applicability } = {}) => applicability === 'products',
                                 description: 'Select the specific products or menu items this coupon applies to.',
+                                hidden: true,
                             },
                         },
                         {
