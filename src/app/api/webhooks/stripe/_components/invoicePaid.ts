@@ -228,7 +228,7 @@ export async function handleInvoicePaid(invoice: any) {
 async function deductWTCoins(payload: any, userId: string | number, pointsUsed: number, orderId: string | number) {
     const userRewards = await payload.find({
         collection: "user-wt-coins",
-        where: { user: { equals: userId } },
+        where: { user: { equals: Number(userId) } },
     })
 
     if (userRewards.docs.length === 0) return
@@ -264,12 +264,19 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
     }
 
     // Properly format existing history to avoid structure issues
-    const processedHistory = (record.pointsRedemptionHistory || []).map((h: any) => ({
-        redeemedPoints: h.redeemedPoints,
-        associatedOrder: typeof h.associatedOrder === "object"
-            ? { relationTo: h.associatedOrder.relationTo, value: h.associatedOrder.value }
-            : h.associatedOrder
-    }))
+    const processedHistory = (record.pointsRedemptionHistory || []).map((h: any) => {
+        const associatedValue = typeof h.associatedOrder === 'object'
+            ? (h.associatedOrder.value || h.associatedOrder.id)
+            : h.associatedOrder;
+
+        return {
+            redeemedPoints: h.redeemedPoints,
+            associatedOrder: {
+                relationTo: h.associatedOrder?.relationTo || 'web-orders',
+                value: associatedValue
+            }
+        };
+    })
 
     await payload.update({
         collection: "user-wt-coins",

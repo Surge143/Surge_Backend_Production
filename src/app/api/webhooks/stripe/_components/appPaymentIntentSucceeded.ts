@@ -186,7 +186,7 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
     try {
         const userRewards = await payload.find({
             collection: 'user-wt-coins',
-            where: { user: { equals: userId } },
+            where: { user: { equals: Number(userId) } },
         })
 
         if (userRewards.docs.length === 0) return
@@ -221,12 +221,19 @@ async function deductWTCoins(payload: any, userId: string | number, pointsUsed: 
             console.warn(`⚠️ User ${userId} requested to spend ${pointsUsed} but only ${pointsUsed - pointsToDeduct} were available/active.`);
         }
 
-        const processedHistory = (userWTCoins.pointsRedemptionHistory || []).map((h: any) => ({
-            redeemedPoints: h.redeemedPoints,
-            associatedOrder: typeof h.associatedOrder === 'object' && h.associatedOrder.relationTo && h.associatedOrder.value
-                ? { relationTo: h.associatedOrder.relationTo, value: h.associatedOrder.value }
-                : h.associatedOrder // Keep as is if not a full relation object
-        }));
+        const processedHistory = (userWTCoins.pointsRedemptionHistory || []).map((h: any) => {
+            const associatedValue = typeof h.associatedOrder === 'object'
+                ? (h.associatedOrder.value || h.associatedOrder.id)
+                : h.associatedOrder;
+
+            return {
+                redeemedPoints: h.redeemedPoints,
+                associatedOrder: {
+                    relationTo: h.associatedOrder?.relationTo || 'app-orders',
+                    value: associatedValue
+                }
+            };
+        });
 
         await payload.update({
             collection: 'user-wt-coins',

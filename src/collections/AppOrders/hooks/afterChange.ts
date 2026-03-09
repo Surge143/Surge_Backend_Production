@@ -30,6 +30,10 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
             await createOrderPaidNotification(payload, userId, doc.id, 'cafe');
         }
 
+        if (isNowPaid && !wasPaid && userId) {
+            await awardReferralCoins(payload, userId, doc.id, 'app-orders');
+        }
+
         // --- ORDER STATUS: completed notification + stamp accrual ---
         const orderStatus = doc.orderType === 'dine-in' ? doc.appOrderStatusDine : doc.appOrderStatus;
         const prevOrderStatus = previousDoc?.orderType === 'dine-in' ? previousDoc?.appOrderStatusDine : previousDoc?.appOrderStatus;
@@ -37,10 +41,6 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
         const becameEligible = (orderStatus === 'completed' && isNowPaid) && (prevOrderStatus !== 'completed' || !wasPaid);
 
         if (becameEligible && userId) {
-            await awardReferralCoins(payload, userId, doc.id, 'app-orders');
-        }
-
-        if (orderStatus === 'completed' && prevOrderStatus !== 'completed') {
             // Notify user their order is ready
             if (userId) {
                 await createOrderCompletedNotification(payload, userId, doc.id, 'cafe');

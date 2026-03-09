@@ -52,7 +52,7 @@ export const UserWTCoins: CollectionConfig = {
                     admin: { description: "Points remaining from this earning that haven't expired or been used" }
                 },
                 { name: 'earnedAt', type: 'date', defaultValue: () => new Date() },
-                { name: 'linkedOrder', type: 'relationship', relationTo: ['web-orders', 'app-orders'] },
+                { name: 'linkedOrder', type: 'relationship', relationTo: ['web-orders', 'app-orders', 'web-subscription'] },
                 { name: 'expiryDate', type: 'date', validate: validateFutureDate },
             ]
         },
@@ -65,7 +65,7 @@ export const UserWTCoins: CollectionConfig = {
                 {
                     name: 'associatedOrder',
                     type: 'relationship',
-                    relationTo: ['web-orders', 'app-orders'],
+                    relationTo: ['web-orders', 'app-orders', 'web-subscription'],
                     required: true,
                 },
             ]
