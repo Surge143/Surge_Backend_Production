@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import styles from './almost-there.module.css'
+import Link from 'next/link'
 
 export default function AlmostTherePage() {
     const [firstName, setFirstName] = useState('')
@@ -157,7 +158,7 @@ export default function AlmostTherePage() {
                 </form>
 
                 <p className={styles.footer}>
-                    Want to skip? <a href="/">Go to Home</a>
+                    Want to skip? <Link href="/">Go to Home</Link>      
                 </p>
             </div>
         </div>
