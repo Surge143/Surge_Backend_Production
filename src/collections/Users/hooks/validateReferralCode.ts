@@ -12,10 +12,12 @@ export const validateReferralCode: CollectionBeforeChangeHook = async ({ data, o
         return data;
     }
 
-    // --- NEW: BLOCK IF PREVIOUS ORDERS EXIST ---
+    // --- NEW: BLOCK IF PREVIOUS ORDERS EXIST (WITH 24H GRACE PERIOD) ---
     const checkCollections = ['web-orders', 'app-orders', 'web-subscription'];
     const email = data?.email || originalDoc?.email;
     const userId = originalDoc?.id;
+    const now = new Date().getTime();
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
     for (const slug of checkCollections) {
         const orderQuery: any = {
@@ -28,12 +30,18 @@ export const validateReferralCode: CollectionBeforeChangeHook = async ({ data, o
             const existingOrders = await payload.find({
                 collection: slug as any,
                 where: orderQuery,
-                limit: 1,
+                limit: 10, // Check a few orders
                 depth: 0,
                 overrideAccess: true,
+                sort: 'createdAt', // Oldest first
             });
 
-            if (existingOrders.docs.length > 0) {
+            const trulyOldOrder = existingOrders.docs.find(order => {
+                const orderCreatedAt = new Date(order.createdAt).getTime();
+                return (now - orderCreatedAt) > TWENTY_FOUR_HOURS;
+            });
+
+            if (trulyOldOrder) {
                 throw new ValidationError({
                     errors: [{ message: 'Referral codes can only be applied to new accounts with no previous orders.', path: 'referralCodeInput' }],
                 });
@@ -53,9 +61,8 @@ export const validateReferralCode: CollectionBeforeChangeHook = async ({ data, o
 
         // LOCK: Only allow referral within 24 hours of account creation
         if (originalDoc?.createdAt) {
-            const createdAt = new Date(originalDoc.createdAt).getTime();
-            const now = new Date().getTime();
-            const hoursSinceCreation = (now - createdAt) / (1000 * 60 * 60);
+            const userCreatedAt = new Date(originalDoc.createdAt).getTime();
+            const hoursSinceCreation = (now - userCreatedAt) / (1000 * 60 * 60);
 
             if (hoursSinceCreation > 24) {
                 throw new ValidationError({
