@@ -3,9 +3,10 @@ import styles from './page.module.css'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 
-export default async function SuccessPage({ searchParams }: { searchParams: { orderId?: string, subscriptionId?: string, token?: string } }) {
-    const orderId = searchParams.orderId || searchParams.subscriptionId;
-    const { token } = searchParams;
+export default async function SuccessPage({ searchParams }: { searchParams: Promise<{ orderId?: string, subscriptionId?: string, token?: string }> }) {
+    const resolvedSearchParams = await searchParams;
+    const orderId = resolvedSearchParams.orderId || resolvedSearchParams.subscriptionId;
+    const { token } = resolvedSearchParams;
     let order: any = null;
 
     if (orderId) {
