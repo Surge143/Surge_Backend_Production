@@ -105,6 +105,7 @@ export async function POST(req: NextRequest) {
                 message: isNewUser ? 'User registered and logged in successfully' : 'User logged in successfully',
                 user: loginResult.user,
                 isNewUser,
+                token
             }, { status: 200 });
 
             if (token) {
