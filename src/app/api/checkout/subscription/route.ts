@@ -347,7 +347,16 @@ export async function POST(req: NextRequest) {
                         ]
                     });
 
+                    console.log("✅ Subscription created successfully", JSON.stringify(subscription, null, 10));
+
                     const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
+
+                    console.log("✅ Subscription created successfully", {
+                        stripeSubscriptionId: subscription.id,
+                        dbSubscriptionId: subscriptionDoc.id,
+                        clientSecret,
+                    });
+
 
                     const responseData: any = {
                         success: true,
