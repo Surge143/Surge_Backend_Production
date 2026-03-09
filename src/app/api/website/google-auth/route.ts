@@ -115,12 +115,10 @@ export async function POST(req: NextRequest) {
                 });
             }
 
-            console.timeEnd(timerLabel);
             return res;
 
         } catch (error: any) {
             console.error('[GoogleAuth] Token verification or login failed:', error);
-            console.timeEnd(timerLabel);
             return NextResponse.json({ error: error.message || 'Login failed' }, { status: 500 })
         }
 

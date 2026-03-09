@@ -21,7 +21,7 @@ const CORS_HEADERS = {
     'Access-Control-Allow-Credentials': 'true',
 }
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
     const origin = req.headers.get('origin') ?? ''
     const isAllowed = ALLOWED_ORIGINS.includes(origin)
 
@@ -36,11 +36,19 @@ export function middleware(req: NextRequest) {
     }
 
     // ── Normal request ───────────────────────────────────────────────────────
-    const res = NextResponse.next()
+    const res = NextResponse.next()  
+
     if (isAllowed) {
         res.headers.set('Access-Control-Allow-Origin', origin)
     }
     Object.entries(CORS_HEADERS).forEach(([k, v]) => res.headers.set(k, v))
+
+    // ✅ Add this — preserve set-cookie from route handlers
+    const setCookie = res.headers.get('set-cookie')
+    if (setCookie) {
+        res.headers.set('set-cookie', setCookie)
+    }
+
     return res
 }
 

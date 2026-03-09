@@ -54,7 +54,39 @@ export async function awardReferralCoins(
             return;
         }
 
-        // 2. ATOMIC LOCK: Update status to 'rewarded' only if it is still 'pending'.
+        // 2. SAFETY CHECK: Ensure no previous orders exist for this EMAIL across all collections.
+        // This is a backup in case the referral code was somehow applied to an account with a reused email.
+        const userEmail = user.email;
+        if (userEmail) {
+            const checkCollections = ['web-orders', 'app-orders', 'web-subscription'];
+            for (const slug of checkCollections) {
+                const existingOrders = await payload.find({
+                    collection: slug as any,
+                    where: {
+                        and: [
+                            { email: { equals: userEmail } },
+                            { id: { not_equals: orderId } } // Exclude current order
+                        ]
+                    },
+                    limit: 1,
+                    depth: 0,
+                    overrideAccess: true,
+                });
+
+                if (existingOrders.docs.length > 0) {
+                    console.log(`[awardReferralCoins] Previous order found for email ${userEmail} in ${slug}. Skipping reward.`);
+                    await payload.update({
+                        collection: 'users',
+                        id: userId,
+                        data: { referralStatus: 'not_eligible' } as any,
+                        overrideAccess: true,
+                    });
+                    return;
+                }
+            }
+        }
+
+        // 3. ATOMIC LOCK: Update status to 'rewarded' only if it is still 'pending'.
         // This prevents a race condition where two hooks fire at the same time.
         const lockResult = await payload.update({
             collection: 'users',

@@ -15,25 +15,20 @@ export const validateReferralCode: CollectionBeforeChangeHook = async ({ data, o
     // --- NEW: BLOCK IF PREVIOUS ORDERS EXIST (WITH 24H GRACE PERIOD) ---
     const checkCollections = ['web-orders', 'app-orders', 'web-subscription'];
     const email = data?.email || originalDoc?.email;
-    const userId = originalDoc?.id;
     const now = new Date().getTime();
     const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
-    for (const slug of checkCollections) {
-        const orderQuery: any = {
-            or: []
-        };
-        if (email) orderQuery.or.push({ email: { equals: email } });
-        if (userId) orderQuery.or.push({ user: { equals: userId } });
-
-        if (orderQuery.or.length > 0) {
+    if (!email) {
+        console.warn('[validateReferralCode] No email found for validation. Skipping previous order check.');
+    } else {
+        for (const slug of checkCollections) {
             const existingOrders = await payload.find({
                 collection: slug as any,
-                where: orderQuery,
-                limit: 10, // Check a few orders
+                where: { email: { equals: email } },
+                limit: 10,
                 depth: 0,
                 overrideAccess: true,
-                sort: 'createdAt', // Oldest first
+                sort: 'createdAt',
             });
 
             const trulyOldOrder = existingOrders.docs.find(order => {
@@ -99,8 +94,11 @@ export const validateReferralCode: CollectionBeforeChangeHook = async ({ data, o
 
     const referrer = referrerResult.docs[0];
 
-    // BLOCK: Self-referral
-    if (operation === 'update' && String(referrer.id) === String(originalDoc?.id)) {
+    // BLOCK: Self-referral (Check by both ID and Email to be sure)
+    const isSelfById = operation === 'update' && String(referrer.id) === String(originalDoc?.id);
+    const isSelfByEmail = email && referrer.email && email.toLowerCase() === referrer.email.toLowerCase();
+
+    if (isSelfById || isSelfByEmail) {
         throw new ValidationError({
             errors: [{ message: 'You cannot use your own referral code.', path: 'referralCodeInput' }],
         });
