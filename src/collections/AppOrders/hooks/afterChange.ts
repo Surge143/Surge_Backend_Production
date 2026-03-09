@@ -34,10 +34,15 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
         const orderStatus = doc.orderType === 'dine-in' ? doc.appOrderStatusDine : doc.appOrderStatus;
         const prevOrderStatus = previousDoc?.orderType === 'dine-in' ? previousDoc?.appOrderStatusDine : previousDoc?.appOrderStatus;
 
+        const becameEligible = (orderStatus === 'completed' && isNowPaid) && (prevOrderStatus !== 'completed' || !wasPaid);
+
+        if (becameEligible && userId) {
+            await awardReferralCoins(payload, userId, doc.id, 'app-orders');
+        }
+
         if (orderStatus === 'completed' && prevOrderStatus !== 'completed') {
             // Notify user their order is ready
             if (userId) {
-                await awardReferralCoins(payload, userId, doc.id, 'app-orders');
                 await createOrderCompletedNotification(payload, userId, doc.id, 'cafe');
             }
         }
@@ -54,6 +59,16 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
             });
 
             if (latestDoc && !(latestDoc as any).isStampsAwarded) {
+                // --- NEW: ONLY ACCRUE IF COMPLETED AND PAID ---
+                const isPaid = latestDoc.paymentStatus === 'paid';
+                const currentStatus = latestDoc.orderType === 'dine-in' ? latestDoc.appOrderStatusDine : latestDoc.appOrderStatus;
+                const isCompleted = currentStatus === 'completed';
+
+                if (!isPaid || !isCompleted) {
+                    console.log(`[afterChange] Order ${doc.id} not yet fully paid and completed (Status: ${currentStatus}, Paid: ${isPaid}). Skipping stamp accrual for now.`);
+                    return;
+                }
+
                 const coinsUsed = (latestDoc as any).coinsUsed || 0;
                 const wtCoinsDiscount = (latestDoc as any).financials?.wtCoinsDiscount || 0;
 

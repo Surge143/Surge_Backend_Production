@@ -17,7 +17,13 @@ export async function POST(req: NextRequest) {
             headers: await getNextHeaders(),
         })
 
-        const body = await req.json();
+        let body: any;
+        try {
+            body = await req.json();
+        } catch (e) {
+            return NextResponse.json({ error: 'Invalid or missing request body' }, { status: 400 });
+        }
+
         const {
             shippingAddress,
             billingAddress,
@@ -27,7 +33,7 @@ export async function POST(req: NextRequest) {
             products, // Expect array of { productId, variantId, quantity }
             useWTCoins,
             appliedCouponCode,
-        } = body
+        } = body || {};
 
         // --- DATA NORMALIZATION ---
         // Handle legacy 'phone' key from frontend/cache

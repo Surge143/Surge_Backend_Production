@@ -20,7 +20,13 @@ export const POST = async (req: NextRequest) => {
             return NextResponse.json({ error: 'Unauthorized. Please login to place an order.' }, { status: 401 });
         }
 
-        const body = await req.json();
+        let body: any;
+        try {
+            body = await req.json();
+        } catch (e) {
+            return NextResponse.json({ error: 'Invalid or missing request body' }, { status: 400 });
+        }
+
         const {
             paymentMethodId,
             useWTCoins,
@@ -30,7 +36,7 @@ export const POST = async (req: NextRequest) => {
             timeSelection,
             stampRewards,
             selectedSlot,
-        } = body
+        } = body || {};
         let { shopId, selectedBarista, menuItems } = body
 
         // --- ID TYPE CONVERSION (Ensure numeric IDs are numbers, not strings) ---

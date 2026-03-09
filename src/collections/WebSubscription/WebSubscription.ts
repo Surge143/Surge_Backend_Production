@@ -1,7 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { linkGuestOrderToUser } from "../WebOrders/hooks/linkGuestToUser";
 import { refundHandler } from "./endpoints/refundHandler";
-import { awardReferralCoins } from "@/utilities/awardReferralCoins";
 
 export const WebSubscription: CollectionConfig = {
     slug: 'web-subscription',
@@ -61,16 +60,6 @@ export const WebSubscription: CollectionConfig = {
                     collection: 'web-subscription',
                     paidStatus: 'completed',
                 });
-
-                // --- REFERRAL REWARD LOGIC ---
-                const isNowPaid = doc.paymentStatus === 'completed';
-                const wasPaid = previousDoc?.paymentStatus === 'completed';
-                const userId = typeof doc.user === 'object' ? doc.user?.id : doc.user;
-                if (isNowPaid && !wasPaid && userId) {
-                    setImmediate(async () => {
-                        await awardReferralCoins(payload, userId, doc.id, 'web-subscription');
-                    });
-                }
             }
         ],
     },

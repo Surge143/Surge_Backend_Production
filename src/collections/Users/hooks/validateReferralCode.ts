@@ -12,6 +12,35 @@ export const validateReferralCode: CollectionBeforeChangeHook = async ({ data, o
         return data;
     }
 
+    // --- NEW: BLOCK IF PREVIOUS ORDERS EXIST ---
+    const checkCollections = ['web-orders', 'app-orders', 'web-subscription'];
+    const email = data?.email || originalDoc?.email;
+    const userId = originalDoc?.id;
+
+    for (const slug of checkCollections) {
+        const orderQuery: any = {
+            or: []
+        };
+        if (email) orderQuery.or.push({ email: { equals: email } });
+        if (userId) orderQuery.or.push({ user: { equals: userId } });
+
+        if (orderQuery.or.length > 0) {
+            const existingOrders = await payload.find({
+                collection: slug as any,
+                where: orderQuery,
+                limit: 1,
+                depth: 0,
+                overrideAccess: true,
+            });
+
+            if (existingOrders.docs.length > 0) {
+                throw new ValidationError({
+                    errors: [{ message: 'Referral codes can only be applied to new accounts with no previous orders.', path: 'referralCodeInput' }],
+                });
+            }
+        }
+    }
+
     // For updates (Almost There screen), check if user is eligible
     if (operation === 'update') {
         const currentStatus = originalDoc?.referralStatus;

@@ -60,10 +60,11 @@ export const WebOrders: CollectionConfig = {
                     // Award WTCoins when delivery status changes to 'delivered'
                     const isNowDelivered = data.deliveryStatus === 'delivered'
                     const wasDelivered = originalDoc?.deliveryStatus === 'delivered'
+                    const isPaid = (data.paymentStatus || originalDoc?.paymentStatus) === 'completed'
                     const alreadyAwarded = originalDoc?.wtCoinsAwarded
                     const hasUser = data.user || originalDoc?.user
 
-                    if (isNowDelivered && !wasDelivered && hasUser && !alreadyAwarded) {
+                    if (isNowDelivered && !wasDelivered && isPaid && hasUser && !alreadyAwarded) {
                         try {
                             const userId = typeof (data.user || originalDoc.user) === 'object'
                                 ? (data.user || originalDoc.user).id
@@ -113,14 +114,45 @@ export const WebOrders: CollectionConfig = {
 
                 if (userId) {
                     setImmediate(async () => {
-                        // 1. Referral Reward: Trigger only on DELIVERY
-                        if (isNowDelivered && !wasDelivered && doc.paymentStatus === 'completed') {
+                        // 1. Referral Reward: Trigger when BOTH delivered AND paid
+                        const isDelivered = doc.deliveryStatus === 'delivered';
+                        const isPaid = doc.paymentStatus === 'completed';
+
+                        // Trigger if it just BECAME fully eligible (either just paid or just delivered)
+                        const wasDelivered = previousDoc?.deliveryStatus === 'delivered';
+                        const wasPaid = previousDoc?.paymentStatus === 'completed';
+
+                        const becameEligible = (isDelivered && isPaid) && (!wasDelivered || !wasPaid);
+
+                        if (becameEligible) {
                             await awardReferralCoins(payload, userId, doc.id, 'web-orders');
                         }
 
                         // 2. Notification: Trigger on PAYMENT
                         if (isNowPaid && !wasPaid) {
                             await createOrderPaidNotification(payload, userId, doc.id, 'store');
+
+                            // 3. Award WTCoins if already delivered but not yet awarded (Payment after Delivery)
+                            if (doc.deliveryStatus === 'delivered' && !doc.wtCoinsAwarded) {
+                                try {
+                                    const totalAmount = doc.financials?.total || 0;
+                                    const pointsUsed = doc.pointsUsed || 0;
+                                    const wtCoinsDiscount = pointsUsed ? await convertPointsToAED(payload, pointsUsed) : 0;
+                                    const realMoneySpent = Math.max(0, totalAmount - wtCoinsDiscount);
+
+                                    if (realMoneySpent > 0) {
+                                        await awardWTCoins(payload, userId, realMoneySpent, doc.id);
+                                        await payload.update({
+                                            collection: 'web-orders',
+                                            id: doc.id,
+                                            data: { wtCoinsAwarded: true },
+                                        });
+                                        console.log(`✅ Awarded WTCoins for order ${doc.id} in afterChange (Payment after Delivery)`);
+                                    }
+                                } catch (error) {
+                                    console.error('Error awarding WTCoins on payment after delivery:', error);
+                                }
+                            }
                         }
                     });
                 }

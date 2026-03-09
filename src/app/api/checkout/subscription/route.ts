@@ -334,7 +334,7 @@ export async function POST(req: NextRequest) {
                         ],
                         discounts: stripeCouponId ? [{ coupon: stripeCouponId }] : [],
                         payment_behavior: "default_incomplete",
-                        payment_settings: { 
+                        payment_settings: {
                             save_default_payment_method: "on_subscription",
                         },
                         metadata: {
