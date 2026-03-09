@@ -23,7 +23,50 @@ export const WebOrders: CollectionConfig = {
         },
     ],
     access: {
-        read: () => true,
+        read: async ({ req, id }) => {
+            const { user, payload, query } = req
+            // Admins and shop-managers always allowed
+            if (user && (
+                user.role === 'admin' ||
+                user.role === 'super-admin' ||
+                user.role === 'shop-manager'
+            )) return true
+
+            // If an ID is provided, check ownership or token
+            if (id) {
+                try {
+                    const order = await payload.findByID({
+                        collection: 'web-orders',
+                        id,
+                        depth: 0,
+                        overrideAccess: true,
+                    })
+
+                    // Allow if owner
+                    const orderUserId = typeof order.user === 'object' ? order.user?.id : order.user
+                    if (user && String(orderUserId) === String(user.id)) return true
+
+                    // Allow if guest token matches
+                    const token = query?.token || req.headers?.get?.('x-guest-token')
+                    if (order.customerType === 'guest' && order.guestAccessToken && token === order.guestAccessToken) {
+                        return true
+                    }
+                } catch {
+                    return false
+                }
+            }
+
+            // If no ID or not authorized yet, restrict to user's own orders (for listing)
+            if (user) {
+                return {
+                    user: {
+                        equals: user.id,
+                    },
+                }
+            }
+
+            return false
+        },
         create: () => true,
         update: async ({ req: { user, payload }, id }) => {
             if (!user) return false
@@ -580,5 +623,12 @@ export const WebOrders: CollectionConfig = {
 
             },
         },
+        {
+            name: 'guestAccessToken',
+            type: 'text',
+            admin: {
+                hidden: true,
+            },
+        }
     ],
 };

@@ -6,6 +6,7 @@ import { calculateWTCoinsDiscount } from '../_components/validateAndCalculateWTC
 import { stripe } from "@/lib/stripe";
 import { validateAppCoupon } from '@/collections/Shop/endpoints/coupons/components/shopCouponUtils';
 import { calculateCouponDiscount } from '../_components/calculateCouponDiscount';
+import crypto from 'crypto';
 
 export const POST = async (req: NextRequest) => {
     try {
@@ -358,7 +359,6 @@ export const POST = async (req: NextRequest) => {
             depth: 0,
         });
 
-        // --- CREATE ORDER ---
         const orderData: any = {
             user: user?.id,
             email: user.email,

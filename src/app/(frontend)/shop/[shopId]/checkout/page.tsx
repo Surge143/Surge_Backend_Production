@@ -293,18 +293,20 @@ function ShopCheckoutForm() {
             const data = await res.json()
             if (!res.ok) throw new Error(data.error || 'Checkout failed')
 
-            console.log('Success:', data)
+            const { clientSecret, dbOrderId, guestAccessToken } = data
 
-            if (data.clientSecret) {
-                const { error: confirmError } = await stripe.confirmPayment({
-                    elements,
-                    clientSecret: data.clientSecret,
-                    confirmParams: {
-                        return_url: `${window.location.origin}/checkout/success?orderId=${data.dbOrderId}`,
-                    },
-                })
-                if (confirmError) throw new Error(confirmError.message)
-            }
+            // 3. Confirm the payment with Stripe
+            // This will handle 3DS, saved cards, and redirect to return_url
+            const { error: confirmError } = await stripe.confirmPayment({
+                elements,
+                clientSecret,
+                confirmParams: {
+                    return_url: `${window.location.origin}/checkout/success?orderId=${dbOrderId}${guestAccessToken ? `&token=${guestAccessToken}` : ''}`,
+                },
+            })
+            // Kind of duplicate of what I did for the non-shop checkout page.
+            if (confirmError) throw new Error(confirmError.message)
+
 
         } catch (error: any) {
             alert('Error: ' + error.message)

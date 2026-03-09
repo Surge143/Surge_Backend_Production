@@ -1211,6 +1211,10 @@ export interface UserWtCoin {
           | ({
               relationTo: 'app-orders';
               value: number | AppOrder;
+            } | null)
+          | ({
+              relationTo: 'web-subscription';
+              value: number | WebSubscription;
             } | null);
         expiryDate?: string | null;
         id?: string | null;
@@ -1230,6 +1234,10 @@ export interface UserWtCoin {
           | {
               relationTo: 'app-orders';
               value: number | AppOrder;
+            }
+          | {
+              relationTo: 'web-subscription';
+              value: number | WebSubscription;
             };
         id?: string | null;
       }[]
@@ -1340,6 +1348,7 @@ export interface WebOrder {
     | number
     | boolean
     | null;
+  guestAccessToken?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2793,6 +2802,7 @@ export interface WebOrdersSelect<T extends boolean = true> {
       };
   wtCoinsAwarded?: T;
   stripeData?: T;
+  guestAccessToken?: T;
   updatedAt?: T;
   createdAt?: T;
 }

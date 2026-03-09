@@ -83,7 +83,7 @@ function CheckoutFormUI({
             const data = await response.json()
             if (!response.ok) throw new Error(data.error || 'Checkout failed')
 
-            const { clientSecret, dbOrderId } = data
+            const { clientSecret, dbOrderId, guestAccessToken } = data
 
             // 3. Confirm the payment with Stripe
             // This will handle 3DS, saved cards, and redirect to return_url
@@ -91,7 +91,7 @@ function CheckoutFormUI({
                 elements,
                 clientSecret,
                 confirmParams: {
-                    return_url: `${window.location.origin}/checkout/success?orderId=${dbOrderId}`,
+                    return_url: `${window.location.origin}/checkout/success?orderId=${dbOrderId}${guestAccessToken ? `&token=${guestAccessToken}` : ''}`,
                 },
             })
 

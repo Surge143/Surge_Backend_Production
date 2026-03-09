@@ -195,14 +195,14 @@ function CheckoutSubscriptionForm() {
             const data = await response.json()
             if (!response.ok) throw new Error(data.error || 'Checkout failed')
 
-            const { clientSecret, dbSubscriptionId } = data
+            const { clientSecret, dbSubscriptionId, guestAccessToken } = data
 
             // Confirm payment with Stripe (handles 3DS, saved cards, and redirect)
             const { error: confirmError } = await stripe.confirmPayment({
                 elements,
                 clientSecret,
                 confirmParams: {
-                    return_url: `${window.location.origin}/checkout/success?subscriptionId=${dbSubscriptionId}`,
+                    return_url: `${window.location.origin}/checkout/success?orderId=${dbSubscriptionId}${guestAccessToken ? `&token=${guestAccessToken}` : ''}`,
                 },
             })
 

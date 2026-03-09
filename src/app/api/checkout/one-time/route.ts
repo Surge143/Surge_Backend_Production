@@ -7,6 +7,7 @@ import { stripe } from "@/lib/stripe";
 import { calculateTaxAndShipping } from '../_components/calculateTaxAndShipping';
 import { validateCoupon } from '@/collections/Coupon/endpoints/couponUtils';
 import { calculateCouponDiscount } from '../_components/calculateCouponDiscount';
+import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
     try {
@@ -216,6 +217,11 @@ export async function POST(req: NextRequest) {
         const finalTotal = totalWithShipping + taxAmount;
 
         // --- CREATE PAYLOAD ORDER ---
+        let guestAccessToken: string | null = null;
+        if (!user) {
+            guestAccessToken = crypto.randomBytes(32).toString('hex');
+        }
+
         try {
             const orderDoc = await (payload as any).create({
                 collection: 'web-orders',
@@ -231,6 +237,7 @@ export async function POST(req: NextRequest) {
                     paymentStatus: 'pending',
                     couponCode: couponId as any,
                     pointsUsed: wtPointsUsed,
+                    guestAccessToken: guestAccessToken,
                     financials: {
                         subtotal,
                         couponDiscount,
@@ -242,8 +249,12 @@ export async function POST(req: NextRequest) {
                     },
                 },
                 depth: 0,
-                select: { id: true },
+                select: { id: true, guestAccessToken: true },
             });
+
+            if (orderDoc.guestAccessToken) {
+                guestAccessToken = orderDoc.guestAccessToken;
+            }
 
             // --- CREATE STRIPE PAYMENT INTENT ---
             try {
@@ -303,6 +314,7 @@ export async function POST(req: NextRequest) {
                     message: "Order created successfully",
                     clientSecret: paymentIntent.client_secret,
                     dbOrderId: orderDoc.id,
+                    guestAccessToken,
                     stripeCustomerId,
                 }, { status: 200 });
 
