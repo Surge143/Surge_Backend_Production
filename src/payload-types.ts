@@ -1189,7 +1189,7 @@ export interface UserWtCoin {
    */
   user: number | User;
   /**
-   * Current spendable balance
+   * Current spendable balance (calculated from active earnings)
    */
   totalBalance?: number | null;
   /**
@@ -1198,6 +1198,10 @@ export interface UserWtCoin {
   coinEarningHistory?:
     | {
         amount: number;
+        /**
+         * Points remaining from this earning that haven't expired or been used
+         */
+        remainingAmount: number;
         earnedAt?: string | null;
         linkedOrder?:
           | ({
@@ -2707,6 +2711,7 @@ export interface UserWtCoinsSelect<T extends boolean = true> {
     | T
     | {
         amount?: T;
+        remainingAmount?: T;
         earnedAt?: T;
         linkedOrder?: T;
         expiryDate?: T;

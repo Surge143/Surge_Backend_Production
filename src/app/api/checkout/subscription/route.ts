@@ -336,7 +336,6 @@ export async function POST(req: NextRequest) {
                         payment_behavior: "default_incomplete",
                         payment_settings: { 
                             save_default_payment_method: "on_subscription",
-                            payment_method_types: null,
                         },
                         metadata: {
                             db_subscription_id: subscriptionDoc.id,
