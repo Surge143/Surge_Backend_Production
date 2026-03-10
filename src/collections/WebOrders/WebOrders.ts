@@ -463,7 +463,7 @@ export const WebOrders: CollectionConfig = {
                                     options: [
                                         { label: 'Placed', value: 'placed' },
                                         { label: 'Shipped', value: 'shipped' },
-                                        { label: 'Delivered', value: 'delivered' },
+                                        { label: 'Completed', value: 'delivered' },
                                         { label: 'Cancelled', value: 'cancelled' },
                                         { label: 'Refund Initiated', value: 'refund-initiated' },
                                         { label: 'Refunded', value: 'refunded' },

@@ -18,6 +18,33 @@ export const UserWTCoins: CollectionConfig = {
         update: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
         delete: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
     },
+    hooks: {
+        beforeChange: [
+            ({ data }) => {
+                const now = new Date();
+
+                // 1. Ensure we have the history array to work with
+                const earnings = data.coinEarningHistory || [];
+
+                // 2. Calculate the sum of remainingAmount for non-expired entries
+                const newTotal = earnings.reduce((acc: number, entry: any) => {
+                    const expiryDate = entry.expiryDate ? new Date(entry.expiryDate) : null;
+
+                    // Only add if not expired (or no expiry set) and has remaining points
+                    if (expiryDate && expiryDate > now) {
+                        return acc + (Number(entry.remainingAmount) || 0);
+                    }
+                    return acc;
+                }, 0);
+
+                // 3. Directly modify the data object before it hits the DB
+                return {
+                    ...data,
+                    totalBalance: newTotal,
+                };
+            },
+        ],
+    },
     fields: [
         {
             name: 'user',

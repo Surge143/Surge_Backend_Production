@@ -51,12 +51,7 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
         try {
             // Refetch the doc to get the latest state (especially isStampsAwarded)
             // this prevents double-awarding if multiple status updates happen rapidly
-            const latestDoc = await payload.findByID({
-                collection: 'app-orders',
-                id: doc.id,
-                depth: 0,
-                overrideAccess: true,
-            });
+            const latestDoc = doc;
 
             if (latestDoc && !(latestDoc as any).isStampsAwarded) {
                 // --- NEW: ONLY ACCRUE IF COMPLETED, PAID, AND ACCEPTED ---
