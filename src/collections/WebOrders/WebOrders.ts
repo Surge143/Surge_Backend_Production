@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { awardWTCoins, convertPointsToAED } from "./hooks/wtCoinsUtils";
+import { awardWTCoins, convertPointsToAED } from "@/utilities/wtCoins";
 import { refundHandler } from "./endpoints/refundHandler";
 import { linkGuestOrderToUser } from "./hooks/linkGuestToUser";
 import { awardReferralCoins } from "@/utilities/awardReferralCoins";

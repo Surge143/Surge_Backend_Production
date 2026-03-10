@@ -2,6 +2,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { sendEmail } from "@/lib/emailConfig";
 import { orderConfirmationEmailTemplate } from "@/lib/emailTemplate";
+import { deductWTCoins } from '@/utilities/wtCoins';
 
 export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
     console.log('🏁 Starting handleAppPaymentIntentSucceeded for:', paymentIntent.id)
@@ -43,7 +44,7 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
             try {
                 // DEDUCT WTCOINS IF USED (coinsUsed in AppOrders)
                 if (order.coinsUsed && order.coinsUsed > 0) {
-                    await deductWTCoins(payload, userId, order.coinsUsed, orderId)
+                    await deductWTCoins(payload, userId, order.coinsUsed, orderId, 'app-orders')
                 }
 
                 // DEDUCT STAMP REWARDS IF USED (stampRewards in AppOrders)
@@ -182,84 +183,6 @@ Team White Mantis Cafe`.trim(),
 }
 
 
-async function deductWTCoins(payload: any, userId: string | number, pointsUsed: number, orderId: string | number) {
-    try {
-        const userRewards = await payload.find({
-            collection: 'user-wt-coins',
-            where: { user: { equals: Number(userId) } },
-        })
-
-        if (userRewards.docs.length === 0) return
-
-        const userWTCoins = userRewards.docs[0]
-
-        // --- FIFO DEDUCTION LOGIC ---
-        let pointsToDeduct = pointsUsed;
-        const now = new Date();
-
-        // Sort history by earnedAt (oldest first) and filter for active ones (non-expired and remainingAmount > 0)
-        const earningHistory = [...(userWTCoins.coinEarningHistory || [])].sort((a: any, b: any) =>
-            new Date(a.earnedAt).getTime() - new Date(b.earnedAt).getTime()
-        );
-
-        const updatedHistory = earningHistory.map((entry: any) => {
-            const expiryDate = entry.expiryDate ? new Date(entry.expiryDate) : null;
-            const isExpired = expiryDate && expiryDate <= now;
-
-            if (pointsToDeduct > 0 && !isExpired && (entry.remainingAmount || 0) > 0) {
-                const deduction = Math.min(entry.remainingAmount, pointsToDeduct);
-                pointsToDeduct -= deduction;
-                return {
-                    ...entry,
-                    remainingAmount: entry.remainingAmount - deduction
-                };
-            }
-            return entry;
-        });
-
-        if (pointsToDeduct > 0) {
-            console.warn(`⚠️ User ${userId} requested to spend ${pointsUsed} but only ${pointsUsed - pointsToDeduct} were available/active.`);
-        }
-
-        const processedHistory = (userWTCoins.pointsRedemptionHistory || []).map((h: any) => {
-            const associatedValue = typeof h.associatedOrder === 'object'
-                ? (h.associatedOrder.value || h.associatedOrder.id)
-                : h.associatedOrder;
-
-            return {
-                redeemedPoints: h.redeemedPoints,
-                associatedOrder: {
-                    relationTo: h.associatedOrder?.relationTo || 'app-orders',
-                    value: associatedValue
-                }
-            };
-        });
-
-        await payload.update({
-            collection: 'user-wt-coins',
-            id: userWTCoins.id,
-            data: {
-                // totalBalance will be recalculated by UserWTCoins afterChange hook
-                coinEarningHistory: updatedHistory,
-                pointsRedemptionHistory: [
-                    ...processedHistory,
-                    {
-                        redeemedPoints: pointsUsed - pointsToDeduct,
-                        associatedOrder: {
-                            relationTo: 'app-orders',
-                            value: orderId,
-                        },
-                    }
-                ]
-            }
-        })
-
-        console.log(`✅ Deducted ${pointsUsed - pointsToDeduct} WTCoins from user ${userId} using FIFO.`)
-    } catch (error) {
-        console.error('Error deducting WTCoins:', error)
-        throw error
-    }
-}
 async function deductStampRewards(payload: any, userId: string | number, rewardsUsed: number, orderId: string | number) {
     try {
         const stampResult = await payload.find({

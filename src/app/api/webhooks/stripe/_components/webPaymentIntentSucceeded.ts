@@ -2,6 +2,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { sendEmail } from "@/lib/emailConfig";
 import { orderConfirmationEmailTemplate } from "@/lib/emailTemplate";
+import { deductWTCoins } from '@/utilities/wtCoins';
 
 export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
     const payload = await getPayload({ config })
@@ -34,7 +35,7 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
             try {
                 // DEDUCT WTCOINS IF USED
                 if (order.pointsUsed && order.pointsUsed > 0) {
-                    await deductWTCoins(payload, userId, order.pointsUsed, orderId)
+                    await deductWTCoins(payload, userId, order.pointsUsed, orderId, 'web-orders')
                 }
             } catch (error) {
                 console.error('Error managing WTCoins:', error)
@@ -178,93 +179,6 @@ Team White Mantis`.trim(),
     } catch (error) {
         console.error('Error fetching order in Payment Intent Webhook:', error)
         return
-    }
-}
-
-/**
- * Deduct WTCoins from user's balance using FIFO logic and log the transaction
- */
-async function deductWTCoins(payload: any, userId: string | number, pointsUsed: number, orderId: string | number) {
-    try {
-        // Find user's WTCoins record
-        const userRewards = await payload.find({
-            collection: 'user-wt-coins',
-            where: { user: { equals: Number(userId) } },
-        })
-
-        if (userRewards.docs.length === 0) {
-            console.error(`No WTCoins record found for user ${userId}`)
-            return
-        }
-
-        const userWTCoins = userRewards.docs[0]
-
-        // --- FIFO DEDUCTION LOGIC ---
-        let pointsToDeduct = pointsUsed;
-        const now = new Date();
-
-        // Sort history by earnedAt (oldest first) and filter for active ones (non-expired and remainingAmount > 0)
-        const earningHistory = [...(userWTCoins.coinEarningHistory || [])].sort((a: any, b: any) =>
-            new Date(a.earnedAt).getTime() - new Date(b.earnedAt).getTime()
-        );
-
-        const updatedHistory = earningHistory.map((entry: any) => {
-            const expiryDate = entry.expiryDate ? new Date(entry.expiryDate) : null;
-            const isExpired = expiryDate && expiryDate <= now;
-
-            if (pointsToDeduct > 0 && !isExpired && (entry.remainingAmount || 0) > 0) {
-                const deduction = Math.min(entry.remainingAmount, pointsToDeduct);
-                pointsToDeduct -= deduction;
-                return {
-                    ...entry,
-                    remainingAmount: entry.remainingAmount - deduction
-                };
-            }
-            return entry;
-        });
-
-        if (pointsToDeduct > 0) {
-            console.warn(`⚠️ User ${userId} requested to spend ${pointsUsed} but only ${pointsUsed - pointsToDeduct} were available/active.`);
-        }
-
-        // Properly format existing history to avoid structure issues
-        const processedHistory = (userWTCoins.pointsRedemptionHistory || []).map((h: any) => {
-            const associatedValue = typeof h.associatedOrder === 'object'
-                ? (h.associatedOrder.value || h.associatedOrder.id)
-                : h.associatedOrder;
-
-            return {
-                redeemedPoints: h.redeemedPoints,
-                associatedOrder: {
-                    relationTo: h.associatedOrder?.relationTo || 'web-orders',
-                    value: associatedValue
-                }
-            };
-        });
-
-        await payload.update({
-            collection: 'user-wt-coins',
-            id: userWTCoins.id,
-            data: {
-                // totalBalance will be recalculated by UserWTCoins afterChange hook
-                coinEarningHistory: updatedHistory,
-                pointsRedemptionHistory: [
-                    ...processedHistory,
-                    {
-                        redeemedPoints: pointsUsed - pointsToDeduct,
-                        associatedOrder: {
-                            relationTo: 'web-orders',
-                            value: orderId,
-                        },
-                    }
-                ]
-            }
-        })
-
-        console.log(`✅ Deducted ${pointsUsed - pointsToDeduct} WTCoins from user ${userId} using FIFO.`)
-    } catch (error) {
-        console.error('Error deducting WTCoins:', error)
-        throw error
     }
 }
 

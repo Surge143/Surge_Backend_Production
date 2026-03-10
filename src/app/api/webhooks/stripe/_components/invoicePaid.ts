@@ -3,7 +3,7 @@ import { getPayload } from "payload"
 import config from "@/payload.config"
 import { sendEmail } from "@/lib/emailConfig"
 import { orderConfirmationEmailTemplate } from "@/lib/emailTemplate"
-import { awardWTCoins, convertPointsToAED } from "@/collections/WebOrders/hooks/wtCoinsUtils"
+import { awardWTCoins, convertPointsToAED, deductWTCoins } from "@/utilities/wtCoins"
 
 export async function handleInvoicePaid(invoice: any) {
     const payload = await getPayload({ config })
@@ -19,7 +19,7 @@ export async function handleInvoicePaid(invoice: any) {
             invoice.subscription_details?.metadata?.db_subscription_id ||
             invoice.lines?.data[0]?.metadata?.db_subscription_id;
 
-        const stripeSubscriptionId = invoice.parent.subscription_details.subscription;
+        const stripeSubscriptionId = invoice.parent?.subscription_details?.subscription || invoice.subscription;
 
         if (!dbSubscriptionId) {
             console.error("❌ No db_subscription_id found in invoice metadata. Cannot link to database.");
@@ -134,7 +134,7 @@ export async function handleInvoicePaid(invoice: any) {
         if (userId && !isNaN(Number(userId))) userId = Number(userId);
 
         if (isFirstInvoice && userId && (subscriptionDoc.pointsUsed ?? 0) > 0) {
-            await deductWTCoins(payload, userId, subscriptionDoc.pointsUsed!, newOrder.id)
+            await deductWTCoins(payload, userId, subscriptionDoc.pointsUsed!, newOrder.id, 'web-orders')
         }
 
         // Award WTCoins for pickup orders (immediately delivered)
@@ -146,7 +146,7 @@ export async function handleInvoicePaid(invoice: any) {
                 const realMoneySpent = Math.max(0, totalAmount - wtCoinsDiscount);
 
                 if (realMoneySpent > 0) {
-                    await awardWTCoins(payload, userId as number, realMoneySpent, newOrder.id);
+                    await awardWTCoins(payload, userId as number, realMoneySpent, newOrder.id, 'web-orders');
                     await payload.update({
                         collection: "web-orders",
                         id: newOrder.id,
@@ -224,79 +224,6 @@ export async function handleInvoicePaid(invoice: any) {
 /* ======================================================
     HELPER FUNCTIONS
 ======================================================*/
-
-async function deductWTCoins(payload: any, userId: string | number, pointsUsed: number, orderId: string | number) {
-    const userRewards = await payload.find({
-        collection: "user-wt-coins",
-        where: { user: { equals: Number(userId) } },
-    })
-
-    if (userRewards.docs.length === 0) return
-
-    const record = userRewards.docs[0]
-
-    // --- FIFO DEDUCTION LOGIC ---
-    let pointsToDeduct = pointsUsed;
-    const now = new Date();
-
-    // Sort history by earnedAt (oldest first) and filter for active ones
-    const earningHistory = [...(record.coinEarningHistory || [])].sort((a: any, b: any) =>
-        new Date(a.earnedAt).getTime() - new Date(b.earnedAt).getTime()
-    );
-
-    const updatedHistory = earningHistory.map((entry: any) => {
-        const expiryDate = entry.expiryDate ? new Date(entry.expiryDate) : null;
-        const isExpired = expiryDate && expiryDate <= now;
-
-        if (pointsToDeduct > 0 && !isExpired && (entry.remainingAmount || 0) > 0) {
-            const deduction = Math.min(entry.remainingAmount, pointsToDeduct);
-            pointsToDeduct -= deduction;
-            return {
-                ...entry,
-                remainingAmount: entry.remainingAmount - deduction
-            };
-        }
-        return entry;
-    });
-
-    if (pointsToDeduct > 0) {
-        console.warn(`Sub: User ${userId} requested to spend ${pointsUsed} but only ${pointsUsed - pointsToDeduct} were available/active.`);
-    }
-
-    // Properly format existing history to avoid structure issues
-    const processedHistory = (record.pointsRedemptionHistory || []).map((h: any) => {
-        const associatedValue = typeof h.associatedOrder === 'object'
-            ? (h.associatedOrder.value || h.associatedOrder.id)
-            : h.associatedOrder;
-
-        return {
-            redeemedPoints: h.redeemedPoints,
-            associatedOrder: {
-                relationTo: h.associatedOrder?.relationTo || 'web-orders',
-                value: associatedValue
-            }
-        };
-    })
-
-    await payload.update({
-        collection: "user-wt-coins",
-        id: record.id,
-        data: {
-            coinEarningHistory: updatedHistory,
-            pointsRedemptionHistory: [
-                ...processedHistory,
-                {
-                    redeemedPoints: pointsUsed - pointsToDeduct,
-                    associatedOrder: {
-                        relationTo: "web-orders",
-                        value: orderId,
-                    },
-                },
-            ],
-        },
-    })
-    console.log("✅ WTCoins deducted using FIFO")
-}
 
 async function updateProductStock(payload: any, productId: string | number, variantId: string | null | undefined, quantity: number) {
     const product = await payload.findByID({
