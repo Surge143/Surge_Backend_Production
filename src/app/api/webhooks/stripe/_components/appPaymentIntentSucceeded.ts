@@ -29,6 +29,7 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
             collection: 'app-orders',
             id: orderId,
             depth: 2,
+            overrideAccess: true,
         })
 
         if (!order) {
@@ -93,6 +94,7 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
                     const productDoc = await payload.findByID({
                         collection: 'shop-menu',
                         id: productId,
+                        overrideAccess: true,
                     })
 
                     if (!productDoc) {
@@ -111,6 +113,7 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
                             stockCount: newStock,
                             inStock: newStock > 0,
                         },
+                        overrideAccess: true,
                     })
 
                     console.log(`✅ Stock updated for shop-menu ${productId}: ${currentStock} → ${newStock}`)
@@ -142,6 +145,7 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
                         created: paymentIntent.created,
                     },
                 },
+                overrideAccess: true,
             })
             console.log(`✅ Order ${orderId} marked as paid with payment details`)
 
@@ -189,6 +193,7 @@ async function deductStampRewards(payload: any, userId: string | number, rewards
             collection: 'wt-stamps',
             where: { user: { equals: userId } },
             limit: 1,
+            overrideAccess: true,
         })
 
         if (stampResult.docs.length === 0) {
@@ -220,7 +225,8 @@ async function deductStampRewards(payload: any, userId: string | number, rewards
                         },
                     }
                 ]
-            }
+            },
+            overrideAccess: true,
         })
 
         console.log(`✅ Deducted ${rewardsUsed} Stamp Rewards from user ${userId}. New balance: ${newRewardBalance}`)
@@ -235,6 +241,7 @@ async function clearUserCart(payload: any, userId: string | number) {
         const cartResult = await payload.find({
             collection: 'app-cart',
             where: { user: { equals: userId } },
+            overrideAccess: true,
         })
 
         if (cartResult.docs.length > 0) {
@@ -245,7 +252,8 @@ async function clearUserCart(payload: any, userId: string | number) {
                 data: {
                     items: [],
                     shop: null
-                }
+                },
+                overrideAccess: true,
             })
             console.log(`✅ Cleared app-cart for user ${userId}`)
         }

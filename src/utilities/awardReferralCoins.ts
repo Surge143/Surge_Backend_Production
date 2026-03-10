@@ -113,6 +113,7 @@ export async function awardReferralCoins(
         const wtCoinsConfig = await payload.findGlobal({
             slug: 'wt-coins',
             depth: 0,
+            overrideAccess: true,
         });
 
         const coinsForReferred: number = (wtCoinsConfig as any)?.referralRewardForReferred ?? 0;
@@ -195,14 +196,27 @@ async function creditCoins(
     if (existing.docs.length > 0) {
         const doc = existing.docs[0];
 
+        const newHistory = [
+            ...(doc.coinEarningHistory ?? []),
+            historyEntry,
+        ];
+
+        // Compute total balance atomically
+        const now = new Date();
+        const newTotalBalance = newHistory.reduce((acc: number, entry: any) => {
+            const expiryDate = entry.expiryDate ? new Date(entry.expiryDate) : null;
+            if (!expiryDate || expiryDate > now) {
+                return acc + (entry.remainingAmount || 0);
+            }
+            return acc;
+        }, 0);
+
         await payload.update({
             collection: 'user-wt-coins',
             id: doc.id,
             data: {
-                coinEarningHistory: [
-                    ...(doc.coinEarningHistory ?? []),
-                    historyEntry,
-                ],
+                coinEarningHistory: newHistory,
+                totalBalance: newTotalBalance,
             } as any,
             depth: 0,
             overrideAccess: true,

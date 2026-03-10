@@ -20,6 +20,7 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
             collection: 'web-orders',
             id: orderId,
             depth: 2, // Fetch related product data
+            overrideAccess: true,
         })
 
         if (!order) {
@@ -67,6 +68,7 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
                     const productDoc = await payload.findByID({
                         collection: 'web-products',
                         id: productId,
+                        overrideAccess: true,
                     })
 
                     if (!productDoc) {
@@ -97,6 +99,7 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
                                 data: {
                                     variants: productDoc.variants,
                                 },
+                                overrideAccess: true,
                             })
 
                             console.log(`✅ Stock updated for product ${productId}, variant ${variantId}: ${currentStock} → ${newStock}`)
@@ -135,6 +138,7 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
                         created: paymentIntent.created,
                     },
                 },
+                overrideAccess: true,
             })
             console.log(`✅ Order ${orderId} marked as completed with payment details`)
 
@@ -191,6 +195,7 @@ async function clearUserCart(payload: any, userId: string | number) {
         const cartResult = await payload.find({
             collection: 'web-cart',
             where: { user: { equals: userId } },
+            overrideAccess: true,
         })
 
         if (cartResult.docs.length > 0) {
@@ -202,7 +207,8 @@ async function clearUserCart(payload: any, userId: string | number) {
                 id: cart.id,
                 data: {
                     items: []
-                }
+                },
+                overrideAccess: true,
             })
 
             console.log(`✅ Cleared cart for user ${userId}`)

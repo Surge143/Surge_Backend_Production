@@ -37,6 +37,7 @@ export async function handleInvoicePaid(invoice: any) {
             where: {
                 stripeOrderId: { equals: invoice.id },
             },
+            overrideAccess: true,
         })
 
         if (existingOrder.docs.length > 0) {
@@ -51,6 +52,7 @@ export async function handleInvoicePaid(invoice: any) {
             collection: "web-subscription",
             id: dbSubscriptionId,
             depth: 2,
+            overrideAccess: true,
         })
 
         if (!subscriptionDoc) {
@@ -120,9 +122,10 @@ export async function handleInvoicePaid(invoice: any) {
             },
         }
 
-        const newOrder = await payload.create({
+        const newOrder = await (payload as any).create({
             collection: "web-orders",
             data: orderData,
+            overrideAccess: true,
         })
 
         console.log(`✅ Order ${newOrder.id} created`)
@@ -193,6 +196,7 @@ export async function handleInvoicePaid(invoice: any) {
                 collection: "web-subscription",
                 id: dbSubscriptionId,
                 data: updateData,
+                overrideAccess: true,
             });
 
             console.log("✅ Subscription record updated with next payment date:", updateData.nextPaymentDate)
@@ -234,6 +238,7 @@ async function updateProductStock(payload: any, productId: string | number, vari
     const product = await payload.findByID({
         collection: "web-products",
         id: productId,
+        overrideAccess: true,
     })
 
     if (!product) return
@@ -266,6 +271,7 @@ async function updateProductStock(payload: any, productId: string | number, vari
         collection: "web-products",
         id: productId,
         data: updateData,
+        overrideAccess: true,
     })
     console.log(`✅ Stock updated for product ${productId}${variantId ? ` (variant: ${variantId})` : ""}`)
 }

@@ -15,6 +15,7 @@ export async function awardWTCoins(
         const wtCoinsConfig = await payload.findGlobal({
             slug: 'wt-coins',
             depth: 1,
+            overrideAccess: true,
         })
 
         if (!wtCoinsConfig) {
@@ -138,15 +139,8 @@ export async function deductWTCoins(
     relationTo: 'web-orders' | 'app-orders' = 'web-orders'
 ) {
 
-    console.log(payload, "payload")
-    console.log(userId, "userId")
-    console.log(pointsUsed, "pointsUsed")
-    console.log(orderId, "orderId")
-    console.log(relationTo, "relationTo")
-
     try {
-        console.log(`🎬 [wtCoins] Starting FIFO deduction:`);
-        console.log(`   - userId: ${userId} (type: ${typeof userId})`);
+        console.log(`🎬 [wtCoins] Starting FIFO deduction for user ${userId}:`);
         console.log(`   - pointsUsed: ${pointsUsed}`);
         console.log(`   - orderId: ${orderId}`);
         console.log(`   - relationTo: ${relationTo}`);
@@ -252,7 +246,8 @@ export async function deductWTCoins(
         }, 0);
         console.log(`   - New computed totalBalance: ${newTotalBalance}`);
 
-        await payload.update({
+        console.log(`   - Executing payload.update for user-wt-coins record ${record.id}...`);
+        const updateResult = await payload.update({
             collection: 'user-wt-coins',
             id: record.id,
             data: {
@@ -272,7 +267,11 @@ export async function deductWTCoins(
             overrideAccess: true,
         })
 
-        console.log(`✅ [wtCoins] Successfully updated record ${record.id} for user ${userId}. Total deducted: ${finalRedeemed}`);
+        if (!updateResult) {
+            console.error(`❌ [wtCoins] payload.update returned null or undefined for record ${record.id}`);
+        } else {
+            console.log(`✅ [wtCoins] Successfully updated record ${record.id} for user ${userId}. Total deducted: ${finalRedeemed}, New Balance: ${newTotalBalance}`);
+        }
     } catch (error) {
         console.error('❌ [wtCoins] Error in deductWTCoins:', error)
         throw error
@@ -287,6 +286,7 @@ export async function convertPointsToAED(payload: Payload, points: number): Prom
         const wtCoinsConfig = await payload.findGlobal({
             slug: 'wt-coins',
             depth: 1,
+            overrideAccess: true,
         })
 
         if (!wtCoinsConfig) return 0
