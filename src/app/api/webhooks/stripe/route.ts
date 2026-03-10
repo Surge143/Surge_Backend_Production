@@ -25,16 +25,21 @@ export async function POST(req: NextRequest) {
 
       case 'payment_intent.succeeded':
         const pi = event.data.object;
-        console.log(`💰 Payment Intent Succeeded: ${pi.id}, Order Type: ${pi.metadata?.order_type}`);
+        console.log(`💰 Payment Intent Succeeded: ${pi.id}, Order Type: ${pi.metadata?.order_type}, Invoice: ${pi.invoice}`);
 
-        if (pi.invoice) {
+        // Only skip if it's a subscription-related payment intent (handled via invoice.paid)
+        // One-time payments (cafe/store) might occasionally have an invoice but still need PI processing
+        if (pi.invoice && pi.metadata?.order_type === 'subscription') {
+          console.log(`⏭️ Skipping payment_intent.succeeded for subscription (invoice: ${pi.invoice})`);
           break;
         }
+
         if (pi.metadata?.order_type === 'store') {
           await handleWebPaymentIntentSucceeded(pi);
-        }
-        if (pi.metadata?.order_type === 'cafe') {
+        } else if (pi.metadata?.order_type === 'cafe') {
           await handleAppPaymentIntentSucceeded(pi);
+        } else {
+          console.log(`⚠️ Unhandled order_type in payment_intent.succeeded: ${pi.metadata?.order_type}`);
         }
         break;
 
@@ -61,8 +66,9 @@ export async function POST(req: NextRequest) {
         console.log('Unhandled event type:', event.type);
     }
   } catch (err: any) {
-    console.error('⚠️ Webhook signature verification failed.', err.message);
-    return NextResponse.json({ error: 'Webhook Error' }, { status: 400 });
+    console.error('❌ Webhook error:', err.message);
+    if (err.stack) console.error(err.stack);
+    return NextResponse.json({ error: 'Webhook Error', message: err.message }, { status: 400 });
   }
 
   return NextResponse.json({ received: true }, { status: 200 });

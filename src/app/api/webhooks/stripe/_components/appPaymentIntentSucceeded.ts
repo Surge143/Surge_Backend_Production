@@ -12,7 +12,7 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
     console.log('📦 Order ID from metadata:', orderId)
 
     if (!orderId) {
-        console.error('❌ No order ID found in metadata')
+        console.error('❌ No order ID found in metadata for PI:', paymentIntent.id)
         return
     }
 
@@ -24,7 +24,7 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
 
     let order: any
     try {
-        console.log('🔍 Searching for order in app-orders...')
+        console.log('🔍 Searching for order in app-orders with ID:', orderId)
         order = await payload.findByID({
             collection: 'app-orders',
             id: orderId,
@@ -33,27 +33,34 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
         })
 
         if (!order) {
-            console.error('❌ Order not found for ID:', orderId)
+            console.error('❌ Order not found in database for ID:', orderId)
             return
         }
-        console.log('✅ Order found:', order.id)
+        console.log('✅ Order found:', order.id, 'Current Payment Status:', order.paymentStatus)
 
         // --- WTCOINS MANAGEMENT ---
         if (order.user) {
             const userId = typeof order.user === 'object' ? order.user.id : order.user
+            console.log('🪙 Checking rewards for user:', userId)
 
             try {
                 // DEDUCT WTCOINS IF USED (coinsUsed in AppOrders)
                 if (order.coinsUsed && order.coinsUsed > 0) {
+                    console.log(`📉 Deducting ${order.coinsUsed} WTCoins for order ${orderId}`)
                     await deductWTCoins(payload, userId, order.coinsUsed, orderId, 'app-orders')
+                } else {
+                    console.log('⏭️ No WTCoins to deduct')
                 }
 
                 // DEDUCT STAMP REWARDS IF USED (stampRewards in AppOrders)
                 if (order.stampRewards && Array.isArray(order.stampRewards) && order.stampRewards.length > 0) {
+                    console.log(`📉 Deducting ${order.stampRewards.length} stamp rewards for order ${orderId}`)
                     await deductStampRewards(payload, userId, order.stampRewards.length, orderId)
+                } else {
+                    console.log('⏭️ No stamp rewards to deduct')
                 }
             } catch (error) {
-                console.error('Error managing rewards:', error)
+                console.error('❌ Error managing rewards:', error)
             }
         }
 
@@ -62,9 +69,10 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
             const userId = typeof order.user === 'object' ? order.user.id : order.user
 
             try {
+                console.log('🛒 Clearing app-cart for user:', userId)
                 await clearUserCart(payload, userId)
             } catch (error) {
-                console.error('Error clearing cart:', error)
+                console.error('❌ Error clearing cart:', error)
             }
         }
 
@@ -88,9 +96,9 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
         }
 
         if (allItemsToDeduct.length > 0) {
+            console.log(`📦 Deducting stock for ${allItemsToDeduct.length} line items`)
             for (const { productId, quantity } of allItemsToDeduct) {
                 try {
-                    // Fetch the shop-menu product
                     const productDoc = await payload.findByID({
                         collection: 'shop-menu',
                         id: productId,
@@ -98,11 +106,10 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
                     })
 
                     if (!productDoc) {
-                        console.error(`Shop item ${productId} not found`)
+                        console.error(`❌ Shop item ${productId} not found for stock update`)
                         continue
                     }
 
-                    // For Cafe orders, stock management is at the top level of ShopMenu
                     const currentStock = productDoc.stockCount || 0
                     const newStock = Math.max(0, currentStock - quantity)
 
@@ -118,13 +125,14 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
 
                     console.log(`✅ Stock updated for shop-menu ${productId}: ${currentStock} → ${newStock}`)
                 } catch (error) {
-                    console.error(`Error updating stock for shop item ${productId}:`, error)
+                    console.error(`❌ Error updating stock for shop item ${productId}:`, error)
                 }
             }
         }
 
         // --- UPDATE ORDER STATUS AND PAYMENT DETAILS ---
         try {
+            console.log('📝 Updating order paymentStatus to "paid"')
             const chargeId = paymentIntent.latest_charge || paymentIntent.charges?.data?.[0]?.id
             const receiptUrl = paymentIntent.charges?.data?.[0]?.receipt_url
 
@@ -132,7 +140,7 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
                 collection: 'app-orders',
                 id: orderId,
                 data: {
-                    paymentStatus: 'paid', // AppOrders uses paid/completed
+                    paymentStatus: 'paid',
                     stripeData: {
                         paymentIntentId: paymentIntent.id,
                         chargeId: chargeId,
@@ -147,12 +155,13 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
                 },
                 overrideAccess: true,
             })
-            console.log(`✅ Order ${orderId} marked as paid with payment details`)
+            console.log(`✅ Order ${orderId} successfully marked as paid`)
 
             // Send order confirmation email
             try {
                 const userEmail = typeof order.user === 'object' ? order.user?.email : null
                 if (userEmail) {
+                    console.log('📧 Sending confirmation email to:', userEmail)
                     const userName = (order.user as any)?.firstName || 'Coffee Lover'
 
                     await sendEmail({
@@ -177,12 +186,13 @@ Team White Mantis Cafe`.trim(),
                 console.error("❌ Failed to send order confirmation email:", emailError)
             }
         } catch (error) {
-            console.error('Error updating order status:', error)
+            console.error('❌ Error updating order status/details:', error)
+            throw error; // Re-throw to be caught by the outer catch
         }
 
     } catch (error) {
-        console.error('Error fetching order in App Payment Intent Webhook:', error)
-        return
+        console.error('❌ Critical failure in handleAppPaymentIntentSucceeded:', error)
+        throw error; // Re-throw so route.ts logs the stack trace
     }
 }
 

@@ -28,5 +28,28 @@ export const beforeValidateHook: CollectionBeforeValidateHook = async ({ data, r
             throw new Error(`All items in the order must belong to the selected shop. Invalid items found.`);
         }
     }
+
+    // --- Validate stampRewards field ---
+    if (data?.stampRewards && Array.isArray(data.stampRewards)) {
+        const rewardProductIds = data.stampRewards.map((reward: any) =>
+            typeof reward === 'object' ? reward.id : reward
+        );
+
+        const rewardProducts = await payload.find({
+            collection: 'shop-menu',
+            where: {
+                id: { in: rewardProductIds },
+            },
+            depth: 0,
+        });
+
+        const ineligibleRewards = rewardProducts.docs.filter((p: any) => !p.isStampFreeProduct);
+
+        if (ineligibleRewards.length > 0) {
+            const ineligibleNames = ineligibleRewards.map((p: any) => p.name).join(', ');
+            throw new Error(`The following products are not eligible for stamp redemption: ${ineligibleNames}`);
+        }
+    }
+
     return data;
 };

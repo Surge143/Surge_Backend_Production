@@ -59,13 +59,14 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
             });
 
             if (latestDoc && !(latestDoc as any).isStampsAwarded) {
-                // --- NEW: ONLY ACCRUE IF COMPLETED AND PAID ---
+                // --- NEW: ONLY ACCRUE IF COMPLETED, PAID, AND ACCEPTED ---
                 const isPaid = latestDoc.paymentStatus === 'paid';
+                const isAccepted = (latestDoc as any).orderAcceptance === 'accepted';
                 const currentStatus = latestDoc.orderType === 'dine-in' ? latestDoc.appOrderStatusDine : latestDoc.appOrderStatus;
                 const isCompleted = currentStatus === 'completed';
 
-                if (!isPaid || !isCompleted) {
-                    console.log(`[afterChange] Order ${doc.id} not yet fully paid and completed (Status: ${currentStatus}, Paid: ${isPaid}). Skipping stamp accrual for now.`);
+                if (!isPaid || !isCompleted || !isAccepted) {
+                    console.log(`[afterChange] Order ${doc.id} not yet fully paid, completed, and accepted (Status: ${currentStatus}, Paid: ${isPaid}, Accepted: ${isAccepted}). Skipping stamp accrual for now.`);
                     return;
                 }
 
