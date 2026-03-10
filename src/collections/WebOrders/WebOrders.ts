@@ -157,10 +157,9 @@ export const WebOrders: CollectionConfig = {
 
                 if (userId) {
                     setImmediate(async () => {
-                        // 1. Referral: Trigger when BOTH paid and delivered
-                        const becameEligible = (isNowPaid && isNowDelivered) && (!wasPaid || !wasDelivered);
+                        const becamePaid = isNowPaid && !wasPaid;
 
-                        if (becameEligible) {
+                        if (becamePaid) {
                             await awardReferralCoins(payload, userId, doc.id, 'web-orders');
                         }
 

@@ -104,12 +104,12 @@ export async function POST(req: NextRequest) {
                 success: true,
                 message: isNewUser ? 'User registered and logged in successfully' : 'User logged in successfully',
                 user: loginResult.user,
+                token: token,
                 isNewUser,
-                token
             }, { status: 200 });
 
             if (token) {
-                res.cookies.set('payload-token', token, {
+                res.cookies.set('paylaod-token', token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     maxAge: 60 * 60 * 24 * 7,
