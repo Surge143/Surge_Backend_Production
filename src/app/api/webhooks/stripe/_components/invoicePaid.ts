@@ -133,8 +133,13 @@ export async function handleInvoicePaid(invoice: any) {
         let userId = subscriptionDoc.user && (typeof subscriptionDoc.user === "object" ? subscriptionDoc.user.id : subscriptionDoc.user);
         if (userId && !isNaN(Number(userId))) userId = Number(userId);
 
+        console.log(`[invoicePaid] 🪙 Deduction check → isFirstInvoice=${isFirstInvoice}, userId=${userId}, subscriptionDoc.pointsUsed=${subscriptionDoc.pointsUsed}`);
         if (isFirstInvoice && userId && (subscriptionDoc.pointsUsed ?? 0) > 0) {
+            console.log(`[invoicePaid] ▶️ Calling deductWTCoins for user ${userId}, points=${subscriptionDoc.pointsUsed}`);
             await deductWTCoins(payload, userId, subscriptionDoc.pointsUsed!, newOrder.id, 'web-orders')
+            console.log(`[invoicePaid] ✅ deductWTCoins completed`);
+        } else {
+            console.log(`[invoicePaid] ⏭️ Deduction skipped. Reason: isFirstInvoice=${isFirstInvoice}, userId=${userId}, pointsUsed=${subscriptionDoc.pointsUsed ?? 0}`);
         }
 
         // Award WTCoins for pickup orders (immediately delivered)

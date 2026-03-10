@@ -40,6 +40,7 @@ export async function awardWTCoins(
         const userRewards = await payload.find({
             collection: 'user-wt-coins',
             where: { user: { equals: userId } },
+            depth: 0,
             overrideAccess: true,
         })
 
@@ -73,20 +74,7 @@ export async function awardWTCoins(
             // Update existing record
             userWTCoins = userRewards.docs[0]
 
-            const history = (userWTCoins.coinEarningHistory || []).map((entry: any) => {
-                let processedLinkedOrder = entry.linkedOrder;
-                if (processedLinkedOrder && typeof processedLinkedOrder.value === 'object') {
-                    processedLinkedOrder = {
-                        relationTo: processedLinkedOrder.relationTo,
-                        value: processedLinkedOrder.value.id || processedLinkedOrder.value._id || processedLinkedOrder.value,
-                    };
-                }
-                return {
-                    ...entry,
-                    linkedOrder: processedLinkedOrder,
-                };
-            });
-
+            const history = userWTCoins.coinEarningHistory || [];
             const alreadyAwarded = history.some((entry: any) =>
                 entry.linkedOrder &&
                 entry.linkedOrder.relationTo === collection &&
@@ -98,27 +86,40 @@ export async function awardWTCoins(
                 return;
             }
 
+            const newHistory = [
+                ...history,
+                {
+                    amount: pointsToAward,
+                    remainingAmount: pointsToAward,
+                    earnedAt: new Date().toISOString(),
+                    linkedOrder: {
+                        relationTo: collection,
+                        value: orderId as any
+                    },
+                    expiryDate: expiryDate.toISOString(),
+                }
+            ];
+
+            // Compute new totalBalance directly to avoid relying solely on afterChange hook
+            const nowForBalance = new Date();
+            const newTotalBalance = newHistory.reduce((acc: number, entry: any) => {
+                const exp = entry.expiryDate ? new Date(entry.expiryDate) : null;
+                if (!exp || exp > nowForBalance) {
+                    return acc + (entry.remainingAmount || 0);
+                }
+                return acc;
+            }, 0);
+
             await payload.update({
                 collection: 'user-wt-coins',
                 id: userWTCoins.id,
                 data: {
-                    coinEarningHistory: [
-                        ...history,
-                        {
-                            amount: pointsToAward,
-                            remainingAmount: pointsToAward,
-                            earnedAt: new Date().toISOString(),
-                            linkedOrder: {
-                                relationTo: collection,
-                                value: orderId as any
-                            },
-                            expiryDate: expiryDate.toISOString(),
-                        }
-                    ]
+                    coinEarningHistory: newHistory,
+                    totalBalance: newTotalBalance,
                 },
                 overrideAccess: true,
             })
-            console.log(`✅ [wtCoins] Awarded ${pointsToAward} WTCoins to user ${userId}.`)
+            console.log(`✅ [wtCoins] Awarded ${pointsToAward} WTCoins to user ${userId}. New totalBalance: ${newTotalBalance}.`)
         }
     } catch (error) {
         console.error('❌ [wtCoins] Error awarding WTCoins:', error)
@@ -136,6 +137,13 @@ export async function deductWTCoins(
     orderId: string | number,
     relationTo: 'web-orders' | 'app-orders' = 'web-orders'
 ) {
+
+    console.log(payload, "payload")
+    console.log(userId, "userId")
+    console.log(pointsUsed, "pointsUsed")
+    console.log(orderId, "orderId")
+    console.log(relationTo, "relationTo")
+
     try {
         console.log(`🎬 [wtCoins] Starting FIFO deduction:`);
         console.log(`   - userId: ${userId} (type: ${typeof userId})`);
@@ -150,6 +158,7 @@ export async function deductWTCoins(
         const userRewards = await payload.find({
             collection: 'user-wt-coins',
             where: { user: { equals: numericUserId } },
+            depth: 0,
             overrideAccess: true,
         })
 
@@ -161,6 +170,7 @@ export async function deductWTCoins(
                 const retryRewards = await payload.find({
                     collection: 'user-wt-coins',
                     where: { user: { equals: userId } },
+                    depth: 0,
                     overrideAccess: true,
                 });
                 if (retryRewards.docs.length > 0) {
@@ -195,31 +205,17 @@ export async function deductWTCoins(
             const expiryDate = entry.expiryDate ? new Date(entry.expiryDate) : null;
             const isExpired = expiryDate && expiryDate <= now;
 
-            // Handle populated linkedOrder to prevent schema validation errors on update
-            let processedLinkedOrder = entry.linkedOrder;
-            if (processedLinkedOrder && typeof processedLinkedOrder.value === 'object') {
-                processedLinkedOrder = {
-                    relationTo: processedLinkedOrder.relationTo,
-                    value: processedLinkedOrder.value.id || processedLinkedOrder.value._id || processedLinkedOrder.value,
-                };
-            }
-
-            const newEntry = {
-                ...entry,
-                linkedOrder: processedLinkedOrder,
-            };
-
             if (pointsToDeduct > 0 && !isExpired && (entry.remainingAmount || 0) > 0) {
                 const deduction = Math.min(entry.remainingAmount, pointsToDeduct);
                 pointsToDeduct -= deduction;
                 actualDeducted += deduction;
                 console.log(`   - Entry ${index}: Deducted ${deduction}, Remaining in entry: ${entry.remainingAmount - deduction}`);
                 return {
-                    ...newEntry,
+                    ...entry,
                     remainingAmount: Math.max(0, entry.remainingAmount - deduction)
                 };
             }
-            return newEntry;
+            return entry;
         });
 
         if (pointsToDeduct > 0) {
@@ -228,8 +224,8 @@ export async function deductWTCoins(
 
         // Properly format redemption history
         const processedRedemptionHistory = (record.pointsRedemptionHistory || []).map((h: any) => {
-            const associatedValue = typeof h.associatedOrder === 'object'
-                ? (h.associatedOrder.value || h.associatedOrder.id)
+            const associatedValue = h.associatedOrder?.value !== undefined
+                ? h.associatedOrder.value
                 : h.associatedOrder;
 
             return {
@@ -244,11 +240,24 @@ export async function deductWTCoins(
         const finalRedeemed = Math.round(pointsUsed - pointsToDeduct);
         console.log(`   - Final points to redeem: ${finalRedeemed}`);
 
+        // Compute the new totalBalance directly here (sum of non-expired remainingAmounts)
+        // so the afterChange hook has accurate data and we don't rely on async hook timing
+        const now2 = new Date();
+        const newTotalBalance = updatedHistory.reduce((acc: number, entry: any) => {
+            const expiryDate = entry.expiryDate ? new Date(entry.expiryDate) : null;
+            if (!expiryDate || expiryDate > now2) {
+                return acc + (entry.remainingAmount || 0);
+            }
+            return acc;
+        }, 0);
+        console.log(`   - New computed totalBalance: ${newTotalBalance}`);
+
         await payload.update({
             collection: 'user-wt-coins',
             id: record.id,
             data: {
                 coinEarningHistory: updatedHistory,
+                totalBalance: newTotalBalance,
                 pointsRedemptionHistory: [
                     ...processedRedemptionHistory,
                     {
