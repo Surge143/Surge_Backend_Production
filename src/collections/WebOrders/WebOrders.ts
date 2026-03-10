@@ -458,7 +458,7 @@ export const WebOrders: CollectionConfig = {
                                     type: 'select',
                                     defaultValue: 'placed',
                                     admin: {
-                                        condition: (data) => data?.paymentStatus === 'completed' && data?.deliveryOption === 'delivery',
+                                        condition: (data) => data?.paymentStatus === 'completed',
                                     },
                                     options: [
                                         { label: 'Placed', value: 'placed' },
