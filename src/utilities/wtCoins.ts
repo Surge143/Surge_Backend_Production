@@ -73,7 +73,20 @@ export async function awardWTCoins(
             // Update existing record
             userWTCoins = userRewards.docs[0]
 
-            const history = userWTCoins.coinEarningHistory || [];
+            const history = (userWTCoins.coinEarningHistory || []).map((entry: any) => {
+                let processedLinkedOrder = entry.linkedOrder;
+                if (processedLinkedOrder && typeof processedLinkedOrder.value === 'object') {
+                    processedLinkedOrder = {
+                        relationTo: processedLinkedOrder.relationTo,
+                        value: processedLinkedOrder.value.id || processedLinkedOrder.value._id || processedLinkedOrder.value,
+                    };
+                }
+                return {
+                    ...entry,
+                    linkedOrder: processedLinkedOrder,
+                };
+            });
+
             const alreadyAwarded = history.some((entry: any) =>
                 entry.linkedOrder &&
                 entry.linkedOrder.relationTo === collection &&
@@ -124,21 +137,48 @@ export async function deductWTCoins(
     relationTo: 'web-orders' | 'app-orders' = 'web-orders'
 ) {
     try {
-        console.log(`🎬 [wtCoins] Starting FIFO deduction of ${pointsUsed} for user ${userId} (Order: ${orderId})`);
+        console.log(`🎬 [wtCoins] Starting FIFO deduction:`);
+        console.log(`   - userId: ${userId} (type: ${typeof userId})`);
+        console.log(`   - pointsUsed: ${pointsUsed}`);
+        console.log(`   - orderId: ${orderId}`);
+        console.log(`   - relationTo: ${relationTo}`);
+
+        const numericUserId = Number(userId);
+        console.log(`   - Searching for user-wt-coins with user ID: ${numericUserId}`);
 
         // Find user's WTCoins record
         const userRewards = await payload.find({
             collection: 'user-wt-coins',
-            where: { user: { equals: Number(userId) } },
+            where: { user: { equals: numericUserId } },
             overrideAccess: true,
         })
 
         if (userRewards.docs.length === 0) {
-            console.error(`❌ [wtCoins] No WTCoins record found for user ${userId}`)
-            return
+            console.error(`❌ [wtCoins] No WTCoins record found for user ${userId} (searched for ${numericUserId})`)
+            // Try searching without Number() just in case the ID is a string
+            if (typeof userId === 'string') {
+                console.log(`   - Retrying search with string userId: ${userId}`);
+                const retryRewards = await payload.find({
+                    collection: 'user-wt-coins',
+                    where: { user: { equals: userId } },
+                    overrideAccess: true,
+                });
+                if (retryRewards.docs.length > 0) {
+                    console.log(`   ✅ [wtCoins] Found record on retry with string ID.`);
+                    // Fall through with the found record
+                    userRewards.docs = retryRewards.docs;
+                } else {
+                    return;
+                }
+            } else {
+                return;
+            }
         }
 
         const record = userRewards.docs[0]
+        console.log(`   - Found record ID: ${record.id}`);
+        console.log(`   - Current totalBalance: ${record.totalBalance}`);
+
         let pointsToDeduct = Math.round(pointsUsed);
         const now = new Date();
 
@@ -148,19 +188,38 @@ export async function deductWTCoins(
             new Date(a.earnedAt).getTime() - new Date(b.earnedAt).getTime()
         );
 
-        const updatedHistory = earningHistory.map((entry: any) => {
+        console.log(`   - Earning history entries: ${earningHistory.length}`);
+
+        let actualDeducted = 0;
+        const updatedHistory = earningHistory.map((entry: any, index: number) => {
             const expiryDate = entry.expiryDate ? new Date(entry.expiryDate) : null;
             const isExpired = expiryDate && expiryDate <= now;
+
+            // Handle populated linkedOrder to prevent schema validation errors on update
+            let processedLinkedOrder = entry.linkedOrder;
+            if (processedLinkedOrder && typeof processedLinkedOrder.value === 'object') {
+                processedLinkedOrder = {
+                    relationTo: processedLinkedOrder.relationTo,
+                    value: processedLinkedOrder.value.id || processedLinkedOrder.value._id || processedLinkedOrder.value,
+                };
+            }
+
+            const newEntry = {
+                ...entry,
+                linkedOrder: processedLinkedOrder,
+            };
 
             if (pointsToDeduct > 0 && !isExpired && (entry.remainingAmount || 0) > 0) {
                 const deduction = Math.min(entry.remainingAmount, pointsToDeduct);
                 pointsToDeduct -= deduction;
+                actualDeducted += deduction;
+                console.log(`   - Entry ${index}: Deducted ${deduction}, Remaining in entry: ${entry.remainingAmount - deduction}`);
                 return {
-                    ...entry,
+                    ...newEntry,
                     remainingAmount: Math.max(0, entry.remainingAmount - deduction)
                 };
             }
-            return entry;
+            return newEntry;
         });
 
         if (pointsToDeduct > 0) {
@@ -183,6 +242,7 @@ export async function deductWTCoins(
         });
 
         const finalRedeemed = Math.round(pointsUsed - pointsToDeduct);
+        console.log(`   - Final points to redeem: ${finalRedeemed}`);
 
         await payload.update({
             collection: 'user-wt-coins',
@@ -200,12 +260,12 @@ export async function deductWTCoins(
                     }
                 ]
             },
-            overrideAccess: true, // CRITICAL FIX: Bypass access control in webhooks
+            overrideAccess: true,
         })
 
-        console.log(`✅ [wtCoins] Deducted ${finalRedeemed} WTCoins from user ${userId} via FIFO.`)
+        console.log(`✅ [wtCoins] Successfully updated record ${record.id} for user ${userId}. Total deducted: ${finalRedeemed}`);
     } catch (error) {
-        console.error('❌ [wtCoins] Error deducting WTCoins:', error)
+        console.error('❌ [wtCoins] Error in deductWTCoins:', error)
         throw error
     }
 }
