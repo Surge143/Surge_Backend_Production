@@ -31,19 +31,24 @@ export const refundHandler: PayloadHandler = async (req) => {
         }
 
         if (order.subsStatus === 'active' && order.paymentStatus === 'completed') {
-            if (!order.stripeData?.subscriptionId) {
+            const stripeSubId = order.stripeSubscriptionID || order.stripeData?.subscriptionId;
+
+            if (!stripeSubId) {
+                console.error(`[RefundHandler] No Stripe subscription ID found for order ${id}. Tried stripeSubscriptionID and stripeData.subscriptionId.`);
                 return Response.json({ error: 'No Stripe subscription ID found on this order' }, { status: 400 })
             }
 
             try {
                 // 1. Cancel the Stripe subscription immediately (not at period end)
-                await stripe.subscriptions.cancel(order.stripeData.subscriptionId)
-                console.log(`[RefundHandler] Stripe subscription ${order.stripeData.subscriptionId} cancelled immediately`)
+                await stripe.subscriptions.cancel(stripeSubId)
+                console.log(`[RefundHandler] Stripe subscription ${stripeSubId} cancelled immediately for order ${id}`)
 
                 // 2. Refund the last payment intent if available
-                if (order.stripeData?.paymentIntentId) {
+                const piId = order.stripeData?.paymentIntentId || order.stripeData?.latest_invoice?.payment_intent;
+
+                if (piId) {
                     const refund = await stripe.refunds.create({
-                        payment_intent: order.stripeData.paymentIntentId,
+                        payment_intent: piId,
                     })
                     console.log(`[RefundHandler] Refund created: ${refund.id}`)
 

@@ -19,7 +19,10 @@ export async function handleSubscriptionDeleted(subscription: any) {
         const result = await payload.find({
             collection: 'web-subscription',
             where: {
-                'stripeData.subscriptionId': { equals: stripeSubscriptionId },
+                or: [
+                    { 'stripeData.subscriptionId': { equals: stripeSubscriptionId } },
+                    { 'stripeSubscriptionID': { equals: stripeSubscriptionId } },
+                ],
             },
             depth: 0,
             limit: 1,
