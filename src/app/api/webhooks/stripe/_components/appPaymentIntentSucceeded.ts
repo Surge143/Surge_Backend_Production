@@ -132,9 +132,11 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
 
         // --- UPDATE ORDER STATUS AND PAYMENT DETAILS ---
         try {
-            console.log('📝 Updating order paymentStatus to "paid"')
+            console.log(`📝 Updating order ${orderId} paymentStatus to "paid"`)
             const chargeId = paymentIntent.latest_charge || paymentIntent.charges?.data?.[0]?.id
             const receiptUrl = paymentIntent.charges?.data?.[0]?.receipt_url
+
+            console.log(`ℹ️ Charge ID: ${chargeId}, Receipt URL: ${receiptUrl}`)
 
             await payload.update({
                 collection: 'app-orders',
