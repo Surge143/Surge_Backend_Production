@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import styles from './login.module.css';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function OfflineSystemLogin() {
   const [email, setEmail] = useState('');
@@ -43,11 +44,17 @@ export default function OfflineSystemLogin() {
   return (
     <div className={styles.container}>
       <div className={styles.leftSection}>
-        <img
-          src="/images/latte-art.jpg"
-          alt="Latte Art"
-          className={styles.latteImage}
-        />
+        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+          <Image
+            src="/images/latte-art.jpg"
+            alt="Latte Art"
+            className={styles.latteImage}
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 50vw"
+            style={{ objectFit: 'cover' }}
+          />
+        </div>
         <div className={styles.craftText}>
           <h2>PURE CRAFT. UNCOMPROMISING QUALITY.</h2>
           <p>

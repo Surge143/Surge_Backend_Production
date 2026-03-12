@@ -4,7 +4,7 @@ import config from '@/payload.config'
 import { decryptUrlToken } from '@/app/api/offline-system/_components/decryptToken'
 import { headers } from 'next/headers'
 
-export async function POST(req: NextRequest, { params }: { params: { token: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
     const { token } = await params
 
     const decryptedToken = await decryptUrlToken(token)
