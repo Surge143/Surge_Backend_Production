@@ -1,0 +1,119 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+  background: #fff;
+}
+
+.leftSection {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  background: #222;
+}
+
+.latteImage {
+  width: 100%;
+  height: 70vh;
+  object-fit: cover;
+}
+
+.craftText {
+  position: absolute;
+  left: 32px;
+  bottom: 32px;
+  color: #fff;
+}
+
+.craftText h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.craftText p {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.rightSection {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f7f7;
+}
+
+.portalBox {
+  width: 350px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo {
+  width: 48px;
+  height: 48px;
+  background: url('/images/store-manager-logo.svg') no-repeat center center;
+  background-size: contain;
+  margin-bottom: 24px;
+}
+
+.portalBox h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 32px;
+  color: #3a4a3c;
+}
+
+.form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.portalBox label {
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  color: #3a4a3c;
+}
+
+.portalBox input {
+  padding: 10px;
+  margin-bottom: 18px;
+  border: 1px solid #cfd8dc;
+  border-radius: 4px;
+  font-size: 1rem;
+  background: #f9f9f9;
+}
+
+.signInButton {
+  background: #6b7c5c;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  padding: 12px 0;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s;
+}
+
+.signInButton:hover {
+  background: #3a4a3c;
+}
+
+.error {
+  color: #d32f2f;
+  font-size: 0.85rem;
+  margin-top: -10px;
+  margin-bottom: 10px;
+  text-align: center;
+}

@@ -35,12 +35,31 @@ export const WTStamps: CollectionConfig = {
             type: 'array',
             admin: { description: "Log of all stamps earned" },
             fields: [
+                {
+                    name: 'type',
+                    type: 'select',
+                    defaultValue: 'online',
+                    options: [
+                        { label: 'Offline', value: 'offline' },
+                        { label: 'Online', value: 'online' },
+                    ],
+                },
                 { name: 'stamps', type: 'number', required: true },
-                { name: 'earnedAt', type: 'date', defaultValue: () => new Date() },
+                { name: 'earnedAt', type: 'date', defaultValue: () => new Date(), admin: { readOnly: true } },
                 {
                     name: 'linkedOrder',
                     type: 'relationship',
-                    relationTo: ['web-orders', 'app-orders'],
+                    relationTo: ['web-orders', 'app-orders', 'web-subscription'],
+                    admin: {
+                        condition: (data, siblingData) => siblingData.type === 'online',
+                    },
+                },
+                {
+                    name: 'offlineReferenceId',
+                    type: 'text',
+                    admin: {
+                        condition: (data, siblingData) => siblingData.type === 'offline',
+                    },
                 },
             ]
         },
@@ -51,11 +70,36 @@ export const WTStamps: CollectionConfig = {
             fields: [
                 { name: 'redeemedStamps', type: 'number', required: true },
                 {
+                    name: 'type',
+                    type: 'select',
+                    defaultValue: 'online',
+                    options: [
+                        { label: 'Offline', value: 'offline' },
+                        { label: 'Online', value: 'online' },
+                    ],
+                },
+                {
                     name: 'associatedOrder',
                     type: 'relationship',
-                    relationTo: ['web-orders', 'app-orders'],
-                    required: true,
+                    relationTo: ['web-orders', 'app-orders', 'web-subscription'],
+                    validate: (value, { siblingData }) => {
+                        if (siblingData?.type === 'online' && !value) {
+                            return 'This field is required for online transactions'
+                        }
+                        return true
+                    },
+                    admin: {
+                        condition: (data, siblingData) => siblingData.type === 'online',
+                    },
                 },
+                {
+                    name: 'offlineReferenceId',
+                    type: 'text',
+                    admin: {
+                        condition: (data, siblingData) => siblingData.type === 'offline',
+                    },
+                },
+                { name: 'redeemedAt', type: 'date', defaultValue: () => new Date(), admin: { readOnly: true } },
             ]
         },
     ]

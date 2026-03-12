@@ -71,6 +71,15 @@ export const UserWTCoins: CollectionConfig = {
             type: 'array',
             admin: { description: "Log of all points earned" },
             fields: [
+                {
+                    name: 'type',
+                    type: 'select',
+                    defaultValue: 'online',
+                    options: [
+                        { label: 'Offline', value: 'offline' },
+                        { label: 'Online', value: 'online' },
+                    ],
+                },
                 { name: 'amount', type: 'number', required: true },
                 {
                     name: 'remainingAmount',
@@ -78,8 +87,22 @@ export const UserWTCoins: CollectionConfig = {
                     required: true,
                     admin: { description: "Points remaining from this earning that haven't expired or been used" }
                 },
-                { name: 'earnedAt', type: 'date', defaultValue: () => new Date() },
-                { name: 'linkedOrder', type: 'relationship', relationTo: ['web-orders', 'app-orders', 'web-subscription'] },
+                { name: 'earnedAt', type: 'date', defaultValue: () => new Date(), admin: { readOnly: true } },
+                {
+                    name: 'linkedOrder',
+                    type: 'relationship',
+                    relationTo: ['web-orders', 'app-orders', 'web-subscription'],
+                    admin: {
+                        condition: (data, siblingData) => siblingData.type === 'online',
+                    },
+                },
+                {
+                    name: 'offlineReferenceId',
+                    type: 'text',
+                    admin: {
+                        condition: (data, siblingData) => siblingData.type === 'offline',
+                    },
+                },
                 { name: 'expiryDate', type: 'date', validate: validateFutureDate },
             ]
         },
@@ -88,43 +111,40 @@ export const UserWTCoins: CollectionConfig = {
             type: 'array',
             admin: { description: "Log of all points spent" },
             fields: [
+                {
+                    name: 'type',
+                    type: 'select',
+                    defaultValue: 'online',
+                    options: [
+                        { label: 'Offline', value: 'offline' },
+                        { label: 'Online', value: 'online' },
+                    ],
+                },
                 { name: 'redeemedPoints', type: 'number', required: true },
                 {
                     name: 'associatedOrder',
                     type: 'relationship',
                     relationTo: ['web-orders', 'app-orders', 'web-subscription'],
-                    required: true,
+                    validate: (value, { siblingData }) => {
+                        if (siblingData?.type === 'online' && !value) {
+                            return 'This field is required for online transactions'
+                        }
+                        return true
+                    },
+                    admin: {
+                        condition: (data, siblingData) => siblingData.type === 'online',
+                    },
                 },
+                {
+                    name: 'offlineReferenceId',
+                    type: 'text',
+                    admin: {
+                        condition: (data, siblingData) => siblingData.type === 'offline',
+                    },
+                },
+                { name: 'redeemedAt', type: 'date', defaultValue: () => new Date(), admin: { readOnly: true } },
             ]
         },
     ],
-    // hooks: {
-    //     afterChange: [
-    //         async ({ doc, req: { payload } }) => {
-    //             // Calculate total balance from non-expired earnings with remaining points
-    //             const now = new Date();
-    //             const totalBalance = (doc.coinEarningHistory || []).reduce((acc: number, entry: any) => {
-    //                 const expiryDate = entry.expiryDate ? new Date(entry.expiryDate) : null;
-    //                 if (!expiryDate || expiryDate > now) {
-    //                     return acc + (entry.remainingAmount || 0);
-    //                 }
-    //                 return acc;
-    //             }, 0);
-
-    //             // Update totalBalance if it differs (to avoid infinite hook loops)
-    //             if (doc.totalBalance !== totalBalance) {
-    //                 await payload.update({
-    //                     collection: 'user-wt-coins',
-    //                     id: doc.id,
-    //                     data: {
-    //                         totalBalance: totalBalance,
-    //                     },
-    //                     // Important: override access and skip hooks to avoid recursion
-    //                     overrideAccess: true,
-    //                 });
-    //             }
-    //         }
-    //     ]
-    // },
     timestamps: true,
 }

@@ -261,6 +261,10 @@ export interface User {
    * Tracks the state of the referral reward for this user.
    */
   referralStatus?: ('pending' | 'rewarded' | 'not_eligible') | null;
+  /**
+   * Token used for generating user-specific barcodes in the mobile app.
+   */
+  barcodeToken?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -1197,6 +1201,7 @@ export interface UserWtCoin {
    */
   coinEarningHistory?:
     | {
+        type?: ('offline' | 'online') | null;
         amount: number;
         /**
          * Points remaining from this earning that haven't expired or been used
@@ -1216,6 +1221,7 @@ export interface UserWtCoin {
               relationTo: 'web-subscription';
               value: number | WebSubscription;
             } | null);
+        offlineReferenceId?: string | null;
         expiryDate?: string | null;
         id?: string | null;
       }[]
@@ -1225,20 +1231,23 @@ export interface UserWtCoin {
    */
   pointsRedemptionHistory?:
     | {
+        type?: ('offline' | 'online') | null;
         redeemedPoints: number;
-        associatedOrder:
-          | {
+        associatedOrder?:
+          | ({
               relationTo: 'web-orders';
               value: number | WebOrder;
-            }
-          | {
+            } | null)
+          | ({
               relationTo: 'app-orders';
               value: number | AppOrder;
-            }
-          | {
+            } | null)
+          | ({
               relationTo: 'web-subscription';
               value: number | WebSubscription;
-            };
+            } | null);
+        offlineReferenceId?: string | null;
+        redeemedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -1465,6 +1474,7 @@ export interface WtStamp {
    */
   stampEarningHistory?:
     | {
+        type?: ('offline' | 'online') | null;
         stamps: number;
         earnedAt?: string | null;
         linkedOrder?:
@@ -1475,7 +1485,12 @@ export interface WtStamp {
           | ({
               relationTo: 'app-orders';
               value: number | AppOrder;
+            } | null)
+          | ({
+              relationTo: 'web-subscription';
+              value: number | WebSubscription;
             } | null);
+        offlineReferenceId?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -1485,15 +1500,22 @@ export interface WtStamp {
   stampsRedemptionHistory?:
     | {
         redeemedStamps: number;
-        associatedOrder:
-          | {
+        type?: ('offline' | 'online') | null;
+        associatedOrder?:
+          | ({
               relationTo: 'web-orders';
               value: number | WebOrder;
-            }
-          | {
+            } | null)
+          | ({
               relationTo: 'app-orders';
               value: number | AppOrder;
-            };
+            } | null)
+          | ({
+              relationTo: 'web-subscription';
+              value: number | WebSubscription;
+            } | null);
+        offlineReferenceId?: string | null;
+        redeemedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -2130,6 +2152,7 @@ export interface UsersSelect<T extends boolean = true> {
   referredBy?: T;
   referralCodeInput?: T;
   referralStatus?: T;
+  barcodeToken?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -2719,18 +2742,23 @@ export interface UserWtCoinsSelect<T extends boolean = true> {
   coinEarningHistory?:
     | T
     | {
+        type?: T;
         amount?: T;
         remainingAmount?: T;
         earnedAt?: T;
         linkedOrder?: T;
+        offlineReferenceId?: T;
         expiryDate?: T;
         id?: T;
       };
   pointsRedemptionHistory?:
     | T
     | {
+        type?: T;
         redeemedPoints?: T;
         associatedOrder?: T;
+        offlineReferenceId?: T;
+        redeemedAt?: T;
         id?: T;
       };
   updatedAt?: T;
@@ -2894,16 +2922,21 @@ export interface WtStampsSelect<T extends boolean = true> {
   stampEarningHistory?:
     | T
     | {
+        type?: T;
         stamps?: T;
         earnedAt?: T;
         linkedOrder?: T;
+        offlineReferenceId?: T;
         id?: T;
       };
   stampsRedemptionHistory?:
     | T
     | {
         redeemedStamps?: T;
+        type?: T;
         associatedOrder?: T;
+        offlineReferenceId?: T;
+        redeemedAt?: T;
         id?: T;
       };
   updatedAt?: T;
