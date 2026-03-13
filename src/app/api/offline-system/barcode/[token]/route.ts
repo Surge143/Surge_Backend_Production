@@ -52,7 +52,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         const totalStamps = userStamps?.docs[0]?.stampCount || 0
         const stampReward = userStamps?.docs[0]?.stampReward || 0
 
-        return NextResponse.json({ success: true, totalBeans, totalStamps, stampReward })
+        const userData = await payload.findByID({
+            collection: 'users',
+            id: decryptedToken,
+        })
+
+        return NextResponse.json({ success: true, totalBeans, totalStamps, stampReward, user: userData })
     }
     catch (error) {
         console.log(error)
