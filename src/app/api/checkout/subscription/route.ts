@@ -337,6 +337,7 @@ export async function POST(req: NextRequest) {
                         payment_settings: { save_default_payment_method: "on_subscription" },
                         metadata: {
                             db_subscription_id: subscriptionDoc.id,
+                            payment_method_types: null,
                             guest_access_token: guestAccessToken || "", // Store token in Stripe metadata
                             order_type: 'subscription'
                         },
