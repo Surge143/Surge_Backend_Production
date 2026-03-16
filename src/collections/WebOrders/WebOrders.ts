@@ -1,634 +1,721 @@
-import type { CollectionConfig } from "payload";
-import { awardWTCoins, convertPointsToAED } from "@/utilities/wtCoins";
-import { refundHandler } from "./endpoints/refundHandler";
-import { linkGuestOrderToUser } from "./hooks/linkGuestToUser";
-import { awardReferralCoins } from "@/utilities/awardReferralCoins";
-import { createOrderPaidNotification } from "@/utilities/orderNotifications";
+import type { CollectionConfig } from 'payload'
+import { awardWTCoins, convertPointsToAED } from '@/utilities/wtCoins'
+import { refundHandler } from './endpoints/refundHandler'
+import { linkGuestOrderToUser } from './hooks/linkGuestToUser'
+import { awardReferralCoins } from '@/utilities/awardReferralCoins'
+import { createOrderPaidNotification } from '@/utilities/orderNotifications'
+
+function generateOrderID() {
+  const now = new Date()
+  const datePart = now.toISOString().slice(2, 10).replace(/-/g, '')
+  const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase()
+  return `${datePart}-${randomPart}`
+}
 
 export const WebOrders: CollectionConfig = {
-    slug: 'web-orders',
-    labels: {
-        singular: 'Store Order',
-        plural: 'Store Orders'
+  slug: 'web-orders',
+  labels: {
+    singular: 'Store Order',
+    plural: 'Store Orders',
+  },
+  admin: {
+    useAsTitle: 'id',
+    group: 'Store',
+  },
+  endpoints: [
+    {
+      path: '/:id/cancel',
+      method: 'get',
+      handler: refundHandler,
     },
-    admin: {
-        useAsTitle: 'id',
-        group: 'Store',
-    },
-    endpoints: [
-        {
-            path: '/:id/cancel',
-            method: 'get',
-            handler: refundHandler,
-        },
-    ],
-    access: {
-        read: async ({ req, id }) => {
-            const { user, payload, query } = req
-            // Admins and shop-managers always allowed
-            if (user && (
-                user.role === 'admin' ||
-                user.role === 'super-admin' ||
-                user.role === 'shop-manager'
-            )) return true
+  ],
+  access: {
+    read: async ({ req, id }) => {
+      const { user, payload, query } = req
+      // Admins and shop-managers always allowed
+      if (
+        user &&
+        (user.role === 'admin' || user.role === 'super-admin' || user.role === 'shop-manager')
+      )
+        return true
 
-            // If an ID is provided, check ownership or token
-            if (id) {
-                try {
-                    const order = await payload.findByID({
-                        collection: 'web-orders',
-                        id,
-                        depth: 0,
-                        overrideAccess: true,
-                    })
+      // If an ID is provided, check ownership or token
+      if (id) {
+        try {
+          const order = await payload.findByID({
+            collection: 'web-orders',
+            id,
+            depth: 0,
+            overrideAccess: true,
+          })
 
-                    // Allow if owner
-                    const orderUserId = typeof order.user === 'object' ? order.user?.id : order.user
-                    if (user && String(orderUserId) === String(user.id)) return true
+          // Allow if owner
+          const orderUserId = typeof order.user === 'object' ? order.user?.id : order.user
+          if (user && String(orderUserId) === String(user.id)) return true
 
-                    // Allow if guest token matches
-                    const token = query?.token || req.headers?.get?.('x-guest-token')
-                    if (order.customerType === 'guest' && order.guestAccessToken && token === order.guestAccessToken) {
-                        return true
-                    }
-                } catch {
-                    return false
-                }
-            }
-
-            // If no ID or not authorized yet, restrict to user's own orders (for listing)
-            if (user) {
-                return {
-                    user: {
-                        equals: user.id,
-                    },
-                }
-            }
-
-            return false
-        },
-        create: () => true,
-        update: async ({ req: { user, payload }, id }) => {
-            if (!user) return false
-            // Admins and shop-managers always allowed
-            if (
-                user.role === 'admin' ||
-                user.role === 'super-admin' ||
-                user.role === 'shop-manager'
-            ) return true
-            // Allow the order's owner to update their own order
-            if (id) {
-                try {
-                    const order = await payload.findByID({
-                        collection: 'web-orders',
-                        id,
-                        depth: 0,
-                        overrideAccess: true,
-                    })
-                    const orderUserId = typeof order.user === 'object' ? order.user?.id : order.user
-                    return String(orderUserId) === String(user.id)
-                } catch {
-                    return false
-                }
-            }
-            return false
-        },
-        delete: ({ req: { user } }) =>
-            user?.role === 'super-admin' || user?.role === 'admin',
-    },
-    hooks: {
-        beforeChange: [
-            async ({ data, req, originalDoc, operation }) => {
-                if (operation === 'update') {
-                    // Award WTCoins when delivery status changes to 'delivered'
-                    const isNowDelivered = data.deliveryStatus === 'delivered'
-                    const wasDelivered = originalDoc?.deliveryStatus === 'delivered'
-                    const isPaid = (data.paymentStatus || originalDoc?.paymentStatus) === 'completed'
-                    const alreadyAwarded = originalDoc?.wtCoinsAwarded
-                    const hasUser = data.user || originalDoc?.user
-
-                    if (isNowDelivered && !wasDelivered && isPaid && hasUser && !alreadyAwarded) {
-                        try {
-                            const userId = typeof (data.user || originalDoc.user) === 'object'
-                                ? (data.user || originalDoc.user).id
-                                : (data.user || originalDoc.user)
-
-                            if (typeof userId === 'number') {
-                                // Calculate real money spent (excluding WTCoins discount)
-                                const pointsUsed = data.pointsUsed !== undefined ? data.pointsUsed : (originalDoc.pointsUsed || 0)
-                                const totalAmount = data.financials?.total !== undefined ? data.financials.total : (originalDoc.financials?.total || 0)
-
-                                const wtCoinsDiscount = pointsUsed ? await convertPointsToAED(req.payload, pointsUsed) : 0
-                                const realMoneySpent = Math.max(0, totalAmount - wtCoinsDiscount)
-
-                                if (realMoneySpent > 0) {
-                                    await awardWTCoins(req.payload, userId, realMoneySpent, originalDoc.id)
-                                    // Mark as awarded in the same operation
-                                    data.wtCoinsAwarded = true
-                                    console.log(`✅ Awarded WTCoins for order ${originalDoc.id} in beforeChange`)
-                                }
-                            } else {
-                                console.error('User ID is not a number, skipping WTCoins award')
-                            }
-                        } catch (error) {
-                            console.error('Error awarding WTCoins on shipment:', error)
-                        }
-                    }
-                }
-                return data
-            }
-        ],
-        afterChange: [
-            async ({ doc, previousDoc, req: { payload } }) => {
-                await linkGuestOrderToUser({
-                    payload,
-                    doc,
-                    previousDoc,
-                    collection: 'web-orders',
-                    paidStatus: 'completed',
-                });
-
-                // --- REFERRAL & NOTIFICATION LOGIC ---
-                const isNowPaid = doc.paymentStatus === 'completed';
-                const wasPaid = previousDoc?.paymentStatus === 'completed';
-                const isNowDelivered = doc.deliveryStatus === 'delivered';
-                const wasDelivered = previousDoc?.deliveryStatus === 'delivered';
-                const userId = typeof doc.user === 'object' ? doc.user?.id : doc.user;
-
-                if (userId) {
-                    setImmediate(async () => {
-                        const becamePaid = isNowPaid && !wasPaid;
-
-                        if (becamePaid) {
-                            await awardReferralCoins(payload, userId, doc.id, 'web-orders');
-                        }
-
-                        // 2. Notification: Trigger on PAYMENT
-                        if (isNowPaid && !wasPaid) {
-                            await createOrderPaidNotification(payload, userId, doc.id, 'store');
-
-                            // 3. Award WTCoins if already delivered but not yet awarded (Payment after Delivery)
-                            if (doc.deliveryStatus === 'delivered' && !doc.wtCoinsAwarded) {
-                                try {
-                                    const totalAmount = doc.financials?.total || 0;
-                                    const pointsUsed = doc.pointsUsed || 0;
-                                    const wtCoinsDiscount = pointsUsed ? await convertPointsToAED(payload, pointsUsed) : 0;
-                                    const realMoneySpent = Math.max(0, totalAmount - wtCoinsDiscount);
-
-                                    if (realMoneySpent > 0) {
-                                        await awardWTCoins(payload, userId, realMoneySpent, doc.id);
-                                        await payload.update({
-                                            collection: 'web-orders',
-                                            id: doc.id,
-                                            data: { wtCoinsAwarded: true },
-                                        });
-                                        console.log(`✅ Awarded WTCoins for order ${doc.id} in afterChange (Payment after Delivery)`);
-                                    }
-                                } catch (error) {
-                                    console.error('Error awarding WTCoins on payment after delivery:', error);
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-        ],
-    },
-    fields: [
-        {
-            type: 'tabs',
-            tabs: [
-                {
-                    label: 'Order Details',
-                    fields: [
-                        {
-                            type: 'row',
-                            fields: [
-                                {
-                                    name: 'customerType',
-                                    type: 'select',
-                                    defaultValue: 'guest',
-                                    options: [
-                                        { label: 'Guest', value: 'guest' },
-                                        { label: 'Registered User', value: 'user' },
-                                    ],
-                                    admin: {
-                                        width: '50%',
-
-                                    },
-                                },
-                                {
-                                    name: 'user',
-                                    type: 'relationship',
-                                    relationTo: 'users',
-                                    required: false, // Optional because it's hidden for guests
-                                    admin: {
-                                        width: '50%',
-
-
-                                        // This field ONLY shows up if customerType is 'user'
-                                        condition: (data) => data?.customerType === 'user',
-                                        description: 'Select the registered user account for this order.',
-                                    },
-                                },
-                                {
-                                    name: 'deliveryOption',
-                                    type: 'select',
-                                    required: true,
-                                    options: [
-                                        { label: 'Delivery', value: 'delivery' },
-                                        { label: 'Pickup', value: 'pickup' },
-                                    ],
-                                    admin: {
-
-                                    },
-                                },
-                                {
-                                    name: 'stripeOrderId',
-                                    type: 'text',
-                                    admin: { description: 'The ID from Stripe' }
-                                },
-                                {
-                                    name: 'origin',
-                                    type: 'select',
-                                    required: true,
-                                    options: [
-                                        { label: 'Subscription', value: 'subscription' },
-                                        { label: 'One Time', value: 'one-time' },
-                                    ],
-                                    admin: {
-
-                                    },
-                                },
-                                {
-                                    name: 'email',
-                                    label: 'Customer Email',
-                                    type: 'text',
-                                    admin: {
-                                        description: 'Stored at checkout for guest-to-user linking.',
-
-                                    },
-                                },
-                            ],
-                        },
-                        {
-                            name: 'items',
-                            type: 'array',
-                            required: true,
-                            fields: [
-                                {
-                                    type: 'row',
-                                    fields: [
-                                        {
-                                            name: 'product',
-                                            type: 'relationship',
-                                            relationTo: 'web-products',
-                                            required: true,
-                                            admin: { width: '25%' }
-                                        },
-                                        {
-                                            name: 'variantID',
-                                            label: 'Variation ID',
-                                            type: 'text',
-                                            admin: {
-                                                width: '25%',
-
-                                                description: 'The ID of the row in the Product Variants array'
-                                            }
-                                        },
-                                        {
-                                            name: 'quantity',
-                                            type: 'number',
-                                            required: true,
-                                            admin: { width: '10%', }
-                                        },
-                                        {
-                                            name: 'price',
-                                            type: 'number',
-                                            required: true,
-                                            admin: { width: '15%', }
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    ],
-                },
-                {
-                    label: 'Shipping & Billing',
-                    fields: [
-                        {
-                            name: 'shippingAddress',
-                            type: 'group',
-                            label: 'Shipping Address (For Delivery Only)',
-                            admin: {
-                                condition: (data) => data?.deliveryOption === 'delivery',
-
-                            },
-                            fields: [
-                                {
-                                    type: 'row',
-                                    fields: [
-                                        { name: 'addressFirstName', type: 'text' },
-                                        { name: 'addressLastName', type: 'text' },
-                                    ],
-                                },
-                                {
-                                    type: 'row',
-                                    fields: [
-                                        { name: 'addressLine1', type: 'text' },
-                                        { name: 'addressLine2', type: 'text' },
-                                    ],
-                                },
-                                {
-                                    type: 'row',
-                                    fields: [
-                                        { name: 'city', type: 'text' },
-                                        {
-                                            name: 'emirates',
-                                            type: 'select',
-                                            options: [
-                                                { label: 'Abu Dhabi', value: 'abu_dhabi' },
-                                                { label: 'Dubai', value: 'dubai' },
-                                                { label: 'Sharjah', value: 'sharjah' },
-                                                { label: 'Ajman', value: 'ajman' },
-                                                { label: 'Umm Al Quwain', value: 'umm_al_quwain' },
-                                                { label: 'Ras Al Khaimah', value: 'ras_al_khaimah' },
-                                                { label: 'Fujairah', value: 'fujairah' },
-                                            ],
-                                        },
-                                        { name: 'phoneNumber', type: 'text' },
-                                        {
-                                            name: 'addressCountry',
-                                            label: 'Country',
-                                            type: 'text',
-                                            defaultValue: 'United Arab Emirates',
-                                            admin: {
-                                                readOnly: true,
-                                            },
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                        {
-                            name: 'billingAddress',
-                            type: 'group',
-                            admin: {
-
-                            },
-                            fields: [
-                                {
-                                    type: 'row',
-                                    fields: [
-                                        { name: 'addressFirstName', type: 'text' },
-                                        { name: 'addressLastName', type: 'text' },
-                                    ],
-                                },
-                                {
-                                    type: 'row',
-                                    fields: [
-                                        { name: 'addressLine1', type: 'text' },
-                                        { name: 'addressLine2', type: 'text' },
-                                    ],
-                                },
-                                {
-                                    type: 'row',
-                                    fields: [
-                                        { name: 'city', type: 'text' },
-                                        {
-                                            name: 'emirates',
-                                            type: 'select',
-                                            options: [
-                                                { label: 'Abu Dhabi', value: 'abu_dhabi' },
-                                                { label: 'Dubai', value: 'dubai' },
-                                                { label: 'Sharjah', value: 'sharjah' },
-                                                { label: 'Ajman', value: 'ajman' },
-                                                { label: 'Umm Al Quwain', value: 'umm_al_quwain' },
-                                                { label: 'Ras Al Khaimah', value: 'ras_al_khaimah' },
-                                                { label: 'Fujairah', value: 'fujairah' },
-                                            ],
-                                        },
-                                        { name: 'phoneNumber', type: 'text' },
-                                        {
-                                            name: 'addressCountry',
-                                            label: 'Country',
-                                            type: 'text',
-                                            defaultValue: 'United Arab Emirates',
-                                            admin: {
-                                                readOnly: true,
-                                            },
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                    ],
-                },
-                {
-                    label: 'Payment & Totals',
-                    fields: [
-                        {
-                            type: 'row',
-                            fields: [
-                                {
-                                    name: 'paymentStatus',
-                                    type: 'select',
-                                    required: true,
-                                    admin: {
-
-                                    },
-                                    validate: (val, { data }) => {
-                                        if (val === 'refunded' && data?.deliveryStatus !== 'placed' && data?.deliveryStatus !== 'cancelled') {
-                                            return 'Refunds are only allowed while the delivery status is "Placed" or "Cancelled".';
-                                        }
-                                        return true;
-                                    },
-                                    options: [
-                                        { label: 'Pending', value: 'pending' },
-                                        { label: 'Completed', value: 'completed' },
-                                        { label: 'Failed', value: 'failed' },
-                                        { label: 'Refund Initiated', value: 'refund-initiated' },
-                                        { label: 'Refunded', value: 'refunded' },
-                                    ],
-
-                                },
-                                {
-                                    name: 'deliveryStatus',
-                                    type: 'select',
-                                    defaultValue: 'placed',
-                                    admin: {
-                                        condition: (data) => data?.paymentStatus === 'completed',
-                                    },
-                                    options: [
-                                        { label: 'Placed', value: 'placed' },
-                                        { label: 'Shipped', value: 'shipped' },
-                                        { label: 'Completed', value: 'delivered' },
-                                        { label: 'Cancelled', value: 'cancelled' },
-                                        { label: 'Refund Initiated', value: 'refund-initiated' },
-                                        { label: 'Refunded', value: 'refunded' },
-                                    ],
-                                },
-                                {
-                                    name: 'refundReason',
-                                    label: 'Refund Reason',
-                                    type: 'text',
-                                },
-                                {
-                                    name: 'deliveringBy',
-                                    label: 'Delivering By',
-                                    type: 'date',
-                                    admin: {
-                                        date: {
-                                            displayFormat: 'MM/dd/yyyy',
-                                            pickerAppearance: 'dayOnly',
-                                        },
-                                    },
-                                },
-                                {
-                                    name: 'deliveredOn',
-                                    label: 'Delivered On',
-                                    type: 'date',
-                                    admin: {
-                                        date: {
-                                            displayFormat: 'MM/dd/yyyy',
-                                            pickerAppearance: 'dayOnly',
-                                        },
-                                    },
-                                },
-                                {
-                                    name: 'refundedOn',
-                                    label: 'Refunded On',
-                                    type: 'date',
-                                    admin: {
-                                        date: {
-                                            displayFormat: 'MM/dd/yyyy',
-                                            pickerAppearance: 'dayOnly',
-                                        },
-                                    },
-                                },
-                                {
-                                    name: 'refundedAmount',
-                                    label: 'Refunded Amount',
-                                    type: 'number',
-                                    min: 0,
-                                    admin: {
-                                        readOnly: true,
-                                    },
-                                },
-                            ],
-                        },
-                        {
-                            name: 'couponCode',
-                            type: 'relationship',
-                            relationTo: 'coupon',
-                            admin: {
-                                condition: (data) => data?.origin === 'one-time',
-                            },
-                        },
-                        {
-                            name: 'pointsUsed',
-                            type: 'number',
-                            admin: {
-
-                            },
-                        },
-                        {
-                            name: 'financials',
-                            type: 'group',
-                            label: 'Financial Breakdown',
-                            fields: [
-                                {
-                                    type: 'row',
-                                    fields: [
-                                        {
-                                            name: 'subtotal',
-                                            label: 'Subtotal (Before Discounts)',
-                                            type: 'number',
-                                            required: true,
-                                            admin: { width: '50%', description: 'Sum of all item prices × quantities', }
-                                        },
-                                        {
-                                            name: 'couponDiscount',
-                                            label: 'Coupon Discount',
-                                            type: 'number',
-                                            admin: { width: '50%', description: 'Discount applied via coupon code', }
-                                        },
-                                    ],
-                                },
-                                {
-                                    type: 'row',
-                                    fields: [
-                                        {
-                                            name: 'wtCoinsDiscount',
-                                            label: 'WT Coins Discount',
-                                            type: 'number',
-                                            admin: { width: '50%', description: 'Discount applied via WT Coins redemption', }
-                                        },
-                                        {
-                                            name: 'shippingCharge',
-                                            label: 'Shipping Charge',
-                                            type: 'number',
-                                            admin: { width: '50%', description: 'Shipping fee (0 for pickup orders)', }
-                                        },
-                                    ],
-                                },
-                                {
-                                    type: 'row',
-                                    fields: [
-                                        {
-                                            name: 'taxPercentage',
-                                            label: 'Tax Percentage',
-                                            type: 'number',
-                                            min: 0,
-                                            max: 100,
-                                            admin: { width: '50%', description: 'Tax percentage applied on (subtotal − discounts + shipping)', }
-                                        },
-                                        {
-                                            name: 'taxAmount',
-                                            label: 'Tax',
-                                            type: 'number',
-                                            admin: { width: '50%', description: 'Tax applied on (subtotal − discounts + shipping)', }
-                                        },
-                                        {
-                                            name: 'total',
-                                            label: 'Grand Total',
-                                            type: 'number',
-                                            required: true,
-                                            admin: { width: '50%', description: 'Final amount charged (subtotal − discounts + shipping + tax)', }
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    ],
-                },
-            ],
-        },
-        {
-            name: 'wtCoinsAwarded',
-            type: 'checkbox',
-            defaultValue: false,
-            admin: {
-                hidden: true,
-                description: 'Tracks if WTCoins have been awarded for this order',
-
-            },
-        },
-        {
-            name: 'stripeData',
-            type: 'json',
-            admin: {
-                hidden: true, // This hides the field from the Admin Panel entirely
-
-            },
-        },
-        {
-            name: 'guestAccessToken',
-            type: 'text',
-            admin: {
-                hidden: true,
-            },
+          // Allow if guest token matches
+          const token = query?.token || req.headers?.get?.('x-guest-token')
+          if (
+            order.customerType === 'guest' &&
+            order.guestAccessToken &&
+            token === order.guestAccessToken
+          ) {
+            return true
+          }
+        } catch {
+          return false
         }
+      }
+
+      // If no ID or not authorized yet, restrict to user's own orders (for listing)
+      if (user) {
+        return {
+          user: {
+            equals: user.id,
+          },
+        }
+      }
+
+      return false
+    },
+    create: () => true,
+    update: async ({ req: { user, payload }, id }) => {
+      if (!user) return false
+      // Admins and shop-managers always allowed
+      if (user.role === 'admin' || user.role === 'super-admin' || user.role === 'shop-manager')
+        return true
+      // Allow the order's owner to update their own order
+      if (id) {
+        try {
+          const order = await payload.findByID({
+            collection: 'web-orders',
+            id,
+            depth: 0,
+            overrideAccess: true,
+          })
+          const orderUserId = typeof order.user === 'object' ? order.user?.id : order.user
+          return String(orderUserId) === String(user.id)
+        } catch {
+          return false
+        }
+      }
+      return false
+    },
+    delete: ({ req: { user } }) => user?.role === 'super-admin' || user?.role === 'admin',
+  },
+  hooks: {
+    beforeChange: [
+      async ({ data, req: { payload }, originalDoc, operation }) => {
+        const currentPaymentStatus = data.paymentStatus || originalDoc?.paymentStatus
+        const isPaidStatus = currentPaymentStatus === 'completed'
+        const alreadyHasInvoice = data.invoiceId || originalDoc?.invoiceId
+
+        if (isPaidStatus && !alreadyHasInvoice) {
+          data.invoiceId = generateOrderID()
+          data.invoiceDate = new Date().toISOString()
+        }
+
+        // Map variant array IDs to names from web-products
+        if (data.items && Array.isArray(data.items)) {
+          for (const item of data.items) {
+            // Check if product and variantID are provided
+            if (item.product && item.variantID && !item.variantID.includes(' - ')) {
+              try {
+                // Ensure we handle case where product is a reference ID or populated object
+                const productId = typeof item.product === 'object' ? item.product.id : item.product
+                const product = await payload.findByID({
+                  collection: 'web-products',
+                  id: productId,
+                  depth: 0,
+                })
+
+                if (product && product.name) {
+                  item.productName = product.name
+                }
+
+                if (product && product.variants && Array.isArray(product.variants)) {
+                  const matchedVariant = product.variants.find((v: any) => v.id === item.variantID)
+                  if (matchedVariant && matchedVariant.variantName) {
+                    item.variantName = matchedVariant.variantName
+                  }
+                }
+              } catch (error) {
+                console.error(`Error fetching web-product for mapping variant name:`, error)
+              }
+            }
+          }
+        }
+
+        if (operation === 'update') {
+          // Award WTCoins when delivery status changes to 'delivered'
+          const isNowDelivered = data.deliveryStatus === 'delivered'
+          const wasDelivered = originalDoc?.deliveryStatus === 'delivered'
+          const isPaid = (data.paymentStatus || originalDoc?.paymentStatus) === 'completed'
+          const alreadyAwarded = originalDoc?.wtCoinsAwarded
+          const hasUser = data.user || originalDoc?.user
+
+          if (isNowDelivered && !wasDelivered && isPaid && hasUser && !alreadyAwarded) {
+            try {
+              const userId =
+                typeof (data.user || originalDoc.user) === 'object'
+                  ? (data.user || originalDoc.user).id
+                  : data.user || originalDoc.user
+
+              if (typeof userId === 'number') {
+                // Calculate real money spent (excluding WTCoins discount)
+                const pointsUsed =
+                  data.pointsUsed !== undefined ? data.pointsUsed : originalDoc.pointsUsed || 0
+                const totalAmount =
+                  data.financials?.total !== undefined
+                    ? data.financials.total
+                    : originalDoc.financials?.total || 0
+
+                const wtCoinsDiscount = pointsUsed
+                  ? await convertPointsToAED(payload, pointsUsed)
+                  : 0
+                const realMoneySpent = Math.max(0, totalAmount - wtCoinsDiscount)
+
+                if (realMoneySpent > 0) {
+                  await awardWTCoins(payload, userId, realMoneySpent, originalDoc.id)
+                  // Mark as awarded in the same operation
+                  data.wtCoinsAwarded = true
+                  console.log(`✅ Awarded WTCoins for order ${originalDoc.id} in beforeChange`)
+                }
+              } else {
+                console.error('User ID is not a number, skipping WTCoins award')
+              }
+            } catch (error) {
+              console.error('Error awarding WTCoins on shipment:', error)
+            }
+          }
+        }
+        return data
+      },
     ],
-};
+    afterChange: [
+      async ({ doc, previousDoc, req: { payload } }) => {
+        await linkGuestOrderToUser({
+          payload,
+          doc,
+          previousDoc,
+          collection: 'web-orders',
+          paidStatus: 'completed',
+        })
+
+        // --- REFERRAL & NOTIFICATION LOGIC ---
+        const isNowPaid = doc.paymentStatus === 'completed'
+        const wasPaid = previousDoc?.paymentStatus === 'completed'
+        const isNowDelivered = doc.deliveryStatus === 'delivered'
+        const wasDelivered = previousDoc?.deliveryStatus === 'delivered'
+        const userId = typeof doc.user === 'object' ? doc.user?.id : doc.user
+
+        if (userId) {
+          setImmediate(async () => {
+            const becamePaid = isNowPaid && !wasPaid
+
+            if (becamePaid) {
+              await awardReferralCoins(payload, userId, doc.id, 'web-orders')
+            }
+
+            // 2. Notification: Trigger on PAYMENT
+            if (isNowPaid && !wasPaid) {
+              await createOrderPaidNotification(payload, userId, doc.id, 'store')
+
+              // 3. Award WTCoins if already delivered but not yet awarded (Payment after Delivery)
+              if (doc.deliveryStatus === 'delivered' && !doc.wtCoinsAwarded) {
+                try {
+                  const totalAmount = doc.financials?.total || 0
+                  const pointsUsed = doc.pointsUsed || 0
+                  const wtCoinsDiscount = pointsUsed
+                    ? await convertPointsToAED(payload, pointsUsed)
+                    : 0
+                  const realMoneySpent = Math.max(0, totalAmount - wtCoinsDiscount)
+
+                  if (realMoneySpent > 0) {
+                    await awardWTCoins(payload, userId, realMoneySpent, doc.id)
+                    await payload.update({
+                      collection: 'web-orders',
+                      id: doc.id,
+                      data: { wtCoinsAwarded: true },
+                    })
+                    console.log(
+                      `✅ Awarded WTCoins for order ${doc.id} in afterChange (Payment after Delivery)`,
+                    )
+                  }
+                } catch (error) {
+                  console.error('Error awarding WTCoins on payment after delivery:', error)
+                }
+              }
+            }
+          })
+        }
+      },
+    ],
+  },
+  fields: [
+    {
+      type: 'tabs',
+      tabs: [
+        {
+          label: 'Order Details',
+          fields: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'customerType',
+                  type: 'select',
+                  defaultValue: 'guest',
+                  options: [
+                    { label: 'Guest', value: 'guest' },
+                    { label: 'Registered User', value: 'user' },
+                  ],
+                  admin: {
+                    width: '50%',
+                  },
+                },
+                {
+                  name: 'user',
+                  type: 'relationship',
+                  relationTo: 'users',
+                  required: false, // Optional because it's hidden for guests
+                  admin: {
+                    width: '50%',
+
+                    // This field ONLY shows up if customerType is 'user'
+                    condition: (data) => data?.customerType === 'user',
+                    description: 'Select the registered user account for this order.',
+                  },
+                },
+                {
+                  name: 'deliveryOption',
+                  type: 'select',
+                  required: true,
+                  options: [
+                    { label: 'Delivery', value: 'delivery' },
+                    { label: 'Pickup', value: 'pickup' },
+                  ],
+                  admin: {},
+                },
+                {
+                  name: 'stripeOrderId',
+                  type: 'text',
+                  admin: { description: 'The ID from Stripe' },
+                },
+                {
+                  name: 'origin',
+                  type: 'select',
+                  required: true,
+                  options: [
+                    { label: 'Subscription', value: 'subscription' },
+                    { label: 'One Time', value: 'one-time' },
+                  ],
+                  admin: {},
+                },
+                {
+                  name: 'email',
+                  label: 'Customer Email',
+                  type: 'text',
+                  admin: {
+                    description: 'Stored at checkout for guest-to-user linking.',
+                  },
+                },
+              ],
+            },
+            {
+              name: 'items',
+              type: 'array',
+              required: true,
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'product',
+                      type: 'relationship',
+                      relationTo: 'web-products',
+                      required: true,
+                      admin: { width: '25%' },
+                    },
+                    {
+                      name: 'variantID',
+                      label: 'Variation ID',
+                      type: 'text',
+                      admin: {
+                        width: '25%',
+                        description: 'The ID of the variation',
+                      },
+                    },
+                    {
+                      name: 'variantName',
+                      label: 'Variation Name',
+                      type: 'text',
+                      admin: {
+                        width: '25%',
+                        description: 'The name of the variation',
+                      },
+                    },
+                    {
+                      name: 'quantity',
+                      type: 'number',
+                      required: true,
+                      admin: { width: '10%' },
+                    },
+                    {
+                      name: 'price',
+                      type: 'number',
+                      required: true,
+                      admin: { width: '15%' },
+                    },
+                    {
+                      name: 'productName',
+                      type: 'text',
+                      admin: { hidden: true },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Shipping & Billing',
+          fields: [
+            {
+              name: 'shippingAddress',
+              type: 'group',
+              label: 'Shipping Address (For Delivery Only)',
+              admin: {
+                condition: (data) => data?.deliveryOption === 'delivery',
+              },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'addressFirstName', type: 'text' },
+                    { name: 'addressLastName', type: 'text' },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'addressLine1', type: 'text' },
+                    { name: 'addressLine2', type: 'text' },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'city', type: 'text' },
+                    {
+                      name: 'emirates',
+                      type: 'select',
+                      options: [
+                        { label: 'Abu Dhabi', value: 'abu_dhabi' },
+                        { label: 'Dubai', value: 'dubai' },
+                        { label: 'Sharjah', value: 'sharjah' },
+                        { label: 'Ajman', value: 'ajman' },
+                        { label: 'Umm Al Quwain', value: 'umm_al_quwain' },
+                        { label: 'Ras Al Khaimah', value: 'ras_al_khaimah' },
+                        { label: 'Fujairah', value: 'fujairah' },
+                      ],
+                    },
+                    { name: 'phoneNumber', type: 'text' },
+                    {
+                      name: 'addressCountry',
+                      label: 'Country',
+                      type: 'text',
+                      defaultValue: 'United Arab Emirates',
+                      admin: {
+                        readOnly: true,
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              name: 'billingAddress',
+              type: 'group',
+              admin: {},
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'addressFirstName', type: 'text' },
+                    { name: 'addressLastName', type: 'text' },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'addressLine1', type: 'text' },
+                    { name: 'addressLine2', type: 'text' },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'city', type: 'text' },
+                    {
+                      name: 'emirates',
+                      type: 'select',
+                      options: [
+                        { label: 'Abu Dhabi', value: 'abu_dhabi' },
+                        { label: 'Dubai', value: 'dubai' },
+                        { label: 'Sharjah', value: 'sharjah' },
+                        { label: 'Ajman', value: 'ajman' },
+                        { label: 'Umm Al Quwain', value: 'umm_al_quwain' },
+                        { label: 'Ras Al Khaimah', value: 'ras_al_khaimah' },
+                        { label: 'Fujairah', value: 'fujairah' },
+                      ],
+                    },
+                    { name: 'phoneNumber', type: 'text' },
+                    {
+                      name: 'addressCountry',
+                      label: 'Country',
+                      type: 'text',
+                      defaultValue: 'United Arab Emirates',
+                      admin: {
+                        readOnly: true,
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Payment & Totals',
+          fields: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'paymentStatus',
+                  type: 'select',
+                  required: true,
+                  admin: {},
+                  validate: (val, { data }) => {
+                    if (
+                      val === 'refunded' &&
+                      data?.deliveryStatus !== 'placed' &&
+                      data?.deliveryStatus !== 'cancelled'
+                    ) {
+                      return 'Refunds are only allowed while the delivery status is "Placed" or "Cancelled".'
+                    }
+                    return true
+                  },
+                  options: [
+                    { label: 'Pending', value: 'pending' },
+                    { label: 'Completed', value: 'completed' },
+                    { label: 'Failed', value: 'failed' },
+                    { label: 'Refund Initiated', value: 'refund-initiated' },
+                    { label: 'Refunded', value: 'refunded' },
+                  ],
+                },
+                {
+                  name: 'deliveryStatus',
+                  type: 'select',
+                  defaultValue: 'placed',
+                  admin: {
+                    condition: (data) => data?.paymentStatus === 'completed',
+                  },
+                  options: [
+                    { label: 'Placed', value: 'placed' },
+                    { label: 'Shipped', value: 'shipped' },
+                    { label: 'Completed', value: 'delivered' },
+                    { label: 'Cancelled', value: 'cancelled' },
+                    { label: 'Refund Initiated', value: 'refund-initiated' },
+                    { label: 'Refunded', value: 'refunded' },
+                  ],
+                },
+                {
+                  name: 'refundReason',
+                  label: 'Refund Reason',
+                  type: 'text',
+                },
+                {
+                  name: 'deliveringBy',
+                  label: 'Delivering By',
+                  type: 'date',
+                  admin: {
+                    date: {
+                      displayFormat: 'MM/dd/yyyy',
+                      pickerAppearance: 'dayOnly',
+                    },
+                  },
+                },
+                {
+                  name: 'deliveredOn',
+                  label: 'Delivered On',
+                  type: 'date',
+                  admin: {
+                    date: {
+                      displayFormat: 'MM/dd/yyyy',
+                      pickerAppearance: 'dayOnly',
+                    },
+                  },
+                },
+                {
+                  name: 'refundedOn',
+                  label: 'Refunded On',
+                  type: 'date',
+                  admin: {
+                    date: {
+                      displayFormat: 'MM/dd/yyyy',
+                      pickerAppearance: 'dayOnly',
+                    },
+                  },
+                },
+                {
+                  name: 'refundedAmount',
+                  label: 'Refunded Amount',
+                  type: 'number',
+                  min: 0,
+                  admin: {
+                    readOnly: true,
+                  },
+                },
+              ],
+            },
+            {
+              name: 'couponCode',
+              type: 'relationship',
+              relationTo: 'coupon',
+              admin: {
+                condition: (data) => data?.origin === 'one-time',
+              },
+            },
+            {
+              name: 'pointsUsed',
+              type: 'number',
+              admin: {},
+            },
+            {
+              name: 'financials',
+              type: 'group',
+              label: 'Financial Breakdown',
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'subtotal',
+                      label: 'Subtotal (Before Discounts)',
+                      type: 'number',
+                      required: true,
+                      admin: { width: '50%', description: 'Sum of all item prices × quantities' },
+                    },
+                    {
+                      name: 'couponDiscount',
+                      label: 'Coupon Discount',
+                      type: 'number',
+                      admin: { width: '50%', description: 'Discount applied via coupon code' },
+                    },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'wtCoinsDiscount',
+                      label: 'WT Coins Discount',
+                      type: 'number',
+                      admin: {
+                        width: '50%',
+                        description: 'Discount applied via WT Coins redemption',
+                      },
+                    },
+                    {
+                      name: 'shippingCharge',
+                      label: 'Shipping Charge',
+                      type: 'number',
+                      admin: { width: '50%', description: 'Shipping fee (0 for pickup orders)' },
+                    },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'taxPercentage',
+                      label: 'Tax Percentage',
+                      type: 'number',
+                      min: 0,
+                      max: 100,
+                      admin: {
+                        width: '50%',
+                        description: 'Tax percentage applied on (subtotal − discounts + shipping)',
+                      },
+                    },
+                    {
+                      name: 'taxAmount',
+                      label: 'Tax',
+                      type: 'number',
+                      admin: {
+                        width: '50%',
+                        description: 'Tax applied on (subtotal − discounts + shipping)',
+                      },
+                    },
+                    {
+                      name: 'total',
+                      label: 'Grand Total',
+                      type: 'number',
+                      required: true,
+                      admin: {
+                        width: '50%',
+                        description: 'Final amount charged (subtotal − discounts + shipping + tax)',
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'wtCoinsAwarded',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        hidden: true,
+        description: 'Tracks if WTCoins have been awarded for this order',
+      },
+    },
+    {
+      name: 'stripeData',
+      type: 'json',
+      admin: {
+        hidden: true, // This hides the field from the Admin Panel entirely
+      },
+    },
+    {
+      name: 'guestAccessToken',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+    },
+    {
+      name: 'invoiceId',
+      type: 'text',
+      unique: true,
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+    },
+    {
+      name: 'invoiceDate',
+      type: 'date',
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+    },
+  ],
+}

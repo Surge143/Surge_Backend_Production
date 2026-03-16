@@ -1080,6 +1080,8 @@ export interface AppOrder {
     | number
     | boolean
     | null;
+  invoiceId?: string | null;
+  invoiceDate?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1278,11 +1280,12 @@ export interface WebOrder {
   items: {
     product: number | WebProduct;
     /**
-     * The ID of the row in the Product Variants array
+     * The name of the variation
      */
     variantID?: string | null;
     quantity: number;
     price: number;
+    productName?: string | null;
     id?: string | null;
   }[];
   shippingAddress?: {
@@ -1358,6 +1361,8 @@ export interface WebOrder {
     | boolean
     | null;
   guestAccessToken?: string | null;
+  invoiceId?: string | null;
+  invoiceDate?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1385,15 +1390,16 @@ export interface WebSubscription {
   items: {
     product: number | WebProduct;
     /**
-     * The ID of the row in the Product Variants array
+     * The name of the variation
      */
     variantID?: string | null;
     /**
-     * The ID of the row in the subFreq array
+     * The name of the subscription frequency
      */
     subFreqID: string;
     quantity: number;
     price: number;
+    productName?: string | null;
     id?: string | null;
   }[];
   shippingAddress?: {
@@ -1457,6 +1463,8 @@ export interface WebSubscription {
     | boolean
     | null;
   guestAccessToken?: string | null;
+  invoiceId?: string | null;
+  invoiceDate?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2594,6 +2602,8 @@ export interface AppOrdersSelect<T extends boolean = true> {
   stripeOrderId?: T;
   isStampsAwarded?: T;
   stripeData?: T;
+  invoiceId?: T;
+  invoiceDate?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2782,6 +2792,7 @@ export interface WebOrdersSelect<T extends boolean = true> {
         variantID?: T;
         quantity?: T;
         price?: T;
+        productName?: T;
         id?: T;
       };
   shippingAddress?:
@@ -2831,6 +2842,8 @@ export interface WebOrdersSelect<T extends boolean = true> {
   wtCoinsAwarded?: T;
   stripeData?: T;
   guestAccessToken?: T;
+  invoiceId?: T;
+  invoiceDate?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2868,6 +2881,7 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
         subFreqID?: T;
         quantity?: T;
         price?: T;
+        productName?: T;
         id?: T;
       };
   shippingAddress?:
@@ -2908,6 +2922,8 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
       };
   stripeData?: T;
   guestAccessToken?: T;
+  invoiceId?: T;
+  invoiceDate?: T;
   updatedAt?: T;
   createdAt?: T;
 }
