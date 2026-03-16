@@ -1280,9 +1280,13 @@ export interface WebOrder {
   items: {
     product: number | WebProduct;
     /**
-     * The name of the variation
+     * The ID of the variation
      */
     variantID?: string | null;
+    /**
+     * The name of the variation
+     */
+    variantName?: string | null;
     quantity: number;
     price: number;
     productName?: string | null;
@@ -1390,13 +1394,21 @@ export interface WebSubscription {
   items: {
     product: number | WebProduct;
     /**
-     * The name of the variation
+     * The ID of the variation
      */
     variantID?: string | null;
     /**
-     * The name of the subscription frequency
+     * The name of the variation
+     */
+    variantName?: string | null;
+    /**
+     * The ID of the subscription frequency
      */
     subFreqID: string;
+    /**
+     * The name of the subscription frequency
+     */
+    frequencyName?: string | null;
     quantity: number;
     price: number;
     productName?: string | null;
@@ -2790,6 +2802,7 @@ export interface WebOrdersSelect<T extends boolean = true> {
     | {
         product?: T;
         variantID?: T;
+        variantName?: T;
         quantity?: T;
         price?: T;
         productName?: T;
@@ -2878,7 +2891,9 @@ export interface WebSubscriptionSelect<T extends boolean = true> {
     | {
         product?: T;
         variantID?: T;
+        variantName?: T;
         subFreqID?: T;
+        frequencyName?: T;
         quantity?: T;
         price?: T;
         productName?: T;
