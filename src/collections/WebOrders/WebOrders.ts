@@ -161,7 +161,7 @@ export const WebOrders: CollectionConfig = {
                   ? (data.user || originalDoc.user).id
                   : data.user || originalDoc.user
 
-              if (typeof userId === 'number') {
+              if (userId) {
                 // Calculate real money spent (excluding WTCoins discount)
                 const pointsUsed =
                   data.pointsUsed !== undefined ? data.pointsUsed : originalDoc.pointsUsed || 0
@@ -181,8 +181,6 @@ export const WebOrders: CollectionConfig = {
                   data.wtCoinsAwarded = true
                   console.log(`✅ Awarded WTCoins for order ${originalDoc.id} in beforeChange`)
                 }
-              } else {
-                console.error('User ID is not a number, skipping WTCoins award')
               }
             } catch (error) {
               console.error('Error awarding WTCoins on shipment:', error)
