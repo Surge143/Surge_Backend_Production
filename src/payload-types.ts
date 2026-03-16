@@ -157,7 +157,7 @@ export interface Config {
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
   db: {
-    defaultIDType: number;
+    defaultIDType: string;
   };
   fallbackLocale: null;
   globals: {
@@ -222,13 +222,13 @@ export interface AdminAuthOperations {
  * via the `definition` "users".
  */
 export interface User {
-  id: number;
+  id: string;
   role?: 'customer' | null;
   gender?: ('male' | 'female' | 'other') | null;
   phone?: string | null;
   firstName?: string | null;
   lastName?: string | null;
-  profileImage?: (number | null) | Media;
+  profileImage?: (string | null) | Media;
   /**
    * Automatically set when the user completes their first checkout.
    */
@@ -255,7 +255,7 @@ export interface User {
    * The unique code generated from the user’s first name.
    */
   referralCode?: string | null;
-  referredBy?: (number | null) | User;
+  referredBy?: (string | null) | User;
   referralCodeInput?: string | null;
   /**
    * Tracks the state of the referral reward for this user.
@@ -291,10 +291,10 @@ export interface User {
  * via the `definition` "media".
  */
 export interface Media {
-  id: number;
+  id: string;
   alt: string;
   prefix?: string | null;
-  folder?: (number | null) | FolderInterface;
+  folder?: (string | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -322,18 +322,18 @@ export interface Media {
  * via the `definition` "payload-folders".
  */
 export interface FolderInterface {
-  id: number;
+  id: string;
   name: string;
-  folder?: (number | null) | FolderInterface;
+  folder?: (string | null) | FolderInterface;
   documentsAndFolders?: {
     docs?: (
       | {
           relationTo?: 'payload-folders';
-          value: number | FolderInterface;
+          value: string | FolderInterface;
         }
       | {
           relationTo?: 'media';
-          value: number | Media;
+          value: string | Media;
         }
     )[];
     hasNextPage?: boolean;
@@ -348,13 +348,13 @@ export interface FolderInterface {
  * via the `definition` "admins".
  */
 export interface Admin {
-  id: number;
+  id: string;
   role: 'super-admin' | 'admin' | 'shop-manager' | 'barista';
   name: string;
   gender?: ('male' | 'female' | 'other') | null;
   speciality?: string | null;
-  shop?: (number | null) | Shop;
-  profileImage?: (number | null) | Media;
+  shop?: (string | null) | Shop;
+  profileImage?: (string | null) | Media;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -379,7 +379,7 @@ export interface Admin {
  * via the `definition` "shop".
  */
 export interface Shop {
-  id: number;
+  id: string;
   operationalSettings: {
     openingTime: string;
     closingTime: string;
@@ -410,7 +410,7 @@ export interface Shop {
    * Immediately opens/closes shop for customers.
    */
   isShopOpen?: boolean | null;
-  shopManager: number | Admin;
+  shopManager: string | Admin;
   updatedAt: string;
   createdAt: string;
 }
@@ -419,7 +419,7 @@ export interface Shop {
  * via the `definition` "app-categories".
  */
 export interface AppCategory {
-  id: number;
+  id: string;
   title: string;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
@@ -434,9 +434,9 @@ export interface AppCategory {
  * via the `definition` "app-sub-categories".
  */
 export interface AppSubCategory {
-  id: number;
+  id: string;
   title: string;
-  parentCategory?: (number | null) | AppCategory;
+  parentCategory?: (string | null) | AppCategory;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -450,7 +450,7 @@ export interface AppSubCategory {
  * via the `definition` "customization-template".
  */
 export interface CustomizationTemplate {
-  id: number;
+  id: string;
   title: string;
   /**
    * Add sections for customization
@@ -490,7 +490,7 @@ export interface CustomizationTemplate {
  * via the `definition` "menu".
  */
 export interface Menu {
-  id: number;
+  id: string;
   name: string;
   /**
    * Keep it between 5 and 50 characters.
@@ -499,10 +499,10 @@ export interface Menu {
   /**
    * Upload Food Item Image
    */
-  image?: (number | null) | Media;
+  image?: (string | null) | Media;
   description?: string | null;
-  category: number | AppCategory;
-  subCategories?: (number | AppSubCategory)[] | null;
+  category: string | AppCategory;
+  subCategories?: (string | AppSubCategory)[] | null;
   regularPrice: number;
   salePrice?: number | null;
   /**
@@ -512,7 +512,7 @@ export interface Menu {
   customizations?:
     | {
         title?: string | null;
-        template?: (number | null) | CustomizationTemplate;
+        template?: (string | null) | CustomizationTemplate;
         sections?:
           | {
               title: string;
@@ -564,11 +564,11 @@ export interface Menu {
  * via the `definition` "shop-menu".
  */
 export interface ShopMenu {
-  id: number;
+  id: string;
   name: string;
-  shop?: (number | null) | Shop;
-  menuRelation?: (number | Menu)[] | null;
-  createdBy?: (number | null) | Admin;
+  shop?: (string | null) | Shop;
+  menuRelation?: (string | Menu)[] | null;
+  createdBy?: (string | null) | Admin;
   /**
    * Keep it between 5 and 50 characters.
    */
@@ -576,10 +576,10 @@ export interface ShopMenu {
   /**
    * Upload Food Item Image
    */
-  image?: (number | null) | Media;
+  image?: (string | null) | Media;
   description?: string | null;
-  category: number | AppCategory;
-  subCategories?: (number | AppSubCategory)[] | null;
+  category: string | AppCategory;
+  subCategories?: (string | AppSubCategory)[] | null;
   regularPrice: number;
   salePrice?: number | null;
   /**
@@ -594,7 +594,7 @@ export interface ShopMenu {
   customizations?:
     | {
         title?: string | null;
-        template?: (number | null) | CustomizationTemplate;
+        template?: (string | null) | CustomizationTemplate;
         sections?:
           | {
               title: string;
@@ -646,7 +646,7 @@ export interface ShopMenu {
  * via the `definition` "coupon".
  */
 export interface Coupon {
-  id: number;
+  id: string;
   /**
    * Unique code customers enter at checkout. Use uppercase letters and numbers only.
    */
@@ -675,11 +675,11 @@ export interface Coupon {
     | (
         | {
             relationTo: 'shop-menu';
-            value: number | ShopMenu;
+            value: string | ShopMenu;
           }
         | {
             relationTo: 'web-products';
-            value: number | WebProduct;
+            value: string | WebProduct;
           }
       )[]
     | null;
@@ -695,7 +695,7 @@ export interface Coupon {
    * Max number of times a single customer can use this coupon.
    */
   usageLimitPerUser: number;
-  createdBy?: (number | null) | Admin;
+  createdBy?: (string | null) | Admin;
   /**
    * Toggle on to show this coupon in "Available Offers".
    */
@@ -723,14 +723,14 @@ export interface Coupon {
  * via the `definition` "web-products".
  */
 export interface WebProduct {
-  id: number;
+  id: string;
   name: string;
   tagline: string;
   hasVariantOptions?: boolean | null;
   variants?:
     | {
         variantName: string;
-        variantImage: number | Media;
+        variantImage: string | Media;
         hasVariantSub?: boolean | null;
         subscriptionDiscount?: number | null;
         subFreq?:
@@ -766,12 +766,12 @@ export interface WebProduct {
   /**
    * Upload product image that will be visible on Product Listing
    */
-  productImage: number | Media;
+  productImage: string | Media;
   description: string;
   /**
    * Select category
    */
-  categories: number | WebCategory;
+  categories: string | WebCategory;
   subCategories?:
     | {
         [k: string]: unknown;
@@ -806,8 +806,8 @@ export interface WebProduct {
     };
     [k: string]: unknown;
   };
-  videoBanner: number | Media;
-  recommendedProducts?: (number | WebProduct)[] | null;
+  videoBanner: string | Media;
+  recommendedProducts?: (string | WebProduct)[] | null;
   brewGuide?: {
     filter?: boolean | null;
     espresso?: boolean | null;
@@ -818,7 +818,7 @@ export interface WebProduct {
     /**
      * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
      */
-    image?: (number | null) | Media;
+    image?: (string | null) | Media;
     description?: string | null;
   };
   slug: string;
@@ -831,7 +831,7 @@ export interface WebProduct {
  * via the `definition` "web-categories".
  */
 export interface WebCategory {
-  id: number;
+  id: string;
   title: string;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
@@ -846,7 +846,7 @@ export interface WebCategory {
  * via the `definition` "shop-coupon".
  */
 export interface ShopCoupon {
-  id: number;
+  id: string;
   /**
    * Unique code customers enter at checkout. Use uppercase letters and numbers only.
    */
@@ -875,11 +875,11 @@ export interface ShopCoupon {
     | (
         | {
             relationTo: 'shop-menu';
-            value: number | ShopMenu;
+            value: string | ShopMenu;
           }
         | {
             relationTo: 'web-products';
-            value: number | WebProduct;
+            value: string | WebProduct;
           }
       )[]
     | null;
@@ -895,9 +895,9 @@ export interface ShopCoupon {
    * Max number of times a single customer can use this coupon.
    */
   usageLimitPerUser: number;
-  shop?: (number | null) | Shop;
-  couponRelation: (number | Coupon)[];
-  createdBy?: (number | null) | Admin;
+  shop?: (string | null) | Shop;
+  couponRelation: (string | Coupon)[];
+  createdBy?: (string | null) | Admin;
   couponFor?: {
     website?: boolean | null;
     app?: boolean | null;
@@ -919,7 +919,7 @@ export interface ShopCoupon {
  * via the `definition` "otp".
  */
 export interface Otp {
-  id: number;
+  id: string;
   email: string;
   otp: string;
   isUsed?: boolean | null;
@@ -941,20 +941,20 @@ export interface Otp {
  * via the `definition` "app-cart".
  */
 export interface AppCart {
-  id: number;
-  user: number | User;
+  id: string;
+  user: string | User;
   origin: 'cafe' | 'store';
-  shop?: (number | null) | Shop;
+  shop?: (string | null) | Shop;
   items?:
     | {
         product:
           | {
               relationTo: 'shop-menu';
-              value: number | ShopMenu;
+              value: string | ShopMenu;
             }
           | {
               relationTo: 'web-products';
-              value: number | WebProduct;
+              value: string | WebProduct;
             };
         vId?: string | null;
         quantity?: number | null;
@@ -981,20 +981,20 @@ export interface AppCart {
  * via the `definition` "wishlist".
  */
 export interface Wishlist {
-  id: number;
-  user: number | User;
+  id: string;
+  user: string | User;
   items?:
     | {
         product:
           | {
               relationTo: 'shop-menu';
-              value: number | ShopMenu;
+              value: string | ShopMenu;
             }
           | {
               relationTo: 'web-products';
-              value: number | WebProduct;
+              value: string | WebProduct;
             };
-        shop?: (number | null) | Shop;
+        shop?: (string | null) | Shop;
         id?: string | null;
       }[]
     | null;
@@ -1006,8 +1006,8 @@ export interface Wishlist {
  * via the `definition` "app-orders".
  */
 export interface AppOrder {
-  id: number;
-  user?: (number | null) | User;
+  id: string;
+  user?: (string | null) | User;
   /**
    * Stored at checkout for guest-to-user linking.
    */
@@ -1018,10 +1018,10 @@ export interface AppOrder {
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refund-initiated' | 'refunded';
   refundReason?: string | null;
   refundedAmount?: number | null;
-  shop: number | Shop;
-  barista?: (number | null) | Admin;
+  shop: string | Shop;
+  barista?: (string | null) | Admin;
   items: {
-    product: number | ShopMenu;
+    product: string | ShopMenu;
     quantity?: number | null;
     customizations?:
       | {
@@ -1039,11 +1039,11 @@ export interface AppOrder {
   baristaRating?: number | null;
   orderType: 'take-away' | 'dine-in';
   timeSelection?: ('now' | 'custom') | null;
-  slot?: (number | null) | Slot;
+  slot?: (string | null) | Slot;
   isCouponUsed?: boolean | null;
-  coupon?: (number | null) | ShopCoupon;
+  coupon?: (string | null) | ShopCoupon;
   coinsUsed?: number | null;
-  stampRewards?: (number | ShopMenu)[] | null;
+  stampRewards?: (string | ShopMenu)[] | null;
   financials?: {
     /**
      * Sum of all item prices × quantities
@@ -1092,7 +1092,7 @@ export interface AppOrder {
  * via the `definition` "slots".
  */
 export interface Slot {
-  id: number;
+  id: string;
   /**
    * Uncheck to temporarily pause bookings for this slot.
    */
@@ -1116,11 +1116,11 @@ export interface Slot {
   /**
    * Auto-assigned based on your manager account.
    */
-  shop?: (number | null) | Shop;
+  shop?: (string | null) | Shop;
   /**
    * The manager who created this slot.
    */
-  shopManager?: (number | null) | Admin;
+  shopManager?: (string | null) | Admin;
   updatedAt: string;
   createdAt: string;
 }
@@ -1129,8 +1129,8 @@ export interface Slot {
  * via the `definition` "web-sub-categories".
  */
 export interface WebSubCategory {
-  id: number;
-  parentCategory: number | WebCategory;
+  id: string;
+  parentCategory: string | WebCategory;
   level1?:
     | {
         name: string;
@@ -1169,11 +1169,11 @@ export interface WebSubCategory {
  * via the `definition` "web-cart".
  */
 export interface WebCart {
-  id: number;
-  user: number | User;
+  id: string;
+  user: string | User;
   items?:
     | {
-        product: number | WebProduct;
+        product: string | WebProduct;
         vId?: string | null;
         quantity?: number | null;
         id?: string | null;
@@ -1189,11 +1189,11 @@ export interface WebCart {
  * via the `definition` "user-wt-coins".
  */
 export interface UserWtCoin {
-  id: number;
+  id: string;
   /**
    * User who owns this balance
    */
-  user: number | User;
+  user: string | User;
   /**
    * Current spendable balance (calculated from active earnings)
    */
@@ -1213,15 +1213,15 @@ export interface UserWtCoin {
         linkedOrder?:
           | ({
               relationTo: 'web-orders';
-              value: number | WebOrder;
+              value: string | WebOrder;
             } | null)
           | ({
               relationTo: 'app-orders';
-              value: number | AppOrder;
+              value: string | AppOrder;
             } | null)
           | ({
               relationTo: 'web-subscription';
-              value: number | WebSubscription;
+              value: string | WebSubscription;
             } | null);
         offlineReferenceId?: string | null;
         expiryDate?: string | null;
@@ -1238,15 +1238,15 @@ export interface UserWtCoin {
         associatedOrder?:
           | ({
               relationTo: 'web-orders';
-              value: number | WebOrder;
+              value: string | WebOrder;
             } | null)
           | ({
               relationTo: 'app-orders';
-              value: number | AppOrder;
+              value: string | AppOrder;
             } | null)
           | ({
               relationTo: 'web-subscription';
-              value: number | WebSubscription;
+              value: string | WebSubscription;
             } | null);
         offlineReferenceId?: string | null;
         redeemedAt?: string | null;
@@ -1261,12 +1261,12 @@ export interface UserWtCoin {
  * via the `definition` "web-orders".
  */
 export interface WebOrder {
-  id: number;
+  id: string;
   customerType?: ('guest' | 'user') | null;
   /**
    * Select the registered user account for this order.
    */
-  user?: (number | null) | User;
+  user?: (string | null) | User;
   deliveryOption: 'delivery' | 'pickup';
   /**
    * The ID from Stripe
@@ -1278,7 +1278,7 @@ export interface WebOrder {
    */
   email?: string | null;
   items: {
-    product: number | WebProduct;
+    product: string | WebProduct;
     /**
      * The ID of the variation
      */
@@ -1319,7 +1319,7 @@ export interface WebOrder {
   deliveredOn?: string | null;
   refundedOn?: string | null;
   refundedAmount?: number | null;
-  couponCode?: (number | null) | Coupon;
+  couponCode?: (string | null) | Coupon;
   pointsUsed?: number | null;
   financials: {
     /**
@@ -1375,12 +1375,12 @@ export interface WebOrder {
  * via the `definition` "web-subscription".
  */
 export interface WebSubscription {
-  id: number;
+  id: string;
   customerType?: ('guest' | 'user') | null;
   /**
    * Select the registered user account for this order.
    */
-  user?: (number | null) | User;
+  user?: (string | null) | User;
   deliveryOption: 'delivery' | 'pickup';
   /**
    * The ID from Stripe
@@ -1392,7 +1392,7 @@ export interface WebSubscription {
    */
   email?: string | null;
   items: {
-    product: number | WebProduct;
+    product: string | WebProduct;
     /**
      * The ID of the variation
      */
@@ -1485,8 +1485,8 @@ export interface WebSubscription {
  * via the `definition` "wt-stamps".
  */
 export interface WtStamp {
-  id: number;
-  user?: (number | null) | User;
+  id: string;
+  user?: (string | null) | User;
   stampCount: number;
   stampReward: number;
   /**
@@ -1500,15 +1500,15 @@ export interface WtStamp {
         linkedOrder?:
           | ({
               relationTo: 'web-orders';
-              value: number | WebOrder;
+              value: string | WebOrder;
             } | null)
           | ({
               relationTo: 'app-orders';
-              value: number | AppOrder;
+              value: string | AppOrder;
             } | null)
           | ({
               relationTo: 'web-subscription';
-              value: number | WebSubscription;
+              value: string | WebSubscription;
             } | null);
         offlineReferenceId?: string | null;
         id?: string | null;
@@ -1524,15 +1524,15 @@ export interface WtStamp {
         associatedOrder?:
           | ({
               relationTo: 'web-orders';
-              value: number | WebOrder;
+              value: string | WebOrder;
             } | null)
           | ({
               relationTo: 'app-orders';
-              value: number | AppOrder;
+              value: string | AppOrder;
             } | null)
           | ({
               relationTo: 'web-subscription';
-              value: number | WebSubscription;
+              value: string | WebSubscription;
             } | null);
         offlineReferenceId?: string | null;
         redeemedAt?: string | null;
@@ -1549,8 +1549,8 @@ export interface WtStamp {
  * via the `definition` "user-preferences".
  */
 export interface UserPreference {
-  id: number;
-  user: number | User;
+  id: string;
+  user: string | User;
   /**
    * Last-used customization selections per cafe menu product.
    */
@@ -1587,7 +1587,7 @@ export interface UserPreference {
  * via the `definition` "app-contact-form".
  */
 export interface AppContactForm {
-  id: number;
+  id: string;
   fullName: string;
   email: string;
   /**
@@ -1611,7 +1611,7 @@ export interface AppContactForm {
  * via the `definition` "web-contact-form".
  */
 export interface WebContactForm {
-  id: number;
+  id: string;
   fullName: string;
   email: string;
   /**
@@ -1635,8 +1635,8 @@ export interface WebContactForm {
  * via the `definition` "notifications".
  */
 export interface Notification {
-  id: number;
-  user: number | User;
+  id: string;
+  user: string | User;
   notificationEnabled?: boolean | null;
   notifications?:
     | {
@@ -1655,9 +1655,9 @@ export interface Notification {
  * via the `definition` "app-best-seller".
  */
 export interface AppBestSeller {
-  id: number;
-  shop: number | Shop;
-  products: (number | ShopMenu)[];
+  id: string;
+  shop: string | Shop;
+  products: (string | ShopMenu)[];
   updatedAt: string;
   createdAt: string;
 }
@@ -1666,9 +1666,9 @@ export interface AppBestSeller {
  * via the `definition` "workshop".
  */
 export interface Workshop {
-  id: number;
+  id: string;
   title: string;
-  workshopImage: number | Media;
+  workshopImage: string | Media;
   eventDate: string;
   calendyLink: string;
   eventTime: string;
@@ -1687,12 +1687,12 @@ export interface Workshop {
  * via the `definition` "blogs".
  */
 export interface Blog {
-  id: number;
+  id: string;
   title: string;
   /**
    * This image appears at the top of the blog and in social share previews.
    */
-  featuredImage: number | Media;
+  featuredImage: string | Media;
   content: {
     root: {
       type: string;
@@ -1711,13 +1711,13 @@ export interface Blog {
   /**
    * Select up to 3 other blogs to recommend to readers.
    */
-  relatedBlogs?: (number | Blog)[] | null;
+  relatedBlogs?: (string | Blog)[] | null;
   meta?: {
     title?: string | null;
     /**
      * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
      */
-    image?: (number | null) | Media;
+    image?: (string | null) | Media;
     description?: string | null;
   };
   /**
@@ -1748,7 +1748,7 @@ export interface Blog {
  * via the `definition` "wholesale".
  */
 export interface Wholesale {
-  id: number;
+  id: string;
   email: string;
   phone: string;
   company: string;
@@ -1775,7 +1775,7 @@ export interface Wholesale {
  * via the `definition` "exports".
  */
 export interface Export {
-  id: number;
+  id: string;
   name?: string | null;
   format?: ('csv' | 'json') | null;
   limit?: number | null;
@@ -1812,7 +1812,7 @@ export interface Export {
  * via the `definition` "import_export_plugin_imports".
  */
 export interface ImportExportPluginImport {
-  id: number;
+  id: string;
   name?: string | null;
   collectionSlug: string;
   jsonData?:
@@ -1841,7 +1841,7 @@ export interface ImportExportPluginImport {
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: number;
+  id: string;
   key: string;
   data:
     | {
@@ -1858,7 +1858,7 @@ export interface PayloadKv {
  * via the `definition` "payload-jobs".
  */
 export interface PayloadJob {
-  id: number;
+  id: string;
   /**
    * Input data provided to the job
    */
@@ -1950,153 +1950,153 @@ export interface PayloadJob {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: number;
+  id: string;
   document?:
     | ({
         relationTo: 'admins';
-        value: number | Admin;
+        value: string | Admin;
       } | null)
     | ({
         relationTo: 'app-categories';
-        value: number | AppCategory;
+        value: string | AppCategory;
       } | null)
     | ({
         relationTo: 'media';
-        value: number | Media;
+        value: string | Media;
       } | null)
     | ({
         relationTo: 'app-sub-categories';
-        value: number | AppSubCategory;
+        value: string | AppSubCategory;
       } | null)
     | ({
         relationTo: 'customization-template';
-        value: number | CustomizationTemplate;
+        value: string | CustomizationTemplate;
       } | null)
     | ({
         relationTo: 'menu';
-        value: number | Menu;
+        value: string | Menu;
       } | null)
     | ({
         relationTo: 'shop';
-        value: number | Shop;
+        value: string | Shop;
       } | null)
     | ({
         relationTo: 'shop-menu';
-        value: number | ShopMenu;
+        value: string | ShopMenu;
       } | null)
     | ({
         relationTo: 'coupon';
-        value: number | Coupon;
+        value: string | Coupon;
       } | null)
     | ({
         relationTo: 'shop-coupon';
-        value: number | ShopCoupon;
+        value: string | ShopCoupon;
       } | null)
     | ({
         relationTo: 'otp';
-        value: number | Otp;
+        value: string | Otp;
       } | null)
     | ({
         relationTo: 'app-cart';
-        value: number | AppCart;
+        value: string | AppCart;
       } | null)
     | ({
         relationTo: 'wishlist';
-        value: number | Wishlist;
+        value: string | Wishlist;
       } | null)
     | ({
         relationTo: 'app-orders';
-        value: number | AppOrder;
+        value: string | AppOrder;
       } | null)
     | ({
         relationTo: 'web-categories';
-        value: number | WebCategory;
+        value: string | WebCategory;
       } | null)
     | ({
         relationTo: 'web-sub-categories';
-        value: number | WebSubCategory;
+        value: string | WebSubCategory;
       } | null)
     | ({
         relationTo: 'web-products';
-        value: number | WebProduct;
+        value: string | WebProduct;
       } | null)
     | ({
         relationTo: 'web-cart';
-        value: number | WebCart;
+        value: string | WebCart;
       } | null)
     | ({
         relationTo: 'user-wt-coins';
-        value: number | UserWtCoin;
+        value: string | UserWtCoin;
       } | null)
     | ({
         relationTo: 'web-orders';
-        value: number | WebOrder;
+        value: string | WebOrder;
       } | null)
     | ({
         relationTo: 'slots';
-        value: number | Slot;
+        value: string | Slot;
       } | null)
     | ({
         relationTo: 'web-subscription';
-        value: number | WebSubscription;
+        value: string | WebSubscription;
       } | null)
     | ({
         relationTo: 'wt-stamps';
-        value: number | WtStamp;
+        value: string | WtStamp;
       } | null)
     | ({
         relationTo: 'user-preferences';
-        value: number | UserPreference;
+        value: string | UserPreference;
       } | null)
     | ({
         relationTo: 'app-contact-form';
-        value: number | AppContactForm;
+        value: string | AppContactForm;
       } | null)
     | ({
         relationTo: 'web-contact-form';
-        value: number | WebContactForm;
+        value: string | WebContactForm;
       } | null)
     | ({
         relationTo: 'notifications';
-        value: number | Notification;
+        value: string | Notification;
       } | null)
     | ({
         relationTo: 'app-best-seller';
-        value: number | AppBestSeller;
+        value: string | AppBestSeller;
       } | null)
     | ({
         relationTo: 'workshop';
-        value: number | Workshop;
+        value: string | Workshop;
       } | null)
     | ({
         relationTo: 'blogs';
-        value: number | Blog;
+        value: string | Blog;
       } | null)
     | ({
         relationTo: 'wholesale';
-        value: number | Wholesale;
+        value: string | Wholesale;
       } | null)
     | ({
         relationTo: 'exports';
-        value: number | Export;
+        value: string | Export;
       } | null)
     | ({
         relationTo: 'import_export_plugin_imports';
-        value: number | ImportExportPluginImport;
+        value: string | ImportExportPluginImport;
       } | null)
     | ({
         relationTo: 'payload-folders';
-        value: number | FolderInterface;
+        value: string | FolderInterface;
       } | null);
   globalSlug?: string | null;
   user:
     | {
         relationTo: 'users';
-        value: number | User;
+        value: string | User;
       }
     | {
         relationTo: 'admins';
-        value: number | Admin;
+        value: string | Admin;
       };
   updatedAt: string;
   createdAt: string;
@@ -2106,15 +2106,15 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: number;
+  id: string;
   user:
     | {
         relationTo: 'users';
-        value: number | User;
+        value: string | User;
       }
     | {
         relationTo: 'admins';
-        value: number | Admin;
+        value: string | Admin;
       };
   key?: string | null;
   value?:
@@ -2134,7 +2134,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: number;
+  id: string;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -3248,7 +3248,7 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  * via the `definition` "wt-coins".
  */
 export interface WtCoin {
-  id: number;
+  id: string;
   /**
    * Points to earn per order in percentage
    */
@@ -3285,7 +3285,7 @@ export interface WtCoin {
  * via the `definition` "ship-and-tax".
  */
 export interface ShipAndTax {
-  id: number;
+  id: string;
   /**
    * Add tax percentage here (e.g., 5 for 5%)
    */

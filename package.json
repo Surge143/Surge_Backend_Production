@@ -19,7 +19,7 @@
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
-    "@payloadcms/db-mongodb": "^3.79.0",
+    "@payloadcms/db-mongodb": "3.76.1",
     "@payloadcms/db-postgres": "3.76.1",
     "@payloadcms/next": "3.76.1",
     "@payloadcms/plugin-seo": "^3.76.1",
