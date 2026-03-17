@@ -35,65 +35,17 @@ export const WebSubCategories: CollectionConfig = {
             fields: [
                 { name: 'name', type: 'text', required: true },
                 {
-                    name: 'slug',
-                    type: 'text',
-                    unique: true,
-                    admin: {
-                        description: 'Auto-generated from name'
-                    },
-                    hooks: {
-                        beforeValidate: [
-                            ({ value, siblingData }) => {
-                                if (value) return value;
-                                return siblingData?.name ? formatSlug(siblingData.name) : value;
-                            }
-                        ]
-                    }
-                },
-                {
                     name: 'level2',
                     type: 'array',
                     admin: { condition: (_, siblingData) => !!siblingData?.name },
                     fields: [
                         { name: 'name', type: 'text', required: true },
                         {
-                            name: 'slug',
-                            type: 'text',
-                            unique: true,
-                            admin: {
-                                description: 'Auto-generated from name'
-                            },
-                            hooks: {
-                                beforeValidate: [
-                                    ({ value, siblingData }) => {
-                                        if (value) return value;
-                                        return siblingData?.name ? formatSlug(siblingData.name) : value;
-                                    }
-                                ]
-                            }
-                        },
-                        {
                             name: 'level3',
                             type: 'array',
                             admin: { condition: (_, siblingData) => !!siblingData?.name },
                             fields: [
                                 { name: 'name', type: 'text', required: true },
-                                {
-                                    name: 'slug',
-                                    type: 'text',
-                                    unique: true,
-                                    admin: {
-                                        description: 'Auto-generated from name'
-                                    },
-                                    hooks: {
-                                        beforeValidate: [
-                                            ({ value, siblingData }) => {
-                                                if (value) return value;
-                                                return siblingData?.name ? formatSlug(siblingData.name) : value;
-                                            }
-                                        ]
-                                    }
-                                },
                             ]
                         }
                     ]
