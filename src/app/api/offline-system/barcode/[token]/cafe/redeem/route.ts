@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       beansRedeemed: boolean
     }
 
-    const userId = decryptedToken
+    const userId = decryptedToken as any
     const messages: string[] = []
     let stampRecord: any = null
     let beanRecord: any = null

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       OrderValue: number
     }
 
-    const userId = decryptedToken
+    const userId = decryptedToken as any
     const messages: string[] = []
 
     // 0. Fetch initial states and configuration

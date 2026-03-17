@@ -7,7 +7,7 @@ import { headers } from 'next/headers'
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
 
-  const decryptedToken = await decryptUrlToken(token)
+  const decryptedToken = (await decryptUrlToken(token)) as any
   try {
     const payload = await getPayload({ config })
     const { user } = await payload.auth({ headers: await headers() })
