@@ -331,7 +331,7 @@ export const WebProducts: CollectionConfig = {
                                 { name: 'brewing', label: 'Brewing', type: 'text', required: true, admin: { width: '50%' } },
                             ]
                         },
-                        { name: 'farmDescription', label: 'Farm Description', type: 'richText', required: true },
+                        { name: 'farmDescription', label: 'Farm Description', type: 'textarea', required: true },
                         {
                             name: 'videoBanner',
                             label: 'Video Banner',

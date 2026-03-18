@@ -791,21 +791,7 @@ export interface WebProduct {
   roast: string;
   finish: string;
   brewing: string;
-  farmDescription: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
+  farmDescription: string;
   videoBanner: number | Media;
   recommendedProducts?: (number | WebProduct)[] | null;
   brewGuide?: {
@@ -1660,6 +1646,7 @@ export interface Workshop {
   eventDate: string;
   calendyLink: string;
   eventTime: string;
+  workshopDescription: string;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -3040,6 +3027,7 @@ export interface WorkshopSelect<T extends boolean = true> {
   eventDate?: T;
   calendyLink?: T;
   eventTime?: T;
+  workshopDescription?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
