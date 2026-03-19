@@ -3,7 +3,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { sendEmail } from '@/lib/emailConfig'
 import { orderConfirmationEmailTemplate } from '@/lib/emailTemplate'
-import { awardWTCoins, convertPointsToAED, deductWTCoins } from '@/utilities/wtCoins'
+import { deductWTCoins } from '@/utilities/wtCoins'
 
 export async function handleInvoicePaid(invoice: any) {
   const payload = await getPayload({ config })
@@ -100,7 +100,7 @@ export async function handleInvoicePaid(invoice: any) {
       shippingAddress: subscriptionDoc.shippingAddress,
       billingAddress: subscriptionDoc.billingAddress,
       paymentStatus: 'completed',
-      deliveryStatus: subscriptionDoc.deliveryOption === 'delivery' ? 'placed' : 'delivered',
+      deliveryStatus: 'placed',
       pointsUsed: isFirstInvoice ? subscriptionDoc.pointsUsed || 0 : 0,
       financials: {
         subtotal: subscriptionDoc.financials?.subtotal ?? 0,
@@ -151,27 +151,6 @@ export async function handleInvoicePaid(invoice: any) {
       console.log(
         `[invoicePaid] ⏭️ Deduction skipped. Reason: isFirstInvoice=${isFirstInvoice}, userId=${userId}, pointsUsed=${subscriptionDoc.pointsUsed ?? 0}`,
       )
-    }
-
-    // Award WTCoins for pickup orders (immediately delivered)
-    if (newOrder.deliveryStatus === 'delivered' && userId) {
-      try {
-        const totalAmount = newOrder.financials?.total || 0
-        const pointsUsed = newOrder.pointsUsed || 0
-        const wtCoinsDiscount = pointsUsed ? await convertPointsToAED(payload, pointsUsed) : 0
-        const realMoneySpent = Math.max(0, totalAmount - wtCoinsDiscount)
-
-        if (realMoneySpent > 0) {
-          await awardWTCoins(payload, userId, realMoneySpent, newOrder.id, 'web-orders')
-          await payload.update({
-            collection: 'web-orders',
-            id: newOrder.id,
-            data: { wtCoinsAwarded: true },
-          })
-        }
-      } catch (err) {
-        console.error('❌ Failed awarding WTCoins for pickup subscription:', err)
-      }
     }
 
     for (const item of subscriptionDoc.items) {
