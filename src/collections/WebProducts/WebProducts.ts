@@ -311,9 +311,9 @@ export const WebProducts: CollectionConfig = {
                         {
                             type: 'row',
                             fields: [
-                                { name: 'variety', label: 'Variety', type: 'text', required: true, admin: { width: '33.33%' } },
                                 { name: 'process', label: 'Process', type: 'text', required: true, admin: { width: '33.33%' } },
                                 { name: 'altitude', label: 'Altitude', type: 'text', required: true, admin: { width: '33.33%' } },
+                                { name: 'finish', label: 'Finish', type: 'text', required: true, admin: { width: '50%' } },
                             ]
                         },
                         {
@@ -322,13 +322,6 @@ export const WebProducts: CollectionConfig = {
                                 { name: 'body', label: 'Body', type: 'text', required: true, admin: { width: '33.33%' } },
                                 { name: 'aroma', label: 'Aroma', type: 'text', required: true, admin: { width: '33.33%' } },
                                 { name: 'roast', label: 'Roast', type: 'text', required: true, admin: { width: '33.33%' } },
-                            ]
-                        },
-                        {
-                            type: 'row',
-                            fields: [
-                                { name: 'finish', label: 'Finish', type: 'text', required: true, admin: { width: '50%' } },
-                                { name: 'brewing', label: 'Brewing', type: 'text', required: true, admin: { width: '50%' } },
                             ]
                         },
                         { name: 'farmDescription', label: 'Farm Description', type: 'textarea', required: true },
