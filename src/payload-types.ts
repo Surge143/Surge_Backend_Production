@@ -100,6 +100,7 @@ export interface Config {
     workshop: Workshop;
     blogs: Blog;
     wholesale: Wholesale;
+    'app-banners': AppBanner;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -147,6 +148,7 @@ export interface Config {
     workshop: WorkshopSelect<false> | WorkshopSelect<true>;
     blogs: BlogsSelect<false> | BlogsSelect<true>;
     wholesale: WholesaleSelect<false> | WholesaleSelect<true>;
+    'app-banners': AppBannersSelect<false> | AppBannersSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -783,14 +785,12 @@ export interface WebProduct {
     | null;
   farm: string;
   tastingNotes: string;
-  variety: string;
   process: string;
   altitude: string;
+  finish: string;
   body: string;
   aroma: string;
   roast: string;
-  finish: string;
-  brewing: string;
   farmDescription: string;
   videoBanner: number | Media;
   recommendedProducts?: (number | WebProduct)[] | null;
@@ -1746,6 +1746,25 @@ export interface Wholesale {
   createdAt: string;
 }
 /**
+ * Manage application banners for Home, Cafe, and Store pages.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-banners".
+ */
+export interface AppBanner {
+  id: number;
+  /**
+   * Upload a banner image (images only — JPEG, PNG, WebP, etc.).
+   */
+  image: number | Media;
+  /**
+   * Select the page this banner belongs to. Each page can have at most 3 banners.
+   */
+  page: 'Home' | 'Cafe' | 'Store';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
@@ -2050,6 +2069,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'wholesale';
         value: number | Wholesale;
+      } | null)
+    | ({
+        relationTo: 'app-banners';
+        value: number | AppBanner;
       } | null)
     | ({
         relationTo: 'exports';
@@ -2679,14 +2702,12 @@ export interface WebProductsSelect<T extends boolean = true> {
   subCategories?: T;
   farm?: T;
   tastingNotes?: T;
-  variety?: T;
   process?: T;
   altitude?: T;
+  finish?: T;
   body?: T;
   aroma?: T;
   roast?: T;
-  finish?: T;
-  brewing?: T;
   farmDescription?: T;
   videoBanner?: T;
   recommendedProducts?: T;
@@ -3080,6 +3101,16 @@ export interface WholesaleSelect<T extends boolean = true> {
         other_specification?: T;
       };
   message?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-banners_select".
+ */
+export interface AppBannersSelect<T extends boolean = true> {
+  image?: T;
+  page?: T;
   updatedAt?: T;
   createdAt?: T;
 }
