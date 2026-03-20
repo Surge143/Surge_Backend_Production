@@ -32,6 +32,7 @@ import { AppBestSeller } from "./AppBestSeller/AppBestSeller";
 import { Workshop } from "./Workshops/Workshop";
 import { Blogs } from "./Blogs/Blogs";
 import { Wholesale } from "./Wholesale/Wholesale";
+import { AppBanners } from "./AppBanner/AppBanner";
 
 export const collections = [
     Users,
@@ -66,6 +67,7 @@ export const collections = [
     Workshop,
     Blogs,
     Wholesale,
+    AppBanners,
 ]
 
 export const globals = [
