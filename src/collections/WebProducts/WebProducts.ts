@@ -379,7 +379,6 @@ export const WebProducts: CollectionConfig = {
             name: "slug",
             type: "text",
             required: true,
-            unique: true,
             index: true,
             admin: {
                 components: {
