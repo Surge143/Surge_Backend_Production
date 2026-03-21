@@ -12,7 +12,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const shopId = searchParams.get('shopId')
 
-    // Fetch all live orders (pending acceptance + accepted with active statuses)
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+
+    // Fetch today's live orders only
     const ordersResult = await payload.find({
       collection: 'app-orders',
       where: {
@@ -34,6 +37,7 @@ export async function GET(req: NextRequest) {
             ],
           },
           { paymentStatus: { equals: 'paid' } },
+          { createdAt: { greater_than_equal: todayStart.toISOString() } },
           ...(shopId ? [{ shop: { equals: shopId } }] : []),
         ],
       },
@@ -41,10 +45,6 @@ export async function GET(req: NextRequest) {
       limit: 200,
       sort: '-createdAt',
     })
-
-    // Fetch cancelled orders for today's session
-    const todayStart = new Date()
-    todayStart.setHours(0, 0, 0, 0)
 
     const cancelledResult = await payload.find({
       collection: 'app-orders',

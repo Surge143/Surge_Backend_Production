@@ -9,12 +9,12 @@ interface FilterBarProps {
 
 export const FilterBar: React.FC<FilterBarProps> = ({ filter, onFilter }) => {
   const filterColors: Record<string, { c: string; bg: string; border: string }> = {
-    all: { c: C.textSub, bg: 'transparent', border: C.border },
+    all: { c: C.text, bg: C.bg, border: C.borderMid },
     takeaway: { c: C.takeaway, bg: C.takeawayBg, border: C.takeaway },
     'dine-in': { c: C.dineIn, bg: C.dineInBg, border: C.dineIn },
     delayed: { c: C.late, bg: C.lateBg, border: C.late },
-    reward: { c: C.reward, bg: C.rewardBg, border: C.reward },
-    fallback: { c: C.fallback, bg: C.fallbackBg, border: C.fallback },
+    slot: { c: C.custPick, bg: C.custPickBg, border: C.custPick },
+    now: { c: C.auto, bg: C.autoBg, border: C.auto },
   }
 
   return (
@@ -44,7 +44,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filter, onFilter }) => {
             onClick={() => onFilter(f.key)}
             style={{
               padding: '4px 12px',
-              background: isActive ? fc.bg : 'transparent',
+              background: isActive ? fc.bg : f.key === 'all' ? fc.bg : 'transparent',
               border: `1px solid ${isActive ? fc.border : C.border}`,
               borderRadius: 20,
               color: isActive ? fc.c : C.textSub,

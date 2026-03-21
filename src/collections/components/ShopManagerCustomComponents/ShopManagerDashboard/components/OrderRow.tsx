@@ -1,7 +1,7 @@
 'use client'
-import React, { useState } from 'react'
+import React from 'react'
 import { C } from '../constants'
-import { Tag, AssignTag, ABtn, CancelBtn, EyeIcon } from './UIAtoms'
+import { Tag, AssignTag, ABtn, EyeIcon } from './UIAtoms'
 
 interface OrderRowProps {
   order: any
@@ -12,7 +12,6 @@ interface OrderRowProps {
   isOpen: boolean
   onToggle: () => void
   onAdvance: () => void
-  onCancel: () => void
   onPeekEnter: (e: React.MouseEvent, id: string) => void
   onPeekLeave: () => void
   barista: any | null
@@ -28,7 +27,6 @@ export const OrderRow: React.FC<OrderRowProps> = ({
   isOpen,
   onToggle,
   onAdvance,
-  onCancel,
   onPeekEnter,
   onPeekLeave,
   barista,
@@ -39,16 +37,15 @@ export const OrderRow: React.FC<OrderRowProps> = ({
 
   return (
     <div
-      className="hrow"
+      className="hrow order-grid"
       onClick={onToggle}
       style={{
-        display: 'grid',
-        gridTemplateColumns: '90px 68px 175px 140px 110px 1fr 110px 175px',
         alignItems: 'center',
         padding: '10px 20px',
         background: rowBg,
         borderBottom: `1px solid ${C.border}`,
         borderLeft: `3px solid ${leftBorderColor}`,
+        borderRight: `3px solid ${leftBorderColor}`,
         cursor: 'pointer',
         transition: 'border-color .12s',
       }}
@@ -85,7 +82,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
           <>
             <div style={{ fontSize: 10, color: C.textMute, fontWeight: 500 }}>SLOT</div>
             <div style={{ fontWeight: 700, color: C.takeaway, fontSize: 13, marginTop: 1 }}>
-              {order.slot || 'Now'}
+              {order.slot || 'Immediate'}
             </div>
           </>
         ) : (
@@ -137,7 +134,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
       </div>
 
       {/* Flags */}
-      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+      <div className="col-flags" style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
         {order.type === 'takeaway' && !order.delayed && (
           <Tag c={C.takeaway} bg={C.takeawayBg}>
             Takeaway
@@ -171,7 +168,6 @@ export const OrderRow: React.FC<OrderRowProps> = ({
           onClick={onAdvance}
           disabled={loading}
         />
-        <CancelBtn onClick={onCancel} />
       </div>
     </div>
   )

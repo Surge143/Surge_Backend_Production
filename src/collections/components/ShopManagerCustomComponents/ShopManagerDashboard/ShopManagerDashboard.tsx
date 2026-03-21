@@ -1,5 +1,4 @@
 import { DefaultTemplate } from '@payloadcms/next/templates'
-import { Gutter } from '@payloadcms/ui'
 import { AdminViewProps } from 'payload'
 import React from 'react'
 import { ShopManagerDashboardClient } from './ShopManagerDashboardClient'
@@ -15,9 +14,14 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
   const { permissions, locale, req, visibleEntities } = initPageResult
   const currentUser = req.user as any
 
+  const isAdmin = currentUser?.role !== 'shop-manager'
+
   // Determine this manager's shop
   let shopDoc: any = null
-  if (currentUser?.role === 'shop-manager') {
+  let allShops: any[] = []
+
+  if (!isAdmin) {
+    // Shop-manager: locked to their own shop
     const shopResult = await req.payload.find({
       collection: 'shop',
       where: { shopManager: { equals: currentUser.id } },
@@ -26,12 +30,13 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
     })
     shopDoc = shopResult.docs[0] || null
   } else {
-    // Super-admin or admin — pick first shop
+    // Admin/super-admin: fetch all shops for the picker
     const shopResult = await req.payload.find({
       collection: 'shop',
-      limit: 1,
+      limit: 100,
       depth: 0,
     })
+    allShops = shopResult.docs
     shopDoc = shopResult.docs[0] || null
   }
 
@@ -40,7 +45,11 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
   // Build shared query
   const shopWhere = shopId ? [{ shop: { equals: shopId } }] : []
 
-  // Fetch live orders (pending + accepted/active)
+  // Today's date range
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+
+  // Fetch today's live orders (pending + accepted/active)
   const { docs: liveOrders } = await req.payload.find({
     collection: 'app-orders',
     where: {
@@ -62,6 +71,7 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
           ],
         },
         { paymentStatus: { equals: 'paid' } },
+        { createdAt: { greater_than_equal: todayStart.toISOString() } },
         ...shopWhere,
       ],
     },
@@ -71,8 +81,6 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
   })
 
   // Fetch today's cancelled/rejected orders
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
   const { docs: cancelledOrders } = await req.payload.find({
     collection: 'app-orders',
     where: {
@@ -122,15 +130,15 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
       user={req.user ?? undefined}
       visibleEntities={visibleEntities}
     >
-      <Gutter>
-        <ShopManagerDashboardClient
-          initialOrders={liveOrders as any}
-          initialCancelled={cancelledOrders as any}
-          initialSlots={slots as any}
-          initialBaristas={baristas as any}
-          shopDoc={shopDoc as any}
-        />
-      </Gutter>
+      <ShopManagerDashboardClient
+        initialOrders={liveOrders as any}
+        initialCancelled={cancelledOrders as any}
+        initialSlots={slots as any}
+        initialBaristas={baristas as any}
+        shopDoc={shopDoc as any}
+        isAdmin={isAdmin}
+        allShops={allShops as any}
+      />
     </DefaultTemplate>
   )
 }

@@ -15,6 +15,8 @@ interface Props {
   initialSlots: any[]
   initialBaristas: any[]
   shopDoc: any | null
+  isAdmin?: boolean
+  allShops?: any[]
 }
 
 export const ShopManagerDashboardClient: React.FC<Props> = ({
@@ -23,6 +25,8 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
   initialSlots,
   initialBaristas,
   shopDoc,
+  isAdmin = false,
+  allShops = [],
 }) => {
   const [orders, setOrders] = useState<any[]>(() => initialOrders.map(formatOrder))
   const [cancelled, setCancelled] = useState<any[]>(() => initialCancelled.map(formatOrder))
@@ -38,10 +42,14 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
   const [filter, setFilter] = useState('all')
   const [rightPanel, setRightPanel] = useState<string | null>(null)
   const [selectedBaristas, setSelectedBaristas] = useState<Record<string, string>>({})
-  const [cancelReasons, setCancelReasons] = useState<Record<string, string>>({})
   const [loadingIds, setLoadingIds] = useState<Record<string, boolean>>({})
+  const [currentShopId, setCurrentShopId] = useState<string | null>(
+    shopDoc?.id ? String(shopDoc.id) : null,
+  )
+  const [currentShopDoc, setCurrentShopDoc] = useState<any>(shopDoc)
+  const [shopSwitching, setShopSwitching] = useState(false)
 
-  const shopId = shopDoc?.id ? String(shopDoc.id) : null
+  const shopId = currentShopId
 
   // ── Toast helper ──────────────────────────────────────────────────────────
   const notify = useCallback((msg: string, type = 'ok') => {
@@ -49,12 +57,46 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
     setTimeout(() => setToast(null), 2400)
   }, [])
 
+  // ── Shop switcher (admin only) ─────────────────────────────────────────────
+  const handleShopSwitch = useCallback(
+    async (newShopId: string) => {
+      if (newShopId === currentShopId) return
+      setShopSwitching(true)
+      try {
+        const res = await fetch(`/api/shop-manager/dashboard-data?shopId=${newShopId}`)
+        if (!res.ok) throw new Error('Failed to load shop data')
+        const data = await res.json()
+        setOrders(data.orders.map(formatOrder))
+        setCancelled(data.cancelled.map(formatOrder))
+        setSlots(data.slots)
+        setCurrentShopId(newShopId)
+        setCurrentShopDoc(data.shop)
+        setStoreStatus(data.shop?.isShopOpen ? 'live' : 'paused')
+        setExpanded(null)
+        setSearch('')
+        setFilter('all')
+      } catch (e: any) {
+        notify(e.message || 'Failed to switch shop', 'err')
+      } finally {
+        setShopSwitching(false)
+      }
+    },
+    [currentShopId, notify],
+  )
+
   // ── Socket.io ─────────────────────────────────────────────────────────────
   useEffect(() => {
     const socket = io()
 
+    const matchesShop = (raw: any) => {
+      if (!currentShopId) return true
+      const rawShopId =
+        typeof raw.shop === 'object' && raw.shop !== null ? String(raw.shop.id) : String(raw.shop)
+      return rawShopId === currentShopId
+    }
+
     socket.on('order-created', (raw: any) => {
-      if (raw.paymentStatus !== 'paid') return
+      if (raw.paymentStatus !== 'paid' || !matchesShop(raw)) return
       const formatted = formatOrder(raw)
       setOrders((prev) => {
         if (prev.find((o) => o.id === formatted.id)) return prev
@@ -64,10 +106,10 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
     })
 
     socket.on('order-updated', (raw: any) => {
+      if (!matchesShop(raw)) return
       const formatted = formatOrder(raw)
       const sec = getOrderSection(raw)
       if (!sec || raw.paymentStatus !== 'paid') {
-        // Move to cancelled if cancelled
         if (
           raw.appOrderStatus === 'cancelled' ||
           raw.appOrderStatusDine === 'cancelled' ||
@@ -91,13 +133,14 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
     })
 
     socket.on('shop-status-updated', (shop: any) => {
+      if (currentShopId && String(shop.id) !== currentShopId) return
       setStoreStatus(shop.isShopOpen ? 'live' : 'paused')
     })
 
     return () => {
       socket.disconnect()
     }
-  }, [notify])
+  }, [notify, currentShopId])
 
   // ── Filtering ─────────────────────────────────────────────────────────────
   const applyFilter = (o: any) => {
@@ -109,8 +152,8 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
     if (filter === 'takeaway') return o.type === 'takeaway'
     if (filter === 'dine-in') return o.type === 'dine-in'
     if (filter === 'delayed') return o.delayed
-    if (filter === 'reward') return o.reward
-    if (filter === 'fallback') return false // no fallback concept in real data
+    if (filter === 'slot') return o.slot !== null && o.slot !== 'Immediate'
+    if (filter === 'now') return o.slot === 'Immediate'
     return true
   }
 
@@ -137,7 +180,8 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
   }
 
   const handleAdvance = async (order: any) => {
-    const nextStatus = order.status === 'prep' ? 'ready' : 'completed'
+    const nextStatus =
+      order.status === 'queued' ? 'preparing' : order.status === 'prep' ? 'ready' : 'completed'
     const field = order.type === 'dine-in' ? 'appOrderStatusDine' : 'appOrderStatus'
     await patchOrder(order.id, { [field]: nextStatus })
 
@@ -154,11 +198,11 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
     const field = order.type === 'dine-in' ? 'appOrderStatusDine' : 'appOrderStatus'
     await patchOrder(order.id, {
       [field]: 'cancelled',
-      cancelReason: cancelReasons[order.id] || 'Manager action',
+      cancelReason: 'Manager action',
     })
     setOrders((prev) => prev.filter((o) => o.id !== order.id))
     setCancelled((prev) => [
-      { ...order, cancelReason: cancelReasons[order.id] || 'Manager action' },
+      { ...order, cancelReason: 'Manager action' },
       ...prev,
     ])
     if (expanded === order.id) setExpanded(null)
@@ -263,7 +307,7 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
     onLeave: () => setPeek(null),
   }
 
-  const counts = { new: 0, prep: 0, ready: 0 }
+  const counts = { new: 0, queued: 0, prep: 0, ready: 0 }
   orders.forEach((o) => {
     if (o.status in counts) (counts as any)[o.status]++
   })
@@ -272,15 +316,17 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
 
   return (
     <div
+      className="smd-root"
       style={{
         fontFamily: "'Inter','DM Sans',system-ui,sans-serif",
         background: C.bg,
         color: C.text,
-        height: 'calc(100vh - 60px)',
+        height: 'calc(100vh - 80px)',
         display: 'flex',
         flexDirection: 'column',
         fontSize: 13,
-        margin: '0 -20px',
+        width: '100%',
+        minWidth: 0,
       }}
     >
       <style>{GLOBAL_STYLES}</style>
@@ -295,8 +341,12 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
         onPanelToggle={(p) => setRightPanel((prev) => (prev === p ? null : p))}
         onGoLive={() => handleStoreStatus('live')}
         onPause={() => handleStoreStatus('paused')}
-        onEmergency={() => handleStoreStatus('emergency')}
-        shopName={shopDoc?.address?.street || 'White Mantis'}
+        shopName={currentShopDoc?.address?.street || 'White Mantis'}
+        isAdmin={isAdmin}
+        allShops={allShops}
+        currentShopId={currentShopId}
+        onShopChange={handleShopSwitch}
+        shopSwitching={shopSwitching}
       />
 
       <FilterBar filter={filter} onFilter={setFilter} />
@@ -304,7 +354,7 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
       {/* ── BODY ── */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         {/* Main scroll */}
-        <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', position: 'relative', minWidth: 0 }}>
           {SECTIONS.map((sec) => (
             <OrderSection
               key={sec.key}
@@ -313,19 +363,14 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
               baristas={baristas}
               expanded={expanded}
               selectedBaristas={selectedBaristas}
-              cancelReasons={cancelReasons}
               loadingIds={loadingIds}
               peekHandlers={peekHandlers}
               onToggleExpand={(id) => setExpanded((prev) => (prev === id ? null : id))}
               onAdvance={handleAdvance}
-              onCancel={handleCancel}
               onAccept={handleAccept}
               onReject={handleReject}
               onBaristaChange={(orderId, bId) =>
                 setSelectedBaristas((p) => ({ ...p, [orderId]: bId }))
-              }
-              onCancelReasonChange={(orderId, r) =>
-                setCancelReasons((p) => ({ ...p, [orderId]: r }))
               }
             />
           ))}

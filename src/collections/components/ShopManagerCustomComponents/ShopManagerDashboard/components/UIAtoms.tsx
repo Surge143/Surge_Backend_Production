@@ -161,28 +161,31 @@ export const FullBtn: React.FC<{
   label: string
   c: string
   cBg?: string
-  onClick: () => void
+  onClick?: () => void
   loading?: boolean
-}> = ({ label, c, cBg, onClick, loading }) => {
+  disabled?: boolean
+}> = ({ label, c, cBg, onClick, loading, disabled }) => {
   const [h, setH] = useState(false)
+  const isDisabled = loading || disabled
   return (
     <button
       onClick={onClick}
       onMouseEnter={() => setH(true)}
       onMouseLeave={() => setH(false)}
-      disabled={loading}
+      disabled={isDisabled}
       style={{
         width: '100%',
         padding: '8px 12px',
-        background: h && !loading ? c : cBg || c + '10',
+        background: h && !isDisabled ? c : cBg || c + '10',
         border: `1px solid ${c}`,
         borderRadius: 7,
-        color: h && !loading ? '#fff' : c,
+        color: h && !isDisabled ? '#fff' : c,
         fontSize: 12,
         fontWeight: 600,
         textAlign: 'left',
         transition: 'all .12s',
-        opacity: loading ? 0.6 : 1,
+        opacity: isDisabled ? 0.45 : 1,
+        cursor: isDisabled ? 'not-allowed' : 'pointer',
       }}
     >
       {loading ? 'Updating…' : label}

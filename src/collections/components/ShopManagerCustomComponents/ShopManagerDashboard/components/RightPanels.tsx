@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React from 'react'
 import { C } from '../constants'
 import { SPill } from './UIAtoms'
 
@@ -33,7 +33,7 @@ export const SlotsPanel: React.FC<SlotsPanelProps> = ({ slots, onAct }) => (
             hour12: false,
           })
         : s.timeSelection === 'now'
-          ? 'Now'
+          ? 'Immediate'
           : '—'
 
       return (
@@ -61,7 +61,8 @@ export const SlotsPanel: React.FC<SlotsPanelProps> = ({ slots, onAct }) => (
               style={{
                 padding: '2px 8px',
                 background: stateBg,
-                border: `1px solid ${(stateColor || C.textMute) + '44'}`,
+                border: `1px solid ${state === 'Disabled' ? 'var(--smd-border)' : stateColor}`,
+                opacity: state === 'Disabled' ? 0.6 : 1,
                 borderRadius: 10,
                 fontSize: 10,
                 fontWeight: 600,
@@ -148,9 +149,6 @@ export const BaristasPanel: React.FC<BaristasProps> = ({ baristas, orders }) => 
           >
             <div>
               <div style={{ fontWeight: 600, fontSize: 13 }}>{b.name}</div>
-              <div style={{ fontSize: 11, marginTop: 2, color: C.ready, fontWeight: 600 }}>
-                active
-              </div>
             </div>
             <span
               style={{

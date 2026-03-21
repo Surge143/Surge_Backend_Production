@@ -39,37 +39,59 @@ export const PeekTooltip: React.FC<PeekTooltipProps> = ({ order, x, y }) => {
       >
         ORDER ITEMS · {order.no}
       </div>
-      {order.items.map((item: string, i: number) => (
-        <div
-          key={i}
-          style={{
-            display: 'flex',
-            gap: 10,
-            padding: '5px 0',
-            borderBottom: i < order.items.length - 1 ? `1px solid ${C.border}` : 'none',
-            alignItems: 'center',
-          }}
-        >
-          <span
+      {order.items.map((item: any, i: number) => {
+        const label = typeof item === 'string' ? item : `${item.name}${item.qty > 1 ? ` ×${item.qty}` : ''}`
+        const customs: any[] = typeof item === 'object' ? (item.customs || []) : []
+        return (
+          <div
+            key={i}
             style={{
-              width: 18,
-              height: 18,
-              borderRadius: '50%',
-              background: sec.color,
-              color: '#fff',
-              fontSize: 9,
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
+              padding: '5px 0',
+              borderBottom: i < order.items.length - 1 ? `1px solid ${C.border}` : 'none',
             }}
           >
-            {i + 1}
-          </span>
-          <span style={{ color: C.text, fontSize: 12, lineHeight: 1.4 }}>{item}</span>
-        </div>
-      ))}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <span
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  background: sec.color,
+                  color: '#fff',
+                  fontSize: 9,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                {i + 1}
+              </span>
+              <span style={{ color: C.text, fontSize: 12, fontWeight: 500, lineHeight: 1.4 }}>{label}</span>
+            </div>
+            {customs.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4, paddingLeft: 28 }}>
+                {customs.map((c: any, ci: number) => (
+                  <span
+                    key={ci}
+                    style={{
+                      fontSize: 10,
+                      padding: '1px 6px',
+                      background: C.bg,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 4,
+                      color: C.textSub,
+                    }}
+                  >
+                    {c.sectionTitle}: {c.label}{c.price > 0 ? ` +${c.price}` : ''}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -122,9 +144,8 @@ export const CancelledSection: React.FC<CancelledSectionProps> = ({
     </div>
 
     <div
+      className="cancel-grid"
       style={{
-        display: 'grid',
-        gridTemplateColumns: '90px 68px 175px 140px 110px 1fr 140px 110px',
         padding: '6px 20px',
         background: C.bg,
         borderBottom: `1px solid ${C.border}`,
@@ -151,10 +172,8 @@ export const CancelledSection: React.FC<CancelledSectionProps> = ({
       return (
         <div
           key={o.id}
-          className="crow"
+          className="crow cancel-grid"
           style={{
-            display: 'grid',
-            gridTemplateColumns: '90px 68px 175px 140px 110px 1fr 140px 110px',
             alignItems: 'center',
             padding: '9px 20px',
             borderBottom: `1px solid ${C.cancelBorder}`,

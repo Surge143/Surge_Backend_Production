@@ -38,37 +38,68 @@ export const NewOrderExpandedPanel: React.FC<NewOrderPanelProps> = ({
   >
     <div style={{ padding: '16px 20px', borderRight: `1px solid ${C.border}` }}>
       <ColLabel>Order Items</ColLabel>
-      {order.items.map((item: string, i: number) => (
-        <div
-          key={i}
-          style={{
-            display: 'flex',
-            gap: 12,
-            padding: '7px 0',
-            borderBottom: i < order.items.length - 1 ? `1px solid ${C.border}` : 'none',
-            alignItems: 'center',
-          }}
-        >
-          <span
+      {order.items.map((item: any, i: number) => {
+        const isObj = typeof item === 'object' && item !== null
+        const name = isObj ? `${item.name}${item.qty > 1 ? ` ×${item.qty}` : ''}` : item
+        const customs: any[] = isObj ? (item.customs || []) : []
+        return (
+          <div
+            key={i}
             style={{
-              width: 20,
-              height: 20,
-              borderRadius: '50%',
-              background: sectionColor,
-              color: '#fff',
-              fontSize: 10,
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
+              padding: '8px 0',
+              borderBottom: i < order.items.length - 1 ? `1px solid ${C.border}` : 'none',
             }}
           >
-            {i + 1}
-          </span>
-          <span style={{ color: C.text, fontSize: 12, lineHeight: 1.5 }}>{item}</span>
-        </div>
-      ))}
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <span
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: sectionColor,
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  marginTop: 1,
+                }}
+              >
+                {i + 1}
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: C.text, fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>{name}</div>
+                {customs.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 5 }}>
+                    {customs.map((c: any, ci: number) => (
+                      <span
+                        key={ci}
+                        style={{
+                          fontSize: 11,
+                          padding: '2px 8px',
+                          background: C.surface,
+                          border: `1px solid ${C.borderMid}`,
+                          borderRadius: 6,
+                          color: C.textSub,
+                          fontWeight: 500,
+                        }}
+                      >
+                        <span style={{ color: C.textMute, fontWeight: 400 }}>{c.sectionTitle}:</span>{' '}
+                        {c.label}
+                        {c.price > 0 && (
+                          <span style={{ color: C.prep, marginLeft: 3, fontWeight: 600 }}>+{c.price}</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })}
       {order.reward && (
         <div style={{ marginTop: 10, fontSize: 12, color: C.reward, fontWeight: 500 }}>
           ★ This is a reward order
@@ -90,10 +121,10 @@ export const NewOrderExpandedPanel: React.FC<NewOrderPanelProps> = ({
           style={{
             width: '100%',
             background: C.surface,
-            border: `1px solid ${C.border}`,
+            border: `1px solid ${!selectedBaristaId ? C.cancelled : C.border}`,
             borderRadius: 7,
             padding: '8px',
-            color: C.textSub,
+            color: selectedBaristaId ? C.textSub : C.cancelled,
             fontSize: 12,
             outline: 'none',
             marginBottom: 4,
@@ -106,12 +137,18 @@ export const NewOrderExpandedPanel: React.FC<NewOrderPanelProps> = ({
             </option>
           ))}
         </select>
+        {!selectedBaristaId && (
+          <div style={{ fontSize: 11, color: C.cancelled, fontWeight: 500, marginTop: -2 }}>
+            ⚠ Select a barista to accept this order
+          </div>
+        )}
         <FullBtn
           label={loading ? 'Accepting…' : '✓ Accept Order'}
-          c={C.ready}
-          cBg={C.readyBg}
-          onClick={onAccept}
+          c={selectedBaristaId ? C.ready : C.textMute}
+          cBg={selectedBaristaId ? C.readyBg : C.bg}
+          onClick={selectedBaristaId ? onAccept : undefined}
           loading={loading}
+          disabled={!selectedBaristaId}
         />
         <FullBtn
           label={loading ? 'Rejecting…' : '✕ Reject Order'}
@@ -131,10 +168,7 @@ interface ExpandedPanelProps {
   sectionBg: string
   advLabel: string
   advColor: string
-  cancelReason: string
-  onCancelReasonChange: (r: string) => void
   onAdvance: () => void
-  onCancel: () => void
   loading?: boolean
 }
 
@@ -144,10 +178,7 @@ export const OrderExpandedPanel: React.FC<ExpandedPanelProps> = ({
   sectionBg,
   advLabel,
   advColor,
-  cancelReason,
-  onCancelReasonChange,
   onAdvance,
-  onCancel,
   loading,
 }) => (
   <div
@@ -162,37 +193,68 @@ export const OrderExpandedPanel: React.FC<ExpandedPanelProps> = ({
   >
     <div style={{ padding: '16px 20px', borderRight: `1px solid ${C.border}` }}>
       <ColLabel>Order Items</ColLabel>
-      {order.items.map((item: string, i: number) => (
-        <div
-          key={i}
-          style={{
-            display: 'flex',
-            gap: 12,
-            padding: '7px 0',
-            borderBottom: i < order.items.length - 1 ? `1px solid ${C.border}` : 'none',
-            alignItems: 'center',
-          }}
-        >
-          <span
+      {order.items.map((item: any, i: number) => {
+        const isObj = typeof item === 'object' && item !== null
+        const name = isObj ? `${item.name}${item.qty > 1 ? ` ×${item.qty}` : ''}` : item
+        const customs: any[] = isObj ? (item.customs || []) : []
+        return (
+          <div
+            key={i}
             style={{
-              width: 20,
-              height: 20,
-              borderRadius: '50%',
-              background: sectionColor,
-              color: '#fff',
-              fontSize: 10,
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
+              padding: '8px 0',
+              borderBottom: i < order.items.length - 1 ? `1px solid ${C.border}` : 'none',
             }}
           >
-            {i + 1}
-          </span>
-          <span style={{ color: C.text, fontSize: 12, lineHeight: 1.5 }}>{item}</span>
-        </div>
-      ))}
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <span
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: sectionColor,
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  marginTop: 1,
+                }}
+              >
+                {i + 1}
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: C.text, fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>{name}</div>
+                {customs.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 5 }}>
+                    {customs.map((c: any, ci: number) => (
+                      <span
+                        key={ci}
+                        style={{
+                          fontSize: 11,
+                          padding: '2px 8px',
+                          background: C.surface,
+                          border: `1px solid ${C.borderMid}`,
+                          borderRadius: 6,
+                          color: C.textSub,
+                          fontWeight: 500,
+                        }}
+                      >
+                        <span style={{ color: C.textMute, fontWeight: 400 }}>{c.sectionTitle}:</span>{' '}
+                        {c.label}
+                        {c.price > 0 && (
+                          <span style={{ color: C.prep, marginLeft: 3, fontWeight: 600 }}>+{c.price}</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })}
       {order.delayed && (
         <AlertBox c={C.late} bg={C.lateBg}>
           ⚠ This order is delayed
@@ -219,40 +281,6 @@ export const OrderExpandedPanel: React.FC<ExpandedPanelProps> = ({
           onClick={onAdvance}
           loading={loading}
         />
-        <div style={{ marginTop: 4 }}>
-          <div style={{ fontSize: 11, color: C.textMute, marginBottom: 5, fontWeight: 500 }}>
-            Cancel reason (optional)
-          </div>
-          <select
-            value={cancelReason}
-            onChange={(e) => onCancelReasonChange(e.target.value)}
-            style={{
-              width: '100%',
-              background: C.surface,
-              border: `1px solid ${C.border}`,
-              borderRadius: 7,
-              padding: '6px 8px',
-              color: C.textSub,
-              fontSize: 12,
-              outline: 'none',
-              marginBottom: 6,
-            }}
-          >
-            <option value="">Select reason…</option>
-            <option>Customer request</option>
-            <option>Out of stock</option>
-            <option>Duplicate order</option>
-            <option>Payment issue</option>
-            <option>Manager action</option>
-          </select>
-          <FullBtn
-            label={loading ? 'Cancelling…' : 'Cancel Order'}
-            c={C.cancelled}
-            cBg={C.cancelBg}
-            onClick={onCancel}
-            loading={loading}
-          />
-        </div>
       </div>
     </div>
   </div>

@@ -267,6 +267,14 @@ export interface User {
    * Token used for generating user-specific barcodes in the mobile app.
    */
   barcodeToken?: string | null;
+  /**
+   * Apple unique user identifier (sub) from Sign in with Apple.
+   */
+  appleSubId?: string | null;
+  /**
+   * Whether the user signed in with an Apple private relay email.
+   */
+  isApplePrivateEmail?: boolean | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -2171,6 +2179,8 @@ export interface UsersSelect<T extends boolean = true> {
   referralCodeInput?: T;
   referralStatus?: T;
   barcodeToken?: T;
+  appleSubId?: T;
+  isApplePrivateEmail?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

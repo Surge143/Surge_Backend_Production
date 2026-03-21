@@ -10,7 +10,6 @@ interface OrderSectionProps {
   baristas: any[]
   expanded: string | null
   selectedBaristas: Record<string, string>
-  cancelReasons: Record<string, string>
   loadingIds: Record<string, boolean>
   peekHandlers: {
     onEnter: (e: React.MouseEvent, id: string) => void
@@ -18,11 +17,9 @@ interface OrderSectionProps {
   }
   onToggleExpand: (id: string) => void
   onAdvance: (order: any) => void
-  onCancel: (order: any) => void
   onAccept: (order: any) => void
   onReject: (order: any) => void
   onBaristaChange: (orderId: string, baristaId: string) => void
-  onCancelReasonChange: (orderId: string, reason: string) => void
 }
 
 export const OrderSection: React.FC<OrderSectionProps> = ({
@@ -31,16 +28,13 @@ export const OrderSection: React.FC<OrderSectionProps> = ({
   baristas,
   expanded,
   selectedBaristas,
-  cancelReasons,
   loadingIds,
   peekHandlers,
   onToggleExpand,
   onAdvance,
-  onCancel,
   onAccept,
   onReject,
   onBaristaChange,
-  onCancelReasonChange,
 }) => {
   const advLabel =
     section.key === 'new' ? 'Start Prep' : section.key === 'prep' ? 'Mark Ready' : 'Complete'
@@ -91,9 +85,8 @@ export const OrderSection: React.FC<OrderSectionProps> = ({
 
       {/* Column headers */}
       <div
+        className="order-grid"
         style={{
-          display: 'grid',
-          gridTemplateColumns: '90px 68px 175px 140px 110px 1fr 110px 175px',
           padding: '6px 20px',
           background: C.bg,
           borderBottom: `1px solid ${C.border}`,
@@ -102,6 +95,7 @@ export const OrderSection: React.FC<OrderSectionProps> = ({
         {['ORDER', 'TIME', 'CUSTOMER', 'BARISTA', 'REF', 'ITEMS', 'FLAGS', 'ACTION'].map((h, i) => (
           <span
             key={i}
+            className={h === 'FLAGS' ? 'col-flags' : undefined}
             style={{ fontSize: 10, color: C.textMute, letterSpacing: 0.8, fontWeight: 600 }}
           >
             {h}
@@ -129,7 +123,6 @@ export const OrderSection: React.FC<OrderSectionProps> = ({
               isOpen={isOpen}
               onToggle={() => onToggleExpand(order.id)}
               onAdvance={() => (section.key === 'new' ? onAccept(order) : onAdvance(order))}
-              onCancel={() => onCancel(order)}
               onPeekEnter={peekHandlers.onEnter}
               onPeekLeave={peekHandlers.onLeave}
               barista={b}
@@ -157,10 +150,7 @@ export const OrderSection: React.FC<OrderSectionProps> = ({
                 sectionBg={section.bg}
                 advLabel={advLabel}
                 advColor={advColor}
-                cancelReason={cancelReasons[order.id] || ''}
-                onCancelReasonChange={(r) => onCancelReasonChange(order.id, r)}
                 onAdvance={() => onAdvance(order)}
-                onCancel={() => onCancel(order)}
                 loading={loading}
               />
             )}

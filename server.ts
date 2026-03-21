@@ -3,6 +3,7 @@ import { createServer } from 'http'
 import next from 'next'
 import { Server } from 'socket.io'
 import { parse } from 'url'
+import { Cron } from 'croner'
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
@@ -42,5 +43,20 @@ app.prepare().then(() => {
 
     httpServer.listen(port, () => {
         console.log(`> Ready on http://${hostname}:${port}`)
+
+        // ── Slot preparation cron — runs every minute ──────────────────
+        // Finds accepted+queued orders whose slot time is ≤ 30 min away
+        // and automatically moves them to "preparing".
+        const cronSecret = process.env.CRON_SECRET || 'slot-cron-internal'
+        new Cron('* * * * *', async () => {
+            try {
+                await fetch(`http://localhost:${port}/api/cron/slot-preparation`, {
+                    headers: { 'x-cron-secret': cronSecret },
+                })
+            } catch (err) {
+                console.error('[SlotCron] fetch error:', err)
+            }
+        })
+        console.log('[SlotCron] Slot preparation cron started (every minute)')
     })
 })
