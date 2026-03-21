@@ -355,6 +355,25 @@ export const Users: CollectionConfig = {
         hidden: true, // Hide from admin UI since it's only relevant for the mobile app and generated automatically
       },
     },
+    {
+      name: 'appleSubId',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        description: 'Apple unique user identifier (sub) from Sign in with Apple.',
+        hidden: true,
+      },
+    },
+    {
+      name: 'isApplePrivateEmail',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        readOnly: true,
+        description: 'Whether the user signed in with an Apple private relay email.',
+        hidden: true,
+      },
+    },
   ],
   lockDocuments: false,
 }

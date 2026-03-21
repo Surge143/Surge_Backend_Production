@@ -38,10 +38,16 @@ export default buildConfig({
           Component: '@/collections/components/BaristaDashboard/OrdersDashboard#OrdersDashboard',
           path: '/barista-dashboard',
         },
+        ShopManagerDashboard: {
+          Component:
+            '@/collections/components/ShopManagerCustomComponents/ShopManagerDashboard/ShopManagerDashboard#ShopManagerDashboard',
+          path: '/shop-manager-dashboard',
+        },
       },
       afterNavLinks: [
         '@/collections/components/Navbar/MySidebarLink#MySidebarLink',
         '@/collections/components/Navbar/BaristaDashboardLink#BaristaDashboardLink',
+        '@/collections/components/Navbar/ShopManagerDashboardLink#ShopManagerDashboardLink',
       ],
     },
     user: Admins.slug,

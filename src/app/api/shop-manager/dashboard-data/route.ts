@@ -1,0 +1,114 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getPayload } from 'payload'
+import config from '@payload-config'
+
+export const dynamic = 'force-dynamic'
+
+export async function GET(req: NextRequest) {
+  try {
+    const payload = await getPayload({ config })
+
+    // Get current user from session
+    const { searchParams } = new URL(req.url)
+    const shopId = searchParams.get('shopId')
+
+    // Fetch all live orders (pending acceptance + accepted with active statuses)
+    const ordersResult = await payload.find({
+      collection: 'app-orders',
+      where: {
+        and: [
+          {
+            or: [
+              { orderAcceptance: { equals: 'pending' } },
+              {
+                and: [
+                  { orderAcceptance: { equals: 'accepted' } },
+                  {
+                    or: [
+                      { appOrderStatus: { in: ['pending', 'preparing', 'ready'] } },
+                      { appOrderStatusDine: { in: ['pending', 'preparing', 'ready'] } },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          { paymentStatus: { equals: 'paid' } },
+          ...(shopId ? [{ shop: { equals: shopId } }] : []),
+        ],
+      },
+      depth: 3,
+      limit: 200,
+      sort: '-createdAt',
+    })
+
+    // Fetch cancelled orders for today's session
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+
+    const cancelledResult = await payload.find({
+      collection: 'app-orders',
+      where: {
+        and: [
+          {
+            or: [
+              { orderAcceptance: { equals: 'rejected' } },
+              { appOrderStatus: { equals: 'cancelled' } },
+              { appOrderStatusDine: { equals: 'cancelled' } },
+            ],
+          },
+          { paymentStatus: { equals: 'paid' } },
+          { createdAt: { greater_than: todayStart.toISOString() } },
+          ...(shopId ? [{ shop: { equals: shopId } }] : []),
+        ],
+      },
+      depth: 3,
+      limit: 100,
+      sort: '-updatedAt',
+    })
+
+    // Fetch slots
+    const slotsResult = await payload.find({
+      collection: 'slots',
+      ...(shopId ? { where: { shop: { equals: shopId } } } : {}),
+      limit: 50,
+      sort: 'slot',
+    })
+
+    // Fetch baristas (admins with role barista)
+    const baristasResult = await payload.find({
+      collection: 'admins',
+      where: { role: { equals: 'barista' } },
+      limit: 50,
+      overrideAccess: true,
+      depth: 0,
+    })
+
+    // Fetch shop info
+    let shopDoc: any = null
+    if (shopId) {
+      shopDoc = await payload.findByID({
+        collection: 'shop',
+        id: shopId,
+        depth: 0,
+      })
+    } else {
+      const shopResult = await payload.find({
+        collection: 'shop',
+        limit: 1,
+      })
+      shopDoc = shopResult.docs[0] || null
+    }
+
+    return NextResponse.json({
+      orders: ordersResult.docs,
+      cancelled: cancelledResult.docs,
+      slots: slotsResult.docs,
+      baristas: baristasResult.docs,
+      shop: shopDoc,
+    })
+  } catch (err: any) {
+    console.error('[dashboard-data] Error:', err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
