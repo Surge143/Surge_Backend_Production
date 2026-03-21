@@ -118,7 +118,7 @@ export const CancelledSection: React.FC<CancelledSectionProps> = ({
       >
         {cancelled.length}
       </span>
-      <span style={{ fontSize: 11, color: C.textMute, marginLeft: 4 }}>— today's session</span>
+      <span style={{ fontSize: 11, color: C.textMute, marginLeft: 4 }}>— today&apos;s session</span>
     </div>
 
     <div
