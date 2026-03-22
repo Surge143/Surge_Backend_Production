@@ -1,5 +1,5 @@
 'use client'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { io } from 'socket.io-client'
 import { C, SECTIONS, GLOBAL_STYLES, formatOrder, getOrderSection } from './constants'
 import { TopBar } from './components/TopBar'
@@ -194,22 +194,7 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
     }
   }
 
-  const handleCancel = async (order: any) => {
-    const field = order.type === 'dine-in' ? 'appOrderStatusDine' : 'appOrderStatus'
-    await patchOrder(order.id, {
-      [field]: 'cancelled',
-      cancelReason: 'Manager action',
-    })
-    setOrders((prev) => prev.filter((o) => o.id !== order.id))
-    setCancelled((prev) => [
-      { ...order, cancelReason: 'Manager action' },
-      ...prev,
-    ])
-    if (expanded === order.id) setExpanded(null)
-    notify('Order cancelled', 'warn')
-  }
-
-  const handleAccept = async (order: any) => {
+const handleAccept = async (order: any) => {
     const baristaId = selectedBaristas[order.id]
     await patchOrder(order.id, {
       orderAcceptance: 'accepted',
@@ -232,11 +217,26 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
   }
 
   const handleReject = async (order: any) => {
-    await patchOrder(order.id, { orderAcceptance: 'rejected' })
-    setOrders((prev) => prev.filter((o) => o.id !== order.id))
-    setCancelled((prev) => [{ ...order, cancelReason: 'Rejected by manager' }, ...prev])
-    if (expanded === order.id) setExpanded(null)
-    notify('Order rejected', 'warn')
+    setLoading(order.id, true)
+    try {
+      const res = await fetch('/api/shop-manager/cancel-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id, reason: 'Rejected by manager' }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Reject failed')
+      }
+      setOrders((prev) => prev.filter((o) => o.id !== order.id))
+      setCancelled((prev) => [{ ...order, cancelReason: 'Rejected by manager' }, ...prev])
+      if (expanded === order.id) setExpanded(null)
+      notify('Order rejected & refund initiated', 'warn')
+    } catch (e: any) {
+      notify(e.message || 'Error rejecting order', 'err')
+    } finally {
+      setLoading(order.id, false)
+    }
   }
 
   const handleRestore = async (id: string) => {
@@ -418,7 +418,7 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
               </button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
-              {rightPanel === 'slots' && <SlotsPanel slots={slots} onAct={handleSlotAct} />}
+              {rightPanel === 'slots' && <SlotsPanel slots={slots} orders={orders} onAct={handleSlotAct} />}
               {rightPanel === 'baristas' && <BaristasPanel baristas={baristas} orders={orders} />}
             </div>
           </div>

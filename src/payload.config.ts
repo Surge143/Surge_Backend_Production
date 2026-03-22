@@ -43,11 +43,17 @@ export default buildConfig({
             '@/collections/components/ShopManagerCustomComponents/ShopManagerDashboard/ShopManagerDashboard#ShopManagerDashboard',
           path: '/shop-manager-dashboard',
         },
+        StoreDashboard: {
+          Component:
+            '@/collections/components/ShopManagerCustomComponents/StoreDashboard/StoreDashboard#StoreDashboard',
+          path: '/store-dashboard',
+        },
       },
       afterNavLinks: [
         '@/collections/components/Navbar/MySidebarLink#MySidebarLink',
         '@/collections/components/Navbar/BaristaDashboardLink#BaristaDashboardLink',
         '@/collections/components/Navbar/ShopManagerDashboardLink#ShopManagerDashboardLink',
+        '@/collections/components/Navbar/StoreDashboardLink#StoreDashboardLink',
       ],
     },
     user: Admins.slug,

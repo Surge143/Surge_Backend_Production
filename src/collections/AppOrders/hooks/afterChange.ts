@@ -199,24 +199,28 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
         }
 
         // --- SLOT LOAD UPDATE LOGIC ---
+        // Count accepted orders that are not yet cancelled or completed
         const updateSlotLoad = async (slotId: string) => {
             try {
                 const ordersInSlot = await payload.find({
                     collection: 'app-orders',
                     where: {
-                        slot: { equals: slotId },
-                        orderAcceptance: { equals: 'accepted' },
+                        and: [
+                            { slot: { equals: slotId } },
+                            { orderAcceptance: { equals: 'accepted' } },
+                            { appOrderStatus: { not_in: ['cancelled', 'completed'] } },
+                            { appOrderStatusDine: { not_in: ['cancelled', 'completed'] } },
+                        ],
                     },
                     depth: 0,
+                    limit: 1000,
                     overrideAccess: true,
                 });
-
-                const totalLoad = ordersInSlot.docs.length;
 
                 await payload.update({
                     collection: 'slots',
                     id: slotId,
-                    data: { currentLoad: totalLoad },
+                    data: { currentLoad: ordersInSlot.totalDocs },
                     overrideAccess: true,
                 });
             } catch (err) {

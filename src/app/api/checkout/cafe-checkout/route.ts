@@ -78,6 +78,71 @@ export const POST = async (req: NextRequest) => {
             }
         }
 
+        // --- SHOP VALIDATION (open status, operating day, hours) ---
+        const shopDoc = await payload.findByID({
+            collection: 'shop',
+            id: shopId,
+            depth: 0,
+            overrideAccess: true,
+        }) as any;
+
+        if (!shopDoc) {
+            return NextResponse.json({ error: 'Shop not found.' }, { status: 404 });
+        }
+
+        // 1. Live open/closed toggle
+        if (!shopDoc.isShopOpen) {
+            return NextResponse.json({ error: 'This shop is currently closed.' }, { status: 400 });
+        }
+
+        // 2. Operating day check
+        const now = new Date();
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+        const todayName = dayNames[now.getDay()];
+        const operatingDays = shopDoc.operationalSettings?.operatingDays;
+        if (operatingDays && !operatingDays[todayName]) {
+            const label = todayName.charAt(0).toUpperCase() + todayName.slice(1);
+            return NextResponse.json({ error: `This shop is not open on ${label}s.` }, { status: 400 });
+        }
+
+        // 3. Operating hours check (times stored as ISO strings; compare UTC hours/minutes)
+        const openingTime = shopDoc.operationalSettings?.openingTime;
+        const closingTime = shopDoc.operationalSettings?.closingTime;
+        if (openingTime && closingTime) {
+            const toUTCMinutes = (iso: string) => {
+                const d = new Date(iso);
+                return d.getUTCHours() * 60 + d.getUTCMinutes();
+            };
+            const nowMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+            if (nowMinutes < toUTCMinutes(openingTime) || nowMinutes >= toUTCMinutes(closingTime)) {
+                return NextResponse.json({ error: 'This shop is currently outside its operating hours.' }, { status: 400 });
+            }
+        }
+
+        // --- SLOT CAPACITY CHECK ---
+        let slotDoc: any = null;
+        if (selectedSlot) {
+            const slotId = !isNaN(Number(selectedSlot)) ? Number(selectedSlot) : selectedSlot;
+            slotDoc = await payload.findByID({
+                collection: 'slots',
+                id: slotId,
+                depth: 0,
+                overrideAccess: true,
+            }) as any;
+
+            if (!slotDoc) {
+                return NextResponse.json({ error: 'Selected slot not found.' }, { status: 400 });
+            }
+            if (!slotDoc.isActive) {
+                return NextResponse.json({ error: 'The selected slot is not currently accepting bookings.' }, { status: 400 });
+            }
+            const currentLoad = slotDoc.currentLoad || 0;
+            const maxCapacity = slotDoc.maxCapacity || 0;
+            if (currentLoad >= maxCapacity) {
+                return NextResponse.json({ error: 'The selected slot is fully booked. Please choose another slot.' }, { status: 400 });
+            }
+        }
+
         const carts = await payload.find({
             collection: 'app-cart',
             where: {

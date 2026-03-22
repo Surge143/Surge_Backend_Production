@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { emitShopStatusUpdated } from '@/utilities/socket'
+import { emitWebOrderUpdated } from '@/utilities/socket'
 
 export async function PATCH(req: NextRequest) {
   try {
@@ -13,25 +13,26 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await req.json()
-    const { shopId, ...updateData } = body
+    const { orderId, ...updateData } = body
 
-    if (!shopId) {
-      return NextResponse.json({ error: 'shopId is required' }, { status: 400 })
+    if (!orderId) {
+      return NextResponse.json({ error: 'orderId is required' }, { status: 400 })
     }
 
     const updated = await payload.update({
-      collection: 'shop',
-      id: shopId,
+      collection: 'web-orders',
+      id: orderId,
       data: updateData,
-      depth: 0,
+      depth: 2,
       overrideAccess: true,
     })
 
-    emitShopStatusUpdated(updated)
+    // Emit real-time update
+    emitWebOrderUpdated(updated)
 
-    return NextResponse.json({ success: true, shop: updated })
+    return NextResponse.json({ success: true, order: updated })
   } catch (err: any) {
-    console.error('[update-shop] Error:', err)
+    console.error('[update-web-order] Error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
