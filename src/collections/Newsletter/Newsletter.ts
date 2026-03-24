@@ -1,4 +1,4 @@
-import { CollectionConfig } from 'payload'
+import { APIError, CollectionConfig } from 'payload'
 
 export const Newsletter: CollectionConfig = {
   slug: 'newsletters',
@@ -21,7 +21,7 @@ export const Newsletter: CollectionConfig = {
               limit: 1,
             })
             if (existing.totalDocs > 0) {
-              throw new Error("You're already subscribed! We'll keep you in the loop.")
+              throw new APIError("You're already subscribed! We'll keep you in the loop.", 400, undefined, true)
             }
           }
         }
