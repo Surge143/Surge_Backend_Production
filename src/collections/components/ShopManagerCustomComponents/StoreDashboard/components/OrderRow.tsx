@@ -185,7 +185,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                           Cancel
                         </button>
                         <button
-                          onClick={() => { if (!deliverByDate) return; onShip && onShip(deliverByDate); setShipOpen(false); setDeliverByDate('') }}
+                          onClick={() => { if (!deliverByDate) return; if (onShip) onShip(deliverByDate); setShipOpen(false); setDeliverByDate('') }}
                           disabled={!deliverByDate || loading}
                           style={{ flex: 1, padding: '5px 0', background: deliverByDate ? C.shipped : C.shipped + '40', border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 600, cursor: deliverByDate && !loading ? 'pointer' : 'not-allowed' }}
                         >
@@ -201,7 +201,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                 <ABtn
                   label={loading ? '…' : 'Mark Ready'}
                   c={C.new}
-                  onClick={() => { onMarkReady && onMarkReady(); setRefundOpen(false) }}
+                  onClick={() => { if (onMarkReady) onMarkReady(); setRefundOpen(false) }}
                   disabled={loading}
                 />
               )}
@@ -366,7 +366,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                       Cancel
                     </button>
                     <button
-                      onClick={() => { if (!pickedUpDate) return; onPickedUp && onPickedUp(pickedUpDate); setPickupOpen(false); setPickedUpDate('') }}
+                      onClick={() => { if (!pickedUpDate) return; if (onPickedUp) onPickedUp(pickedUpDate); setPickupOpen(false); setPickedUpDate('') }}
                       disabled={!pickedUpDate || loading}
                       style={{ flex: 1, padding: '5px 0', background: pickedUpDate ? C.new : C.new + '40', border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 600, cursor: pickedUpDate && !loading ? 'pointer' : 'not-allowed' }}
                     >
