@@ -18,7 +18,7 @@ interface OrderSectionProps {
   onToggleExpand: (id: string) => void
   onAdvance: (order: any) => void
   onAccept: (order: any) => void
-  onReject: (order: any) => void
+  onReject: (order: any, reason: string) => void
   onBaristaChange: (orderId: string, baristaId: string) => void
 }
 
@@ -37,8 +37,13 @@ export const OrderSection: React.FC<OrderSectionProps> = ({
   onBaristaChange,
 }) => {
   const advLabel =
-    section.key === 'new' ? 'Start Prep' : section.key === 'prep' ? 'Mark Ready' : 'Complete'
-  const advColor = section.key === 'new' ? C.new : section.key === 'prep' ? C.prep : C.ready
+    section.key === 'new' ? 'Start Prep' :
+    section.key === 'queued' ? 'Start Preparing' :
+    section.key === 'prep' ? 'Mark Ready' : 'Complete'
+  const advColor =
+    section.key === 'new' ? C.new :
+    section.key === 'queued' ? C.prep :
+    section.key === 'prep' ? C.prep : C.ready
 
   return (
     <div>
@@ -120,12 +125,18 @@ export const OrderSection: React.FC<OrderSectionProps> = ({
               sectionBg={section.bg}
               advLabel={advLabel}
               advColor={advColor}
+              isNew={section.key === 'new'}
               isOpen={isOpen}
               onToggle={() => onToggleExpand(order.id)}
-              onAdvance={() => (section.key === 'new' ? onAccept(order) : onAdvance(order))}
+              onAdvance={() => onAdvance(order)}
+              onAccept={() => onAccept(order)}
+              onReject={(reason) => onReject(order, reason)}
               onPeekEnter={peekHandlers.onEnter}
               onPeekLeave={peekHandlers.onLeave}
               barista={b}
+              baristas={baristas}
+              selectedBaristaId={selectedBaristas[order.id]}
+              onBaristaChange={(id) => onBaristaChange(order.id, id)}
               loading={loading}
             />
 

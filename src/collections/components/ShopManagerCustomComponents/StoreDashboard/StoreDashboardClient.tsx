@@ -5,7 +5,6 @@ import { C, SECTIONS, GLOBAL_STYLES, formatOrder } from './constants'
 import { TopBar } from './components/TopBar'
 import { FilterBar } from './components/FilterBar'
 import { OrderRow } from './components/OrderRow'
-import { CancelledSection } from './components/CancelledSection'
 import { Toast } from './components/UIAtoms'
 
 interface Props {
@@ -27,8 +26,8 @@ export const StoreDashboardClient: React.FC<Props> = ({
 }) => {
   // ── State ──────────────────────────────────────────────────────────────────
   const [orders, setOrders] = useState<any[]>(() => initialOrders.map(formatOrder))
-  const [delivered, setDelivered] = useState<any[]>(() => initialDelivered.map(formatOrder))
-  const [cancelled, setCancelled] = useState<any[]>(() => initialCancelled.map(formatOrder))
+  const [, setDelivered] = useState<any[]>(() => initialDelivered.map(formatOrder))
+  const [, setCancelled] = useState<any[]>(() => initialCancelled.map(formatOrder))
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
@@ -83,6 +82,16 @@ export const StoreDashboardClient: React.FC<Props> = ({
   useEffect(() => {
     const socket = io()
 
+    socket.on('web-order-created', (raw: any) => {
+      if (raw.paymentStatus !== 'completed') return
+      const formatted = formatOrder(raw)
+      setOrders((prev) => {
+        if (prev.find((o) => o.id === formatted.id)) return prev
+        return [formatted, ...prev]
+      })
+      notify('🔔 New store order received!', 'ok')
+    })
+
     socket.on('web-order-updated', (raw: any) => {
       const formatted = formatOrder(raw)
       const ds = raw.deliveryStatus
@@ -135,7 +144,7 @@ export const StoreDashboardClient: React.FC<Props> = ({
   }
 
   // ── Action handlers ────────────────────────────────────────────────────────
-  const handleShip = async (order: any) => {
+  const handleShip = async (order: any, deliverByDate: string) => {
     setLoading(order.id, true)
     try {
       const res = await fetch('/api/store-manager/update-web-order', {
@@ -144,7 +153,7 @@ export const StoreDashboardClient: React.FC<Props> = ({
         body: JSON.stringify({
           orderId: order.id,
           deliveryStatus: 'shipped',
-          deliveringBy: new Date().toISOString(),
+          deliveringBy: new Date(`${deliverByDate}T23:59:59`).toISOString(),
         }),
       })
       if (!res.ok) {
@@ -155,6 +164,62 @@ export const StoreDashboardClient: React.FC<Props> = ({
       const formatted = formatOrder(updated)
       setOrders((prev) => prev.map((o) => (o.id === formatted.id ? formatted : o)))
       notify('Order marked as shipped')
+    } catch (e: any) {
+      notify(e.message || 'Error updating order', 'err')
+    } finally {
+      setLoading(order.id, false)
+    }
+  }
+
+  const handleMarkReady = async (order: any) => {
+    setLoading(order.id, true)
+    try {
+      const res = await fetch('/api/store-manager/update-web-order', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: order.id,
+          deliveryStatus: 'shipped',
+          isPickupReady: true,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Update failed')
+      }
+      const { order: updated } = await res.json()
+      const formatted = formatOrder(updated)
+      setOrders((prev) => prev.map((o) => (o.id === formatted.id ? formatted : o)))
+      notify('Pickup marked as ready')
+    } catch (e: any) {
+      notify(e.message || 'Error updating order', 'err')
+    } finally {
+      setLoading(order.id, false)
+    }
+  }
+
+  const handlePickedUp = async (order: any, pickedUpDate: string) => {
+    setLoading(order.id, true)
+    try {
+      const res = await fetch('/api/store-manager/update-web-order', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: order.id,
+          deliveryStatus: 'delivered',
+          pickedUpDate: new Date(`${pickedUpDate}T12:00:00`).toISOString(),
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Update failed')
+      }
+      const { order: updated } = await res.json()
+      const formatted = formatOrder(updated)
+      setOrders((prev) => prev.filter((o) => o.id !== formatted.id))
+      setDelivered((prev) => [formatted, ...prev])
+      if (expanded === order.id) setExpanded(null)
+      notify('Order picked up')
     } catch (e: any) {
       notify(e.message || 'Error updating order', 'err')
     } finally {
@@ -220,7 +285,6 @@ export const StoreDashboardClient: React.FC<Props> = ({
   const counts = {
     new: orders.filter((o) => o.status === 'new').length,
     shipped: orders.filter((o) => o.status === 'shipped').length,
-    delivered: delivered.length,
   }
 
   const shopName =
@@ -245,7 +309,6 @@ export const StoreDashboardClient: React.FC<Props> = ({
 
       <TopBar
         counts={counts}
-        cancelledCount={cancelled.length}
         search={search}
         onSearch={setSearch}
         shopName={shopName}
@@ -262,10 +325,7 @@ export const StoreDashboardClient: React.FC<Props> = ({
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', minWidth: 0 }}>
         {SECTIONS.map((sec) => {
           // Pull the right list per section
-          const sectionOrders =
-            sec.key === 'delivered'
-              ? delivered.filter(applyFilter)
-              : orders.filter((o) => o.status === sec.key && applyFilter(o))
+          const sectionOrders = orders.filter((o) => o.status === sec.key && applyFilter(o))
 
           return (
             <div key={sec.key}>
@@ -363,8 +423,10 @@ export const StoreDashboardClient: React.FC<Props> = ({
                     isOpen={isOpen}
                     onToggle={() => setExpanded((prev) => (prev === order.id ? null : order.id))}
                     loading={loading}
-                    onShip={() => handleShip(order)}
+                    onShip={(deliverByDate) => handleShip(order, deliverByDate)}
+                    onMarkReady={() => handleMarkReady(order)}
                     onDeliver={() => handleDeliver(order)}
+                    onPickedUp={(date) => handlePickedUp(order, date)}
                     onRefund={(reason: string) => handleRefund(order, reason)}
                   />
                 )
@@ -373,7 +435,6 @@ export const StoreDashboardClient: React.FC<Props> = ({
           )
         })}
 
-        <CancelledSection cancelled={cancelled.filter(applyFilter)} />
       </div>
 
       {/* Toast */}

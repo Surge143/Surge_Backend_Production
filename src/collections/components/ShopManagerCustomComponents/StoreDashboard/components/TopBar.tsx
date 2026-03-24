@@ -4,8 +4,7 @@ import { C } from '../constants'
 import { SearchIcon, StoreIcon } from './UIAtoms'
 
 interface TopBarProps {
-  counts: { new: number; shipped: number; delivered: number }
-  cancelledCount: number
+  counts: { new: number; shipped: number }
   search: string
   onSearch: (v: string) => void
   shopName?: string
@@ -18,7 +17,6 @@ interface TopBarProps {
 
 export const TopBar: React.FC<TopBarProps> = ({
   counts,
-  cancelledCount,
   search,
   onSearch,
   shopName,
@@ -48,7 +46,6 @@ export const TopBar: React.FC<TopBarProps> = ({
   const chipData = [
     { key: 'new' as const, label: 'New', color: C.new, bg: C.newBg, border: C.newBorder },
     { key: 'shipped' as const, label: 'Shipped', color: C.shipped, bg: C.shipBg, border: C.shipBorder },
-    { key: 'delivered' as const, label: 'Delivered', color: C.delivered, bg: C.doneBg, border: C.doneBorder },
   ]
 
   return (
@@ -192,23 +189,6 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
       ))}
 
-      {cancelledCount > 0 && (
-        <div
-          className="topbar-count-chip"
-          style={{
-            padding: '3px 10px',
-            background: C.cancelBg,
-            border: `1px solid ${C.cancelBorder}`,
-            borderRadius: 12,
-            fontSize: 11,
-            fontWeight: 700,
-            color: C.cancelled,
-            flexShrink: 0,
-          }}
-        >
-          Cancelled {cancelledCount}
-        </div>
-      )}
 
       {/* Spacer */}
       <div style={{ flex: 1 }} />

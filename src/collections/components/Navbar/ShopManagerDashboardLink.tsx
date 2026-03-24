@@ -8,7 +8,7 @@ export const ShopManagerDashboardLink: React.FC = () => {
         href="/admin/shop-manager-dashboard"
         style={{ textDecoration: 'none', color: 'inherit' }}
       >
-        <span className="nav__link-label">🏪 Shop Dashboard</span>
+        <span className="nav__link-label">Cafe Dashboard</span>
       </Link>
     </div>
   )

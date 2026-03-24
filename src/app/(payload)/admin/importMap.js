@@ -48,14 +48,10 @@ import { Preview as Preview_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-imp
 import { ExportSaveButton as ExportSaveButton_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
 import { ImportPreview as ImportPreview_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
 import { FolderTypeField as FolderTypeField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
-import { MySidebarLink as MySidebarLink_656f662ab5214447cb676fcf6ae488ee } from '@/collections/components/Navbar/MySidebarLink'
-import { BaristaDashboardLink as BaristaDashboardLink_3bea824dbff9559afc699976245b71b3 } from '@/collections/components/Navbar/BaristaDashboardLink'
 import { ShopManagerDashboardLink as ShopManagerDashboardLink_167428d647347319b1ef8a5907bede83 } from '@/collections/components/Navbar/ShopManagerDashboardLink'
 import { StoreDashboardLink as StoreDashboardLink_96c56f38833246a5e56695bf19d3d6ce } from '@/collections/components/Navbar/StoreDashboardLink'
 import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
 import { ImportExportProvider as ImportExportProvider_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
-import { pendingOrders as pendingOrders_f4186d53f34f61062346315dc23f9ae8 } from '@/collections/components/ShopManagerCustomComponents/PendingOrders/PendingOrders'
-import { OrdersDashboard as OrdersDashboard_1a7850c769448e12f0bf338f3f71516f } from '@/collections/components/BaristaDashboard/OrdersDashboard'
 import { ShopManagerDashboard as ShopManagerDashboard_8333465cff1e575b1730266ecf0cec9a } from '@/collections/components/ShopManagerCustomComponents/ShopManagerDashboard/ShopManagerDashboard'
 import { StoreDashboard as StoreDashboard_3c37493a0b0d21ca3fcbccd797c23d1a } from '@/collections/components/ShopManagerCustomComponents/StoreDashboard/StoreDashboard'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
@@ -111,14 +107,10 @@ export const importMap = {
   "payload-import-export/rsc#ExportSaveButton": ExportSaveButton_7d8c2ee66d868f2af498f46de2c9b2f8,
   "payload-import-export/rsc#ImportPreview": ImportPreview_7d8c2ee66d868f2af498f46de2c9b2f8,
   "@payloadcms/next/client#FolderTypeField": FolderTypeField_2b8867833a34864a02ddf429b0728a40,
-  "@/collections/components/Navbar/MySidebarLink#MySidebarLink": MySidebarLink_656f662ab5214447cb676fcf6ae488ee,
-  "@/collections/components/Navbar/BaristaDashboardLink#BaristaDashboardLink": BaristaDashboardLink_3bea824dbff9559afc699976245b71b3,
   "@/collections/components/Navbar/ShopManagerDashboardLink#ShopManagerDashboardLink": ShopManagerDashboardLink_167428d647347319b1ef8a5907bede83,
   "@/collections/components/Navbar/StoreDashboardLink#StoreDashboardLink": StoreDashboardLink_96c56f38833246a5e56695bf19d3d6ce,
   "@payloadcms/storage-s3/client#S3ClientUploadHandler": S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24,
   "payload-import-export/rsc#ImportExportProvider": ImportExportProvider_7d8c2ee66d868f2af498f46de2c9b2f8,
-  "@/collections/components/ShopManagerCustomComponents/PendingOrders/PendingOrders#pendingOrders": pendingOrders_f4186d53f34f61062346315dc23f9ae8,
-  "@/collections/components/BaristaDashboard/OrdersDashboard#OrdersDashboard": OrdersDashboard_1a7850c769448e12f0bf338f3f71516f,
   "@/collections/components/ShopManagerCustomComponents/ShopManagerDashboard/ShopManagerDashboard#ShopManagerDashboard": ShopManagerDashboard_8333465cff1e575b1730266ecf0cec9a,
   "@/collections/components/ShopManagerCustomComponents/StoreDashboard/StoreDashboard#StoreDashboard": StoreDashboard_3c37493a0b0d21ca3fcbccd797c23d1a,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1

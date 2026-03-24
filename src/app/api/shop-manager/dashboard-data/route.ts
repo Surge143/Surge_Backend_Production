@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
               { appOrderStatusDine: { equals: 'cancelled' } },
             ],
           },
-          { paymentStatus: { equals: 'paid' } },
+          { paymentStatus: { in: ['paid', 'refund-initiated', 'refunded', 'failed'] } },
           { createdAt: { greater_than: todayStart.toISOString() } },
           ...(shopId ? [{ shop: { equals: shopId } }] : []),
         ],
@@ -79,10 +79,15 @@ export async function GET(req: NextRequest) {
       sort: 'slot',
     })
 
-    // Fetch baristas (admins with role barista)
+    // Fetch baristas for the requested shop only
     const baristasResult = await payload.find({
       collection: 'admins',
-      where: { role: { equals: 'barista' } },
+      where: {
+        and: [
+          { role: { equals: 'barista' } },
+          ...(shopId ? [{ shop: { equals: shopId } }] : []),
+        ],
+      },
       limit: 50,
       overrideAccess: true,
       depth: 0,

@@ -39,20 +39,29 @@ export async function POST(req: NextRequest) {
 
     // Attempt Stripe refund if order was paid
     const paymentIntentId = order.stripeData?.paymentIntentId
+    let stripeRefundSucceeded = false
+    let stripeRefundFailed = false
+
     if (order.paymentStatus === 'paid' && paymentIntentId) {
       try {
         await stripe.refunds.create({ payment_intent: paymentIntentId })
+        stripeRefundSucceeded = true
       } catch (stripeErr: any) {
         console.error('[cancel-order] Stripe refund error:', stripeErr)
-        return NextResponse.json(
-          { error: `Stripe refund failed: ${stripeErr.message}` },
-          { status: 500 },
-        )
+        stripeRefundFailed = true
+        // Don't block the cancellation — order will be cancelled with refund-failed status
       }
     }
 
     const cancelField = order.orderType === 'dine-in' ? 'appOrderStatusDine' : 'appOrderStatus'
     const isPending = order.orderAcceptance === 'pending'
+
+    const paymentStatusUpdate: Record<string, unknown> =
+      order.paymentStatus === 'paid' && paymentIntentId
+        ? stripeRefundFailed
+          ? { paymentStatus: 'failed', refundReason: reason || 'Manager action' }
+          : { paymentStatus: 'refund-initiated', refundReason: reason || 'Manager action' }
+        : {}
 
     const updated = await payload.update({
       collection: 'app-orders',
@@ -62,9 +71,7 @@ export async function POST(req: NextRequest) {
         ...(isPending
           ? { orderAcceptance: 'rejected' }
           : { [cancelField]: 'cancelled' }),
-        ...(order.paymentStatus === 'paid' && paymentIntentId
-          ? { paymentStatus: 'refund-initiated', refundReason: reason || 'Manager action' }
-          : {}),
+        ...paymentStatusUpdate,
       },
       depth: 3,
       overrideAccess: true,

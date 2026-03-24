@@ -60,6 +60,8 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
             {
               and: [
                 { orderAcceptance: { equals: 'accepted' } },
+                // Exclude orders held in the "scheduled for later" hidden state
+                { scheduledForPrep: { not_equals: true } },
                 {
                   or: [
                     { appOrderStatus: { in: ['pending', 'preparing', 'ready'] } },
@@ -92,7 +94,7 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
             { appOrderStatusDine: { equals: 'cancelled' } },
           ],
         },
-        { paymentStatus: { equals: 'paid' } },
+        { paymentStatus: { in: ['paid', 'refund-initiated', 'refunded', 'failed'] } },
         { createdAt: { greater_than: todayStart.toISOString() } },
         ...shopWhere,
       ],
@@ -110,10 +112,15 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
     sort: 'slot',
   })
 
-  // Fetch baristas
+  // Fetch baristas for the current shop only
   const { docs: baristas } = await req.payload.find({
     collection: 'admins',
-    where: { role: { equals: 'barista' } },
+    where: {
+      and: [
+        { role: { equals: 'barista' } },
+        ...(shopId ? [{ shop: { equals: shopId } }] : []),
+      ],
+    },
     limit: 50,
     overrideAccess: true,
     depth: 0,

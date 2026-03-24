@@ -191,7 +191,7 @@ export const WebOrders: CollectionConfig = {
       },
     ],
     afterChange: [
-      async ({ doc, previousDoc, req: { payload } }) => {
+      async ({ doc, previousDoc, operation, req: { payload } }) => {
         await linkGuestOrderToUser({
           payload,
           doc,
@@ -199,6 +199,20 @@ export const WebOrders: CollectionConfig = {
           collection: 'web-orders',
           paidStatus: 'completed',
         })
+
+        // --- REAL-TIME SOCKET EMISSION ---
+        const { emitWebOrderCreated, emitWebOrderUpdated } = await import('@/utilities/socket')
+        const isNowCompleted = doc.paymentStatus === 'completed'
+        const wasCompleted = previousDoc?.paymentStatus === 'completed'
+
+        if (isNowCompleted) {
+          if (operation === 'create' || !wasCompleted) {
+            // New paid order — broadcast so Store Dashboard picks it up instantly
+            emitWebOrderCreated(doc)
+          } else {
+            emitWebOrderUpdated(doc)
+          }
+        }
 
         // --- REFERRAL & NOTIFICATION LOGIC ---
         const isNowPaid = doc.paymentStatus === 'completed'
@@ -550,6 +564,29 @@ export const WebOrders: CollectionConfig = {
                   label: 'Delivered On',
                   type: 'date',
                   admin: {
+                    condition: (data) => data?.deliveryOption === 'delivery',
+                    date: {
+                      displayFormat: 'MM/dd/yyyy',
+                      pickerAppearance: 'dayOnly',
+                    },
+                  },
+                },
+                {
+                  name: 'isPickupReady',
+                  label: 'Pickup Ready',
+                  type: 'checkbox',
+                  defaultValue: false,
+                  admin: {
+                    condition: (data) => data?.deliveryOption === 'pickup',
+                    description: 'Mark when order is packed and ready for customer pickup',
+                  },
+                },
+                {
+                  name: 'pickedUpDate',
+                  label: 'Picked Up Date',
+                  type: 'date',
+                  admin: {
+                    condition: (data) => data?.deliveryOption === 'pickup',
                     date: {
                       displayFormat: 'MM/dd/yyyy',
                       pickerAppearance: 'dayOnly',

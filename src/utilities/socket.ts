@@ -39,6 +39,16 @@ export const emitShopStatusUpdated = (shop: any) => {
   }
 }
 
+export const emitWebOrderCreated = (order: any) => {
+  const io = getIO()
+  if (io) {
+    console.log('Emitting web-order-created via Socket.io')
+    io.emit('web-order-created', order)
+  } else {
+    console.warn('Socket.io instance not found on global object')
+  }
+}
+
 export const emitWebOrderUpdated = (order: any) => {
   const io = getIO()
   if (io) {

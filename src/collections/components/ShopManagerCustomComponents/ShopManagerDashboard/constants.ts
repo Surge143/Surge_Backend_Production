@@ -179,16 +179,17 @@ export const GLOBAL_STYLES = `
   .smd-root .crow:hover{background:var(--smd-cancel-bg)!important}
 
   /* ── Responsive grid columns ── */
-  .smd-root .order-grid{display:grid;grid-template-columns:90px 68px 175px 140px 110px 1fr 110px 175px}
-  .smd-root .cancel-grid{display:grid;grid-template-columns:90px 68px 175px 140px 110px 1fr 140px 110px}
+  .smd-root .order-grid{display:grid;grid-template-columns:90px 68px 175px 170px 110px 1fr 110px 175px;min-width:0}
+  .smd-root .order-grid>*{min-width:0}
+  .smd-root .cancel-grid{display:grid;grid-template-columns:90px 68px 175px 170px 110px 1fr 140px}
   @media(max-width:1200px){
-    .smd-root .order-grid{grid-template-columns:75px 58px 145px 115px 90px 1fr 90px 145px}
-    .smd-root .cancel-grid{grid-template-columns:75px 58px 145px 115px 90px 1fr 115px 90px}
+    .smd-root .order-grid{grid-template-columns:75px 58px 145px 150px 90px 1fr 90px 145px}
+    .smd-root .cancel-grid{grid-template-columns:75px 58px 145px 150px 90px 1fr 115px}
   }
   @media(max-width:900px){
-    .smd-root .order-grid{grid-template-columns:65px 52px 125px 100px 78px 1fr 130px}
+    .smd-root .order-grid{grid-template-columns:65px 52px 125px 130px 78px 1fr 130px}
     .smd-root .order-grid>.col-flags{display:none!important}
-    .smd-root .cancel-grid{grid-template-columns:65px 52px 125px 100px 78px 1fr 110px 85px}
+    .smd-root .cancel-grid{grid-template-columns:65px 52px 125px 100px 78px 1fr 110px}
     .smd-root .smd-hide{display:none!important}
     .smd-root .topbar-search{min-width:80px!important;max-width:180px!important}
   }
@@ -208,10 +209,13 @@ export const GLOBAL_STYLES = `
 `
 
 // ── Derived status helpers ──────────────────────────────────────────────────
-/** Map a raw Payload order doc → dashboard section key */
+/** Map a raw Payload order doc → dashboard section key.
+ *  Returns null for orders that should be hidden (scheduled for later slot). */
 export function getOrderSection(order: any): 'new' | 'queued' | 'prep' | 'ready' | null {
   if (order.orderAcceptance === 'pending') return 'new'
   if (order.orderAcceptance !== 'accepted') return null
+  // Slot orders accepted early are held in a hidden state until T-30
+  if (order.scheduledForPrep) return null
   const status = order.orderType === 'dine-in' ? order.appOrderStatusDine : order.appOrderStatus
   if (status === 'preparing') return 'prep'
   if (status === 'ready') return 'ready'
@@ -226,6 +230,9 @@ export function formatOrder(o: any) {
   // populated `slot` doc. The slot doc also has `timeSelection` and a `slot`
   // date field (only present when slot.timeSelection === 'custom').
   let slotTime: string | null = null
+  // slotMs — today at the slot hour:minute (ms since epoch), null for "now" orders.
+  // Used client-side to decide if a slot is within 30 mins of the current time.
+  let slotMs: number | null = null
   const slotDoc = typeof o.slot === 'object' && o.slot !== null ? o.slot : null
 
   if (o.timeSelection === 'now') {
@@ -236,11 +243,16 @@ export function formatOrder(o: any) {
     } else if (slotDoc.slot) {
       // slotDoc.slot is an ISO date string (time-only picker stores full ISO)
       try {
-        slotTime = new Date(slotDoc.slot).toLocaleTimeString('en-AE', {
+        const slotDate = new Date(slotDoc.slot)
+        slotTime = slotDate.toLocaleTimeString('en-AE', {
           hour: '2-digit',
           minute: '2-digit',
           hour12: false,
         })
+        // Build today's date at this hour:minute for 30-min comparison
+        const todayAtSlot = new Date()
+        todayAtSlot.setHours(slotDate.getHours(), slotDate.getMinutes(), 0, 0)
+        slotMs = todayAtSlot.getTime()
       } catch {
         slotTime = String(slotDoc.slot)
       }
@@ -262,14 +274,20 @@ export function formatOrder(o: any) {
   }
 
   // ── Items ──────────────────────────────────────────────────────────────────
-  // customizations is an array of { sectionTitle, label, price } objects
+  // customizations use selectedOptionLabel (not label) in the actual order data
   const items = (o.items || []).map((item: any) => {
     const product = typeof item.product === 'object' ? item.product : null
     const name = product?.name || 'Item'
     const qty: number = item.quantity || 1
     const customs: Array<{ sectionTitle: string; label: string; price: number }> =
       Array.isArray(item.customizations)
-        ? item.customizations.filter((c: any) => c && typeof c === 'object' && c.label)
+        ? item.customizations
+            .filter((c: any) => c && typeof c === 'object' && (c.selectedOptionLabel || c.label))
+            .map((c: any) => ({
+              sectionTitle: c.sectionTitle || '',
+              label: c.selectedOptionLabel || c.label || '',
+              price: c.price || 0,
+            }))
         : []
     return { name, qty, customs }
   })
@@ -282,6 +300,7 @@ export function formatOrder(o: any) {
     status: getOrderSection(o) || 'new',
     baristaId: baristaId ? String(baristaId) : null,
     slot: slotTime,
+    slotMs,
     slotId: slotDoc?.id ?? (typeof o.slot === 'string' ? o.slot : null),
     time: new Date(o.createdAt).toLocaleTimeString('en-AE', {
       hour: '2-digit',
@@ -291,6 +310,7 @@ export function formatOrder(o: any) {
     items,
     reward: Boolean(o.stampRewards?.length || o.coinsUsed),
     delayed: false,
+    cancelReason: o.refundReason || null,
     raw: o,
   }
 }

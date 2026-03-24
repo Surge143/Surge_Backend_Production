@@ -31,7 +31,7 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
   const [orders, setOrders] = useState<any[]>(() => initialOrders.map(formatOrder))
   const [cancelled, setCancelled] = useState<any[]>(() => initialCancelled.map(formatOrder))
   const [slots, setSlots] = useState<any[]>(initialSlots)
-  const [baristas] = useState<any[]>(initialBaristas)
+  const [baristas, setBaristas] = useState<any[]>(initialBaristas)
   const [storeStatus, setStoreStatus] = useState<'live' | 'paused' | 'emergency'>(
     shopDoc?.isShopOpen ? 'live' : 'paused',
   )
@@ -69,6 +69,7 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
         setOrders(data.orders.map(formatOrder))
         setCancelled(data.cancelled.map(formatOrder))
         setSlots(data.slots)
+        setBaristas(data.baristas || [])
         setCurrentShopId(newShopId)
         setCurrentShopDoc(data.shop)
         setStoreStatus(data.shop?.isShopOpen ? 'live' : 'paused')
@@ -97,6 +98,9 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
 
     socket.on('order-created', (raw: any) => {
       if (raw.paymentStatus !== 'paid' || !matchesShop(raw)) return
+      // Only handle orders that belong to an active dashboard section.
+      // A null section means the order is completed/cancelled — never add those.
+      if (!getOrderSection(raw)) return
       const formatted = formatOrder(raw)
       setOrders((prev) => {
         if (prev.find((o) => o.id === formatted.id)) return prev
@@ -124,7 +128,16 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
           setOrders((prev) => prev.filter((o) => o.id !== formatted.id))
         }
       } else {
-        setOrders((prev) => prev.map((o) => (o.id === formatted.id ? formatted : o)))
+        setOrders((prev) => {
+          const exists = prev.find((o) => o.id === formatted.id)
+          if (exists) {
+            // Normal update — replace in place
+            return prev.map((o) => (o.id === formatted.id ? formatted : o))
+          }
+          // Order emerged from hidden scheduledForPrep state (cron released it)
+          notify(`🔔 Slot order #${formatted.no} is now queued!`, 'ok')
+          return [formatted, ...prev]
+        })
       }
     })
 
@@ -180,56 +193,75 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
   }
 
   const handleAdvance = async (order: any) => {
-    const nextStatus =
+    const nextApiStatus =
       order.status === 'queued' ? 'preparing' : order.status === 'prep' ? 'ready' : 'completed'
-    const field = order.type === 'dine-in' ? 'appOrderStatusDine' : 'appOrderStatus'
-    await patchOrder(order.id, { [field]: nextStatus })
+    // Map API status values to dashboard section keys for local state
+    const nextSectionKey: Record<string, string> = { preparing: 'prep', ready: 'ready', completed: 'completed' }
 
-    if (nextStatus === 'completed') {
+    // Always mark both fields to avoid stale appOrderStatusDine confusing cron / hooks
+    await patchOrder(order.id, {
+      appOrderStatus: nextApiStatus,
+      appOrderStatusDine: nextApiStatus,
+    })
+
+    if (nextApiStatus === 'completed') {
       setOrders((prev) => prev.filter((o) => o.id !== order.id))
       notify('Order completed ✓')
     } else {
-      setOrders((prev) => prev.map((o) => (o.id !== order.id ? o : { ...o, status: nextStatus })))
+      setOrders((prev) =>
+        prev.map((o) => (o.id !== order.id ? o : { ...o, status: nextSectionKey[nextApiStatus] })),
+      )
       notify('Order advanced')
     }
   }
 
 const handleAccept = async (order: any) => {
     const baristaId = selectedBaristas[order.id]
+
+    // A slot order is "late" if its slot time is more than 30 mins from now.
+    // Late slot orders are held in a hidden state (scheduledForPrep: true) until
+    // the cron releases them into the Queued section at T-30.
+    const THIRTY_MIN_MS = 30 * 60 * 1000
+    const isLateSlot = order.slotMs !== null && (order.slotMs - Date.now()) > THIRTY_MIN_MS
+
     await patchOrder(order.id, {
       orderAcceptance: 'accepted',
-      appOrderStatus: 'preparing',
-      appOrderStatusDine: 'preparing',
+      appOrderStatus: 'pending',
+      appOrderStatusDine: 'pending',
+      scheduledForPrep: isLateSlot,
       ...(baristaId ? { barista: Number(baristaId) } : {}),
     })
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id !== order.id
-          ? o
-          : {
-              ...o,
-              status: 'prep',
-              baristaId: baristaId || o.baristaId,
-            },
-      ),
-    )
-    notify('Order accepted ✓')
+
+    if (isLateSlot) {
+      // Remove from the dashboard — it will reappear via socket when cron fires at T-30
+      setOrders((prev) => prev.filter((o) => o.id !== order.id))
+      notify(`Accepted — will queue at ${order.slot} ⏱`, 'ok')
+    } else {
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id !== order.id ? o : { ...o, status: 'queued', baristaId: baristaId || o.baristaId },
+        ),
+      )
+      notify('Order accepted ✓')
+    }
   }
 
-  const handleReject = async (order: any) => {
+  const handleReject = async (order: any, reason: string) => {
     setLoading(order.id, true)
     try {
       const res = await fetch('/api/shop-manager/cancel-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: order.id, reason: 'Rejected by manager' }),
+        body: JSON.stringify({ orderId: order.id, reason }),
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error || 'Reject failed')
       }
       setOrders((prev) => prev.filter((o) => o.id !== order.id))
-      setCancelled((prev) => [{ ...order, cancelReason: 'Rejected by manager' }, ...prev])
+      setCancelled((prev) =>
+        prev.find((o) => o.id === order.id) ? prev : [{ ...order, cancelReason: reason }, ...prev],
+      )
       if (expanded === order.id) setExpanded(null)
       notify('Order rejected & refund initiated', 'warn')
     } catch (e: any) {
@@ -375,7 +407,7 @@ const handleAccept = async (order: any) => {
             />
           ))}
 
-          <CancelledSection cancelled={cancelled} baristas={baristas} onRestore={handleRestore} />
+          <CancelledSection cancelled={cancelled} baristas={baristas} />
         </div>
 
         {/* Right panel */}

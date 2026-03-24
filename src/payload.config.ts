@@ -29,15 +29,6 @@ export default buildConfig({
   admin: {
     components: {
       views: {
-        MyCustomView: {
-          Component:
-            '@/collections/components/ShopManagerCustomComponents/PendingOrders/PendingOrders#pendingOrders',
-          path: '/pending-orders',
-        },
-        BaristaDashboard: {
-          Component: '@/collections/components/BaristaDashboard/OrdersDashboard#OrdersDashboard',
-          path: '/barista-dashboard',
-        },
         ShopManagerDashboard: {
           Component:
             '@/collections/components/ShopManagerCustomComponents/ShopManagerDashboard/ShopManagerDashboard#ShopManagerDashboard',
@@ -50,8 +41,6 @@ export default buildConfig({
         },
       },
       afterNavLinks: [
-        '@/collections/components/Navbar/MySidebarLink#MySidebarLink',
-        '@/collections/components/Navbar/BaristaDashboardLink#BaristaDashboardLink',
         '@/collections/components/Navbar/ShopManagerDashboardLink#ShopManagerDashboardLink',
         '@/collections/components/Navbar/StoreDashboardLink#StoreDashboardLink',
       ],

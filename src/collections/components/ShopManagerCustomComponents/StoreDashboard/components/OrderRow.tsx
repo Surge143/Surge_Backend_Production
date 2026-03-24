@@ -3,6 +3,17 @@ import React, { useState } from 'react'
 import { C } from '../constants'
 import { ABtn, Tag } from './UIAtoms'
 
+const REFUND_REASONS = [
+  'Customer requested cancellation',
+  'Out of stock',
+  'Item damaged / quality issue',
+  'Wrong item shipped',
+  'Delivery not possible',
+  'Duplicate order',
+  'Payment issue',
+  'Other',
+]
+
 interface OrderRowProps {
   order: any
   sectionKey: string
@@ -11,8 +22,10 @@ interface OrderRowProps {
   isOpen: boolean
   onToggle: () => void
   loading: boolean
-  onShip?: () => void
+  onShip?: (deliverByDate: string) => void
+  onMarkReady?: () => void
   onDeliver?: () => void
+  onPickedUp?: (pickedUpDate: string) => void
   onRefund?: (reason: string) => void
 }
 
@@ -25,11 +38,17 @@ export const OrderRow: React.FC<OrderRowProps> = ({
   onToggle,
   loading,
   onShip,
+  onMarkReady,
   onDeliver,
+  onPickedUp,
   onRefund,
 }) => {
   const [refundOpen, setRefundOpen] = useState(false)
   const [refundReason, setRefundReason] = useState('')
+  const [shipOpen, setShipOpen] = useState(false)
+  const [deliverByDate, setDeliverByDate] = useState('')
+  const [pickupOpen, setPickupOpen] = useState(false)
+  const [pickedUpDate, setPickedUpDate] = useState('')
 
   const leftBorderColor = isOpen ? sectionColor : 'transparent'
 
@@ -47,6 +66,8 @@ export const OrderRow: React.FC<OrderRowProps> = ({
     delivered: 'Delivered',
     cancelled: 'Cancelled',
   }
+
+  console.log(order)
 
   return (
     <>
@@ -103,9 +124,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
         </div>
 
         {/* Amount */}
-        <div style={{ fontWeight: 600, fontSize: 13 }}>
-          AED {Number(order.total).toFixed(2)}
-        </div>
+        <div style={{ fontWeight: 600, fontSize: 13 }}>AED {Number(order.total).toFixed(2)}</div>
 
         {/* Actions */}
         <div
@@ -114,27 +133,249 @@ export const OrderRow: React.FC<OrderRowProps> = ({
         >
           {sectionKey === 'new' && (
             <>
-              <ABtn
-                label={loading ? '…' : 'Ship'}
-                c={C.shipped}
-                onClick={() => onShip && onShip()}
-                disabled={loading}
-              />
-              <ABtn
-                label="Cancel & Refund"
-                c={C.cancelled}
-                onClick={() => setRefundOpen((p) => !p)}
-                disabled={loading}
-              />
+              {/* ── Delivery: Ship with deliver-by date popover ── */}
+              {order.type === 'delivery' && (
+                <div style={{ position: 'relative' }}>
+                  <ABtn
+                    label={loading ? '…' : 'Ship'}
+                    c={C.shipped}
+                    onClick={() => { setShipOpen((p) => !p); setRefundOpen(false) }}
+                    disabled={loading}
+                  />
+                  {shipOpen && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 6px)',
+                        left: 0,
+                        zIndex: 50,
+                        background: C.surface,
+                        border: `1px solid ${C.border}`,
+                        borderRadius: 8,
+                        padding: 12,
+                        boxShadow: '0 4px 20px rgba(0,0,0,.12)',
+                        minWidth: 200,
+                      }}
+                    >
+                      <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600, letterSpacing: 0.5, marginBottom: 6 }}>
+                        DELIVER BY DATE
+                      </div>
+                      <input
+                        type="date"
+                        value={deliverByDate}
+                        min={new Date().toISOString().split('T')[0]}
+                        onChange={(e) => setDeliverByDate(e.target.value)}
+                        style={{
+                          width: '100%',
+                          background: C.bg,
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 6,
+                          padding: '6px 8px',
+                          color: deliverByDate ? C.text : C.textMute,
+                          fontSize: 12,
+                          outline: 'none',
+                          marginBottom: 8,
+                        }}
+                      />
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          onClick={() => { setShipOpen(false); setDeliverByDate('') }}
+                          style={{ flex: 1, padding: '5px 0', background: 'none', border: `1px solid ${C.border}`, borderRadius: 6, color: C.textMute, fontSize: 11, cursor: 'pointer' }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => { if (!deliverByDate) return; onShip && onShip(deliverByDate); setShipOpen(false); setDeliverByDate('') }}
+                          disabled={!deliverByDate || loading}
+                          style={{ flex: 1, padding: '5px 0', background: deliverByDate ? C.shipped : C.shipped + '40', border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 600, cursor: deliverByDate && !loading ? 'pointer' : 'not-allowed' }}
+                        >
+                          {loading ? '…' : 'Confirm'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* ── Pickup: Mark Ready button ── */}
+              {order.type === 'pickup' && (
+                <ABtn
+                  label={loading ? '…' : 'Mark Ready'}
+                  c={C.new}
+                  onClick={() => { onMarkReady && onMarkReady(); setRefundOpen(false) }}
+                  disabled={loading}
+                />
+              )}
+              <div style={{ position: 'relative' }}>
+                <ABtn
+                  label="Cancel & Refund"
+                  c={C.cancelled}
+                  onClick={() => { setRefundOpen((p) => !p); setShipOpen(false) }}
+                  disabled={loading}
+                />
+                {refundOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 6px)',
+                      right: 0,
+                      zIndex: 50,
+                      background: C.surface,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 8,
+                      padding: 12,
+                      boxShadow: '0 4px 20px rgba(0,0,0,.12)',
+                      minWidth: 220,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: C.textMute,
+                        fontWeight: 600,
+                        letterSpacing: 0.5,
+                        marginBottom: 6,
+                      }}
+                    >
+                      REFUND REASON
+                    </div>
+                    <select
+                      value={refundReason}
+                      onChange={(e) => setRefundReason(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: C.bg,
+                        border: `1px solid ${C.border}`,
+                        borderRadius: 6,
+                        padding: '6px 8px',
+                        color: refundReason ? C.text : C.textMute,
+                        fontSize: 12,
+                        outline: 'none',
+                        marginBottom: 8,
+                      }}
+                    >
+                      <option value="">Select a reason…</option>
+                      {REFUND_REASONS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        onClick={() => {
+                          setRefundOpen(false)
+                          setRefundReason('')
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '5px 0',
+                          background: 'none',
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 6,
+                          color: C.textMute,
+                          fontSize: 11,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!refundReason) return
+                          handleRefundSubmit()
+                        }}
+                        disabled={!refundReason || loading}
+                        style={{
+                          flex: 1,
+                          padding: '5px 0',
+                          background: refundReason ? C.cancelled : C.cancelled + '40',
+                          border: 'none',
+                          borderRadius: 6,
+                          color: '#fff',
+                          fontSize: 11,
+                          fontWeight: 600,
+                          cursor: refundReason && !loading ? 'pointer' : 'not-allowed',
+                        }}
+                      >
+                        {loading ? '…' : 'Confirm'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           )}
-          {sectionKey === 'shipped' && (
+          {/* ── Shipped/delivery: mark delivered ── */}
+          {sectionKey === 'shipped' && order.type === 'delivery' && (
             <ABtn
               label={loading ? '…' : 'Delivered'}
               c={C.new}
               onClick={() => onDeliver && onDeliver()}
               disabled={loading}
             />
+          )}
+          {/* ── Shipped/pickup: mark picked up with date popover ── */}
+          {sectionKey === 'shipped' && order.type === 'pickup' && (
+            <div style={{ position: 'relative' }}>
+              <ABtn
+                label={loading ? '…' : 'Picked Up'}
+                c={C.new}
+                onClick={() => setPickupOpen((p) => !p)}
+                disabled={loading}
+              />
+              {pickupOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    left: 0,
+                    zIndex: 50,
+                    background: C.surface,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 8,
+                    padding: 12,
+                    boxShadow: '0 4px 20px rgba(0,0,0,.12)',
+                    minWidth: 200,
+                  }}
+                >
+                  <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600, letterSpacing: 0.5, marginBottom: 6 }}>
+                    PICKED UP DATE
+                  </div>
+                  <input
+                    type="date"
+                    value={pickedUpDate}
+                    max={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setPickedUpDate(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: C.bg,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 6,
+                      padding: '6px 8px',
+                      color: pickedUpDate ? C.text : C.textMute,
+                      fontSize: 12,
+                      outline: 'none',
+                      marginBottom: 8,
+                    }}
+                  />
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      onClick={() => { setPickupOpen(false); setPickedUpDate('') }}
+                      style={{ flex: 1, padding: '5px 0', background: 'none', border: `1px solid ${C.border}`, borderRadius: 6, color: C.textMute, fontSize: 11, cursor: 'pointer' }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => { if (!pickedUpDate) return; onPickedUp && onPickedUp(pickedUpDate); setPickupOpen(false); setPickedUpDate('') }}
+                      disabled={!pickedUpDate || loading}
+                      style={{ flex: 1, padding: '5px 0', background: pickedUpDate ? C.new : C.new + '40', border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 600, cursor: pickedUpDate && !loading ? 'pointer' : 'not-allowed' }}
+                    >
+                      {loading ? '…' : 'Confirm'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
           {(sectionKey === 'delivered' || sectionKey === 'cancelled') && (
             <span
@@ -155,73 +396,6 @@ export const OrderRow: React.FC<OrderRowProps> = ({
         </div>
       </div>
 
-      {/* Refund reason input (shown inline below row) */}
-      {refundOpen && sectionKey === 'new' && (
-        <div
-          className="slip"
-          style={{
-            padding: '10px 20px 12px 20px',
-            background: C.cancelBg,
-            borderBottom: `1px solid ${C.cancelBorder}`,
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-          }}
-        >
-          <span style={{ fontSize: 12, color: C.cancelled, fontWeight: 600, flexShrink: 0 }}>
-            Refund reason:
-          </span>
-          <input
-            value={refundReason}
-            onChange={(e) => setRefundReason(e.target.value)}
-            placeholder="e.g. Customer request, out of stock…"
-            style={{
-              flex: 1,
-              padding: '6px 10px',
-              border: `1px solid ${C.cancelBorder}`,
-              borderRadius: 6,
-              fontSize: 12,
-              background: C.surface,
-              color: C.text,
-              outline: 'none',
-            }}
-          />
-          <button
-            onClick={handleRefundSubmit}
-            disabled={loading}
-            style={{
-              padding: '6px 14px',
-              background: C.cancelled,
-              border: 'none',
-              borderRadius: 6,
-              color: '#fff',
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.5 : 1,
-              flexShrink: 0,
-            }}
-          >
-            {loading ? '…' : 'Confirm Refund'}
-          </button>
-          <button
-            onClick={() => setRefundOpen(false)}
-            style={{
-              padding: '6px 10px',
-              background: 'transparent',
-              border: `1px solid ${C.border}`,
-              borderRadius: 6,
-              color: C.textMute,
-              fontSize: 12,
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-
       {/* Expanded detail panel */}
       {isOpen && !refundOpen && (
         <div
@@ -233,8 +407,54 @@ export const OrderRow: React.FC<OrderRowProps> = ({
             borderLeft: `3px solid ${sectionColor}`,
           }}
         >
+          {/* ── Order info strip ── */}
+          <div
+            style={{
+              display: 'flex',
+              gap: 28,
+              flexWrap: 'wrap',
+              padding: '8px 12px',
+              background: C.surface,
+              border: `1px solid ${C.border}`,
+              borderRadius: 7,
+              marginBottom: 14,
+              fontSize: 11,
+            }}
+          >
+            <div>
+              <span style={{ color: C.textMute, fontWeight: 600 }}>Order ID: </span>
+              <span style={{ fontWeight: 700 }}>{order.no}</span>
+            </div>
+            <div>
+              <span style={{ color: C.textMute, fontWeight: 600 }}>Date: </span>
+              {order.raw?.createdAt
+                ? new Date(order.raw.createdAt).toLocaleDateString('en-AE', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })
+                : '—'}
+            </div>
+            <div>
+              <span style={{ color: C.textMute, fontWeight: 600 }}>Time: </span>
+              {order.time}
+            </div>
+            <div>
+              <span style={{ color: C.textMute, fontWeight: 600 }}>Type: </span>
+              {order.type === 'delivery' ? 'Delivery' : 'Pickup'}
+            </div>
+            <div>
+              <span style={{ color: C.textMute, fontWeight: 600 }}>Origin: </span>
+              {order.origin === 'subscription' ? 'Subscription' : 'One-time'}
+            </div>
+            <div>
+              <span style={{ color: C.textMute, fontWeight: 600 }}>Payment: </span>
+              {order.raw?.paymentStatus || '—'}
+            </div>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-            {/* Left: Customer & Address */}
+            {/* Left: Customer & Shipping Address */}
             <div>
               <div
                 style={{
@@ -254,23 +474,82 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                 <div style={{ fontSize: 11, color: C.textSub, marginBottom: 2 }}>{order.email}</div>
               )}
               {order.phone && (
-                <div style={{ fontSize: 11, color: C.textSub, marginBottom: 2 }}>{order.phone}</div>
+                <div style={{ fontSize: 11, color: C.textSub, marginBottom: 6 }}>{order.phone}</div>
               )}
-              {order.address && (
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: C.textSub,
-                    marginTop: 6,
-                    padding: '6px 8px',
-                    background: C.surface,
-                    borderRadius: 6,
-                    border: `1px solid ${C.border}`,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {order.address}
-                </div>
+
+              {/* Shipping address with labels */}
+              {order.shippingAddress && (
+                <>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: C.textMute,
+                      fontWeight: 600,
+                      letterSpacing: 0.8,
+                      marginTop: 10,
+                      marginBottom: 6,
+                    }}
+                  >
+                    SHIPPING ADDRESS
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: C.textSub,
+                      padding: '8px 10px',
+                      background: C.bg,
+                      borderRadius: 6,
+                      border: `1px solid ${C.border}`,
+                      lineHeight: 1.8,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
+                    }}
+                  >
+                    {order.shippingAddress.name && (
+                      <div>
+                        <span style={{ color: C.textMute, fontWeight: 600 }}>Name: </span>
+                        {order.shippingAddress.name}
+                      </div>
+                    )}
+                    {order.shippingAddress.line1 && (
+                      <div>
+                        <span style={{ color: C.textMute, fontWeight: 600 }}>Address: </span>
+                        {order.shippingAddress.line1}
+                      </div>
+                    )}
+                    {order.shippingAddress.line2 && (
+                      <div>
+                        <span style={{ color: C.textMute, fontWeight: 600 }}>Address 2: </span>
+                        {order.shippingAddress.line2}
+                      </div>
+                    )}
+                    {order.shippingAddress.city && (
+                      <div>
+                        <span style={{ color: C.textMute, fontWeight: 600 }}>City: </span>
+                        {order.shippingAddress.city}
+                      </div>
+                    )}
+                    {order.shippingAddress.emirates && (
+                      <div>
+                        <span style={{ color: C.textMute, fontWeight: 600 }}>Emirate: </span>
+                        {order.shippingAddress.emirates}
+                      </div>
+                    )}
+                    {order.shippingAddress.country && (
+                      <div>
+                        <span style={{ color: C.textMute, fontWeight: 600 }}>Country: </span>
+                        {order.shippingAddress.country}
+                      </div>
+                    )}
+                    {order.shippingAddress.phone && (
+                      <div>
+                        <span style={{ color: C.textMute, fontWeight: 600 }}>Phone: </span>
+                        {order.shippingAddress.phone}
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
 
@@ -282,32 +561,62 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                   color: C.textMute,
                   fontWeight: 600,
                   letterSpacing: 0.8,
-                  marginBottom: 8,
+                  marginBottom: 6,
                 }}
               >
                 ORDER ITEMS
+              </div>
+              {/* Column headers */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 40px 50px 80px',
+                  gap: 6,
+                  padding: '4px 0',
+                  borderBottom: `1px solid ${C.borderMid}`,
+                  marginBottom: 4,
+                }}
+              >
+                {['PRODUCT', 'QTY', 'UNIT', 'TOTAL'].map((h) => (
+                  <span
+                    key={h}
+                    style={{ fontSize: 9, color: C.textMute, fontWeight: 700, letterSpacing: 0.6 }}
+                  >
+                    {h}
+                  </span>
+                ))}
               </div>
               {order.items.map((item: any, i: number) => (
                 <div
                   key={i}
                   style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    padding: '5px 0',
-                    borderBottom:
-                      i < order.items.length - 1 ? `1px solid ${C.border}` : 'none',
-                    fontSize: 12,
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 40px 50px 80px',
+                    gap: 6,
+                    alignItems: 'start',
+                    padding: '6px 0',
+                    borderBottom: i < order.items.length - 1 ? `1px solid ${C.border}` : 'none',
                   }}
                 >
-                  <div>
-                    <span style={{ fontWeight: 500 }}>{item.name}</span>
+                  {/* Product name + variant + tagline */}
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>
+                      {item.name} {item.tagline}
+                    </div>
                     {item.variant && (
-                      <span style={{ color: C.textMute, marginLeft: 4 }}>({item.variant})</span>
+                      <div style={{ fontSize: 11, color: C.textSub, marginTop: 1 }}>
+                        {item.variant}g
+                      </div>
                     )}
-                    <span style={{ color: C.textMute, marginLeft: 6 }}>×{item.qty}</span>
                   </div>
-                  <span style={{ fontWeight: 600, color: C.text, whiteSpace: 'nowrap', marginLeft: 8 }}>
+                  {/* Qty */}
+                  <span style={{ fontSize: 12, color: C.textSub, paddingTop: 1 }}>×{item.qty}</span>
+                  {/* Unit price */}
+                  <span style={{ fontSize: 11, color: C.textSub, paddingTop: 2 }}>
+                    AED {Number(item.price).toFixed(2)}
+                  </span>
+                  {/* Line total */}
+                  <span style={{ fontSize: 12, fontWeight: 600, color: C.text, paddingTop: 1 }}>
                     AED {Number(item.price * item.qty).toFixed(2)}
                   </span>
                 </div>
@@ -316,6 +625,20 @@ export const OrderRow: React.FC<OrderRowProps> = ({
           </div>
 
           {/* Financials */}
+          {order.raw?.financials && (
+            <div
+              style={{
+                fontSize: 10,
+                color: C.textMute,
+                fontWeight: 600,
+                letterSpacing: 0.8,
+                marginTop: 14,
+                marginBottom: 6,
+              }}
+            >
+              PAYMENT SUMMARY
+            </div>
+          )}
           {order.raw?.financials && (
             <div
               style={{

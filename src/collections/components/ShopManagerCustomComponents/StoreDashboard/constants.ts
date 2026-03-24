@@ -47,13 +47,6 @@ export const SECTIONS = [
     bg: C.shipBg,
     border: C.shipBorder,
   },
-  {
-    key: 'delivered',
-    label: 'Delivered',
-    color: C.delivered,
-    bg: C.doneBg,
-    border: C.doneBorder,
-  },
 ] as const
 
 export const FILTER_PRESETS = [
@@ -77,9 +70,9 @@ export const GLOBAL_STYLES = `
   ════════════════════════════════════════════════════════ */
   .std-root {
     /* Neutrals */
-    --std-bg: #F5F0E8;
-    --std-surface: #FDFAF5;
-    --std-surface-hover: #F0EAD8;
+    --std-bg: #ffffff;
+    --std-surface: #ffffff;
+    --std-surface-hover: #f1f5f9;
     --std-border: #D4C9B0;
     --std-border-mid: #BFB49A;
     --std-text: #1A1A14;
@@ -165,7 +158,7 @@ export const GLOBAL_STYLES = `
 /** Format a raw web-order Payload doc for the dashboard */
 export function formatOrder(o: any) {
   // ── Order number ───────────────────────────────────────────────────────────
-  const no = o.invoiceId || '#' + String(o.id).slice(-6).toUpperCase()
+  const no = o.invoiceId ? `#${o.invoiceId}` : `#ORD-${String(o.id)}`
 
   // ── Customer name ──────────────────────────────────────────────────────────
   let customer = 'Guest'
@@ -182,13 +175,19 @@ export function formatOrder(o: any) {
 
   // ── Phone & address ────────────────────────────────────────────────────────
   const phone = addr?.phoneNumber || ''
-  const addressLine = [
-    addr?.addressLine1,
-    addr?.city,
-    addr?.emirates,
-  ]
-    .filter(Boolean)
-    .join(', ')
+  const shippingAddress = addr
+    ? {
+        name: [addr.addressFirstName, addr.addressLastName].filter(Boolean).join(' ').trim() || null,
+        line1: addr.addressLine1 || null,
+        line2: addr.addressLine2 || null,
+        city: addr.city || null,
+        emirates: addr.emirates || null,
+        country: addr.addressCountry || 'United Arab Emirates',
+        phone: addr.phoneNumber || null,
+      }
+    : null
+  // Kept for the summary row display
+  const addressLine = [addr?.addressLine1, addr?.city, addr?.emirates].filter(Boolean).join(', ')
 
   // ── Type & status ──────────────────────────────────────────────────────────
   const type: 'delivery' | 'pickup' = o.deliveryOption === 'delivery' ? 'delivery' : 'pickup'
@@ -204,12 +203,16 @@ export function formatOrder(o: any) {
   const slot = type === 'pickup' ? 'Pickup' : 'Delivery'
 
   // ── Items ──────────────────────────────────────────────────────────────────
-  const items = (o.items || []).map((item: any) => ({
-    name: item.productName || 'Item',
-    variant: item.variantName || '',
-    qty: item.quantity || 1,
-    price: item.price || 0,
-  }))
+  const items = (o.items || []).map((item: any) => {
+    const productDoc = typeof item.product === 'object' && item.product !== null ? item.product : null
+    return {
+      name: item.productName || productDoc?.name || 'Unnamed product',
+      variant: item.variantName || '',
+      tagline: productDoc?.tagline || productDoc?.shortDescription || '',
+      qty: item.quantity || 1,
+      price: item.price || 0,
+    }
+  })
 
   // ── Financials ─────────────────────────────────────────────────────────────
   const total = o.financials?.total || 0
@@ -231,6 +234,7 @@ export function formatOrder(o: any) {
     email: o.email || '',
     phone,
     address: addressLine,
+    shippingAddress,
     type,
     origin: o.origin || 'one-time',
     status,
@@ -239,6 +243,7 @@ export function formatOrder(o: any) {
     items,
     total,
     reward,
+    isPickupReady: Boolean(o.isPickupReady),
     delayed: false,
     raw: o,
   }

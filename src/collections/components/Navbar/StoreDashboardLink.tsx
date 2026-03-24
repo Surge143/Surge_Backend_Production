@@ -5,7 +5,7 @@ export const StoreDashboardLink: React.FC = () => {
   return (
     <div className="nav__link">
       <Link href="/admin/store-dashboard" style={{ textDecoration: 'none', color: 'inherit' }}>
-        <span className="nav__link-label">📦 Store Dashboard</span>
+        <span className="nav__link-label">Store Dashboard</span>
       </Link>
     </div>
   )

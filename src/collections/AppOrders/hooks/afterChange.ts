@@ -11,8 +11,17 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({ doc, previous
     const { emitOrderCreated, emitOrderUpdated } = await import('@/utilities/socket');
 
     // --- SOCKET.IO EMISSION LOGIC ---
-    // Only send the order when payment status is paid
-    if (doc.paymentStatus === 'paid') {
+    // Only send the order when payment status is paid.
+    // Guard: never re-emit order-created for internal background updates
+    // (e.g. isStampsAwarded flag) — those have no meaningful state change for the dashboard.
+    const isBackgroundUpdate =
+        operation === 'update' &&
+        previousDoc?.paymentStatus === 'paid' &&
+        previousDoc?.orderAcceptance === doc.orderAcceptance &&
+        previousDoc?.appOrderStatus === doc.appOrderStatus &&
+        previousDoc?.appOrderStatusDine === doc.appOrderStatusDine
+
+    if (doc.paymentStatus === 'paid' && !isBackgroundUpdate) {
         if (operation === 'create' || (previousDoc && previousDoc.paymentStatus !== 'paid')) {
             emitOrderCreated(doc);
         } else if (operation === 'update') {

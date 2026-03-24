@@ -1,7 +1,7 @@
 'use client'
-import React, { useState } from 'react'
+import React from 'react'
 import { C } from '../constants'
-import { ColLabel, AlertBox, FullBtn } from './UIAtoms'
+import { ColLabel, AlertBox } from './UIAtoms'
 
 interface NewOrderPanelProps {
   order: any
@@ -31,12 +31,10 @@ export const NewOrderExpandedPanel: React.FC<NewOrderPanelProps> = ({
     style={{
       background: C.bg,
       borderBottom: `2px solid ${sectionColor}`,
-      display: 'grid',
-      gridTemplateColumns: '1fr 300px',
       borderLeft: `3px solid ${sectionColor}`,
     }}
   >
-    <div style={{ padding: '16px 20px', borderRight: `1px solid ${C.border}` }}>
+    <div style={{ padding: '16px 20px' }}>
       <ColLabel>Order Items</ColLabel>
       {order.items.map((item: any, i: number) => {
         const isObj = typeof item === 'object' && item !== null
@@ -106,58 +104,13 @@ export const NewOrderExpandedPanel: React.FC<NewOrderPanelProps> = ({
         </div>
       )}
       {order.raw?.specialInstructions && (
-        <AlertBox c={C.auto} bg={C.autoBg}>
-          📝 {order.raw.specialInstructions}
-        </AlertBox>
+        <div style={{ marginTop: 14 }}>
+          <ColLabel>Special Request</ColLabel>
+          <AlertBox c={C.auto} bg={C.autoBg}>
+            {order.raw.specialInstructions}
+          </AlertBox>
+        </div>
       )}
-    </div>
-    <div style={{ padding: '16px 20px' }}>
-      <ColLabel>Assign &amp; Accept</ColLabel>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <label style={{ fontSize: 11, color: C.textMute, fontWeight: 500 }}>Assign Barista</label>
-        <select
-          value={selectedBaristaId || ''}
-          onChange={(e) => onBaristaChange(e.target.value)}
-          style={{
-            width: '100%',
-            background: C.surface,
-            border: `1px solid ${!selectedBaristaId ? C.cancelled : C.border}`,
-            borderRadius: 7,
-            padding: '8px',
-            color: selectedBaristaId ? C.textSub : C.cancelled,
-            fontSize: 12,
-            outline: 'none',
-            marginBottom: 4,
-          }}
-        >
-          <option value="">Select barista…</option>
-          {baristas.map((b) => (
-            <option key={b.id} value={String(b.id)}>
-              {b.name}
-            </option>
-          ))}
-        </select>
-        {!selectedBaristaId && (
-          <div style={{ fontSize: 11, color: C.cancelled, fontWeight: 500, marginTop: -2 }}>
-            ⚠ Select a barista to accept this order
-          </div>
-        )}
-        <FullBtn
-          label={loading ? 'Accepting…' : '✓ Accept Order'}
-          c={selectedBaristaId ? C.ready : C.textMute}
-          cBg={selectedBaristaId ? C.readyBg : C.bg}
-          onClick={selectedBaristaId ? onAccept : undefined}
-          loading={loading}
-          disabled={!selectedBaristaId}
-        />
-        <FullBtn
-          label={loading ? 'Rejecting…' : '✕ Reject Order'}
-          c={C.cancelled}
-          cBg={C.cancelBg}
-          onClick={onReject}
-          loading={loading}
-        />
-      </div>
     </div>
   </div>
 )
@@ -186,12 +139,10 @@ export const OrderExpandedPanel: React.FC<ExpandedPanelProps> = ({
     style={{
       background: C.bg,
       borderBottom: `2px solid ${sectionColor}`,
-      display: 'grid',
-      gridTemplateColumns: '1fr 300px',
       borderLeft: `3px solid ${sectionColor}`,
     }}
   >
-    <div style={{ padding: '16px 20px', borderRight: `1px solid ${C.border}` }}>
+    <div style={{ padding: '16px 20px' }}>
       <ColLabel>Order Items</ColLabel>
       {order.items.map((item: any, i: number) => {
         const isObj = typeof item === 'object' && item !== null
@@ -266,22 +217,13 @@ export const OrderExpandedPanel: React.FC<ExpandedPanelProps> = ({
         </div>
       )}
       {order.raw?.specialInstructions && (
-        <AlertBox c={C.auto} bg={C.autoBg}>
-          📝 {order.raw.specialInstructions}
-        </AlertBox>
+        <div style={{ marginTop: 14 }}>
+          <ColLabel>Special Request</ColLabel>
+          <AlertBox c={C.auto} bg={C.autoBg}>
+            {order.raw.specialInstructions}
+          </AlertBox>
+        </div>
       )}
-    </div>
-    <div style={{ padding: '16px 20px' }}>
-      <ColLabel>Actions</ColLabel>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <FullBtn
-          label={loading ? 'Updating…' : advLabel}
-          c={advColor}
-          cBg={sectionBg}
-          onClick={onAdvance}
-          loading={loading}
-        />
-      </div>
     </div>
   </div>
 )

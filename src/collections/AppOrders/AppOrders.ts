@@ -407,6 +407,16 @@ export const AppOrders: CollectionConfig = {
       ],
     },
     {
+      name: 'scheduledForPrep',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        hidden: true,
+        description:
+          'Slot orders accepted more than 30 min before their slot time are held here. The cron job clears this flag at T-30 to release them into the Queued section.',
+      },
+    },
+    {
       name: 'isStampsAwarded',
       type: 'checkbox',
       defaultValue: false,

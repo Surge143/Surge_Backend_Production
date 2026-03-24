@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
             }
             items[existingIndex].quantity += quantity
         } else {
-            if (quantity > 5) {
+            if (quantity > 5) { 
                 return NextResponse.json({ error: 'Maximum quantity of 5 units reached for this item' }, { status: 400 })
             }
             items.push({ product, vId, quantity })

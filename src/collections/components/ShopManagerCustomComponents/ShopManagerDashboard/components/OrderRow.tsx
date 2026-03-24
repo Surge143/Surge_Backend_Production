@@ -1,7 +1,16 @@
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
 import { C } from '../constants'
 import { Tag, AssignTag, ABtn, EyeIcon } from './UIAtoms'
+
+const REJECT_REASONS = [
+  'Out of stock',
+  'Shop closing soon',
+  'Unable to fulfill order',
+  'Customer requested cancellation',
+  'Technical issue',
+  'Other',
+]
 
 interface OrderRowProps {
   order: any
@@ -9,12 +18,18 @@ interface OrderRowProps {
   sectionBg: string
   advLabel: string
   advColor: string
+  isNew: boolean
   isOpen: boolean
   onToggle: () => void
   onAdvance: () => void
+  onAccept: () => void
+  onReject: (reason: string) => void
   onPeekEnter: (e: React.MouseEvent, id: string) => void
   onPeekLeave: () => void
   barista: any | null
+  baristas: any[]
+  selectedBaristaId?: string
+  onBaristaChange: (id: string) => void
   loading: boolean
 }
 
@@ -24,14 +39,24 @@ export const OrderRow: React.FC<OrderRowProps> = ({
   sectionBg,
   advLabel,
   advColor,
+  isNew,
   isOpen,
   onToggle,
   onAdvance,
+  onAccept,
+  onReject,
   onPeekEnter,
   onPeekLeave,
   barista,
+  baristas,
+  selectedBaristaId,
+  onBaristaChange,
   loading,
 }) => {
+  const [showReject, setShowReject] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
+
+  const canAccept = !!barista || !!selectedBaristaId
   const leftBorderColor = order.delayed ? C.late : isOpen ? sectionColor : 'transparent'
   const rowBg = order.delayed ? '#fef2f2' : C.surface
 
@@ -63,17 +88,43 @@ export const OrderRow: React.FC<OrderRowProps> = ({
       </div>
 
       {/* Barista */}
-      <div>
-        <div style={{ color: C.textSub, fontSize: 12, fontWeight: 500 }}>
-          {barista?.name || 'Unassigned'}
-        </div>
-        <div style={{ fontSize: 10, marginTop: 2 }}>
-          {barista ? (
-            <span style={{ color: C.ready, fontWeight: 600 }}>active</span>
-          ) : (
-            <span style={{ color: C.textMute }}>—</span>
-          )}
-        </div>
+      <div onClick={(e) => e.stopPropagation()} style={{ minWidth: 0, overflow: 'hidden' }}>
+        {isNew && !barista ? (
+          <select
+            value={selectedBaristaId || ''}
+            onChange={(e) => onBaristaChange(e.target.value)}
+            style={{
+              background: C.bg,
+              border: `1px solid ${selectedBaristaId ? C.border : C.cancelled}`,
+              borderRadius: 6,
+              padding: '4px 6px',
+              color: selectedBaristaId ? C.text : C.cancelled,
+              fontSize: 11,
+              outline: 'none',
+              maxWidth: '100%',
+              minWidth: 0,
+              boxSizing: 'border-box',
+            }}
+          >
+            <option value="">Assign barista…</option>
+            {baristas.map((b) => (
+              <option key={b.id} value={String(b.id)}>{b.name}</option>
+            ))}
+          </select>
+        ) : (
+          <>
+            <div style={{ color: C.textSub, fontSize: 12, fontWeight: 500 }}>
+              {barista?.name || 'Unassigned'}
+            </div>
+            <div style={{ fontSize: 10, marginTop: 2 }}>
+              {barista ? (
+                <span style={{ color: C.ready, fontWeight: 600 }}>active</span>
+              ) : (
+                <span style={{ color: C.textMute }}>—</span>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Ref / slot */}
@@ -158,17 +209,106 @@ export const OrderRow: React.FC<OrderRowProps> = ({
       </div>
 
       {/* Actions */}
-      <div
-        style={{ display: 'flex', gap: 6, alignItems: 'center' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <ABtn
-          label={loading ? '…' : advLabel}
-          c={advColor}
-          onClick={onAdvance}
-          disabled={loading}
-        />
-      </div>
+      {isNew ? (
+        <div
+          style={{ display: 'flex', gap: 4, alignItems: 'center', position: 'relative' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ABtn label={loading ? '…' : '✓ Accept'} c={C.ready} onClick={onAccept} disabled={loading || !canAccept} />
+          <ABtn
+            label={loading ? '…' : '✗ Reject'}
+            c={C.cancelled}
+            onClick={() => setShowReject(true)}
+            disabled={loading}
+          />
+          {showReject && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                right: 0,
+                zIndex: 50,
+                background: C.surface,
+                border: `1px solid ${C.border}`,
+                borderRadius: 8,
+                padding: 12,
+                boxShadow: '0 4px 20px rgba(0,0,0,.12)',
+                minWidth: 210,
+              }}
+            >
+              <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600, letterSpacing: 0.5, marginBottom: 6 }}>
+                REJECTION REASON
+              </div>
+              <select
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: C.bg,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 6,
+                  padding: '6px 8px',
+                  color: rejectReason ? C.text : C.textMute,
+                  fontSize: 12,
+                  outline: 'none',
+                  marginBottom: 8,
+                }}
+              >
+                <option value="">Select a reason…</option>
+                {REJECT_REASONS.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  onClick={() => { setShowReject(false); setRejectReason('') }}
+                  style={{
+                    flex: 1,
+                    padding: '5px 0',
+                    background: 'none',
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 6,
+                    color: C.textMute,
+                    fontSize: 11,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (!rejectReason) return
+                    onReject(rejectReason)
+                    setShowReject(false)
+                    setRejectReason('')
+                  }}
+                  disabled={!rejectReason}
+                  style={{
+                    flex: 1,
+                    padding: '5px 0',
+                    background: rejectReason ? C.cancelled : C.cancelled + '40',
+                    border: 'none',
+                    borderRadius: 6,
+                    color: '#fff',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: rejectReason ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div
+          style={{ display: 'flex', gap: 6, alignItems: 'center' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ABtn label={loading ? '…' : advLabel} c={advColor} onClick={onAdvance} disabled={loading} />
+        </div>
+      )}
     </div>
   )
 }

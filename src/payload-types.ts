@@ -101,6 +101,7 @@ export interface Config {
     blogs: Blog;
     wholesale: Wholesale;
     'app-banners': AppBanner;
+    newsletters: Newsletter;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -149,6 +150,7 @@ export interface Config {
     blogs: BlogsSelect<false> | BlogsSelect<true>;
     wholesale: WholesaleSelect<false> | WholesaleSelect<true>;
     'app-banners': AppBannersSelect<false> | AppBannersSelect<true>;
+    newsletters: NewslettersSelect<false> | NewslettersSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1062,6 +1064,10 @@ export interface AppOrder {
   };
   stripeOrderId?: string | null;
   /**
+   * Slot orders accepted more than 30 min before their slot time are held here. The cron job clears this flag at T-30 to release them into the Queued section.
+   */
+  scheduledForPrep?: boolean | null;
+  /**
    * Flag to track if stamps have been awarded for this order to avoid double-crediting.
    */
   isStampsAwarded?: boolean | null;
@@ -1299,6 +1305,11 @@ export interface WebOrder {
   refundReason?: string | null;
   deliveringBy?: string | null;
   deliveredOn?: string | null;
+  /**
+   * Mark when order is packed and ready for customer pickup
+   */
+  isPickupReady?: boolean | null;
+  pickedUpDate?: string | null;
   refundedOn?: string | null;
   refundedAmount?: number | null;
   couponCode?: (number | null) | Coupon;
@@ -1774,6 +1785,16 @@ export interface AppBanner {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletters".
+ */
+export interface Newsletter {
+  id: number;
+  email: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
 export interface Export {
@@ -2081,6 +2102,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'app-banners';
         value: number | AppBanner;
+      } | null)
+    | ({
+        relationTo: 'newsletters';
+        value: number | Newsletter;
       } | null)
     | ({
         relationTo: 'exports';
@@ -2620,6 +2645,7 @@ export interface AppOrdersSelect<T extends boolean = true> {
         total?: T;
       };
   stripeOrderId?: T;
+  scheduledForPrep?: T;
   isStampsAwarded?: T;
   stripeData?: T;
   invoiceId?: T;
@@ -2840,6 +2866,8 @@ export interface WebOrdersSelect<T extends boolean = true> {
   refundReason?: T;
   deliveringBy?: T;
   deliveredOn?: T;
+  isPickupReady?: T;
+  pickedUpDate?: T;
   refundedOn?: T;
   refundedAmount?: T;
   couponCode?: T;
@@ -3121,6 +3149,15 @@ export interface WholesaleSelect<T extends boolean = true> {
 export interface AppBannersSelect<T extends boolean = true> {
   image?: T;
   page?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletters_select".
+ */
+export interface NewslettersSelect<T extends boolean = true> {
+  email?: T;
   updatedAt?: T;
   createdAt?: T;
 }

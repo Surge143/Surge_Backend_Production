@@ -20,6 +20,16 @@ const nextConfig = {
   // past Vercel's 250 MB uncompressed limit → "internal error" on deploy.
   serverExternalPackages: [
     'firebase-admin',
+    '@firebase/app',
+    '@firebase/app-compat',
+    '@firebase/auth',
+    '@firebase/database',
+    '@firebase/database-compat',
+    '@firebase/firestore',
+    '@firebase/functions',
+    '@firebase/messaging',
+    '@firebase/storage',
+    '@firebase/util',
     'googleapis',
     'google-auth-library',
     'socket.io',

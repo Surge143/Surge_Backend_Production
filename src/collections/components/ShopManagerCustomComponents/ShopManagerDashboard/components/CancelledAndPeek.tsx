@@ -1,7 +1,6 @@
 'use client'
 import React from 'react'
 import { C, SECTIONS } from '../constants'
-import { ABtn } from './UIAtoms'
 
 interface PeekTooltipProps {
   order: any
@@ -99,13 +98,11 @@ export const PeekTooltip: React.FC<PeekTooltipProps> = ({ order, x, y }) => {
 interface CancelledSectionProps {
   cancelled: any[]
   baristas: any[]
-  onRestore: (id: string) => void
 }
 
 export const CancelledSection: React.FC<CancelledSectionProps> = ({
   cancelled,
   baristas,
-  onRestore,
 }) => (
   <div>
     <div
@@ -151,7 +148,7 @@ export const CancelledSection: React.FC<CancelledSectionProps> = ({
         borderBottom: `1px solid ${C.border}`,
       }}
     >
-      {['ORDER', 'TIME', 'CUSTOMER', 'BARISTA', 'REF', 'ITEMS', 'REASON', 'ACTION'].map((h, i) => (
+      {['ORDER', 'TIME', 'CUSTOMER', 'BARISTA', 'REF', 'ITEMS', 'REASON'].map((h, i) => (
         <span
           key={i}
           style={{ fontSize: 10, color: C.textMute, letterSpacing: 0.8, fontWeight: 600 }}
@@ -216,9 +213,6 @@ export const CancelledSection: React.FC<CancelledSectionProps> = ({
           </div>
           <div style={{ fontSize: 11, color: C.cancelled, fontStyle: 'italic', paddingRight: 8 }}>
             {o.cancelReason || '—'}
-          </div>
-          <div>
-            <ABtn label="Restore" c={C.ready} onClick={() => onRestore(o.id)} />
           </div>
         </div>
       )
