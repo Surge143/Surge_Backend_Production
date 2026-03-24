@@ -149,7 +149,7 @@ export const OrderSection: React.FC<OrderSectionProps> = ({
                 selectedBaristaId={selectedBaristas[order.id]}
                 onBaristaChange={(id) => onBaristaChange(order.id, id)}
                 onAccept={() => onAccept(order)}
-                onReject={() => onReject(order)}
+                onReject={() => onReject(order, '')}
                 loading={loading}
               />
             )}
