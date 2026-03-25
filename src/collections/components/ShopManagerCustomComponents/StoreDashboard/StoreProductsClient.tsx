@@ -1,5 +1,6 @@
 'use client'
 import React, { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { ConfirmationModal, useModal } from '@payloadcms/ui'
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -71,7 +72,7 @@ function SubBadge({ discount, freqs }: { discount?: number | null; freqs?: SubFr
         <span style={{
           display: 'inline-flex', alignItems: 'center', gap: 4,
           padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700,
-          background: '#1a1a3a', border: '1px solid #3730a3', color: '#818cf8',
+          background: 'var(--theme-elevation-100)', border: '1px solid rgba(99,102,241,0.5)', color: '#6366f1',
           whiteSpace: 'nowrap',
         }}>
           ↻ Sub
@@ -79,7 +80,7 @@ function SubBadge({ discount, freqs }: { discount?: number | null; freqs?: SubFr
         {discount != null && (
           <span style={{
             padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700,
-            background: '#1f2a1f', border: '1px solid #166534', color: '#4ade80',
+            background: 'var(--theme-elevation-100)', border: '1px solid rgba(22,163,74,0.5)', color: '#16a34a',
             whiteSpace: 'nowrap',
           }}>
             {discount}% off
@@ -92,7 +93,7 @@ function SubBadge({ discount, freqs }: { discount?: number | null; freqs?: SubFr
           {freqs.map((f, i) => (
             <span key={i} style={{
               padding: '1px 6px', borderRadius: 3, fontSize: 10, fontWeight: 600,
-              background: '#1e1e2e', border: '1px solid #2a2a4a', color: '#a5b4fc',
+              background: 'var(--theme-elevation-50)', border: '1px solid var(--theme-elevation-200)', color: '#818cf8',
               whiteSpace: 'nowrap',
             }}>
               {f.duration} {f.interval}{f.duration > 1 ? 's' : ''}
@@ -126,23 +127,23 @@ function variantTotalStock(variants: Variant[]) {
 
 const STYLES = `
   .spl-row { transition: background 0.08s; }
-  .spl-row:hover { background: #1a1a1a !important; }
-  .spl-row.spl-selected { background: #111d2e !important; }
-  .spl-row.spl-selected:hover { background: #142240 !important; }
+  .spl-row:hover { background: var(--theme-elevation-100) !important; }
+  .spl-row.spl-selected { background: var(--theme-elevation-150) !important; }
+  .spl-row.spl-selected:hover { background: var(--theme-elevation-200) !important; }
   .spl-th { cursor: pointer; user-select: none; }
-  .spl-th:hover { color: #c0c0c0 !important; }
-  .spl-link { color: #e0e0e0; text-decoration: underline; text-underline-offset: 2px; }
-  .spl-link:hover { color: #fff; }
+  .spl-th:hover { color: var(--theme-elevation-700) !important; }
+  .spl-link { color: var(--theme-text); text-decoration: underline; text-underline-offset: 2px; }
+  .spl-link:hover { color: var(--theme-text); opacity: 0.7; }
   .spl-var-row { transition: background 0.08s; }
-  .spl-var-row:hover { background: #161616 !important; }
-  .spl-qty-input { width: 64px; background: #0b0b0b; border: 1px solid #3a3a3a; border-radius: 3px; padding: 3px 6px; color: #e0e0e0; font-size: 12px; outline: none; }
-  .spl-qty-input:focus { border-color: #6b8aff; }
-  .spl-edit-btn { background: #1a1a2e; border: 1px solid #3a3a6a; border-radius: 4px; color: #818cf8; cursor: pointer; font-size: 13px; padding: 3px 7px; line-height: 1; transition: all 0.15s; }
-  .spl-edit-btn:hover { background: #22224a; border-color: #6b8aff; color: #a5b4fc; }
-  .spl-save-btn { background: #1a2a1a; border: 1px solid #166534; border-radius: 3px; color: #4ade80; cursor: pointer; font-size: 11px; padding: 2px 7px; font-weight: 600; }
-  .spl-save-btn:hover { background: #1f3a1f; }
-  .spl-cancel-btn { background: transparent; border: 1px solid #333; border-radius: 3px; color: #666; cursor: pointer; font-size: 11px; padding: 2px 7px; }
-  .spl-cancel-btn:hover { border-color: #555; color: #aaa; }
+  .spl-var-row:hover { background: var(--theme-elevation-100) !important; }
+  .spl-qty-input { width: 64px; background: var(--theme-elevation-0); border: 1px solid var(--theme-elevation-250); border-radius: 3px; padding: 3px 6px; color: var(--theme-text); font-size: 12px; outline: none; }
+  .spl-qty-input:focus { border-color: rgba(99,102,241,0.7); }
+  .spl-edit-btn { background: var(--theme-elevation-100); border: 1px solid rgba(99,102,241,0.4); border-radius: 4px; color: #6366f1; cursor: pointer; font-size: 13px; padding: 3px 7px; line-height: 1; transition: all 0.15s; }
+  .spl-edit-btn:hover { background: var(--theme-elevation-150); border-color: rgba(99,102,241,0.8); color: #818cf8; }
+  .spl-save-btn { background: var(--theme-elevation-100); border: 1px solid rgba(22,163,74,0.5); border-radius: 3px; color: #16a34a; cursor: pointer; font-size: 11px; padding: 2px 7px; font-weight: 600; }
+  .spl-save-btn:hover { background: var(--theme-elevation-150); }
+  .spl-cancel-btn { background: transparent; border: 1px solid var(--theme-elevation-250); border-radius: 3px; color: var(--theme-elevation-400); cursor: pointer; font-size: 11px; padding: 2px 7px; }
+  .spl-cancel-btn:hover { border-color: var(--theme-elevation-350); color: var(--theme-elevation-600); }
 `
 
 // Grid columns: checkbox | image | name | price | in-stock | stock-qty | subscription | categories | updated | actions
@@ -158,9 +159,9 @@ const BoolBadge: React.FC<{ value: boolean }> = ({ value }) => (
       padding: '1px 8px',
       borderRadius: 3,
       fontSize: 12,
-      border: '1px solid #2a2a2a',
-      background: '#161616',
-      color: '#aaa',
+      border: '1px solid var(--theme-elevation-150)',
+      background: 'var(--theme-elevation-100)',
+      color: 'var(--theme-elevation-600)',
       fontFamily: 'monospace',
     }}
   >
@@ -170,8 +171,8 @@ const BoolBadge: React.FC<{ value: boolean }> = ({ value }) => (
 
 const SortIcon: React.FC<{ active: boolean; dir: SortDir }> = ({ active, dir }) => (
   <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: 5, gap: 1, verticalAlign: 'middle', lineHeight: 1 }}>
-    <span style={{ fontSize: 7, color: active && dir === 'asc' ? '#fff' : '#3a3a3a' }}>▲</span>
-    <span style={{ fontSize: 7, color: active && dir === 'desc' ? '#fff' : '#3a3a3a' }}>▼</span>
+    <span style={{ fontSize: 7, color: active && dir === 'asc' ? '#fff' : 'var(--theme-elevation-250)' }}>▲</span>
+    <span style={{ fontSize: 7, color: active && dir === 'desc' ? '#fff' : 'var(--theme-elevation-250)' }}>▼</span>
   </span>
 )
 
@@ -384,8 +385,8 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
     <div
       style={{
         fontFamily: "'Inter', 'DM Sans', system-ui, sans-serif",
-        background: '#0b0b0b',
-        color: '#e0e0e0',
+        background: 'var(--theme-elevation-0)',
+        color: 'var(--theme-text)',
         height: 'calc(100vh - 80px)',
         display: 'flex',
         flexDirection: 'column',
@@ -399,8 +400,8 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
       <div
         style={{
           padding: '8px 16px',
-          background: '#111',
-          borderBottom: '1px solid #1e1e1e',
+          background: 'var(--theme-elevation-50)',
+          borderBottom: '1px solid var(--theme-elevation-100)',
           display: 'flex',
           alignItems: 'center',
           gap: 8,
@@ -413,11 +414,11 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
         <span
           style={{
             padding: '1px 8px',
-            background: '#1a1a1a',
-            border: '1px solid #2a2a2a',
+            background: 'var(--theme-elevation-100)',
+            border: '1px solid var(--theme-elevation-150)',
             borderRadius: 10,
             fontSize: 11,
-            color: '#888',
+            color: 'var(--theme-elevation-500)',
           }}
         >
           {filtered.length}
@@ -425,7 +426,7 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
 
         {selectedIds.size > 0 && (
           <>
-            <span style={{ fontSize: 12, color: '#6b8aff', marginLeft: 4 }}>
+            <span style={{ fontSize: 12, color: 'var(--theme-text)', marginLeft: 4 }}>
               {selectedIds.size} selected
             </span>
             <button
@@ -449,24 +450,24 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
         <div style={{ flex: 1 }} />
 
         {/* Add Product */}
-        <a
+        <Link
           href="/admin/collections/web-products/create"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: 5,
             padding: '4px 12px',
-            background: '#1a3a1a',
-            border: '1px solid #2a5a2a',
+            background: '#16a34a',
+            border: '1px solid #15803d',
             borderRadius: 4,
             fontSize: 12,
             fontWeight: 600,
-            color: '#4ade80',
+            color: '#fff',
             textDecoration: 'none',
           }}
         >
           <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Add Product
-        </a>
+        </Link>
 
         {/* Status filter */}
         <div style={{ display: 'flex', gap: 3 }}>
@@ -476,12 +477,12 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
               onClick={() => setStatusFilter(k)}
               style={{
                 padding: '3px 10px',
-                border: `1px solid ${statusFilter === k ? '#3a3a3a' : '#222'}`,
-                background: statusFilter === k ? '#1e1e1e' : 'transparent',
+                border: `1px solid ${statusFilter === k ? 'var(--theme-elevation-250)' : 'var(--theme-elevation-150)'}`,
+                background: statusFilter === k ? 'var(--theme-elevation-100)' : 'transparent',
                 borderRadius: 4,
                 fontSize: 11,
                 fontWeight: 500,
-                color: statusFilter === k ? '#e0e0e0' : '#555',
+                color: statusFilter === k ? 'var(--theme-text)' : 'var(--theme-elevation-350)',
                 cursor: 'pointer',
                 textTransform: 'capitalize',
               }}
@@ -499,12 +500,12 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
               onClick={() => setTypeFilter(k)}
               style={{
                 padding: '3px 10px',
-                border: `1px solid ${typeFilter === k ? '#3a3a3a' : '#222'}`,
-                background: typeFilter === k ? '#1e1e1e' : 'transparent',
+                border: `1px solid ${typeFilter === k ? 'var(--theme-elevation-250)' : 'var(--theme-elevation-150)'}`,
+                background: typeFilter === k ? 'var(--theme-elevation-100)' : 'transparent',
                 borderRadius: 4,
                 fontSize: 11,
                 fontWeight: 500,
-                color: typeFilter === k ? '#e0e0e0' : '#555',
+                color: typeFilter === k ? 'var(--theme-text)' : 'var(--theme-elevation-350)',
                 cursor: 'pointer',
                 textTransform: 'capitalize',
               }}
@@ -526,12 +527,12 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
               onClick={() => setStockFilter(k)}
               style={{
                 padding: '3px 10px',
-                border: `1px solid ${stockFilter === k ? '#3a3a3a' : '#222'}`,
-                background: stockFilter === k ? '#1e1e1e' : 'transparent',
+                border: `1px solid ${stockFilter === k ? 'var(--theme-elevation-250)' : 'var(--theme-elevation-150)'}`,
+                background: stockFilter === k ? 'var(--theme-elevation-100)' : 'transparent',
                 borderRadius: 4,
                 fontSize: 11,
                 fontWeight: 500,
-                color: stockFilter === k ? '#e0e0e0' : '#555',
+                color: stockFilter === k ? 'var(--theme-text)' : 'var(--theme-elevation-350)',
                 cursor: 'pointer',
               }}
             >
@@ -544,7 +545,7 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
         <div style={{ position: 'relative', width: 220 }}>
           <svg
             width="12" height="12" viewBox="0 0 24 24" fill="none"
-            stroke="#444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            stroke="var(--theme-elevation-300)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
             style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
           >
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -555,24 +556,24 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
             placeholder="Search products…"
             style={{
               width: '100%',
-              background: '#0b0b0b',
-              border: '1px solid #222',
+              background: 'var(--theme-elevation-0)',
+              border: '1px solid var(--theme-elevation-150)',
               borderRadius: 4,
               padding: '6px 28px',
-              color: '#e0e0e0',
+              color: 'var(--theme-text)',
               fontSize: 12,
               outline: 'none',
               boxSizing: 'border-box',
             }}
-            onFocus={(e) => (e.target.style.borderColor = '#3a3a3a')}
-            onBlur={(e) => (e.target.style.borderColor = '#222')}
+            onFocus={(e) => (e.target.style.borderColor = 'var(--theme-elevation-250)')}
+            onBlur={(e) => (e.target.style.borderColor = 'var(--theme-elevation-150)')}
           />
           {search && (
             <button
               onClick={() => setSearch('')}
               style={{
                 position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                background: 'none', border: 'none', color: '#444', fontSize: 14, cursor: 'pointer', padding: 0, lineHeight: 1,
+                background: 'none', border: 'none', color: 'var(--theme-elevation-300)', fontSize: 14, cursor: 'pointer', padding: 0, lineHeight: 1,
               }}
             >×</button>
           )}
@@ -588,8 +589,8 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
             gridTemplateColumns: GRID,
             alignItems: 'center',
             padding: '0 16px',
-            background: '#0d0d0d',
-            borderBottom: '1px solid #1e1e1e',
+            background: 'var(--theme-elevation-0)',
+            borderBottom: '1px solid var(--theme-elevation-100)',
             position: 'sticky',
             top: 0,
             zIndex: 10,
@@ -616,7 +617,7 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                 padding: '10px 8px',
                 fontSize: 11,
                 fontWeight: 600,
-                color: '#555',
+                color: 'var(--theme-elevation-350)',
                 letterSpacing: 0.6,
                 textTransform: 'uppercase',
                 whiteSpace: 'nowrap',
@@ -629,14 +630,14 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
             </div>
           ))}
           {/* Actions header */}
-          <div style={{ padding: '10px 8px', fontSize: 11, fontWeight: 600, color: '#555', letterSpacing: 0.6, textTransform: 'uppercase' }}>
+          <div style={{ padding: '10px 8px', fontSize: 11, fontWeight: 600, color: 'var(--theme-elevation-350)', letterSpacing: 0.6, textTransform: 'uppercase' }}>
             Actions
           </div>
         </div>
 
         {/* Empty state */}
         {filtered.length === 0 && (
-          <div style={{ padding: 40, textAlign: 'center', color: '#3a3a3a', fontSize: 13 }}>
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--theme-elevation-250)', fontSize: 13 }}>
             No products found
           </div>
         )}
@@ -660,8 +661,8 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                   gridTemplateColumns: GRID,
                   alignItems: 'center',
                   padding: '0 16px',
-                  borderBottom: hasVariants ? 'none' : '1px solid #1a1a1a',
-                  background: isSelected ? '#111d2e' : rowIdx % 2 === 0 ? '#0b0b0b' : '#111111',
+                  borderBottom: hasVariants ? 'none' : '1px solid var(--theme-elevation-100)',
+                  background: isSelected ? '#111d2e' : rowIdx % 2 === 0 ? 'var(--theme-elevation-0)' : 'var(--theme-elevation-50)',
                   minWidth: 900,
                 }}
               >
@@ -681,10 +682,10 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                     <img
                       src={product.productImage.url}
                       alt={product.name}
-                      style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 4, display: 'block', border: '1px solid #1e1e1e' }}
+                      style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 4, display: 'block', border: '1px solid var(--theme-elevation-100)' }}
                     />
                   ) : (
-                    <div style={{ width: 44, height: 44, background: '#161616', borderRadius: 4, border: '1px solid #1e1e1e' }} />
+                    <div style={{ width: 44, height: 44, background: 'var(--theme-elevation-100)', borderRadius: 4, border: '1px solid var(--theme-elevation-100)' }} />
                   )}
                 </div>
 
@@ -707,9 +708,9 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                         padding: '1px 6px',
                         borderRadius: 3,
                         fontSize: 10,
-                        border: '1px solid #2a2a2a',
-                        background: '#161616',
-                        color: '#666',
+                        border: '1px solid var(--theme-elevation-150)',
+                        background: 'var(--theme-elevation-100)',
+                        color: 'var(--theme-elevation-400)',
                       }}
                     >
                       {variants.length} variants
@@ -718,9 +719,9 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                 </div>
 
                 {/* Regular Price */}
-                <div style={{ padding: '10px 8px', color: '#aaa' }}>
+                <div style={{ padding: '10px 8px', color: 'var(--theme-elevation-600)' }}>
                   {hasVariants
-                    ? <span style={{ color: '#333', fontSize: 11 }}>—</span>
+                    ? <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>
                     : product.regularPrice != null
                       ? `AED ${Number(product.regularPrice).toFixed(2)}`
                       : noVal('Regular Price')}
@@ -729,7 +730,7 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                 {/* In Stock */}
                 <div style={{ padding: '10px 8px' }}>
                   {hasVariants ? (
-                    <span style={{ color: '#333', fontSize: 11 }}>—</span>
+                    <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>
                   ) : editingStock?.productId === product.id && !editingStock.variantId ? (
                     <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
                       <input
@@ -738,7 +739,7 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                         onChange={(e) => setEditingStock((s) => s ? { ...s, inStock: e.target.checked } : s)}
                         style={{ accentColor: '#6b8aff', cursor: 'pointer' }}
                       />
-                      <span style={{ fontSize: 11, color: '#aaa' }}>{editingStock.inStock ? 'In Stock' : 'Out'}</span>
+                      <span style={{ fontSize: 11, color: 'var(--theme-elevation-600)' }}>{editingStock.inStock ? 'In Stock' : 'Out'}</span>
                     </label>
                   ) : (
                     <BoolBadge value={Boolean(product.inStock)} />
@@ -746,9 +747,9 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                 </div>
 
                 {/* Stock Quantity */}
-                <div style={{ padding: '10px 8px', color: '#aaa' }}>
+                <div style={{ padding: '10px 8px', color: 'var(--theme-elevation-600)' }}>
                   {hasVariants ? (
-                    <span style={{ color: '#333', fontSize: 11 }}>—</span>
+                    <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>
                   ) : editingStock?.productId === product.id && !editingStock.variantId ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <input
@@ -780,19 +781,19 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                   {hasVariants
                     ? (variants.some((v) => v.hasVariantSub)
                         ? <span style={{ fontSize: 10, color: '#818cf8' }}>↻ See variants</span>
-                        : <span style={{ color: '#333', fontSize: 11 }}>—</span>)
+                        : <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>)
                     : product.hasSimpleSub
                       ? <SubBadge discount={product.subscriptionDiscount} freqs={product.subFreq} />
-                      : <span style={{ color: '#333', fontSize: 11 }}>—</span>}
+                      : <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>}
                 </div>
 
                 {/* Categories */}
-                <div style={{ padding: '10px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#aaa' }}>
+                <div style={{ padding: '10px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--theme-elevation-600)' }}>
                   {catName || noVal('Categories')}
                 </div>
 
                 {/* Updated At */}
-                <div style={{ padding: '10px 8px', color: '#555', fontSize: 12, whiteSpace: 'nowrap' }}>
+                <div style={{ padding: '10px 8px', color: 'var(--theme-elevation-350)', fontSize: 12, whiteSpace: 'nowrap' }}>
                   {fmtDate(product.updatedAt) || noVal('Updated At')}
                 </div>
 
@@ -804,12 +805,12 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                     title="Delete product"
                     style={{
                       padding: '3px 8px', fontSize: 11,
-                      background: 'transparent', border: '1px solid #2a2a2a',
-                      borderRadius: 3, color: '#555', cursor: 'pointer',
+                      background: 'transparent', border: '1px solid var(--theme-elevation-150)',
+                      borderRadius: 3, color: 'var(--theme-elevation-350)', cursor: 'pointer',
                       lineHeight: 1, opacity: deletingIds.has(product.id) ? 0.4 : 1,
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#ef4444' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#555' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'; e.currentTarget.style.color = 'var(--theme-elevation-350)' }}
                   >
                     🗑
                   </button>
@@ -819,7 +820,7 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
               {/* ── Variant sub-rows ── */}
               {hasVariants && variants.map((variant, vIdx) => {
                 const isLastVariant = vIdx === variants.length - 1
-                const varBg = rowIdx % 2 === 0 ? '#0d0d0d' : '#131313'
+                const varBg = rowIdx % 2 === 0 ? 'var(--theme-elevation-0)' : 'var(--theme-elevation-50)'
                 return (
                   <div
                     key={variant.id ?? vIdx}
@@ -829,9 +830,9 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                       gridTemplateColumns: GRID_VAR,
                       alignItems: 'center',
                       padding: '0 16px',
-                      borderTop: '1px solid #161616',
-                      borderBottom: isLastVariant ? '2px solid #242424' : 'none',
-                      borderLeft: '3px solid #222',
+                      borderTop: '1px solid var(--theme-elevation-100)',
+                      borderBottom: isLastVariant ? '2px solid var(--theme-elevation-150)' : 'none',
+                      borderLeft: '3px solid var(--theme-elevation-150)',
                       background: varBg,
                       minWidth: 900,
                     }}
@@ -841,27 +842,27 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
 
                     {/* Variant image with ↳ indicator */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 8px 6px 0' }}>
-                      <span style={{ color: '#333', fontSize: 11, flexShrink: 0 }}>↳</span>
+                      <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11, flexShrink: 0 }}>↳</span>
                       {variant.variantImage?.url ? (
                         <img
                           src={variant.variantImage.url}
                           alt={variant.variantName}
-                          style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 3, display: 'block', border: '1px solid #1e1e1e' }}
+                          style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 3, display: 'block', border: '1px solid var(--theme-elevation-100)' }}
                         />
                       ) : (
-                        <div style={{ width: 32, height: 32, background: '#161616', borderRadius: 3, border: '1px solid #1e1e1e', flexShrink: 0 }} />
+                        <div style={{ width: 32, height: 32, background: 'var(--theme-elevation-100)', borderRadius: 3, border: '1px solid var(--theme-elevation-100)', flexShrink: 0 }} />
                       )}
                     </div>
 
                     {/* Variant name */}
                     <div style={{ padding: '7px 8px', display: 'flex', alignItems: 'center', minWidth: 0 }}>
-                      <span style={{ fontSize: 12, color: '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <span style={{ fontSize: 12, color: 'var(--theme-elevation-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {variant.variantName}g
                       </span>
                     </div>
 
                     {/* Regular Price */}
-                    <div style={{ padding: '7px 8px', fontSize: 12, color: '#aaa' }}>
+                    <div style={{ padding: '7px 8px', fontSize: 12, color: 'var(--theme-elevation-600)' }}>
                       {variant.variantRegularPrice != null
                         ? `AED ${Number(variant.variantRegularPrice).toFixed(2)}`
                         : noVal('Regular Price')}
@@ -877,7 +878,7 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                             onChange={(e) => setEditingStock((s) => s ? { ...s, inStock: e.target.checked } : s)}
                             style={{ accentColor: '#6b8aff', cursor: 'pointer' }}
                           />
-                          <span style={{ fontSize: 11, color: '#aaa' }}>{editingStock.inStock ? 'In Stock' : 'Out'}</span>
+                          <span style={{ fontSize: 11, color: 'var(--theme-elevation-600)' }}>{editingStock.inStock ? 'In Stock' : 'Out'}</span>
                         </label>
                       ) : (
                         <BoolBadge value={Boolean(variant.variantInStock)} />
@@ -885,7 +886,7 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                     </div>
 
                     {/* Stock Qty */}
-                    <div style={{ padding: '7px 8px', fontSize: 12, color: '#aaa' }}>
+                    <div style={{ padding: '7px 8px', fontSize: 12, color: 'var(--theme-elevation-600)' }}>
                       {editingStock?.productId === product.id && editingStock.variantId === variant.id ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                           <input
@@ -916,7 +917,7 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                     <div style={{ padding: '7px 8px' }}>
                       {variant.hasVariantSub
                         ? <SubBadge discount={variant.subscriptionDiscount} freqs={variant.subFreq} />
-                        : <span style={{ color: '#333', fontSize: 11 }}>—</span>}
+                        : <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>}
                     </div>
 
                     {/* Categories, Updated, Actions — empty for variants */}

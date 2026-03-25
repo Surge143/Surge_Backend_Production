@@ -40,7 +40,7 @@ export default buildConfig({
           path: '/store-dashboard',
         },
       },
-      afterNavLinks: [
+      beforeNavLinks: [
         '@/collections/components/Navbar/ShopManagerDashboardLink#ShopManagerDashboardLink',
       ],
     },

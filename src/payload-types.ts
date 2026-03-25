@@ -812,6 +812,7 @@ export interface WebProduct {
     | null;
   farm: string;
   tastingNotes: string;
+  variety: string;
   process: string;
   altitude: string;
   finish: string;
@@ -2781,6 +2782,7 @@ export interface WebProductsSelect<T extends boolean = true> {
   subCategories?: T;
   farm?: T;
   tastingNotes?: T;
+  variety?: T;
   process?: T;
   altitude?: T;
   finish?: T;
