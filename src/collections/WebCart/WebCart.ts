@@ -3,9 +3,15 @@ import { beforeWebCartChange } from "./hooks/beforeWebCartChange";
 
 export const WebCart: CollectionConfig = {
     slug: 'web-cart',
+    labels: {
+        singular: 'Abandoned Cart',
+        plural: 'Abandoned Carts',
+    },
     admin: {
         defaultColumns: ['user', 'items'],
-        group: 'Store',
+        group: 'Store Management',
+        description: "Follow up on customers who didn't check out",
+        hidden: ({ user }: any) => user?.role !== 'super-admin',
     },
     hooks: {
         beforeChange: [beforeWebCartChange],

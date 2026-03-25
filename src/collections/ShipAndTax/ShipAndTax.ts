@@ -4,10 +4,11 @@ export const ShipAndTax: GlobalConfig = {
     slug: 'ship-and-tax',
     admin: {
         group: 'Settings',
+        hidden: ({ user }: any) => user?.role !== 'super-admin',
     },
     access: {
         read: () => true,
-        update: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+        update: ({ req: { user } }) => user?.role === 'super-admin',
     },
     fields: [
         {

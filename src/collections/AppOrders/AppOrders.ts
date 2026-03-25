@@ -16,12 +16,14 @@ export const AppOrders: CollectionConfig = {
   slug: 'app-orders',
 
   labels: {
-    singular: 'Order',
-    plural: 'Orders',
+    singular: 'Cafe Order',
+    plural: 'Cafe Orders',
   },
   admin: {
     defaultColumns: ['id', 'shop', 'updatedAt'],
-    group: 'Cafe',
+    group: 'Cafe Management',
+    description: 'View and process incoming orders',
+    hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
   },
   endpoints: [
     {

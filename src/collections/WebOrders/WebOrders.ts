@@ -19,8 +19,10 @@ export const WebOrders: CollectionConfig = {
     plural: 'Store Orders',
   },
   admin: {
+    listSearchableFields: ['id', 'email', 'user.firstName', 'user.lastName'],
     useAsTitle: 'id',
-    group: 'Store',
+    group: 'Store Management',
+    description: 'View and fulfill store orders',
   },
   endpoints: [
     {
@@ -268,75 +270,101 @@ export const WebOrders: CollectionConfig = {
     {
       type: 'tabs',
       tabs: [
+        // ─────────────────────────────────────────────────────────────────────
+        // TAB 1 · Order Details
+        // ─────────────────────────────────────────────────────────────────────
         {
           label: 'Order Details',
           fields: [
+            // ── Customer Information ──────────────────────────────────────────
             {
-              type: 'row',
+              type: 'collapsible',
+              label: 'Customer Information',
+              admin: { initCollapsed: false },
               fields: [
                 {
-                  name: 'customerType',
-                  type: 'select',
-                  defaultValue: 'guest',
-                  options: [
-                    { label: 'Guest', value: 'guest' },
-                    { label: 'Registered User', value: 'user' },
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'customerType',
+                      type: 'select',
+                      defaultValue: 'guest',
+                      options: [
+                        { label: 'Guest', value: 'guest' },
+                        { label: 'Registered User', value: 'user' },
+                      ],
+                      admin: { width: '33%' },
+                    },
+                    {
+                      name: 'user',
+                      type: 'relationship',
+                      relationTo: 'users',
+                      required: false,
+                      admin: {
+                        width: '33%',
+                        condition: (data) => data?.customerType === 'user',
+                        description: 'Select the registered user account for this order.',
+                      },
+                    },
+                    {
+                      name: 'email',
+                      label: 'Customer Email',
+                      type: 'text',
+                      admin: {
+                        width: '33%',
+                        description: 'Stored at checkout for guest-to-user linking.',
+                      },
+                    },
                   ],
-                  admin: {
-                    width: '50%',
-                  },
-                },
-                {
-                  name: 'user',
-                  type: 'relationship',
-                  relationTo: 'users',
-                  required: false, // Optional because it's hidden for guests
-                  admin: {
-                    width: '50%',
-
-                    // This field ONLY shows up if customerType is 'user'
-                    condition: (data) => data?.customerType === 'user',
-                    description: 'Select the registered user account for this order.',
-                  },
-                },
-                {
-                  name: 'deliveryOption',
-                  type: 'select',
-                  required: true,
-                  options: [
-                    { label: 'Delivery', value: 'delivery' },
-                    { label: 'Pickup', value: 'pickup' },
-                  ],
-                  admin: {},
-                },
-                {
-                  name: 'stripeOrderId',
-                  type: 'text',
-                  admin: { description: 'The ID from Stripe' },
-                },
-                {
-                  name: 'origin',
-                  type: 'select',
-                  required: true,
-                  options: [
-                    { label: 'Subscription', value: 'subscription' },
-                    { label: 'One Time', value: 'one-time' },
-                  ],
-                  admin: {},
-                },
-                {
-                  name: 'email',
-                  label: 'Customer Email',
-                  type: 'text',
-                  admin: {
-                    description: 'Stored at checkout for guest-to-user linking.',
-                  },
                 },
               ],
             },
+            // ── Order Information ─────────────────────────────────────────────
+            {
+              type: 'collapsible',
+              label: 'Order Information',
+              admin: { initCollapsed: false },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'deliveryOption',
+                      type: 'select',
+                      required: true,
+                      options: [
+                        { label: 'Delivery', value: 'delivery' },
+                        { label: 'Pickup', value: 'pickup' },
+                      ],
+                      admin: { width: '33%' },
+                    },
+                    {
+                      name: 'origin',
+                      type: 'select',
+                      required: true,
+                      options: [
+                        { label: 'Subscription', value: 'subscription' },
+                        { label: 'One Time', value: 'one-time' },
+                      ],
+                      admin: { width: '33%' },
+                    },
+                    {
+                      name: 'stripeOrderId',
+                      type: 'text',
+                      admin: {
+                        width: '33%',
+                        description: 'The payment ID from Stripe',
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+            // ── Order Items ───────────────────────────────────────────────────
             {
               name: 'items',
               type: 'array',
+              label: 'Order Items',
               required: true,
               fields: [
                 {
@@ -347,14 +375,14 @@ export const WebOrders: CollectionConfig = {
                       type: 'relationship',
                       relationTo: 'web-products',
                       required: true,
-                      admin: { width: '25%' },
+                      admin: { width: '30%' },
                     },
                     {
                       name: 'variantID',
                       label: 'Variation ID',
                       type: 'text',
                       admin: {
-                        width: '25%',
+                        width: '20%',
                         description: 'The ID of the variation',
                       },
                     },
@@ -375,6 +403,7 @@ export const WebOrders: CollectionConfig = {
                     },
                     {
                       name: 'price',
+                      label: 'Unit Price (AED)',
                       type: 'number',
                       required: true,
                       admin: { width: '15%' },
@@ -390,13 +419,17 @@ export const WebOrders: CollectionConfig = {
             },
           ],
         },
+
+        // ─────────────────────────────────────────────────────────────────────
+        // TAB 2 · Shipping & Billing
+        // ─────────────────────────────────────────────────────────────────────
         {
           label: 'Shipping & Billing',
           fields: [
             {
               name: 'shippingAddress',
               type: 'group',
-              label: 'Shipping Address (For Delivery Only)',
+              label: 'Shipping Address',
               admin: {
                 condition: (data) => data?.deliveryOption === 'delivery',
               },
@@ -404,24 +437,25 @@ export const WebOrders: CollectionConfig = {
                 {
                   type: 'row',
                   fields: [
-                    { name: 'addressFirstName', type: 'text' },
-                    { name: 'addressLastName', type: 'text' },
+                    { name: 'addressFirstName', label: 'First Name', type: 'text', admin: { width: '50%' } },
+                    { name: 'addressLastName', label: 'Last Name', type: 'text', admin: { width: '50%' } },
                   ],
                 },
                 {
                   type: 'row',
                   fields: [
-                    { name: 'addressLine1', type: 'text' },
-                    { name: 'addressLine2', type: 'text' },
+                    { name: 'addressLine1', label: 'Address Line 1', type: 'text', admin: { width: '50%' } },
+                    { name: 'addressLine2', label: 'Address Line 2', type: 'text', admin: { width: '50%' } },
                   ],
                 },
                 {
                   type: 'row',
                   fields: [
-                    { name: 'city', type: 'text' },
+                    { name: 'city', type: 'text', admin: { width: '25%' } },
                     {
                       name: 'emirates',
                       type: 'select',
+                      admin: { width: '25%' },
                       options: [
                         { label: 'Abu Dhabi', value: 'abu_dhabi' },
                         { label: 'Dubai', value: 'dubai' },
@@ -432,15 +466,13 @@ export const WebOrders: CollectionConfig = {
                         { label: 'Fujairah', value: 'fujairah' },
                       ],
                     },
-                    { name: 'phoneNumber', type: 'text' },
+                    { name: 'phoneNumber', label: 'Phone Number', type: 'text', admin: { width: '25%' } },
                     {
                       name: 'addressCountry',
                       label: 'Country',
                       type: 'text',
                       defaultValue: 'United Arab Emirates',
-                      admin: {
-                        readOnly: true,
-                      },
+                      admin: { width: '25%', readOnly: true },
                     },
                   ],
                 },
@@ -449,29 +481,30 @@ export const WebOrders: CollectionConfig = {
             {
               name: 'billingAddress',
               type: 'group',
-              admin: {},
+              label: 'Billing Address',
               fields: [
                 {
                   type: 'row',
                   fields: [
-                    { name: 'addressFirstName', type: 'text' },
-                    { name: 'addressLastName', type: 'text' },
+                    { name: 'addressFirstName', label: 'First Name', type: 'text', admin: { width: '50%' } },
+                    { name: 'addressLastName', label: 'Last Name', type: 'text', admin: { width: '50%' } },
                   ],
                 },
                 {
                   type: 'row',
                   fields: [
-                    { name: 'addressLine1', type: 'text' },
-                    { name: 'addressLine2', type: 'text' },
+                    { name: 'addressLine1', label: 'Address Line 1', type: 'text', admin: { width: '50%' } },
+                    { name: 'addressLine2', label: 'Address Line 2', type: 'text', admin: { width: '50%' } },
                   ],
                 },
                 {
                   type: 'row',
                   fields: [
-                    { name: 'city', type: 'text' },
+                    { name: 'city', type: 'text', admin: { width: '25%' } },
                     {
                       name: 'emirates',
                       type: 'select',
+                      admin: { width: '25%' },
                       options: [
                         { label: 'Abu Dhabi', value: 'abu_dhabi' },
                         { label: 'Dubai', value: 'dubai' },
@@ -482,15 +515,13 @@ export const WebOrders: CollectionConfig = {
                         { label: 'Fujairah', value: 'fujairah' },
                       ],
                     },
-                    { name: 'phoneNumber', type: 'text' },
+                    { name: 'phoneNumber', label: 'Phone Number', type: 'text', admin: { width: '25%' } },
                     {
                       name: 'addressCountry',
                       label: 'Country',
                       type: 'text',
                       defaultValue: 'United Arab Emirates',
-                      admin: {
-                        readOnly: true,
-                      },
+                      admin: { width: '25%', readOnly: true },
                     },
                   ],
                 },
@@ -498,136 +529,204 @@ export const WebOrders: CollectionConfig = {
             },
           ],
         },
+
+        // ─────────────────────────────────────────────────────────────────────
+        // TAB 3 · Payment & Fulfilment
+        // ─────────────────────────────────────────────────────────────────────
         {
-          label: 'Payment & Totals',
+          label: 'Payment & Fulfilment',
           fields: [
+            // ── Order Status ──────────────────────────────────────────────────
             {
-              type: 'row',
+              type: 'collapsible',
+              label: 'Order Status',
+              admin: { initCollapsed: false },
               fields: [
                 {
-                  name: 'paymentStatus',
-                  type: 'select',
-                  required: true,
-                  admin: {},
-                  validate: (val, { data }) => {
-                    if (
-                      val === 'refunded' &&
-                      data?.deliveryStatus !== 'placed' &&
-                      data?.deliveryStatus !== 'cancelled'
-                    ) {
-                      return 'Refunds are only allowed while the delivery status is "Placed" or "Cancelled".'
-                    }
-                    return true
-                  },
-                  options: [
-                    { label: 'Pending', value: 'pending' },
-                    { label: 'Completed', value: 'completed' },
-                    { label: 'Failed', value: 'failed' },
-                    { label: 'Refund Initiated', value: 'refund-initiated' },
-                    { label: 'Refunded', value: 'refunded' },
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'paymentStatus',
+                      type: 'select',
+                      required: true,
+                      admin: { width: '50%' },
+                      validate: (val, { data }) => {
+                        if (
+                          val === 'refunded' &&
+                          data?.deliveryStatus !== 'placed' &&
+                          data?.deliveryStatus !== 'cancelled'
+                        ) {
+                          return 'Refunds are only allowed while the delivery status is "Placed" or "Cancelled".'
+                        }
+                        return true
+                      },
+                      options: [
+                        { label: 'Pending', value: 'pending' },
+                        { label: 'Completed', value: 'completed' },
+                        { label: 'Failed', value: 'failed' },
+                        { label: 'Refund Initiated', value: 'refund-initiated' },
+                        { label: 'Refunded', value: 'refunded' },
+                      ],
+                    },
+                    {
+                      name: 'deliveryStatus',
+                      type: 'select',
+                      defaultValue: 'placed',
+                      admin: {
+                        width: '50%',
+                        condition: (data) => data?.paymentStatus === 'completed',
+                      },
+                      options: [
+                        { label: 'Placed', value: 'placed' },
+                        { label: 'Shipped', value: 'shipped' },
+                        { label: 'Completed', value: 'delivered' },
+                        { label: 'Cancelled', value: 'cancelled' },
+                        { label: 'Refund Initiated', value: 'refund-initiated' },
+                        { label: 'Refunded', value: 'refunded' },
+                      ],
+                    },
                   ],
-                },
-                {
-                  name: 'deliveryStatus',
-                  type: 'select',
-                  defaultValue: 'placed',
-                  admin: {
-                    condition: (data) => data?.paymentStatus === 'completed',
-                  },
-                  options: [
-                    { label: 'Placed', value: 'placed' },
-                    { label: 'Shipped', value: 'shipped' },
-                    { label: 'Completed', value: 'delivered' },
-                    { label: 'Cancelled', value: 'cancelled' },
-                    { label: 'Refund Initiated', value: 'refund-initiated' },
-                    { label: 'Refunded', value: 'refunded' },
-                  ],
-                },
-                {
-                  name: 'refundReason',
-                  label: 'Refund Reason',
-                  type: 'text',
-                },
-                {
-                  name: 'deliveringBy',
-                  label: 'Delivering By',
-                  type: 'date',
-                  admin: {
-                    date: {
-                      displayFormat: 'MM/dd/yyyy',
-                      pickerAppearance: 'dayOnly',
-                    },
-                  },
-                },
-                {
-                  name: 'deliveredOn',
-                  label: 'Delivered On',
-                  type: 'date',
-                  admin: {
-                    condition: (data) => data?.deliveryOption === 'delivery',
-                    date: {
-                      displayFormat: 'MM/dd/yyyy',
-                      pickerAppearance: 'dayOnly',
-                    },
-                  },
-                },
-                {
-                  name: 'isPickupReady',
-                  label: 'Pickup Ready',
-                  type: 'checkbox',
-                  defaultValue: false,
-                  admin: {
-                    condition: (data) => data?.deliveryOption === 'pickup',
-                    description: 'Mark when order is packed and ready for customer pickup',
-                  },
-                },
-                {
-                  name: 'pickedUpDate',
-                  label: 'Picked Up Date',
-                  type: 'date',
-                  admin: {
-                    condition: (data) => data?.deliveryOption === 'pickup',
-                    date: {
-                      displayFormat: 'MM/dd/yyyy',
-                      pickerAppearance: 'dayOnly',
-                    },
-                  },
-                },
-                {
-                  name: 'refundedOn',
-                  label: 'Refunded On',
-                  type: 'date',
-                  admin: {
-                    date: {
-                      displayFormat: 'MM/dd/yyyy',
-                      pickerAppearance: 'dayOnly',
-                    },
-                  },
-                },
-                {
-                  name: 'refundedAmount',
-                  label: 'Refunded Amount',
-                  type: 'number',
-                  min: 0,
-                  admin: {
-                    readOnly: true,
-                  },
                 },
               ],
             },
+            // ── Fulfilment Dates (Delivery) ───────────────────────────────────
             {
-              name: 'couponCode',
-              type: 'relationship',
-              relationTo: 'coupon',
+              type: 'collapsible',
+              label: 'Delivery Fulfilment',
               admin: {
-                condition: (data) => data?.origin === 'one-time',
+                initCollapsed: false,
+                condition: (data) => data?.deliveryOption === 'delivery',
               },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'deliveringBy',
+                      label: 'Delivering By',
+                      type: 'date',
+                      admin: {
+                        width: '50%',
+                        date: { displayFormat: 'MM/dd/yyyy', pickerAppearance: 'dayOnly' },
+                      },
+                    },
+                    {
+                      name: 'deliveredOn',
+                      label: 'Delivered On',
+                      type: 'date',
+                      admin: {
+                        width: '50%',
+                        date: { displayFormat: 'MM/dd/yyyy', pickerAppearance: 'dayOnly' },
+                      },
+                    },
+                  ],
+                },
+              ],
             },
+            // ── Fulfilment Dates (Pickup) ─────────────────────────────────────
             {
-              name: 'pointsUsed',
-              type: 'number',
-              admin: {},
+              type: 'collapsible',
+              label: 'Pickup Fulfilment',
+              admin: {
+                initCollapsed: false,
+                condition: (data) => data?.deliveryOption === 'pickup',
+              },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'isPickupReady',
+                      label: 'Pickup Ready',
+                      type: 'checkbox',
+                      defaultValue: false,
+                      admin: {
+                        width: '50%',
+                        description: 'Mark when the order is packed and ready for customer pickup',
+                      },
+                    },
+                    {
+                      name: 'pickedUpDate',
+                      label: 'Picked Up Date',
+                      type: 'date',
+                      admin: {
+                        width: '50%',
+                        date: { displayFormat: 'MM/dd/yyyy', pickerAppearance: 'dayOnly' },
+                      },
+                    },
+                  ],
+                },
+              ],
             },
+            // ── Refund Details ────────────────────────────────────────────────
+            {
+              type: 'collapsible',
+              label: 'Refund Details',
+              admin: {
+                initCollapsed: false,
+                condition: (data) =>
+                  data?.paymentStatus === 'refund-initiated' ||
+                  data?.paymentStatus === 'refunded',
+              },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'refundReason',
+                      label: 'Refund Reason',
+                      type: 'text',
+                      admin: { width: '50%' },
+                    },
+                    {
+                      name: 'refundedOn',
+                      label: 'Refunded On',
+                      type: 'date',
+                      admin: {
+                        width: '25%',
+                        date: { displayFormat: 'MM/dd/yyyy', pickerAppearance: 'dayOnly' },
+                      },
+                    },
+                    {
+                      name: 'refundedAmount',
+                      label: 'Refunded Amount (AED)',
+                      type: 'number',
+                      min: 0,
+                      admin: { width: '25%', readOnly: true },
+                    },
+                  ],
+                },
+              ],
+            },
+            // ── Discounts & Points ────────────────────────────────────────────
+            {
+              type: 'collapsible',
+              label: 'Discounts & Points',
+              admin: { initCollapsed: false },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'couponCode',
+                      type: 'relationship',
+                      relationTo: 'coupon',
+                      admin: {
+                        width: '50%',
+                        condition: (data) => data?.origin === 'one-time',
+                      },
+                    },
+                    {
+                      name: 'pointsUsed',
+                      label: 'WT Points Used',
+                      type: 'number',
+                      admin: { width: '50%' },
+                    },
+                  ],
+                },
+              ],
+            },
+            // ── Financial Breakdown ───────────────────────────────────────────
             {
               name: 'financials',
               type: 'group',
@@ -638,30 +737,10 @@ export const WebOrders: CollectionConfig = {
                   fields: [
                     {
                       name: 'subtotal',
-                      label: 'Subtotal (Before Discounts)',
+                      label: 'Subtotal',
                       type: 'number',
                       required: true,
                       admin: { width: '50%', description: 'Sum of all item prices × quantities' },
-                    },
-                    {
-                      name: 'couponDiscount',
-                      label: 'Coupon Discount',
-                      type: 'number',
-                      admin: { width: '50%', description: 'Discount applied via coupon code' },
-                    },
-                  ],
-                },
-                {
-                  type: 'row',
-                  fields: [
-                    {
-                      name: 'wtCoinsDiscount',
-                      label: 'WT Coins Discount',
-                      type: 'number',
-                      admin: {
-                        width: '50%',
-                        description: 'Discount applied via WT Coins redemption',
-                      },
                     },
                     {
                       name: 'shippingCharge',
@@ -675,34 +754,42 @@ export const WebOrders: CollectionConfig = {
                   type: 'row',
                   fields: [
                     {
+                      name: 'couponDiscount',
+                      label: 'Coupon Discount',
+                      type: 'number',
+                      admin: { width: '33%', description: 'Discount applied via coupon code' },
+                    },
+                    {
+                      name: 'wtCoinsDiscount',
+                      label: 'WT Coins Discount',
+                      type: 'number',
+                      admin: { width: '33%', description: 'Discount applied via WT Coins redemption' },
+                    },
+                    {
                       name: 'taxPercentage',
-                      label: 'Tax Percentage',
+                      label: 'Tax %',
                       type: 'number',
                       min: 0,
                       max: 100,
-                      admin: {
-                        width: '50%',
-                        description: 'Tax percentage applied on (subtotal − discounts + shipping)',
-                      },
+                      admin: { width: '33%', description: 'Tax rate applied on taxable amount' },
                     },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
                     {
                       name: 'taxAmount',
-                      label: 'Tax',
+                      label: 'Tax Amount',
                       type: 'number',
-                      admin: {
-                        width: '50%',
-                        description: 'Tax applied on (subtotal − discounts + shipping)',
-                      },
+                      admin: { width: '50%', description: 'Computed tax on (subtotal − discounts + shipping)' },
                     },
                     {
                       name: 'total',
                       label: 'Grand Total',
                       type: 'number',
                       required: true,
-                      admin: {
-                        width: '50%',
-                        description: 'Final amount charged (subtotal − discounts + shipping + tax)',
-                      },
+                      admin: { width: '50%', description: 'Final amount charged (subtotal − discounts + shipping + tax)' },
                     },
                   ],
                 },

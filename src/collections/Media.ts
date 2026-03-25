@@ -6,8 +6,9 @@ export const Media: CollectionConfig = {
   admin: {
     group: 'Content',
     useAsTitle: 'alt',
-    description: 'Upload media files',
+    description: 'Upload and manage images',
     defaultColumns: ['', 'alt', 'createdAt', 'updatedAt'],
+    hidden: ({ user }: any) => user?.role !== 'super-admin',
   },
   access: {
     read: () => true,

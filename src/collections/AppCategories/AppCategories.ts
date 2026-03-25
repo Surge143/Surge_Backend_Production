@@ -20,8 +20,10 @@ export const AppCategories: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    group: 'Cafe',
+    group: 'Cafe Management',
+    description: 'Organize items into groups',
     defaultColumns: ['id', 'title', 'slug'],
+    hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
   },
   fields: [
     {

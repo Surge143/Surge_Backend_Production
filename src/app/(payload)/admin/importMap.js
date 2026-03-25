@@ -7,6 +7,11 @@ import { ShopMenuQuickCreate as ShopMenuQuickCreate_98068d82267ea96f44e26a90051c
 import { ShopCouponQuickCreate as ShopCouponQuickCreate_47d2b66206e6260100d26bf1b04511f5 } from '@/collections/ShopCoupons/components/ShopCouponQuickCreate'
 import { ExportListMenuItem as ExportListMenuItem_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
 import { ImportListMenuItem as ImportListMenuItem_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
+import { VariantsCell as VariantsCell_3123a759e4230be9083cea423ea76d7d } from '@/collections/WebProducts/components/cells/VariantsCell'
+import { PriceCell as PriceCell_83c01769fcefda09b6b27c76f6339a73 } from '@/collections/WebProducts/components/cells/PriceCell'
+import { SalePriceCell as SalePriceCell_8211f85e47c884627db966fbc8901dda } from '@/collections/WebProducts/components/cells/SalePriceCell'
+import { StockCell as StockCell_05637b5140b5e1f1d0ffeddcad2f8824 } from '@/collections/WebProducts/components/cells/StockCell'
+import { ImageCell as ImageCell_c9acb45689f876003db326d0d50c4075 } from '@/collections/WebProducts/components/cells/ImageCell'
 import { NestedSubCategorySelection as NestedSubCategorySelection_b857d3801b37a2d09fca3a66188c8e8f } from '@/collections/WebProducts/components/NestedSubCategorySelection'
 import { RecommendedProductsField as RecommendedProductsField_c460dfb5f15c3f3a62221bd72969049d } from '@/collections/WebProducts/components/RecommendedProductsField'
 import { OverviewComponent as OverviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
@@ -15,6 +20,7 @@ import { MetaImageComponent as MetaImageComponent_a8a977ebc872c5d5ea7ee689724c08
 import { MetaDescriptionComponent as MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { SlugField as SlugField_e4e93a17dcc1addf246cf16a27951ec3 } from '@/collections/components/slugField/customSlugField'
+import { ProductsListView as ProductsListView_d08964f99a0d9b59d23ce1ea2d659e72 } from '@/collections/WebProducts/components/ProductsListView'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -49,7 +55,6 @@ import { ExportSaveButton as ExportSaveButton_7d8c2ee66d868f2af498f46de2c9b2f8 }
 import { ImportPreview as ImportPreview_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
 import { FolderTypeField as FolderTypeField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
 import { ShopManagerDashboardLink as ShopManagerDashboardLink_167428d647347319b1ef8a5907bede83 } from '@/collections/components/Navbar/ShopManagerDashboardLink'
-import { StoreDashboardLink as StoreDashboardLink_96c56f38833246a5e56695bf19d3d6ce } from '@/collections/components/Navbar/StoreDashboardLink'
 import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
 import { ImportExportProvider as ImportExportProvider_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
 import { ShopManagerDashboard as ShopManagerDashboard_8333465cff1e575b1730266ecf0cec9a } from '@/collections/components/ShopManagerCustomComponents/ShopManagerDashboard/ShopManagerDashboard'
@@ -66,6 +71,11 @@ export const importMap = {
   "@/collections/ShopCoupons/components/ShopCouponQuickCreate#ShopCouponQuickCreate": ShopCouponQuickCreate_47d2b66206e6260100d26bf1b04511f5,
   "payload-import-export/rsc#ExportListMenuItem": ExportListMenuItem_7d8c2ee66d868f2af498f46de2c9b2f8,
   "payload-import-export/rsc#ImportListMenuItem": ImportListMenuItem_7d8c2ee66d868f2af498f46de2c9b2f8,
+  "@/collections/WebProducts/components/cells/VariantsCell#VariantsCell": VariantsCell_3123a759e4230be9083cea423ea76d7d,
+  "@/collections/WebProducts/components/cells/PriceCell#PriceCell": PriceCell_83c01769fcefda09b6b27c76f6339a73,
+  "@/collections/WebProducts/components/cells/SalePriceCell#SalePriceCell": SalePriceCell_8211f85e47c884627db966fbc8901dda,
+  "@/collections/WebProducts/components/cells/StockCell#StockCell": StockCell_05637b5140b5e1f1d0ffeddcad2f8824,
+  "@/collections/WebProducts/components/cells/ImageCell#ImageCell": ImageCell_c9acb45689f876003db326d0d50c4075,
   "@/collections/WebProducts/components/NestedSubCategorySelection#NestedSubCategorySelection": NestedSubCategorySelection_b857d3801b37a2d09fca3a66188c8e8f,
   "@/collections/WebProducts/components/RecommendedProductsField#RecommendedProductsField": RecommendedProductsField_c460dfb5f15c3f3a62221bd72969049d,
   "@payloadcms/plugin-seo/client#OverviewComponent": OverviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
@@ -74,6 +84,7 @@ export const importMap = {
   "@payloadcms/plugin-seo/client#MetaDescriptionComponent": MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@/collections/components/slugField/customSlugField#SlugField": SlugField_e4e93a17dcc1addf246cf16a27951ec3,
+  "@/collections/WebProducts/components/ProductsListView#ProductsListView": ProductsListView_d08964f99a0d9b59d23ce1ea2d659e72,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -108,7 +119,6 @@ export const importMap = {
   "payload-import-export/rsc#ImportPreview": ImportPreview_7d8c2ee66d868f2af498f46de2c9b2f8,
   "@payloadcms/next/client#FolderTypeField": FolderTypeField_2b8867833a34864a02ddf429b0728a40,
   "@/collections/components/Navbar/ShopManagerDashboardLink#ShopManagerDashboardLink": ShopManagerDashboardLink_167428d647347319b1ef8a5907bede83,
-  "@/collections/components/Navbar/StoreDashboardLink#StoreDashboardLink": StoreDashboardLink_96c56f38833246a5e56695bf19d3d6ce,
   "@payloadcms/storage-s3/client#S3ClientUploadHandler": S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24,
   "payload-import-export/rsc#ImportExportProvider": ImportExportProvider_7d8c2ee66d868f2af498f46de2c9b2f8,
   "@/collections/components/ShopManagerCustomComponents/ShopManagerDashboard/ShopManagerDashboard#ShopManagerDashboard": ShopManagerDashboard_8333465cff1e575b1730266ecf0cec9a,

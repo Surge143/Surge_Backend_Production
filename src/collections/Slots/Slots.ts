@@ -4,15 +4,15 @@ import { APIError } from 'payload'
 export const Slots: CollectionConfig = {
     slug: "slots",
     labels: {
-        singular: "Slot",
-        plural: "Slots",
+        singular: "Time Slot",
+        plural: "Time Slots",
     },
     admin: {
         defaultColumns: ["timeSelection", "slot", "isActive", "currentLoad", "maxCapacity", "shop"],
-        group: "Cafe",
+        group: "Cafe Management",
         useAsTitle: "slot",
-        description:
-            "Define time slots for customer order bookings. Control availability and capacity per slot.",
+        description: "Set pickup and delivery windows",
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     hooks: {
         beforeChange: [

@@ -5,12 +5,13 @@ export const AppBanners: CollectionConfig = {
     admin: {
         useAsTitle: 'page',
         group: 'Marketing',
-        description: 'Manage application banners for Home, Cafe, and Store pages.',
+        description: 'Manage homepage banners in the app',
         defaultColumns: ['page', 'image', 'createdAt'],
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     labels: {
-        singular: 'Application Banner',
-        plural: 'Application Banners',
+        singular: 'Banner & Promotion',
+        plural: 'Banners & Promotions',
     },
     access: {
         read: () => true,

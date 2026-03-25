@@ -3,9 +3,13 @@ import { validateFutureDate } from '@/utilities/validateFutureDate';
 
 export const UserWTCoins: CollectionConfig = {
     slug: 'user-wt-coins',
+    labels: {
+        singular: 'WT Beans Customer',
+        plural: 'WT Beans Customers',
+    },
     admin: {
-        description: "Aggregated User WT Coins Balance",
-        group: 'Loyalty Program',
+        description: 'View and adjust customer coin balances',
+        group: 'Loyalty & Rewards',
         useAsTitle: 'user',
     },
     access: {

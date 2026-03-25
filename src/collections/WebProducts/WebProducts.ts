@@ -10,13 +10,21 @@ import { type CollectionConfig } from "payload";
 export const WebProducts: CollectionConfig = {
     slug: 'web-products',
     labels: {
-        singular: 'Store Product',
-        plural: 'Store Products'
+        singular: 'Product',
+        plural: 'Products'
     },
     admin: {
         useAsTitle: 'name',
-        group: 'Store',
-        defaultColumns: ['name', 'regularPrice', 'salePrice', 'inStock', 'stock', 'slug']
+        group: 'Store Management',
+        description: 'Add, edit or remove products',
+        defaultColumns: ['productImage', 'name', 'categories', 'regularPrice', 'salePrice', 'inStock', 'variants', '_status'],
+        components: {
+            views: {
+                list: {
+                    Component: '@/collections/WebProducts/components/ProductsListView#ProductsListView',
+                },
+            },
+        },
     },
     versions: {
         drafts: {
@@ -70,8 +78,10 @@ export const WebProducts: CollectionConfig = {
                             type: 'array',
                             required: true,
                             admin: {
-                                // Uses top-level data to hide/show the entire array
                                 condition: (data) => Boolean(data?.hasVariantOptions),
+                                components: {
+                                    Cell: '@/collections/WebProducts/components/cells/VariantsCell#VariantsCell',
+                                },
                             },
                             fields: [
                                 {
@@ -79,6 +89,9 @@ export const WebProducts: CollectionConfig = {
                                     label: 'Variant Name',
                                     type: 'text',
                                     required: true,
+                                    admin:{
+                                        description: 'Add quantity in Grams'
+                                    }
                                 },
                                 {
                                     name: 'variantImage',
@@ -181,14 +194,24 @@ export const WebProducts: CollectionConfig = {
                                     type: 'number',
                                     min: 0,
                                     required: true,
-                                    admin: { width: '50%' },
+                                    admin: {
+                                        width: '50%',
+                                        components: {
+                                            Cell: '@/collections/WebProducts/components/cells/PriceCell#PriceCell',
+                                        },
+                                    },
                                 },
                                 {
                                     name: 'salePrice',
                                     label: 'Sale Price',
                                     type: 'number',
                                     min: 0,
-                                    admin: { width: '50%' },
+                                    admin: {
+                                        width: '50%',
+                                        components: {
+                                            Cell: '@/collections/WebProducts/components/cells/SalePriceCell#SalePriceCell',
+                                        },
+                                    },
                                     validate: (val, { siblingData }) => {
                                         if (!val) return true;
                                         const regularPrice = siblingData?.regularPrice;
@@ -205,7 +228,18 @@ export const WebProducts: CollectionConfig = {
                             type: 'row',
                             admin: { condition: (data) => !data?.hasVariantOptions },
                             fields: [
-                                { name: 'inStock', label: 'In Stock', type: 'checkbox', defaultValue: false, admin: { width: '50%' } },
+                                {
+                                name: 'inStock',
+                                label: 'In Stock',
+                                type: 'checkbox',
+                                defaultValue: false,
+                                admin: {
+                                    width: '50%',
+                                    components: {
+                                        Cell: '@/collections/WebProducts/components/cells/StockCell#StockCell',
+                                    },
+                                },
+                            },
                                 {
                                     name: 'stockQuantity',
                                     label: 'Stock Quantity',
@@ -281,7 +315,10 @@ export const WebProducts: CollectionConfig = {
                             relationTo: 'media',
                             required: true,
                             admin: {
-                                description: 'Upload product image that will be visible on Product Listing'
+                                description: 'Upload product image that will be visible on Product Listing',
+                                components: {
+                                    Cell: '@/collections/WebProducts/components/cells/ImageCell#ImageCell',
+                                },
                             },
                             filterOptions: { mimeType: { contains: 'image' } },
                         },

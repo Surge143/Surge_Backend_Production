@@ -9,14 +9,15 @@ const formatSlug = (val: string): string =>
 export const WebSubCategories: CollectionConfig = {
     slug: 'web-sub-categories',
     labels: {
-        singular: 'Store Sub-Category',
-        plural: 'Store Sub-Categories'
+        singular: 'Sub-category',
+        plural: 'Sub-categories'
     },
     access: {
         read: () => true,
     },
     admin: {
-        group: 'Store',
+        group: 'Store Management',
+        description: 'More specific product groupings',
         defaultColumns: ['slug', 'parentCategory'],
     },
     fields: [

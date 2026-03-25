@@ -42,7 +42,6 @@ export default buildConfig({
       },
       afterNavLinks: [
         '@/collections/components/Navbar/ShopManagerDashboardLink#ShopManagerDashboardLink',
-        '@/collections/components/Navbar/StoreDashboardLink#StoreDashboardLink',
       ],
     },
     user: Admins.slug,

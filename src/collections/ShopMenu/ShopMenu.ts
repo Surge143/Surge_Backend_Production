@@ -12,7 +12,8 @@ export const ShopMenu: CollectionConfig = {
         components: {
             beforeListTable: ['@/collections/ShopMenu/components/ShopMenuQuickCreate#ShopMenuQuickCreate'],
         },
-        group: 'Cafe',
+        group: 'Cafe Management',
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     access: {
         read: async ({ req: { user, payload } }) => {

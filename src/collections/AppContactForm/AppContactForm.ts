@@ -3,12 +3,14 @@ import type { CollectionConfig } from "payload";
 export const AppContactForm: CollectionConfig = {
     slug: "app-contact-form",
     labels: {
-        singular: "Application Contact Form Submission",
-        plural: "Application Contact Form Submissions"
+        singular: 'App Contact Submission',
+        plural: 'Contact Submissions (App)',
     },
     admin: {
         defaultColumns: ['user', 'fullName', 'email', 'phone', 'inquiryType', 'message', 'createdAt'],
         group: 'Marketing',
+        description: 'Messages received from the app',
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     access: {
         read: () => true,

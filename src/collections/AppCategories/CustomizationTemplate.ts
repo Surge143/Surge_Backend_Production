@@ -3,9 +3,15 @@ import { syncTemplates } from './hooks/syncTemplates'
 
 export const CustomizationTemplate: CollectionConfig = {
     slug: 'customization-template',
+    labels: {
+        singular: 'Customization Option',
+        plural: 'Customization Options',
+    },
     admin: {
         useAsTitle: 'title',
-        group: 'Cafe',
+        group: 'Cafe Management',
+        description: 'Sizes, add-ons, and modifiers',
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     hooks: {
         afterChange: [syncTemplates],

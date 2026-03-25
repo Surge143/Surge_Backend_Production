@@ -130,11 +130,11 @@ export const GLOBAL_STYLES = `
   .std-root .crow:hover{background:var(--std-cancel-bg)!important}
 
   /* ── Responsive grid columns ── */
-  .std-root .std-order-grid{display:grid;grid-template-columns:90px 70px 200px 120px 100px 1fr 180px}
-  .std-root .std-cancel-grid{display:grid;grid-template-columns:90px 70px 200px 120px 100px 1fr 160px}
+  .std-root .std-order-grid{display:grid;grid-template-columns:90px 70px 200px 120px 100px 0.9fr 180px}
+  .std-root .std-cancel-grid{display:grid;grid-template-columns:90px 70px 200px 120px 100px 0.9fr 160px}
   @media(max-width:1200px){
-    .std-root .std-order-grid{grid-template-columns:80px 60px 160px 100px 85px 1fr 160px}
-    .std-root .std-cancel-grid{grid-template-columns:80px 60px 160px 100px 85px 1fr 140px}
+    .std-root .std-order-grid{grid-template-columns:80px 60px 160px 100px 85px 0.9fr 160px}
+    .std-root .std-cancel-grid{grid-template-columns:80px 60px 160px 100px 85px 0.9fr 140px}
   }
   @media(max-width:900px){
     .std-root .std-order-grid{grid-template-columns:70px 55px 140px 90px 75px 1fr 130px}

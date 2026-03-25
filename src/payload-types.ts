@@ -297,7 +297,7 @@ export interface User {
   collection: 'users';
 }
 /**
- * Upload media files
+ * Upload and manage images
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
@@ -387,6 +387,8 @@ export interface Admin {
   collection: 'admins';
 }
 /**
+ * Manage your cafe locations
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "shop".
  */
@@ -427,6 +429,8 @@ export interface Shop {
   createdAt: string;
 }
 /**
+ * Organize items into groups
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "app-categories".
  */
@@ -442,6 +446,8 @@ export interface AppCategory {
   createdAt: string;
 }
 /**
+ * More specific groupings within a category
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "app-sub-categories".
  */
@@ -458,6 +464,8 @@ export interface AppSubCategory {
   createdAt: string;
 }
 /**
+ * Sizes, add-ons, and modifiers
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "customization-template".
  */
@@ -498,6 +506,8 @@ export interface CustomizationTemplate {
   createdAt: string;
 }
 /**
+ * Add or edit food & drink items
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "menu".
  */
@@ -654,6 +664,8 @@ export interface ShopMenu {
   createdAt: string;
 }
 /**
+ * Create and manage store discount codes
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "coupon".
  */
@@ -731,6 +743,8 @@ export interface Coupon {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Add, edit or remove products
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "web-products".
  */
@@ -741,6 +755,9 @@ export interface WebProduct {
   hasVariantOptions?: boolean | null;
   variants?:
     | {
+        /**
+         * Add quantity in Grams
+         */
         variantName: string;
         variantImage: number | Media;
         hasVariantSub?: boolean | null;
@@ -823,6 +840,8 @@ export interface WebProduct {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Organize products into groups
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "web-categories".
  */
@@ -838,6 +857,8 @@ export interface WebCategory {
   createdAt: string;
 }
 /**
+ * Create and manage discount codes
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "shop-coupon".
  */
@@ -973,6 +994,8 @@ export interface AppCart {
   createdAt: string;
 }
 /**
+ * See what customers are saving
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "wishlist".
  */
@@ -998,6 +1021,8 @@ export interface Wishlist {
   createdAt: string;
 }
 /**
+ * View and process incoming orders
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "app-orders".
  */
@@ -1086,7 +1111,7 @@ export interface AppOrder {
   createdAt: string;
 }
 /**
- * Define time slots for customer order bookings. Control availability and capacity per slot.
+ * Set pickup and delivery windows
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "slots".
@@ -1125,6 +1150,8 @@ export interface Slot {
   createdAt: string;
 }
 /**
+ * More specific product groupings
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "web-sub-categories".
  */
@@ -1153,6 +1180,8 @@ export interface WebSubCategory {
   createdAt: string;
 }
 /**
+ * Follow up on customers who didn't check out
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "web-cart".
  */
@@ -1171,7 +1200,7 @@ export interface WebCart {
   createdAt: string;
 }
 /**
- * Aggregated User WT Coins Balance
+ * View and adjust customer coin balances
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "user-wt-coins".
@@ -1245,6 +1274,8 @@ export interface UserWtCoin {
   createdAt: string;
 }
 /**
+ * View and fulfill store orders
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "web-orders".
  */
@@ -1255,16 +1286,16 @@ export interface WebOrder {
    * Select the registered user account for this order.
    */
   user?: (number | null) | User;
-  deliveryOption: 'delivery' | 'pickup';
-  /**
-   * The ID from Stripe
-   */
-  stripeOrderId?: string | null;
-  origin: 'subscription' | 'one-time';
   /**
    * Stored at checkout for guest-to-user linking.
    */
   email?: string | null;
+  deliveryOption: 'delivery' | 'pickup';
+  origin: 'subscription' | 'one-time';
+  /**
+   * The payment ID from Stripe
+   */
+  stripeOrderId?: string | null;
   items: {
     product: number | WebProduct;
     /**
@@ -1302,14 +1333,14 @@ export interface WebOrder {
   };
   paymentStatus: 'pending' | 'completed' | 'failed' | 'refund-initiated' | 'refunded';
   deliveryStatus?: ('placed' | 'shipped' | 'delivered' | 'cancelled' | 'refund-initiated' | 'refunded') | null;
-  refundReason?: string | null;
   deliveringBy?: string | null;
   deliveredOn?: string | null;
   /**
-   * Mark when order is packed and ready for customer pickup
+   * Mark when the order is packed and ready for customer pickup
    */
   isPickupReady?: boolean | null;
   pickedUpDate?: string | null;
+  refundReason?: string | null;
   refundedOn?: string | null;
   refundedAmount?: number | null;
   couponCode?: (number | null) | Coupon;
@@ -1320,6 +1351,10 @@ export interface WebOrder {
      */
     subtotal: number;
     /**
+     * Shipping fee (0 for pickup orders)
+     */
+    shippingCharge?: number | null;
+    /**
      * Discount applied via coupon code
      */
     couponDiscount?: number | null;
@@ -1328,15 +1363,11 @@ export interface WebOrder {
      */
     wtCoinsDiscount?: number | null;
     /**
-     * Shipping fee (0 for pickup orders)
-     */
-    shippingCharge?: number | null;
-    /**
-     * Tax percentage applied on (subtotal − discounts + shipping)
+     * Tax rate applied on taxable amount
      */
     taxPercentage?: number | null;
     /**
-     * Tax applied on (subtotal − discounts + shipping)
+     * Computed tax on (subtotal − discounts + shipping)
      */
     taxAmount?: number | null;
     /**
@@ -1364,6 +1395,8 @@ export interface WebOrder {
   createdAt: string;
 }
 /**
+ * Manage customers on a repeat plan
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "web-subscription".
  */
@@ -1474,6 +1507,8 @@ export interface WebSubscription {
   createdAt: string;
 }
 /**
+ * Manage stamp card progress
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "wt-stamps".
  */
@@ -1576,6 +1611,8 @@ export interface UserPreference {
   createdAt: string;
 }
 /**
+ * Messages received from the app
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "app-contact-form".
  */
@@ -1600,6 +1637,8 @@ export interface AppContactForm {
   createdAt: string;
 }
 /**
+ * Messages received from the website
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "web-contact-form".
  */
@@ -1655,6 +1694,8 @@ export interface AppBestSeller {
   createdAt: string;
 }
 /**
+ * Manage events and classes
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "workshop".
  */
@@ -1675,7 +1716,7 @@ export interface Workshop {
   createdAt: string;
 }
 /**
- * Create and manage editorial articles for the company blog.
+ * Publish articles and announcements
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "blogs".
@@ -1736,7 +1777,7 @@ export interface Blog {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Manage and review wholesale partnership inquiries.
+ * Handle B2B and bulk orders
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "wholesale".
@@ -1765,7 +1806,7 @@ export interface Wholesale {
   createdAt: string;
 }
 /**
- * Manage application banners for Home, Cafe, and Store pages.
+ * Manage homepage banners in the app
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "app-banners".
@@ -1784,6 +1825,8 @@ export interface AppBanner {
   createdAt: string;
 }
 /**
+ * Send email updates to customers
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "newsletters".
  */
@@ -2822,10 +2865,10 @@ export interface UserWtCoinsSelect<T extends boolean = true> {
 export interface WebOrdersSelect<T extends boolean = true> {
   customerType?: T;
   user?: T;
-  deliveryOption?: T;
-  stripeOrderId?: T;
-  origin?: T;
   email?: T;
+  deliveryOption?: T;
+  origin?: T;
+  stripeOrderId?: T;
   items?:
     | T
     | {
@@ -2863,11 +2906,11 @@ export interface WebOrdersSelect<T extends boolean = true> {
       };
   paymentStatus?: T;
   deliveryStatus?: T;
-  refundReason?: T;
   deliveringBy?: T;
   deliveredOn?: T;
   isPickupReady?: T;
   pickedUpDate?: T;
+  refundReason?: T;
   refundedOn?: T;
   refundedAmount?: T;
   couponCode?: T;
@@ -2876,9 +2919,9 @@ export interface WebOrdersSelect<T extends boolean = true> {
     | T
     | {
         subtotal?: T;
+        shippingCharge?: T;
         couponDiscount?: T;
         wtCoinsDiscount?: T;
-        shippingCharge?: T;
         taxPercentage?: T;
         taxAmount?: T;
         total?: T;
@@ -3293,7 +3336,7 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * White Mantis Coins Configuration
+ * Track beans earned and redeemed
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "wt-coins".

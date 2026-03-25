@@ -24,7 +24,7 @@ interface OrderRowProps {
   loading: boolean
   onShip?: (deliverByDate: string) => void
   onMarkReady?: () => void
-  onDeliver?: () => void
+  onDeliver?: (deliveredOnDate: string) => void
   onPickedUp?: (pickedUpDate: string) => void
   onRefund?: (reason: string) => void
 }
@@ -49,6 +49,8 @@ export const OrderRow: React.FC<OrderRowProps> = ({
   const [deliverByDate, setDeliverByDate] = useState('')
   const [pickupOpen, setPickupOpen] = useState(false)
   const [pickedUpDate, setPickedUpDate] = useState('')
+  const [deliverOpen, setDeliverOpen] = useState(false)
+  const [deliveredOnDate, setDeliveredOnDate] = useState('')
 
   const leftBorderColor = isOpen ? sectionColor : 'transparent'
 
@@ -85,7 +87,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
         }}
       >
         {/* Order no */}
-        <div style={{ fontWeight: 700, fontSize: 13, color: sectionColor }}>{order.no}</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: sectionColor }}>{order.id}</div>
 
         {/* Time */}
         <div style={{ color: C.textMute, fontSize: 12 }}>{order.time}</div>
@@ -128,7 +130,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
 
         {/* Actions */}
         <div
-          style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}
+          style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'nowrap' }}
           onClick={(e) => e.stopPropagation()}
         >
           {sectionKey === 'new' && (
@@ -158,7 +160,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                       }}
                     >
                       <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600, letterSpacing: 0.5, marginBottom: 6 }}>
-                        DELIVER BY DATE
+                        DELIVERING BY DATE
                       </div>
                       <input
                         type="date"
@@ -305,14 +307,68 @@ export const OrderRow: React.FC<OrderRowProps> = ({
               </div>
             </>
           )}
-          {/* ── Shipped/delivery: mark delivered ── */}
+          {/* ── Shipped/delivery: mark delivered with date popover ── */}
           {sectionKey === 'shipped' && order.type === 'delivery' && (
-            <ABtn
-              label={loading ? '…' : 'Delivered'}
-              c={C.new}
-              onClick={() => onDeliver && onDeliver()}
-              disabled={loading}
-            />
+            <div style={{ position: 'relative' }}>
+              <ABtn
+                label={loading ? '…' : 'Delivered'}
+                c={C.new}
+                onClick={() => setDeliverOpen((p) => !p)}
+                disabled={loading}
+              />
+              {deliverOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    left: 0,
+                    zIndex: 50,
+                    background: C.surface,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 8,
+                    padding: 12,
+                    boxShadow: '0 4px 20px rgba(0,0,0,.12)',
+                    minWidth: 200,
+                  }}
+                >
+                  <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600, letterSpacing: 0.5, marginBottom: 6 }}>
+                    DELIVERED ON DATE
+                  </div>
+                  <input
+                    type="date"
+                    value={deliveredOnDate}
+                    max={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setDeliveredOnDate(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: C.bg,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 6,
+                      padding: '6px 8px',
+                      color: deliveredOnDate ? C.text : C.textMute,
+                      fontSize: 12,
+                      outline: 'none',
+                      marginBottom: 8,
+                    }}
+                  />
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      onClick={() => { setDeliverOpen(false); setDeliveredOnDate('') }}
+                      style={{ flex: 1, padding: '5px 0', background: 'none', border: `1px solid ${C.border}`, borderRadius: 6, color: C.textMute, fontSize: 11, cursor: 'pointer' }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => { if (!deliveredOnDate) return; onDeliver && onDeliver(deliveredOnDate); setDeliverOpen(false); setDeliveredOnDate('') }}
+                      disabled={!deliveredOnDate || loading}
+                      style={{ flex: 1, padding: '5px 0', background: deliveredOnDate ? C.new : C.new + '40', border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 600, cursor: deliveredOnDate && !loading ? 'pointer' : 'not-allowed' }}
+                    >
+                      {loading ? '…' : 'Confirm'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
           {/* ── Shipped/pickup: mark picked up with date popover ── */}
           {sectionKey === 'shipped' && order.type === 'pickup' && (
@@ -474,7 +530,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                 <div style={{ fontSize: 11, color: C.textSub, marginBottom: 2 }}>{order.email}</div>
               )}
               {order.phone && (
-                <div style={{ fontSize: 11, color: C.textSub, marginBottom: 6 }}>{order.phone}</div>
+                <div style={{ fontSize: 11, color: C.textSub, marginBottom: 6 }}>+971 {order.phone}</div>
               )}
 
               {/* Shipping address with labels */}
@@ -545,7 +601,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                     {order.shippingAddress.phone && (
                       <div>
                         <span style={{ color: C.textMute, fontWeight: 600 }}>Phone: </span>
-                        {order.shippingAddress.phone}
+                        +971 {order.shippingAddress.phone}
                       </div>
                     )}
                   </div>

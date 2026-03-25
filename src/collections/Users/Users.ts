@@ -12,12 +12,17 @@ import { validateReferral } from './endpoints/validateReferral'
 
 export const Users: CollectionConfig = {
   slug: 'users',
-
+  labels: {
+    singular: 'Customer',
+    plural: 'Customers',
+  },
   auth: {
     tokenExpiration: 60 * 60 * 24 * 7,
   },
   admin: {
     useAsTitle: 'email',
+    hidden: ({ user }: any) => user?.role !== 'super-admin' || user?.role === 'admin',
+    group: 'Profiles',
   },
 
   endpoints: [
@@ -88,7 +93,7 @@ export const Users: CollectionConfig = {
             const urlSafeToken = encryptedBarcode
               .replace(/\+/g, '-')
               .replace(/\//g, '_')
-              .replace(/=+$/, '');
+              .replace(/=+$/, '')
 
             await req.payload.update({
               collection: 'users',

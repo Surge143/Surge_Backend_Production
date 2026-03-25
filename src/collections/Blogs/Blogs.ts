@@ -23,7 +23,8 @@ export const Blogs: CollectionConfig = {
     admin: {
         useAsTitle: 'title',
         group: 'Marketing',
-        description: 'Create and manage editorial articles for the company blog.',
+        description: 'Publish articles and announcements',
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     versions: {
         drafts: true,

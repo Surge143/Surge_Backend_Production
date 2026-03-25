@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Order is already refunded or refund in progress' }, { status: 400 })
     }
 
-    // Attempt Stripe refund if a paymentIntentId is present
+    // Attempt Stripe refund if a paymentIntentId is present — failure does NOT block the update
+    let stripeRefundFailed = false
     const paymentIntentId = order.stripeData?.paymentIntentId
     if (paymentIntentId) {
       try {
@@ -50,20 +51,17 @@ export async function POST(req: NextRequest) {
           payment_intent: paymentIntentId,
         })
       } catch (stripeErr: any) {
-        console.error('[refund-web-order] Stripe refund error:', stripeErr)
-        return NextResponse.json(
-          { error: `Stripe refund failed: ${stripeErr.message}` },
-          { status: 500 },
-        )
+        console.error('[refund-web-order] Stripe refund error (non-blocking):', stripeErr)
+        stripeRefundFailed = true
       }
     }
 
-    // Update order status
+    // Update order status — always save refundReason regardless of Stripe result
     const updated = await payload.update({
       collection: 'web-orders',
       id: orderId,
       data: {
-        paymentStatus: 'refund-initiated',
+        paymentStatus: stripeRefundFailed ? 'failed' : 'refund-initiated',
         deliveryStatus: 'cancelled',
         refundReason: reason || 'Manager action',
         refundedOn: new Date().toISOString(),
@@ -76,7 +74,7 @@ export async function POST(req: NextRequest) {
     // Emit real-time update
     emitWebOrderUpdated(updated)
 
-    return NextResponse.json({ success: true, order: updated })
+    return NextResponse.json({ success: true, order: updated, stripeRefundFailed })
   } catch (err: any) {
     console.error('[refund-web-order] Error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

@@ -5,6 +5,7 @@ export const AppBestSeller: CollectionConfig = {
     admin: {
         useAsTitle: 'shop',
         defaultColumns: ['shop', 'updatedAt'],
+        hidden: ({ user }: any) => user?.role !== 'super-admin',
     },
     access: {
         // Public can read (for frontend), but shop-managers only see their own shop's entry

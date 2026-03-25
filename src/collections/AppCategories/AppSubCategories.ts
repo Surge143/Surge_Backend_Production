@@ -3,8 +3,8 @@ import { slugField, type CollectionConfig } from 'payload'
 export const AppSubCategories: CollectionConfig = {
     slug: 'app-sub-categories',
     labels: {
-        singular: 'Sub Category',
-        plural: 'Sub Categories',
+        singular: 'Sub-category',
+        plural: 'Sub-categories',
     },
     access: {
         read: () => true,
@@ -20,9 +20,10 @@ export const AppSubCategories: CollectionConfig = {
     },
     admin: {
         useAsTitle: 'title',
-        group: 'Cafe',
-        // Helps you see the hierarchy in the admin dashboard list
+        group: 'Cafe Management',
+        description: 'More specific groupings within a category',
         defaultColumns: ['id', 'title', 'parentCategory', 'slug'],
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     fields: [
         {

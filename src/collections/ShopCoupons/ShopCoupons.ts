@@ -19,7 +19,9 @@ export const ShopCoupons: CollectionConfig = {
             ],
         },
         defaultColumns: ['code', "shop", 'couponStatus', 'expiryDate', 'discountType', 'discountAmount'],
-        group: 'Cafe',
+        group: 'Cafe Management',
+        description: 'Create and manage discount codes',
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
 
     access: {

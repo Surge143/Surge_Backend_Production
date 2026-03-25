@@ -2,9 +2,15 @@ import { CollectionConfig, slugField } from 'payload';
 
 export const Menu: CollectionConfig = {
     slug: 'menu',
+    labels: {
+        singular: 'Menu Builder',
+        plural: 'Menu Builder',
+    },
     admin: {
         useAsTitle: 'name',
-        group: 'Management',
+        group: 'Cafe Management',
+        description: 'Add or edit food & drink items',
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     access: {
         read: ({ req: { user } }) => {

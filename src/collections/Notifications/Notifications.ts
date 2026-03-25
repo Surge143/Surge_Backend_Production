@@ -40,6 +40,7 @@ export const Notifications: CollectionConfig = {
         plural: 'Notifications',
     },
     admin: {
+        hidden: ({ user }: any) => user?.role !== 'super-admin',
     },
     access: {
         read: () => true,

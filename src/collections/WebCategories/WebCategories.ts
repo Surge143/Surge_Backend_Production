@@ -3,8 +3,8 @@ import { slugField, type CollectionConfig } from 'payload'
 export const WebCategories: CollectionConfig = {
     slug: 'web-categories',
     labels: {
-        singular: 'Store Category',
-        plural: 'Store Categories',
+        singular: 'Category',
+        plural: 'Categories',
     },
     access: {
         read: () => true,
@@ -20,7 +20,8 @@ export const WebCategories: CollectionConfig = {
     },
     admin: {
         useAsTitle: 'title',
-        group: 'Store',
+        group: 'Store Management',
+        description: 'Organize products into groups',
         defaultColumns: ['id', 'title', 'slug'],
     },
     fields: [

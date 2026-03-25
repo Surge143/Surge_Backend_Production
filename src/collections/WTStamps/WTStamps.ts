@@ -7,7 +7,9 @@ export const WTStamps: CollectionConfig = {
         plural: 'Stamps',
     },
     admin: {
-        group: 'Loyalty Program',
+        group: 'Loyalty & Rewards',
+        description: 'Manage stamp card progress',
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     fields: [
         {

@@ -5,8 +5,9 @@ export const Wholesale: CollectionConfig = {
     admin: {
         useAsTitle: 'company',
         group: 'Marketing',
-        description: 'Manage and review wholesale partnership inquiries.',
+        description: 'Handle B2B and bulk orders',
         defaultColumns: ['company', 'email', 'createdAt'],
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     access: {
         read: ({ req: { user } }) => {

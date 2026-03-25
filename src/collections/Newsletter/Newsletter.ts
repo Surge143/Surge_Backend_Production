@@ -8,6 +8,8 @@ export const Newsletter: CollectionConfig = {
   admin: {
     useAsTitle: 'email',
     group: 'Marketing',
+    description: 'Send email updates to customers',
+    hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
   },
   hooks: {
     beforeOperation: [

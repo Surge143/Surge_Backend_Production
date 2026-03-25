@@ -3,12 +3,14 @@ import type { CollectionConfig } from "payload";
 export const WebContactForm: CollectionConfig = {
     slug: "web-contact-form",
     labels: {
-        singular: "Website Contact Form Submission",
-        plural: "Website Contact Form Submissions"
+        singular: 'Website Contact Submission',
+        plural: 'Contact Submissions (Website)',
     },
     admin: {
         defaultColumns: ['name', 'email', 'phone', 'inquiryType', 'message'],
         group: 'Marketing',
+        description: 'Messages received from the website',
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     access: {
         read: () => true,

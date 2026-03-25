@@ -32,7 +32,9 @@ export const Coupon: CollectionConfig = {
     admin: {
         useAsTitle: "code",
         defaultColumns: ["code", "couponStatus", "isPubliclyVisible", "applicability", "discountType", "discountAmount", "expiryDate"],
-        group: "Management",
+        group: "Store Management",
+        description: "Create and manage store discount codes",
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     access: {
         read: () => true,

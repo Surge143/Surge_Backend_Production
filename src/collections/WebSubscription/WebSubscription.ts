@@ -13,12 +13,13 @@ function generateOrderID() {
 export const WebSubscription: CollectionConfig = {
   slug: 'web-subscription',
   labels: {
-    singular: 'Store Subscription',
-    plural: 'Store Subscriptions',
+    singular: 'Subscription',
+    plural: 'Subscriptions',
   },
   admin: {
     useAsTitle: 'id',
-    group: 'Store',
+    group: 'Store Management',
+    description: 'Manage customers on a repeat plan',
   },
   endpoints: [
     {

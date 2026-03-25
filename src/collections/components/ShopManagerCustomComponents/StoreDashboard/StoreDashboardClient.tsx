@@ -133,8 +133,14 @@ export const StoreDashboardClient: React.FC<Props> = ({
   // ── Filtering ──────────────────────────────────────────────────────────────
   const applyFilter = (o: any) => {
     if (search) {
-      const q = search.toLowerCase()
-      if (!o.no.toLowerCase().includes(q) && !o.customer.toLowerCase().includes(q)) return false
+      const q = search.toLowerCase().replace(/^#/, '')
+      const invoiceId = (o.raw?.invoiceId || '').toLowerCase()
+      const rawId = String(o.raw?.id || '')
+      if (
+        !invoiceId.includes(q) &&
+        !rawId.includes(q) &&
+        !o.customer.toLowerCase().includes(q)
+      ) return false
     }
     if (filter === 'all') return true
     if (filter === 'delivery') return o.type === 'delivery'
@@ -227,7 +233,7 @@ export const StoreDashboardClient: React.FC<Props> = ({
     }
   }
 
-  const handleDeliver = async (order: any) => {
+  const handleDeliver = async (order: any, deliveredOnDate: string) => {
     setLoading(order.id, true)
     try {
       const res = await fetch('/api/store-manager/update-web-order', {
@@ -236,7 +242,7 @@ export const StoreDashboardClient: React.FC<Props> = ({
         body: JSON.stringify({
           orderId: order.id,
           deliveryStatus: 'delivered',
-          deliveredOn: new Date().toISOString(),
+          deliveredOn: deliveredOnDate ? new Date(deliveredOnDate).toISOString() : new Date().toISOString(),
         }),
       })
       if (!res.ok) {
@@ -287,8 +293,7 @@ export const StoreDashboardClient: React.FC<Props> = ({
     shipped: orders.filter((o) => o.status === 'shipped').length,
   }
 
-  const shopName =
-    currentShopDoc?.address?.street || currentShopDoc?.name || 'White Mantis Store'
+  const shopName = currentShopDoc?.name || 'Store Dashboard'
 
   return (
     <div
@@ -425,7 +430,7 @@ export const StoreDashboardClient: React.FC<Props> = ({
                     loading={loading}
                     onShip={(deliverByDate) => handleShip(order, deliverByDate)}
                     onMarkReady={() => handleMarkReady(order)}
-                    onDeliver={() => handleDeliver(order)}
+                    onDeliver={(date) => handleDeliver(order, date)}
                     onPickedUp={(date) => handlePickedUp(order, date)}
                     onRefund={(reason: string) => handleRefund(order, reason)}
                   />

@@ -45,7 +45,13 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const chipData = [
     { key: 'new' as const, label: 'New', color: C.new, bg: C.newBg, border: C.newBorder },
-    { key: 'shipped' as const, label: 'Shipped', color: C.shipped, bg: C.shipBg, border: C.shipBorder },
+    {
+      key: 'shipped' as const,
+      label: 'Shipped',
+      color: C.shipped,
+      bg: C.shipBg,
+      border: C.shipBorder,
+    },
   ]
 
   return (
@@ -100,9 +106,6 @@ export const TopBar: React.FC<TopBarProps> = ({
                   {dropOpen ? '▲' : '▼'}
                 </span>
               )}
-            </div>
-            <div style={{ fontSize: 10, color: C.textMute }}>
-              {canSwitch ? 'tap to switch' : 'Store Dashboard'}
             </div>
           </div>
         </div>
@@ -189,15 +192,11 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
       ))}
 
-
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
       {/* Search */}
-      <div
-        className="topbar-search"
-        style={{ position: 'relative', maxWidth: 260, minWidth: 120 }}
-      >
+      <div className="topbar-search" style={{ position: 'relative', maxWidth: 260, minWidth: 120 }}>
         <SearchIcon
           style={{
             position: 'absolute',

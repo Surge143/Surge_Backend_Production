@@ -23,7 +23,9 @@ export const Shop: CollectionConfig = {
     admin: {
         useAsTitle: 'shopManager',
         defaultColumns: ['isShopOpen', 'shopManager', 'address.city', 'openingTime', 'closingTime'],
-        group: 'Cafe',
+        group: 'Cafe Management',
+        description: 'Manage your cafe locations',
+        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
     },
     access: {
         read: () => true,

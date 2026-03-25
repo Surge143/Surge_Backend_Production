@@ -3,9 +3,15 @@ import { validateFutureDate } from '@/utilities/validateFutureDate'
 
 export const Workshop: CollectionConfig = {
   slug: 'workshop',
+  labels: {
+    singular: 'Academy',
+    plural: 'Academy',
+  },
   admin: {
     useAsTitle: 'title',
     group: 'Marketing',
+    description: 'Manage events and classes',
+    hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
   },
   access: {
     read: () => true,
