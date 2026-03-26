@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation'
 import './globals.css'
 
 export const metadata = {
@@ -7,13 +6,11 @@ export const metadata = {
 }
 
 export default function FrontendLayout({ children }: { children: React.ReactNode }) {
-  // This triggers the redirect immediately on the server
-  redirect('https://whitemantis-frontend-bfag.vercel.app/')
-
-  // Note: The code below will not actually render because of the redirect above
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <main>{children}</main>
+      </body>
     </html>
   )
 }
