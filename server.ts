@@ -19,25 +19,41 @@ app.prepare().then(() => {
         handle(req, res, parsedUrl)
     })
 
+    // Build the allowed origins list — always include the server's own origin
+    // so the admin dashboards (served from the same host) can connect.
+    const allowedOrigins = [
+        `http://localhost:${port}`,
+        `https://localhost:${port}`,
+        'http://localhost:8100',
+        'http://localhost:5173',
+        process.env.PAYLOAD_PUBLIC_SERVER_URL || '',
+    ].filter(Boolean)
+
     const io = new Server(httpServer, {
         cors: {
-            origin: [
-                'http://localhost:8100',
-                'http://localhost:5173',
-                process.env.PAYLOAD_PUBLIC_SERVER_URL || '',
-            ].filter(Boolean),
-            methods: ["GET", "POST"]
-        }
+            origin: (origin, callback) => {
+                // Allow requests with no origin (e.g. server-to-server / curl)
+                // and any origin that matches the allowed list.
+                if (!origin || allowedOrigins.includes(origin)) {
+                    callback(null, true)
+                } else {
+                    console.warn(`[Socket.IO] Blocked origin: ${origin}`)
+                    callback(new Error('Not allowed by CORS'))
+                }
+            },
+            methods: ['GET', 'POST'],
+            credentials: true,
+        },
     })
 
     // @ts-ignore
     global.io = io
 
     io.on('connection', (socket) => {
-        console.log('Client connected:', socket.id)
+        console.log('[Socket.IO] Client connected:', socket.id)
 
         socket.on('disconnect', () => {
-            console.log('Client disconnected:', socket.id)
+            console.log('[Socket.IO] Client disconnected:', socket.id)
         })
     })
 
