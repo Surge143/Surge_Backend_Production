@@ -8,8 +8,11 @@ if (!admin.apps.length) {
   const rawKey = process.env.FIREBASE_PRIVATE_KEY
 
   if (projectId && clientEmail && rawKey) {
-    // Handle escaped \n from .env files (with or without surrounding quotes)
-    const privateKey = rawKey.replace(/\\n/g, '\n').replace(/^"|"$/g, '')
+    // Handle escaped \n, literal newlines, and surrounding quotes (single or double)
+    const privateKey = rawKey
+      .replace(/\\n/g, '\n')
+      .replace(/^['"]|['"]$/g, '')
+      .trim()
 
     if (privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
       try {
@@ -17,12 +20,17 @@ if (!admin.apps.length) {
           credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
         })
         messaging = admin.messaging()
-      } catch {
+      } catch (err: any) {
         // Key is present but malformed — push notifications disabled, server continues normally
-        console.warn('[Firebase] Push notifications disabled: private key could not be parsed. Check FIREBASE_PRIVATE_KEY in .env.')
+        console.warn(
+          `[Firebase] Push notifications disabled: private key could not be parsed. Error: ${err.message}`,
+        )
+        console.warn(`[Firebase] Private Key Length: ${privateKey.length}`)
       }
     } else {
-      console.warn('[Firebase] Push notifications disabled: FIREBASE_PRIVATE_KEY missing PEM headers.')
+      console.warn(
+        '[Firebase] Push notifications disabled: FIREBASE_PRIVATE_KEY missing PEM headers.',
+      )
     }
   }
   // No credentials = silent skip (expected during build/CI)

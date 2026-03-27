@@ -112,14 +112,14 @@ export const OrderShippedEmail = (order) => {
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 30px;">
                 <tr>
                   <td width="50%" valign="top" style="padding-right: 20px;">
-                    <strong style="color: #333; display: block;">Recipient</strong>
-                    ${order.billingAddress.addressFirstName} ${order.billingAddress.addressLastName}<br>
-                    ${order.email}<br>
-                    ${order.billingAddress.phoneNumber}
+                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block; margin-bottom: 4px;">Recipient</strong>
+                    ${order.billingAddress?.addressFirstName || ''} ${order.billingAddress?.addressLastName || ''}<br>
+                    ${order.email || ''}<br>
+                    ${order.billingAddress?.phoneNumber || 'N/A'}</p>
                   </td>
                   <td width="50%" valign="top">
-                    <strong style="color: #333; display: block;">Shipping Address</strong>
-                    ${formatAddress(order.shippingAddress)}
+                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block; margin-bottom: 4px;">Shipping Address</strong>
+                    ${formatAddress(order.shippingAddress)}</p>
                   </td>
                 </tr>
               </table>

@@ -102,15 +102,15 @@ export const OrderConfirmEmail = (order) => {
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 14px; color: #666; line-height: 1.6;">
                 <tr>
                   <td width="50%" valign="top" style="padding-right: 20px;">
-                    <p style="margin: 0 0 15px 0;"><strong style="color: #333;">Name</strong>${order.billingAddress.addressFirstName} ${order.billingAddress.addressLastName}</p>
-                    <p style="margin: 0 0 15px 0;"><strong style="color: #333;">Email</strong>${order.email}</p>
-                    <p style="margin: 0 0 15px 0;"><strong style="color: #333;">Phone</strong>${order.billingAddress.phoneNumber}</p>
-                    <p style="margin: 0 0 15px 0;"><strong style="color: #333;">Order Date</strong>${orderDate}</p>
+                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block; margin-bottom: 4px;">Name</strong>${order.billingAddress?.addressFirstName || ''} ${order.billingAddress?.addressLastName || ''}</p>
+                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block; margin-bottom: 4px;">Email</strong>${order.email || ''}</p>
+                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block; margin-bottom: 4px;">Phone</strong>${order.billingAddress?.phoneNumber || 'N/A'}</p>
+                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block; margin-bottom: 4px;">Order Date</strong>${orderDate}</p>
                   </td>
                   <td width="50%" valign="top">
-                    <p style="margin: 0 0 15px 0;"><strong style="color: #333;">Payment Method</strong>Stripe</p>
-                    <p style="margin: 0 0 15px 0;"><strong style="color: #333;">Shipping Address</strong>${formatAddress(order.shippingAddress)}</p>
-                    <p style="margin: 0 0 15px 0;"><strong style="color: #333;">Billing Address</strong>${formatAddress(order.billingAddress)}</p>
+                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block; margin-bottom: 4px;">Payment Method</strong>Stripe</p>
+                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block; margin-bottom: 4px;">Shipping Address</strong>${formatAddress(order.shippingAddress)}</p>
+                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block; margin-bottom: 4px;">Billing Address</strong>${formatAddress(order.billingAddress)}</p>
                   </td>
                 </tr>
               </table>
