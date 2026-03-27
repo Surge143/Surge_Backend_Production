@@ -1,6 +1,6 @@
 import { encrypt } from '@/lib/crypto'
 import { sendEmail } from '@/lib/emailConfig'
-import { getOTPEmailTemplate } from '@/lib/emailTemplates/SignInOTP'
+import { getOTPEmailTemplate } from '@/lib/emailTemplates/SignInOtp'
 import { NextResponse } from 'next/server'
 import { PayloadHandler } from 'payload'
 

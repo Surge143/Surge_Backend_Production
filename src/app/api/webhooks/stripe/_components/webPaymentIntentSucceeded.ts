@@ -1,7 +1,7 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { sendEmail } from '@/lib/emailConfig'
-import { OrderConfirmEmail } from '@/lib/emailTemplates/storeOrderConfirm'
+import { OrderConfirmEmail } from '@/lib/emailTemplates/StoreOrderConfirm'
 import { deductWTCoins } from '@/utilities/wtCoins'
 
 export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {

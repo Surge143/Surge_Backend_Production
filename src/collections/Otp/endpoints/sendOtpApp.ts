@@ -1,6 +1,6 @@
 import { encrypt } from '@/lib/crypto'
 import { sendEmail } from '@/lib/emailConfig'
-import { getOTPEmailTemplate } from '@/lib/emailTemplates/SignInOTP'
+import { getOTPEmailTemplate } from '@/lib/emailTemplates/SignInOtp'
 import { PayloadHandler } from 'payload'
 
 export const sendOtpApp: PayloadHandler = async (req) => {
