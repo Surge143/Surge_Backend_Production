@@ -4,6 +4,9 @@ import { refundHandler } from './endpoints/refundHandler'
 import { linkGuestOrderToUser } from './hooks/linkGuestToUser'
 import { awardReferralCoins } from '@/utilities/awardReferralCoins'
 import { createOrderPaidNotification } from '@/utilities/orderNotifications'
+import { sendEmail } from '@/lib/emailConfig'
+import { OrderShippedEmail } from '@/lib/emailTemplates/StoreOrderShipped'
+import { OrderDeliveredEmail } from '@/lib/emailTemplates/StoreOrderDelivered'
 
 function generateOrderID() {
   const now = new Date()
@@ -197,7 +200,7 @@ export const WebOrders: CollectionConfig = {
       },
     ],
     afterChange: [
-      async ({ doc, previousDoc, operation, req: { payload } }) => {
+      async ({ data, doc, previousDoc, operation, req: { payload } }) => {
         await linkGuestOrderToUser({
           payload,
           doc,
@@ -231,7 +234,7 @@ export const WebOrders: CollectionConfig = {
           setImmediate(async () => {
             const becamePaid = isNowPaid && !wasPaid
 
-            if (becamePaid) {
+            if (becamePaid && isNowDelivered && !wasDelivered) {
               await awardReferralCoins(payload, userId, doc.id, 'web-orders')
             }
 
@@ -266,6 +269,33 @@ export const WebOrders: CollectionConfig = {
               }
             }
           })
+        }
+        const isShipped = data.deliveryStatus === 'shipped'
+
+        if (isShipped) {
+          try {
+            await sendEmail({
+              to: data?.email,
+              subject: 'Your order has been shipped!',
+              body: `Order #${data.invoiceId} has been shipped. It is on its way!`,
+              html: OrderShippedEmail({ order: { ...doc } }),
+            })
+          } catch (error) {
+            console.error('Error during shipment logic:', error)
+          }
+        }
+        
+        if (isNowDelivered && !wasDelivered && userId) {
+          try {
+            await sendEmail({
+              to: data?.email,
+              subject: 'Your order has been delivered!',
+              body: `Order #${data.invoiceId} has been delivered. Thank you for shopping with us!`,
+              html: OrderDeliveredEmail({ order: { ...doc } }),
+            })
+          } catch (error) {
+            console.error('Error during shipment logic:', error)
+          }
         }
       },
     ],
@@ -809,13 +839,21 @@ export const WebOrders: CollectionConfig = {
                       label: 'Subtotal',
                       type: 'number',
                       required: true,
-                      admin: { width: '50%', readOnly: true, description: 'Sum of all item prices × quantities' },
+                      admin: {
+                        width: '50%',
+                        readOnly: true,
+                        description: 'Sum of all item prices × quantities',
+                      },
                     },
                     {
                       name: 'shippingCharge',
                       label: 'Shipping Charge',
                       type: 'number',
-                      admin: { width: '50%', readOnly: true, description: 'Shipping fee (0 for pickup orders)' },
+                      admin: {
+                        width: '50%',
+                        readOnly: true,
+                        description: 'Shipping fee (0 for pickup orders)',
+                      },
                     },
                   ],
                 },
@@ -826,7 +864,11 @@ export const WebOrders: CollectionConfig = {
                       name: 'couponDiscount',
                       label: 'Coupon Discount',
                       type: 'number',
-                      admin: { width: '33%', readOnly: true, description: 'Discount applied via coupon code' },
+                      admin: {
+                        width: '33%',
+                        readOnly: true,
+                        description: 'Discount applied via coupon code',
+                      },
                     },
                     {
                       name: 'wtCoinsDiscount',
@@ -844,7 +886,11 @@ export const WebOrders: CollectionConfig = {
                       type: 'number',
                       min: 0,
                       max: 100,
-                      admin: { width: '33%', readOnly: true, description: 'Tax rate applied on taxable amount' },
+                      admin: {
+                        width: '33%',
+                        readOnly: true,
+                        description: 'Tax rate applied on taxable amount',
+                      },
                     },
                   ],
                 },

@@ -1,5 +1,8 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { sendEmail } from '@/lib/emailConfig'
+import { CafeOrderCancellationEmail } from '@/lib/emailTemplates/CafeOrderCancellation'
+import { StoreOrderCancellationEmail } from '@/lib/emailTemplates/StoreOrderCancellation'
 
 export async function handleChargeRefunded(charge: any) {
     const payload = await getPayload({ config })
@@ -188,5 +191,31 @@ export async function handleChargeRefunded(charge: any) {
         if (err.data && Array.isArray(err.data)) {
             console.error('[ChargeRefunded] Detailed Validation Errors:', JSON.stringify(err.data, null, 2))
         }
+    }
+
+    // --- 4. SEND CANCELLATION EMAIL ---
+    try {
+        const userEmail =
+            typeof order.user === 'object' && order.user?.email
+                ? order.user.email
+                : order.billingAddress?.email || order.shippingAddress?.email
+
+        if (userEmail) {
+            const html = orderType === 'cafe'
+                ? CafeOrderCancellationEmail(order)
+                : StoreOrderCancellationEmail(order)
+
+            await sendEmail({
+                to: userEmail,
+                subject: 'Your Order Has Been Cancelled - White Mantis',
+                html,
+            })
+
+            console.log(`✅ [ChargeRefunded] Cancellation email sent to ${userEmail}`)
+        } else {
+            console.warn(`⚠️ [ChargeRefunded] No email found for order ${orderId}, skipping cancellation email`)
+        }
+    } catch (err) {
+        console.error('[ChargeRefunded] Error sending cancellation email:', err)
     }
 }

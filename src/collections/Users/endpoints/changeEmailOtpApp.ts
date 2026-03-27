@@ -1,6 +1,6 @@
 import { encrypt } from "@/lib/crypto";
 import { sendEmail } from "@/lib/emailConfig";
-import { getOTPEmailTemplate } from "@/lib/emailTemplate";
+import { OTPForUpdateEmail } from '@/lib/emailTemplates/EmailChangeOtp'
 import { PayloadHandler } from "payload";
 
 export const changeEmailOtpApp: PayloadHandler = async (req) => {
@@ -138,7 +138,7 @@ export const changeEmailOtpApp: PayloadHandler = async (req) => {
                 to: email,
                 subject: "Your Login Code",
                 body: `Your verification code is: ${generatedOTP}. This code is valid for the next 5 minutes.`,
-                html: getOTPEmailTemplate(generatedOTP),
+                html: OTPForUpdateEmail(generatedOTP),
             });
             console.log(`sendOtpApp: Email sent successfully for ${email}`);
         } catch (emailError: any) {

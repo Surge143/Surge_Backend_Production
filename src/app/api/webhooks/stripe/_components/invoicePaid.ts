@@ -2,13 +2,12 @@ import { stripe } from '@/lib/stripe'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { sendEmail } from '@/lib/emailConfig'
-import { orderConfirmationEmailTemplate } from '@/lib/emailTemplate'
+import { SubscriptionActiveEmail } from '@/lib/emailTemplates/StoreSubscriptionActive'
+import { SubscriptionRenewedEmail } from '@/lib/emailTemplates/SubscriptionRenewal'
 import { deductWTCoins } from '@/utilities/wtCoins'
 
 export async function handleInvoicePaid(invoice: any) {
   const payload = await getPayload({ config })
-
-  console.log('✅ invoice.paid received:', invoice.id)
 
   try {
     /* --------------------------------------------------
@@ -208,7 +207,9 @@ export async function handleInvoicePaid(invoice: any) {
           to: userEmail,
           subject: isFirstInvoice ? 'Subscription Started!' : 'Subscription Renewed!',
           body: `Order #${newOrder.id} processed.`,
-          html: orderConfirmationEmailTemplate({ order: newOrder }),
+          html: isFirstInvoice
+            ? SubscriptionActiveEmail({ order: newOrder })
+            : SubscriptionRenewedEmail({ order: newOrder }),
         })
         console.log('✅ Email sent')
       }
