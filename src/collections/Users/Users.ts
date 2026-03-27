@@ -21,8 +21,12 @@ export const Users: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'email',
-    hidden: ({ user }: any) => user?.role !== 'super-admin' || user?.role === 'admin',
     group: 'Profiles',
+    hidden: ({ user }) => {
+      const isAuthorized =
+        user?.role === 'super-admin' || user?.role === 'admin' || user?.role === 'shop-manager'
+      return !isAuthorized
+    },
   },
 
   endpoints: [
@@ -139,6 +143,14 @@ export const Users: CollectionConfig = {
 
   fields: [
     {
+      name: 'email',
+      type: 'email',
+      required: true,
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
       name: 'role',
       type: 'select',
       defaultValue: 'customer',
@@ -157,27 +169,42 @@ export const Users: CollectionConfig = {
         { label: 'Female', value: 'female' },
         { label: 'Other', value: 'other' },
       ],
+      admin: {
+        readOnly: true,
+      },
     },
     {
       name: 'phone',
       label: 'Phone Number',
       type: 'text',
+      admin: {
+        readOnly: true,
+      },
     },
     {
       name: 'firstName',
       label: 'First Name',
       type: 'text',
+      admin: {
+        readOnly: true,
+      },
     },
     {
       name: 'lastName',
       label: 'Last Name',
       type: 'text',
+      admin: {
+        readOnly: true,
+      },
     },
     {
       name: 'profileImage',
       label: 'Profile Image',
       type: 'upload',
       relationTo: 'media',
+      admin: {
+        readOnly: true,
+      },
     },
     {
       name: 'stripeCustomerId',
@@ -194,6 +221,7 @@ export const Users: CollectionConfig = {
       type: 'array',
       admin: {
         initCollapsed: true,
+        readOnly: true, // Managed via custom endpoints, not directly editable in the admin UI
       },
       hooks: {
         beforeChange: [

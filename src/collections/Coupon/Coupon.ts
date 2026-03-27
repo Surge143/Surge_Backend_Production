@@ -34,7 +34,10 @@ export const Coupon: CollectionConfig = {
         defaultColumns: ["code", "couponStatus", "isPubliclyVisible", "applicability", "discountType", "discountAmount", "expiryDate"],
         group: "Store Management",
         description: "Create and manage store discount codes",
-        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
+        hidden: ({ user }) => {
+      const isAuthorized = user?.role === 'super-admin' || user?.role === 'admin'
+      return !isAuthorized
+    },
     },
     access: {
         read: () => true,

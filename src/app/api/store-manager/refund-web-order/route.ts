@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     // Verify the user is logged in
     const { user } = await payload.auth({ headers: req.headers })
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    if (!['admin', 'super-admin', 'shop-manager'].includes((user as any).role))
+    if (!['admin', 'super-admin'].includes((user as any).role))
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await req.json()

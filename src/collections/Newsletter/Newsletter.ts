@@ -9,7 +9,11 @@ export const Newsletter: CollectionConfig = {
     useAsTitle: 'email',
     group: 'Marketing',
     description: 'Send email updates to customers',
-    hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
+    hidden: ({ user }) => {
+      const isAuthorized =
+        user?.role === 'super-admin' || user?.role === 'admin' || user?.role === 'shop-manager'
+      return !isAuthorized
+    },
   },
   hooks: {
     beforeOperation: [
@@ -23,7 +27,12 @@ export const Newsletter: CollectionConfig = {
               limit: 1,
             })
             if (existing.totalDocs > 0) {
-              throw new APIError("You're already subscribed! We'll keep you in the loop.", 400, undefined, true)
+              throw new APIError(
+                "You're already subscribed! We'll keep you in the loop.",
+                400,
+                undefined,
+                true,
+              )
             }
           }
         }

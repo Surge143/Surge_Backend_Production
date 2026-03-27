@@ -20,6 +20,10 @@ export const WebSubscription: CollectionConfig = {
     useAsTitle: 'id',
     group: 'Store Management',
     description: 'Manage customers on a repeat plan',
+    hidden: ({ user }) => {
+      const isAuthorized = user?.role === 'super-admin' || user?.role === 'admin'
+      return !isAuthorized
+    },
   },
   endpoints: [
     {
@@ -212,6 +216,7 @@ export const WebSubscription: CollectionConfig = {
                   ],
                   admin: {
                     width: '50%',
+                    readOnly: true,
                   },
                 },
                 {
@@ -221,7 +226,7 @@ export const WebSubscription: CollectionConfig = {
                   required: false, // Optional because it's hidden for guests
                   admin: {
                     width: '50%',
-
+                    readOnly: true,
                     // This field ONLY shows up if customerType is 'user'
                     condition: (data) => data?.customerType === 'user',
                     description: 'Select the registered user account for this order.',
@@ -235,23 +240,24 @@ export const WebSubscription: CollectionConfig = {
                     { label: 'Delivery', value: 'delivery' },
                     { label: 'Pickup', value: 'pickup' },
                   ],
-                  admin: {},
+                  admin: { readOnly: true },
                 },
                 {
                   name: 'stripeSubscriptionID',
                   type: 'text',
-                  admin: { description: 'The ID from Stripe' },
+                  admin: { readOnly: true, description: 'The ID from Stripe' },
                 },
                 {
                   name: 'nextPaymentDate',
                   type: 'date',
-                  admin: {},
+                  admin: { readOnly: true },
                 },
                 {
                   name: 'email',
                   label: 'Customer Email',
                   type: 'text',
                   admin: {
+                    readOnly: true,
                     description: 'Stored at checkout for guest-to-user linking.',
                   },
                 },
@@ -261,7 +267,7 @@ export const WebSubscription: CollectionConfig = {
               name: 'items',
               type: 'array',
               required: true,
-              admin: {},
+              admin: { readOnly: true },
               fields: [
                 {
                   type: 'row',
@@ -271,7 +277,7 @@ export const WebSubscription: CollectionConfig = {
                       type: 'relationship',
                       relationTo: 'web-products',
                       required: true,
-                      admin: { width: '25%' },
+                      admin: { width: '25%', readOnly: true },
                     },
                     {
                       name: 'variantID',
@@ -279,6 +285,7 @@ export const WebSubscription: CollectionConfig = {
                       type: 'text',
                       admin: {
                         width: '25%',
+                        readOnly: true,
                         description: 'The ID of the variation',
                       },
                     },
@@ -288,6 +295,7 @@ export const WebSubscription: CollectionConfig = {
                       type: 'text',
                       admin: {
                         width: '25%',
+                        readOnly: true,
                         description: 'The name of the variation',
                       },
                     },
@@ -298,6 +306,7 @@ export const WebSubscription: CollectionConfig = {
                       required: true,
                       admin: {
                         width: '25%',
+                        readOnly: true,
                         description: 'The ID of the subscription frequency',
                       },
                     },
@@ -307,6 +316,7 @@ export const WebSubscription: CollectionConfig = {
                       type: 'text',
                       admin: {
                         width: '25%',
+                        readOnly: true,
                         description: 'The name of the subscription frequency',
                       },
                     },
@@ -314,18 +324,18 @@ export const WebSubscription: CollectionConfig = {
                       name: 'quantity',
                       type: 'number',
                       required: true,
-                      admin: { width: '10%' },
+                      admin: { width: '10%', readOnly: true },
                     },
                     {
                       name: 'price',
                       type: 'number',
                       required: true,
-                      admin: { width: '15%' },
+                      admin: { width: '15%', readOnly: true },
                     },
                     {
                       name: 'productName',
                       type: 'text',
-                      admin: { hidden: true },
+                      admin: { hidden: true, readOnly: true },
                     },
                   ],
                 },
@@ -341,30 +351,32 @@ export const WebSubscription: CollectionConfig = {
               type: 'group',
               label: 'Shipping Address (For Delivery Only)',
               admin: {
+                readOnly: true,
                 condition: (data) => data?.deliveryOption === 'delivery',
               },
               fields: [
                 {
                   type: 'row',
                   fields: [
-                    { name: 'addressFirstName', type: 'text' },
-                    { name: 'addressLastName', type: 'text' },
+                    { name: 'addressFirstName', type: 'text', admin: { readOnly: true } },
+                    { name: 'addressLastName', type: 'text', admin: { readOnly: true } },
                   ],
                 },
                 {
                   type: 'row',
                   fields: [
-                    { name: 'addressLine1', type: 'text' },
-                    { name: 'addressLine2', type: 'text' },
+                    { name: 'addressLine1', type: 'text', admin: { readOnly: true } },
+                    { name: 'addressLine2', type: 'text', admin: { readOnly: true } },
                   ],
                 },
                 {
                   type: 'row',
                   fields: [
-                    { name: 'city', type: 'text' },
+                    { name: 'city', type: 'text', admin: { readOnly: true } },
                     {
                       name: 'emirates',
                       type: 'select',
+                      admin: { readOnly: true },
                       options: [
                         { label: 'Abu Dhabi', value: 'abu_dhabi' },
                         { label: 'Dubai', value: 'dubai' },
@@ -375,34 +387,35 @@ export const WebSubscription: CollectionConfig = {
                         { label: 'Fujairah', value: 'fujairah' },
                       ],
                     },
-                    { name: 'phoneNumber', type: 'text' },
+                    { name: 'phoneNumber', type: 'text', admin: { readOnly: true } },
                   ],
                 },
               ],
             },
             {
               name: 'billingAddress',
-              admin: {},
+              admin: { readOnly: true },
               type: 'group',
               fields: [
                 {
                   type: 'row',
                   fields: [
-                    { name: 'addressFirstName', type: 'text' },
-                    { name: 'addressLastName', type: 'text' },
+                    { name: 'addressFirstName', type: 'text', admin: { readOnly: true } },
+                    { name: 'addressLastName', type: 'text', admin: { readOnly: true } },
                   ],
                 },
                 {
                   type: 'row',
-                  fields: [{ name: 'addressLine1', type: 'text' }],
+                  fields: [{ name: 'addressLine1', type: 'text', admin: { readOnly: true } }],
                 },
                 {
                   type: 'row',
                   fields: [
-                    { name: 'city', type: 'text' },
+                    { name: 'city', type: 'text', admin: { readOnly: true } },
                     {
                       name: 'emirates',
                       type: 'select',
+                      admin: { readOnly: true },
                       options: [
                         { label: 'Abu Dhabi', value: 'abu_dhabi' },
                         { label: 'Dubai', value: 'dubai' },
@@ -413,7 +426,7 @@ export const WebSubscription: CollectionConfig = {
                         { label: 'Fujairah', value: 'fujairah' },
                       ],
                     },
-                    { name: 'phoneNumber', type: 'text' },
+                    { name: 'phoneNumber', type: 'text', admin: { readOnly: true } },
                   ],
                 },
               ],
@@ -435,13 +448,14 @@ export const WebSubscription: CollectionConfig = {
                     { label: 'Completed', value: 'completed' },
                     { label: 'Failed', value: 'failed' },
                   ],
-                  admin: {},
+                  admin: { readOnly: true },
                 },
                 {
                   name: 'subsStatus',
                   type: 'select',
                   defaultValue: 'active',
                   admin: {
+                    readOnly: true,
                     condition: (data) => data?.paymentStatus === 'completed',
                   },
                   options: [
@@ -454,19 +468,20 @@ export const WebSubscription: CollectionConfig = {
                   name: 'cancelReason',
                   label: 'Cancel Reason',
                   type: 'text',
+                  admin: { readOnly: true },
                 },
               ],
             },
             {
               name: 'pointsUsed',
               type: 'number',
-              admin: {},
+              admin: { readOnly: true },
             },
             {
               name: 'financials',
               type: 'group',
               label: 'Financial Breakdown',
-              admin: {},
+              admin: { readOnly: true },
               fields: [
                 {
                   type: 'row',
@@ -478,6 +493,7 @@ export const WebSubscription: CollectionConfig = {
                       required: true,
                       admin: {
                         width: '50%',
+                        readOnly: true,
                         description:
                           'Product base price multiplied by quantity, before any discounts',
                       },
@@ -488,6 +504,7 @@ export const WebSubscription: CollectionConfig = {
                       type: 'number',
                       admin: {
                         width: '50%',
+                        readOnly: true,
                         description: 'Discount from the subscription plan percentage',
                       },
                     },
@@ -502,6 +519,7 @@ export const WebSubscription: CollectionConfig = {
                       type: 'number',
                       admin: {
                         width: '50%',
+                        readOnly: true,
                         description: 'Discount applied via WT Coins redemption',
                       },
                     },
@@ -509,7 +527,11 @@ export const WebSubscription: CollectionConfig = {
                       name: 'shippingCharge',
                       label: 'Shipping Charge',
                       type: 'number',
-                      admin: { width: '50%', description: 'Shipping fee (0 for pickup orders)' },
+                      admin: {
+                        width: '50%',
+                        readOnly: true,
+                        description: 'Shipping fee (0 for pickup orders)',
+                      },
                     },
                   ],
                 },
@@ -524,6 +546,7 @@ export const WebSubscription: CollectionConfig = {
                       max: 100,
                       admin: {
                         width: '50%',
+                        readOnly: true,
                         description: 'Tax percentage applied on (subtotal − discounts + shipping)',
                       },
                     },
@@ -533,6 +556,7 @@ export const WebSubscription: CollectionConfig = {
                       type: 'number',
                       admin: {
                         width: '50%',
+                        readOnly: true,
                         description: 'Tax applied on (subtotal − discounts + shipping)',
                       },
                     },
@@ -543,6 +567,7 @@ export const WebSubscription: CollectionConfig = {
                       required: true,
                       admin: {
                         width: '50%',
+                        readOnly: true,
                         description:
                           'Final recurring amount charged (first payment may differ due to WT Coins)',
                       },
@@ -560,6 +585,7 @@ export const WebSubscription: CollectionConfig = {
       type: 'json',
       admin: {
         hidden: true,
+        readOnly: true,
       },
     },
     {
@@ -567,6 +593,7 @@ export const WebSubscription: CollectionConfig = {
       type: 'text',
       admin: {
         hidden: true,
+        readOnly: true,
       },
     },
     {

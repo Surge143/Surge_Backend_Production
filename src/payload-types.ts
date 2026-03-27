@@ -1380,6 +1380,7 @@ export interface WebOrder {
    * Tracks if WTCoins have been awarded for this order
    */
   wtCoinsAwarded?: boolean | null;
+  orderRating?: number | null;
   stripeData?:
     | {
         [k: string]: unknown;
@@ -2929,6 +2930,7 @@ export interface WebOrdersSelect<T extends boolean = true> {
         total?: T;
       };
   wtCoinsAwarded?: T;
+  orderRating?: T;
   stripeData?: T;
   guestAccessToken?: T;
   invoiceId?: T;

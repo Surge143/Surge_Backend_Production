@@ -1,6 +1,7 @@
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { AdminViewProps } from 'payload'
 import React from 'react'
+import { redirect } from 'next/navigation'
 import { ShopManagerDashboardClient } from './ShopManagerDashboardClient'
 
 export const dynamic = 'force-dynamic'
@@ -13,6 +14,11 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
 }) => {
   const { permissions, locale, req, visibleEntities } = initPageResult
   const currentUser = req.user as any
+
+  // Only super-admin, admin, and shop-manager are allowed
+  if (!['super-admin', 'admin', 'shop-manager'].includes(currentUser?.role)) {
+    redirect('/admin')
+  }
 
   const isAdmin = currentUser?.role !== 'shop-manager'
 

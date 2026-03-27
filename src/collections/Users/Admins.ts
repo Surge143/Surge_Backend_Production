@@ -3,7 +3,7 @@ import type { CollectionConfig, Where } from 'payload'
 const roleHierarchy: Record<string, number> = {
   'super-admin': 1,
   admin: 2,
-  'shop-manager': 3,    
+  'shop-manager': 3,
   barista: 4,
 }
 
@@ -27,6 +27,8 @@ export const Admins: CollectionConfig = {
 
     read: async ({ req: { user, payload } }): Promise<boolean | Where> => {
       if (!user) return false
+
+      // Super Admins can see everyone, including themselves
       if (user?.role === 'super-admin') return true
 
       // Define the roles that are "below" the current user
@@ -34,6 +36,7 @@ export const Admins: CollectionConfig = {
         (r) => roleHierarchy[r] > roleHierarchy[user?.role as string],
       )
 
+      // Shop Manager specific logic
       if (user?.role === 'shop-manager') {
         const managedShops = await payload.find({
           collection: 'shop',
@@ -44,18 +47,18 @@ export const Admins: CollectionConfig = {
 
         const shopId = managedShops.docs[0]?.id
 
+        // Only show people with lower roles in their specific shop
+        // Removed the { id: { equals: user.id } } part
         return {
-          or: [
-            { id: { equals: user.id } },
-            {
-              and: [{ role: { in: lowerRoles } }, { shop: { equals: shopId || 'none' } }],
-            },
-          ],
+          and: [{ role: { in: lowerRoles } }, { shop: { equals: shopId || 'none' } }],
         }
       }
 
+      // For Admin role:
+      // Only show people with roles strictly lower than theirs
+      // Removed the { id: { equals: user.id } } part
       return {
-        or: [{ id: { equals: user.id } }, { role: { in: lowerRoles } }],
+        role: { in: lowerRoles },
       }
     },
 
@@ -96,7 +99,11 @@ export const Admins: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     group: 'Profiles',
-    hidden: ({ user }: any) => user?.role !== 'super-admin' || user?.role === 'admin',
+    hidden: ({ user }) => {
+      const isAuthorized =
+        user?.role === 'super-admin' || user?.role === 'admin' || user?.role === 'shop-manager'
+      return !isAuthorized
+    },
   },
 
   fields: [

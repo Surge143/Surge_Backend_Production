@@ -1,6 +1,7 @@
 import { DefaultTemplate } from '@payloadcms/next/templates'
 import { AdminViewProps } from 'payload'
 import React from 'react'
+import { redirect } from 'next/navigation'
 import { StoreDashboardClient } from './StoreDashboardClient'
 
 export const dynamic = 'force-dynamic'
@@ -14,31 +15,22 @@ export const StoreDashboard: React.FC<AdminViewProps> = async ({
   const { permissions, locale, req, visibleEntities } = initPageResult
   const currentUser = req.user as any
 
-  const isAdmin = currentUser?.role !== 'shop-manager'
+  // Only super-admin and admin are allowed
+  if (!['super-admin', 'admin'].includes(currentUser?.role)) {
+    redirect('/admin')
+  }
 
-  // Determine this manager's shop
+  // Admin/super-admin: fetch all shops for the picker
   let shopDoc: any = null
   let allShops: any[] = []
 
-  if (!isAdmin) {
-    // Shop-manager: locked to their own shop
-    const shopResult = await req.payload.find({
-      collection: 'shop',
-      where: { shopManager: { equals: currentUser.id } },
-      limit: 1,
-      depth: 0,
-    })
-    shopDoc = shopResult.docs[0] || null
-  } else {
-    // Admin/super-admin: fetch all shops for the picker
-    const shopResult = await req.payload.find({
-      collection: 'shop',
-      limit: 100,
-      depth: 0,
-    })
-    allShops = shopResult.docs
-    shopDoc = shopResult.docs[0] || null
-  }
+  const shopResult = await req.payload.find({
+    collection: 'shop',
+    limit: 100,
+    depth: 0,
+  })
+  allShops = shopResult.docs
+  shopDoc = shopResult.docs[0] || null
 
   // Today's date range (for delivered/cancelled sections only)
   const todayStart = new Date()
@@ -106,7 +98,7 @@ export const StoreDashboard: React.FC<AdminViewProps> = async ({
         initialDelivered={deliveredOrders as any}
         initialCancelled={cancelledOrders as any}
         shopDoc={shopDoc as any}
-        isAdmin={isAdmin}
+        isAdmin={true}
         allShops={allShops as any}
       />
     </DefaultTemplate>

@@ -2,13 +2,19 @@
 import React, { useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-
-const links = [
-  { href: '/admin/shop-manager-dashboard', label: 'Cafe Dashboard' },
-  { href: '/admin/store-dashboard', label: 'Store Dashboard' },
-]
+import { useAuth } from '@payloadcms/ui'
 
 export const ShopManagerDashboardLink: React.FC = () => {
+  const { user } = useAuth()
+  const role = (user as any)?.role
+  const isAdminOrSuperAdmin = ['admin', 'super-admin'].includes(role)
+  const canSeeCafeDashboard = ['super-admin', 'admin', 'shop-manager'].includes(role)
+
+  const links = [
+    ...(canSeeCafeDashboard ? [{ href: '/admin/shop-manager-dashboard', label: 'Cafe Dashboard' }] : []),
+    ...(isAdminOrSuperAdmin ? [{ href: '/admin/store-dashboard', label: 'Store Dashboard' }] : []),
+  ]
+
   const [isOpen, setIsOpen] = useState(true)
   const contentRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()

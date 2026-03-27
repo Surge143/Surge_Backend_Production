@@ -23,6 +23,10 @@ export const WebOrders: CollectionConfig = {
     useAsTitle: 'id',
     group: 'Store Management',
     description: 'View and fulfill store orders',
+    hidden: ({ user }) => {
+      const isAuthorized = user?.role === 'super-admin' || user?.role === 'admin'
+      return !isAuthorized
+    },
   },
   endpoints: [
     {
@@ -293,7 +297,7 @@ export const WebOrders: CollectionConfig = {
                         { label: 'Guest', value: 'guest' },
                         { label: 'Registered User', value: 'user' },
                       ],
-                      admin: { width: '33%' },
+                      admin: { width: '33%', readOnly: true },
                     },
                     {
                       name: 'user',
@@ -302,6 +306,7 @@ export const WebOrders: CollectionConfig = {
                       required: false,
                       admin: {
                         width: '33%',
+                        readOnly: true,
                         condition: (data) => data?.customerType === 'user',
                         description: 'Select the registered user account for this order.',
                       },
@@ -312,6 +317,7 @@ export const WebOrders: CollectionConfig = {
                       type: 'text',
                       admin: {
                         width: '33%',
+                        readOnly: true,
                         description: 'Stored at checkout for guest-to-user linking.',
                       },
                     },
@@ -336,7 +342,7 @@ export const WebOrders: CollectionConfig = {
                         { label: 'Delivery', value: 'delivery' },
                         { label: 'Pickup', value: 'pickup' },
                       ],
-                      admin: { width: '33%' },
+                      admin: { width: '33%', readOnly: true },
                     },
                     {
                       name: 'origin',
@@ -346,13 +352,14 @@ export const WebOrders: CollectionConfig = {
                         { label: 'Subscription', value: 'subscription' },
                         { label: 'One Time', value: 'one-time' },
                       ],
-                      admin: { width: '33%' },
+                      admin: { width: '33%', readOnly: true },
                     },
                     {
                       name: 'stripeOrderId',
                       type: 'text',
                       admin: {
                         width: '33%',
+                        readOnly: true,
                         description: 'The payment ID from Stripe',
                       },
                     },
@@ -366,6 +373,7 @@ export const WebOrders: CollectionConfig = {
               type: 'array',
               label: 'Order Items',
               required: true,
+              admin: { readOnly: true },
               fields: [
                 {
                   type: 'row',
@@ -375,7 +383,7 @@ export const WebOrders: CollectionConfig = {
                       type: 'relationship',
                       relationTo: 'web-products',
                       required: true,
-                      admin: { width: '30%' },
+                      admin: { width: '30%', readOnly: true },
                     },
                     {
                       name: 'variantID',
@@ -383,6 +391,7 @@ export const WebOrders: CollectionConfig = {
                       type: 'text',
                       admin: {
                         width: '20%',
+                        readOnly: true,
                         description: 'The ID of the variation',
                       },
                     },
@@ -392,6 +401,7 @@ export const WebOrders: CollectionConfig = {
                       type: 'text',
                       admin: {
                         width: '25%',
+                        readOnly: true,
                         description: 'The name of the variation',
                       },
                     },
@@ -399,19 +409,19 @@ export const WebOrders: CollectionConfig = {
                       name: 'quantity',
                       type: 'number',
                       required: true,
-                      admin: { width: '10%' },
+                      admin: { width: '10%', readOnly: true },
                     },
                     {
                       name: 'price',
                       label: 'Unit Price (AED)',
                       type: 'number',
                       required: true,
-                      admin: { width: '15%' },
+                      admin: { width: '15%', readOnly: true },
                     },
                     {
                       name: 'productName',
                       type: 'text',
-                      admin: { hidden: true },
+                      admin: { hidden: true, readOnly: true },
                     },
                   ],
                 },
@@ -431,31 +441,52 @@ export const WebOrders: CollectionConfig = {
               type: 'group',
               label: 'Shipping Address',
               admin: {
+                readOnly: true,
                 condition: (data) => data?.deliveryOption === 'delivery',
               },
               fields: [
                 {
                   type: 'row',
                   fields: [
-                    { name: 'addressFirstName', label: 'First Name', type: 'text', admin: { width: '50%' } },
-                    { name: 'addressLastName', label: 'Last Name', type: 'text', admin: { width: '50%' } },
+                    {
+                      name: 'addressFirstName',
+                      label: 'First Name',
+                      type: 'text',
+                      admin: { width: '50%', readOnly: true },
+                    },
+                    {
+                      name: 'addressLastName',
+                      label: 'Last Name',
+                      type: 'text',
+                      admin: { width: '50%', readOnly: true },
+                    },
                   ],
                 },
                 {
                   type: 'row',
                   fields: [
-                    { name: 'addressLine1', label: 'Address Line 1', type: 'text', admin: { width: '50%' } },
-                    { name: 'addressLine2', label: 'Address Line 2', type: 'text', admin: { width: '50%' } },
+                    {
+                      name: 'addressLine1',
+                      label: 'Address Line 1',
+                      type: 'text',
+                      admin: { width: '50%', readOnly: true },
+                    },
+                    {
+                      name: 'addressLine2',
+                      label: 'Address Line 2',
+                      type: 'text',
+                      admin: { width: '50%', readOnly: true },
+                    },
                   ],
                 },
                 {
                   type: 'row',
                   fields: [
-                    { name: 'city', type: 'text', admin: { width: '25%' } },
+                    { name: 'city', type: 'text', admin: { width: '25%', readOnly: true } },
                     {
                       name: 'emirates',
                       type: 'select',
-                      admin: { width: '25%' },
+                      admin: { width: '25%', readOnly: true },
                       options: [
                         { label: 'Abu Dhabi', value: 'abu_dhabi' },
                         { label: 'Dubai', value: 'dubai' },
@@ -466,7 +497,12 @@ export const WebOrders: CollectionConfig = {
                         { label: 'Fujairah', value: 'fujairah' },
                       ],
                     },
-                    { name: 'phoneNumber', label: 'Phone Number', type: 'text', admin: { width: '25%' } },
+                    {
+                      name: 'phoneNumber',
+                      label: 'Phone Number',
+                      type: 'text',
+                      admin: { width: '25%', readOnly: true },
+                    },
                     {
                       name: 'addressCountry',
                       label: 'Country',
@@ -482,29 +518,50 @@ export const WebOrders: CollectionConfig = {
               name: 'billingAddress',
               type: 'group',
               label: 'Billing Address',
+              admin: { readOnly: true },
               fields: [
                 {
                   type: 'row',
                   fields: [
-                    { name: 'addressFirstName', label: 'First Name', type: 'text', admin: { width: '50%' } },
-                    { name: 'addressLastName', label: 'Last Name', type: 'text', admin: { width: '50%' } },
+                    {
+                      name: 'addressFirstName',
+                      label: 'First Name',
+                      type: 'text',
+                      admin: { width: '50%', readOnly: true },
+                    },
+                    {
+                      name: 'addressLastName',
+                      label: 'Last Name',
+                      type: 'text',
+                      admin: { width: '50%', readOnly: true },
+                    },
                   ],
                 },
                 {
                   type: 'row',
                   fields: [
-                    { name: 'addressLine1', label: 'Address Line 1', type: 'text', admin: { width: '50%' } },
-                    { name: 'addressLine2', label: 'Address Line 2', type: 'text', admin: { width: '50%' } },
+                    {
+                      name: 'addressLine1',
+                      label: 'Address Line 1',
+                      type: 'text',
+                      admin: { width: '50%', readOnly: true },
+                    },
+                    {
+                      name: 'addressLine2',
+                      label: 'Address Line 2',
+                      type: 'text',
+                      admin: { width: '50%', readOnly: true },
+                    },
                   ],
                 },
                 {
                   type: 'row',
                   fields: [
-                    { name: 'city', type: 'text', admin: { width: '25%' } },
+                    { name: 'city', type: 'text', admin: { width: '25%', readOnly: true } },
                     {
                       name: 'emirates',
                       type: 'select',
-                      admin: { width: '25%' },
+                      admin: { width: '25%', readOnly: true },
                       options: [
                         { label: 'Abu Dhabi', value: 'abu_dhabi' },
                         { label: 'Dubai', value: 'dubai' },
@@ -515,7 +572,12 @@ export const WebOrders: CollectionConfig = {
                         { label: 'Fujairah', value: 'fujairah' },
                       ],
                     },
-                    { name: 'phoneNumber', label: 'Phone Number', type: 'text', admin: { width: '25%' } },
+                    {
+                      name: 'phoneNumber',
+                      label: 'Phone Number',
+                      type: 'text',
+                      admin: { width: '25%', readOnly: true },
+                    },
                     {
                       name: 'addressCountry',
                       label: 'Country',
@@ -549,7 +611,7 @@ export const WebOrders: CollectionConfig = {
                       name: 'paymentStatus',
                       type: 'select',
                       required: true,
-                      admin: { width: '50%' },
+                      admin: { width: '50%', readOnly: true },
                       validate: (val, { data }) => {
                         if (
                           val === 'refunded' &&
@@ -574,6 +636,7 @@ export const WebOrders: CollectionConfig = {
                       defaultValue: 'placed',
                       admin: {
                         width: '50%',
+                        readOnly: true,
                         condition: (data) => data?.paymentStatus === 'completed',
                       },
                       options: [
@@ -607,6 +670,7 @@ export const WebOrders: CollectionConfig = {
                       type: 'date',
                       admin: {
                         width: '50%',
+                        readOnly: true,
                         date: { displayFormat: 'MM/dd/yyyy', pickerAppearance: 'dayOnly' },
                       },
                     },
@@ -616,6 +680,7 @@ export const WebOrders: CollectionConfig = {
                       type: 'date',
                       admin: {
                         width: '50%',
+                        readOnly: true,
                         date: { displayFormat: 'MM/dd/yyyy', pickerAppearance: 'dayOnly' },
                       },
                     },
@@ -642,6 +707,7 @@ export const WebOrders: CollectionConfig = {
                       defaultValue: false,
                       admin: {
                         width: '50%',
+                        readOnly: true,
                         description: 'Mark when the order is packed and ready for customer pickup',
                       },
                     },
@@ -651,6 +717,7 @@ export const WebOrders: CollectionConfig = {
                       type: 'date',
                       admin: {
                         width: '50%',
+                        readOnly: true,
                         date: { displayFormat: 'MM/dd/yyyy', pickerAppearance: 'dayOnly' },
                       },
                     },
@@ -665,8 +732,7 @@ export const WebOrders: CollectionConfig = {
               admin: {
                 initCollapsed: false,
                 condition: (data) =>
-                  data?.paymentStatus === 'refund-initiated' ||
-                  data?.paymentStatus === 'refunded',
+                  data?.paymentStatus === 'refund-initiated' || data?.paymentStatus === 'refunded',
               },
               fields: [
                 {
@@ -676,7 +742,7 @@ export const WebOrders: CollectionConfig = {
                       name: 'refundReason',
                       label: 'Refund Reason',
                       type: 'text',
-                      admin: { width: '50%' },
+                      admin: { width: '50%', readOnly: true },
                     },
                     {
                       name: 'refundedOn',
@@ -684,6 +750,7 @@ export const WebOrders: CollectionConfig = {
                       type: 'date',
                       admin: {
                         width: '25%',
+                        readOnly: true,
                         date: { displayFormat: 'MM/dd/yyyy', pickerAppearance: 'dayOnly' },
                       },
                     },
@@ -713,6 +780,7 @@ export const WebOrders: CollectionConfig = {
                       relationTo: 'coupon',
                       admin: {
                         width: '50%',
+                        readOnly: true,
                         condition: (data) => data?.origin === 'one-time',
                       },
                     },
@@ -720,7 +788,7 @@ export const WebOrders: CollectionConfig = {
                       name: 'pointsUsed',
                       label: 'WT Points Used',
                       type: 'number',
-                      admin: { width: '50%' },
+                      admin: { width: '50%', readOnly: true },
                     },
                   ],
                 },
@@ -731,6 +799,7 @@ export const WebOrders: CollectionConfig = {
               name: 'financials',
               type: 'group',
               label: 'Financial Breakdown',
+              admin: { readOnly: true },
               fields: [
                 {
                   type: 'row',
@@ -740,13 +809,13 @@ export const WebOrders: CollectionConfig = {
                       label: 'Subtotal',
                       type: 'number',
                       required: true,
-                      admin: { width: '50%', description: 'Sum of all item prices × quantities' },
+                      admin: { width: '50%', readOnly: true, description: 'Sum of all item prices × quantities' },
                     },
                     {
                       name: 'shippingCharge',
                       label: 'Shipping Charge',
                       type: 'number',
-                      admin: { width: '50%', description: 'Shipping fee (0 for pickup orders)' },
+                      admin: { width: '50%', readOnly: true, description: 'Shipping fee (0 for pickup orders)' },
                     },
                   ],
                 },
@@ -757,13 +826,17 @@ export const WebOrders: CollectionConfig = {
                       name: 'couponDiscount',
                       label: 'Coupon Discount',
                       type: 'number',
-                      admin: { width: '33%', description: 'Discount applied via coupon code' },
+                      admin: { width: '33%', readOnly: true, description: 'Discount applied via coupon code' },
                     },
                     {
                       name: 'wtCoinsDiscount',
                       label: 'WT Coins Discount',
                       type: 'number',
-                      admin: { width: '33%', description: 'Discount applied via WT Coins redemption' },
+                      admin: {
+                        width: '33%',
+                        readOnly: true,
+                        description: 'Discount applied via WT Coins redemption',
+                      },
                     },
                     {
                       name: 'taxPercentage',
@@ -771,7 +844,7 @@ export const WebOrders: CollectionConfig = {
                       type: 'number',
                       min: 0,
                       max: 100,
-                      admin: { width: '33%', description: 'Tax rate applied on taxable amount' },
+                      admin: { width: '33%', readOnly: true, description: 'Tax rate applied on taxable amount' },
                     },
                   ],
                 },
@@ -782,14 +855,22 @@ export const WebOrders: CollectionConfig = {
                       name: 'taxAmount',
                       label: 'Tax Amount',
                       type: 'number',
-                      admin: { width: '50%', description: 'Computed tax on (subtotal − discounts + shipping)' },
+                      admin: {
+                        width: '50%',
+                        readOnly: true,
+                        description: 'Computed tax on (subtotal − discounts + shipping)',
+                      },
                     },
                     {
                       name: 'total',
                       label: 'Grand Total',
                       type: 'number',
                       required: true,
-                      admin: { width: '50%', description: 'Final amount charged (subtotal − discounts + shipping + tax)' },
+                      admin: {
+                        width: '50%',
+                        readOnly: true,
+                        description: 'Final amount charged (subtotal − discounts + shipping + tax)',
+                      },
                     },
                   ],
                 },
@@ -805,14 +886,23 @@ export const WebOrders: CollectionConfig = {
       defaultValue: false,
       admin: {
         hidden: true,
+        readOnly: true,
         description: 'Tracks if WTCoins have been awarded for this order',
+      },
+    },
+    {
+      name: 'orderRating',
+      type: 'number',
+      admin: {
+        readOnly: true,
       },
     },
     {
       name: 'stripeData',
       type: 'json',
       admin: {
-        hidden: true, // This hides the field from the Admin Panel entirely
+        hidden: true,
+        readOnly: true,
       },
     },
     {
@@ -820,6 +910,7 @@ export const WebOrders: CollectionConfig = {
       type: 'text',
       admin: {
         hidden: true,
+        readOnly: true,
       },
     },
     {

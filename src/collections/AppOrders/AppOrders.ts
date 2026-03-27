@@ -23,7 +23,11 @@ export const AppOrders: CollectionConfig = {
     defaultColumns: ['id', 'shop', 'updatedAt'],
     group: 'Cafe Management',
     description: 'View and process incoming orders',
-    hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
+    hidden: ({ user }) => {
+      const isAuthorized =
+        user?.role === 'super-admin' || user?.role === 'admin' || user?.role === 'shop-manager'
+      return !isAuthorized
+    },
   },
   endpoints: [
     {
@@ -105,7 +109,7 @@ export const AppOrders: CollectionConfig = {
                     { label: 'Rejected', value: 'rejected' },
                   ],
                   required: true,
-                  admin: { width: '50%' },
+                  admin: { width: '50%', readOnly: true },
                 },
               ],
             },
@@ -121,6 +125,7 @@ export const AppOrders: CollectionConfig = {
                 { label: 'Cancelled', value: 'cancelled' },
               ],
               admin: {
+                readOnly: true,
                 condition: (data) =>
                   data?.orderAcceptance === 'accepted' && data?.orderType === 'take-away',
               },
@@ -137,6 +142,7 @@ export const AppOrders: CollectionConfig = {
                 { label: 'Cancelled', value: 'cancelled' },
               ],
               admin: {
+                readOnly: true,
                 condition: (data) =>
                   data?.orderAcceptance === 'accepted' && data?.orderType === 'dine-in',
               },
@@ -153,12 +159,13 @@ export const AppOrders: CollectionConfig = {
                 { label: 'Refund Initiated', value: 'refund-initiated' },
                 { label: 'Refunded', value: 'refunded' },
               ],
-              admin: {},
+              admin: { readOnly: true },
             },
             {
               name: 'refundReason',
               label: 'Refund Reason',
               type: 'text',
+              admin: { readOnly: true },
             },
             {
               name: 'refundedAmount',
@@ -414,6 +421,7 @@ export const AppOrders: CollectionConfig = {
       defaultValue: false,
       admin: {
         hidden: true,
+        readOnly: true,
         description:
           'Slot orders accepted more than 30 min before their slot time are held here. The cron job clears this flag at T-30 to release them into the Queued section.',
       },

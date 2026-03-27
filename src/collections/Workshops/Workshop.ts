@@ -11,7 +11,11 @@ export const Workshop: CollectionConfig = {
     useAsTitle: 'title',
     group: 'Marketing',
     description: 'Manage events and classes',
-    hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
+    hidden: ({ user }) => {
+      const isAuthorized =
+        user?.role === 'super-admin' || user?.role === 'admin' || user?.role === 'shop-manager'
+      return !isAuthorized
+    },
   },
   access: {
     read: () => true,

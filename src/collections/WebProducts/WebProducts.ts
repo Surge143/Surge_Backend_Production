@@ -17,6 +17,10 @@ export const WebProducts: CollectionConfig = {
     useAsTitle: 'name',
     group: 'Store Management',
     description: 'Add, edit or remove products',
+    hidden: ({ user }) => {
+      const isAuthorized = user?.role === 'super-admin' || user?.role === 'admin'
+      return !isAuthorized
+    },
     defaultColumns: [
       'productImage',
       'name',

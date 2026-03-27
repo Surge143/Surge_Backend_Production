@@ -2,117 +2,121 @@ import type { CollectionConfig } from 'payload'
 import { syncTemplates } from './hooks/syncTemplates'
 
 export const CustomizationTemplate: CollectionConfig = {
-    slug: 'customization-template',
-    labels: {
-        singular: 'Customization Option',
-        plural: 'Customization Options',
+  slug: 'customization-template',
+  labels: {
+    singular: 'Customization Option',
+    plural: 'Customization Options',
+  },
+  admin: {
+    useAsTitle: 'title',
+    group: 'Cafe Management',
+    description: 'Sizes, add-ons, and modifiers',
+    hidden: ({ user }) => {
+      const isAuthorized =
+        user?.role === 'super-admin' || user?.role === 'admin' || user?.role === 'shop-manager'
+      return !isAuthorized
     },
-    admin: {
-        useAsTitle: 'title',
-        group: 'Cafe Management',
-        description: 'Sizes, add-ons, and modifiers',
-        hidden: ({ user }: any) => user?.role === 'shop-manager' || user?.role === 'barista',
+  },
+  hooks: {
+    afterChange: [syncTemplates],
+  },
+  fields: [
+    // Internal name
+    {
+      name: 'title',
+      type: 'text',
+      required: true,
+      label: 'Template Name',
     },
-    hooks: {
-        afterChange: [syncTemplates],
-    },
-    fields: [
-        // Internal name
-        {
-            name: 'title',
-            type: 'text',
-            required: true,
-            label: 'Template Name',
+    // SECTIONS
+    {
+      name: 'sections',
+      type: 'array',
+      label: 'Customization Sections',
+      admin: {
+        components: {
+          RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
         },
-        // SECTIONS
+        description: 'Add sections for customization',
+      },
+      fields: [
         {
-            name: 'sections',
-            type: 'array',
-            label: 'Customization Sections',
-            admin: {
-                components: {
-                    RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
-                },
-                description: 'Add sections for customization',
+          name: 'title',
+          type: 'text',
+          required: true,
+          label: 'Section Title',
+        },
+        // single or multiple selection
+        {
+          name: 'selectionType',
+          type: 'radio',
+          required: true,
+          options: [
+            { label: 'Single (Radio)', value: 'single' },
+            { label: 'Multiple (Checkbox)', value: 'multiple' },
+          ],
+        },
+
+        // OPTIONAL GROUPING (Milk / Non-Dairy)
+        {
+          name: 'groups',
+          type: 'array',
+          label: 'Option Groups',
+          admin: {
+            components: {
+              RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
             },
-            fields: [
+          },
+          fields: [
+            {
+              name: 'groupTitle',
+              type: 'text',
+              required: true,
+            },
+            {
+              name: 'options',
+              type: 'array',
+              fields: [
                 {
-                    name: 'title',
-                    type: 'text',
-                    required: true,
-                    label: 'Section Title',
+                  name: 'label',
+                  type: 'text',
+                  required: true,
                 },
-                // single or multiple selection
                 {
-                    name: 'selectionType',
-                    type: 'radio',
-                    required: true,
-                    options: [
-                        { label: 'Single (Radio)', value: 'single' },
-                        { label: 'Multiple (Checkbox)', value: 'multiple' },
-                    ],
+                  name: 'price',
+                  type: 'number',
+                  defaultValue: 0,
                 },
-
-                // OPTIONAL GROUPING (Milk / Non-Dairy)
-                {
-                    name: 'groups',
-                    type: 'array',
-                    label: 'Option Groups',
-                    admin: {
-                        components: {
-                            RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
-                        },
-                    },
-                    fields: [
-                        {
-                            name: 'groupTitle',
-                            type: 'text',
-                            required: true,
-                        },
-                        {
-                            name: 'options',
-                            type: 'array',
-                            fields: [
-                                {
-                                    name: 'label',
-                                    type: 'text',
-                                    required: true,
-                                },
-                                {
-                                    name: 'price',
-                                    type: 'number',
-                                    defaultValue: 0,
-                                },
-                            ],
-                        },
-                    ],
-                },
-
-                // OPTIONS (used when no groups)
-                {
-                    name: 'options',
-                    type: 'array',
-                    label: 'Options',
-                    admin: {
-                        condition: (_, siblingData) => !siblingData.groups?.length,
-                        components: {
-                            RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
-                        },
-                    },
-                    fields: [
-                        {
-                            name: 'label',
-                            type: 'text',
-                            required: true,
-                        },
-                        {
-                            name: 'price',
-                            type: 'number',
-                            defaultValue: 0,
-                        },
-                    ],
-                },
-            ],
+              ],
+            },
+          ],
         },
-    ],
+
+        // OPTIONS (used when no groups)
+        {
+          name: 'options',
+          type: 'array',
+          label: 'Options',
+          admin: {
+            condition: (_, siblingData) => !siblingData.groups?.length,
+            components: {
+              RowLabel: '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
+            },
+          },
+          fields: [
+            {
+              name: 'label',
+              type: 'text',
+              required: true,
+            },
+            {
+              name: 'price',
+              type: 'number',
+              defaultValue: 0,
+            },
+          ],
+        },
+      ],
+    },
+  ],
 }

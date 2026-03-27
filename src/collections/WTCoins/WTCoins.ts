@@ -9,7 +9,10 @@ export const WTCoins: GlobalConfig = {
   admin: {
     description: 'Track beans earned and redeemed',
     group: 'Loyalty & Rewards',
-    hidden: ({ user }: any) => user?.role === 'barista',
+    hidden: ({ user }) => {
+      const isAuthorized = user?.role === 'super-admin' || user?.role === 'admin' 
+      return !isAuthorized
+    },
   },
   access: {
     read: () => true,
