@@ -278,20 +278,20 @@ export const WebOrders: CollectionConfig = {
               to: data?.email,
               subject: 'Your order has been shipped!',
               body: `Order #${data.invoiceId} has been shipped. It is on its way!`,
-              html: OrderShippedEmail({ order: { ...doc } }),
+              html: OrderShippedEmail(doc),
             })
           } catch (error) {
             console.error('Error during shipment logic:', error)
           }
         }
-        
+
         if (isNowDelivered && !wasDelivered && userId) {
           try {
             await sendEmail({
               to: data?.email,
               subject: 'Your order has been delivered!',
               body: `Order #${data.invoiceId} has been delivered. Thank you for shopping with us!`,
-              html: OrderDeliveredEmail({ order: { ...doc } }),
+              html: OrderDeliveredEmail(doc),
             })
           } catch (error) {
             console.error('Error during shipment logic:', error)

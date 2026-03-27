@@ -55,7 +55,7 @@ export async function handleSubscriptionDeleted(subscription: any) {
           to: userEmail,
           subject: 'Subscription Cancelled',
           body: `Your subscription has been cancelled.`,
-          html: SubscriptionCancelledEmail({ order: subDoc }),
+          html: SubscriptionCancelledEmail(subDoc),
         })
         console.log('✅ Email sent')
       }

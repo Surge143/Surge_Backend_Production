@@ -115,8 +115,8 @@ export const SubscriptionRenewedEmail = (order) => {
                   <td width="50%" valign="top">
                     <p style="font-size: 13px; font-weight: 800; color: #2F362A; text-transform: uppercase; margin: 0 0 8px 0;">Delivery Schedule</p>
                     <p style="font-size: 13px; color: #6E736A; margin: 0; line-height: 1.4;">
-                      Frequency: ${order.items[0].frequency}<br>
-                      Next Renewal: ${order.items[0].nextPaymentDate}
+                      Frequency: ${order.items?.[0]?.frequencyName || 'Regular'}<br>
+                      Next Renewal: ${order.nextPaymentDate ? new Date(order.nextPaymentDate).toLocaleDateString() : 'See Account'}
                     </p>
                   </td>
                 </tr>

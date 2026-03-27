@@ -208,8 +208,8 @@ export async function handleInvoicePaid(invoice: any) {
           subject: isFirstInvoice ? 'Subscription Started!' : 'Subscription Renewed!',
           body: `Order #${newOrder.id} processed.`,
           html: isFirstInvoice
-            ? SubscriptionActiveEmail({ order: newOrder })
-            : SubscriptionRenewedEmail({ order: newOrder }),
+            ? SubscriptionActiveEmail(newOrder)
+            : SubscriptionRenewedEmail(newOrder),
         })
         console.log('✅ Email sent')
       }

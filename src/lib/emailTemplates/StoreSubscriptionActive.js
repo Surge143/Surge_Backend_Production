@@ -1,9 +1,11 @@
 export const SubscriptionActiveEmail = (order) => {
-  const LOGO_URL = 'https://wordpressbackend.whitemantis.ae/wp-content/uploads/2026/01/image.png';
-  const BACKEND_URL = 'https://wordpressbackend.whitemantis.ae';
+  const LOGO_URL = 'https://wordpressbackend.whitemantis.ae/wp-content/uploads/2026/01/image.png'
+  const BACKEND_URL = 'https://wordpressbackend.whitemantis.ae'
 
   const formatAddress = (addr) =>
-    addr ? `${addr.addressLine1}, ${addr.addressLine2 ? addr.addressLine2 + ', ' : ''}${addr.city}, ${addr.emirates}, ${addr.addressCountry}` : 'N/A';
+    addr
+      ? `${addr.addressLine1}, ${addr.addressLine2 ? addr.addressLine2 + ', ' : ''}${addr.city}, ${addr.emirates}, ${addr.addressCountry}`
+      : 'N/A'
 
   return `
 <!DOCTYPE html>
@@ -54,26 +56,30 @@ export const SubscriptionActiveEmail = (order) => {
                 <h2 style="font-size: 18px; color: #2F362A; margin: 0 0 5px 0;">Subscription Summary</h2>
                 <table border="0" cellpadding="0" cellspacing="0" width="100%">
                   <tr>
-                    <td style="font-size: 14px; color: #6E736A;">${order.items[0].categoryTitle} Plan</td>
-                    <td align="right" style="font-size: 14px; color: #2F362A; font-weight: 700;">${order.items[0].frequency}</td>
+                    <td style="font-size: 14px; color: #6E736A;">${order.items?.[0]?.product?.categories?.name || 'Coffee'} Plan</td>
+                    <td align="right" style="font-size: 14px; color: #2F362A; font-weight: 700;">${order.items?.[0]?.frequencyName || 'Regular'}</td>
                   </tr>
                 </table>
               </div>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
-                ${order.items.map(item => `
+                ${(order.items || [])
+                  .map(
+                    (item) => `
                   <tr>
                     <td style="padding: 10px 0; width: 70px; vertical-align: top;">
-                      <img src="${BACKEND_URL}${item.product.productImage.sizes.thumbnail.url}" width="60" style="display: block; border-radius: 4px;">
+                      <img src="${BACKEND_URL}${item.product?.productImage?.sizes?.thumbnail?.url || item.product?.productImage?.url || ''}" width="60" style="display: block; border-radius: 4px;">
                     </td>
                     <td style="padding: 10px 10px; vertical-align: top;">
-                      <p style="font-weight: 700; font-size: 15px; color: #2F362A; margin: 0;">${item.productName}</p>
+                      <p style="font-weight: 700; font-size: 15px; color: #2F362A; margin: 0;">${item.productName || item.product?.name || 'Product'}</p>
                       <p style="font-size: 14px; color: #6E736A; margin: 4px 0;">
-                        ${item.variantName >= 1000 ? (item.variantName/1000) + 'kg' : item.variantName + 'g'} | ${item.quantity}x Bag(s)
+                        ${item.variantName >= 1000 ? item.variantName / 1000 + 'kg' : item.variantName + 'g'} | ${item.quantity}x Bag(s)
                       </p>
                     </td>
                   </tr>
-                `).join('')}
+                `,
+                  )
+                  .join('')}
               </table>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 32px; font-size: 14px; color: #2F362A;">
@@ -81,12 +87,16 @@ export const SubscriptionActiveEmail = (order) => {
                   <td style="border-top: 1px solid #e5e5e5; padding: 16px 0 8px 0;">Subtotal</td>
                   <td align="right" style="border-top: 1px solid #e5e5e5; padding: 16px 0 8px 0;">AED ${order.financials.subtotal.toFixed(2)}</td>
                 </tr>
-                ${order.financials.subscriptionDiscount > 0 ? `
+                ${
+                  order.financials.subscriptionDiscount > 0
+                    ? `
                   <tr style="color: #6C7A5F;">
                     <td style="padding: 8px 0;">Subscription Discount (20% Off)</td>
                     <td align="right">- AED ${order.financials.subscriptionDiscount.toFixed(2)}</td>
                   </tr>
-                ` : ''}
+                `
+                    : ''
+                }
                 <tr>
                   <td style="padding: 8px 0;">Shipping</td>
                   <td align="right">AED ${order.financials.shippingCharge.toFixed(2)}</td>
@@ -124,5 +134,5 @@ export const SubscriptionActiveEmail = (order) => {
   </table>
 </body>
 </html>
-    `;
-};
+    `
+}

@@ -168,7 +168,7 @@ We'll send you another email when your order ships.
 
 Happy brewing,
 Team White Mantis`.trim(),
-            html: OrderConfirmEmail({ order: order }),
+            html: OrderConfirmEmail(order),
           })
 
           console.log(`✅ Order confirmation email sent to ${userEmail}`)

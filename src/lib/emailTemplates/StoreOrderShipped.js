@@ -1,9 +1,11 @@
 export const OrderShippedEmail = (order) => {
-  const LOGO_URL = 'https://wordpressbackend.whitemantis.ae/wp-content/uploads/2026/01/image.png';
-  const BACKEND_URL = 'https://wordpressbackend.whitemantis.ae';
+  const LOGO_URL = 'https://wordpressbackend.whitemantis.ae/wp-content/uploads/2026/01/image.png'
+  const BACKEND_URL = 'https://wordpressbackend.whitemantis.ae'
 
   const formatAddress = (addr) =>
-    addr ? `${addr.addressLine1}, ${addr.addressLine2 ? addr.addressLine2 + ', ' : ''}${addr.city}, ${addr.emirates}, ${addr.addressCountry}` : 'N/A';
+    addr
+      ? `${addr.addressLine1}, ${addr.addressLine2 ? addr.addressLine2 + ', ' : ''}${addr.city}, ${addr.emirates}, ${addr.addressCountry}`
+      : 'N/A'
 
   return `
 <!DOCTYPE html>
@@ -57,20 +59,24 @@ export const OrderShippedEmail = (order) => {
               </div>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                ${order.items.map(item => `
+                ${(order.items || [])
+                  .map(
+                    (item) => `
                   <tr>
                     <td style="padding: 15px 0; width: 70px; vertical-align: top;">
-                      <img src="${BACKEND_URL}${item.product.productImage.sizes.thumbnail.url}" width="60" style="display: block; border-radius: 4px;">
+                      <img src="${BACKEND_URL}${item.product?.productImage?.sizes?.thumbnail?.url || item.product?.productImage?.url || ''}" width="60" style="display: block; border-radius: 4px;">
                     </td>
                     <td style="padding: 15px 10px; vertical-align: top;">
-                      <p style="font-weight: 700; font-size: 15px; color: #2F362A; margin: 0;">${item.productName}</p>
-                      <p style="font-size: 14px; color: #6E736A; margin: 4px 0;">${item.variantName}g | Qty: ${item.quantity}</p>
+                      <p style="font-weight: 700; font-size: 15px; color: #2F362A; margin: 0;">${item.productName || item.product?.name || 'Product'}</p>
+                      <p style="font-size: 14px; color: #6E736A; margin: 4px 0;">${item.variantName || 'Regular'} | Qty: ${item.quantity}</p>
                     </td>
                     <td align="right" style="padding: 15px 0; vertical-align: top; font-weight: 700; color: #2F362A;">
                       AED ${(item.price * item.quantity).toFixed(2)}
                     </td>
                   </tr>
-                `).join('')}
+                `,
+                  )
+                  .join('')}
               </table>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 32px; font-size: 14px; color: #2F362A;">
@@ -82,12 +88,16 @@ export const OrderShippedEmail = (order) => {
                   <td style="padding: 8px 0;">Shipping</td>
                   <td align="right">AED ${order.financials.shippingCharge.toFixed(2)}</td>
                 </tr>
-                ${order.financials.couponDiscount > 0 ? `
+                ${
+                  order.financials.couponDiscount > 0
+                    ? `
                   <tr style="color: #6C7A5F;">
                     <td style="padding: 8px 0;">Discount</td>
                     <td align="right">- AED ${order.financials.couponDiscount.toFixed(2)}</td>
                   </tr>
-                ` : ''}
+                `
+                    : ''
+                }
                 <tr>
                   <td style="padding: 8px 0;">VAT (5%)</td>
                   <td align="right">AED ${order.financials.taxAmount.toFixed(2)}</td>
@@ -128,5 +138,5 @@ export const OrderShippedEmail = (order) => {
   </table>
 </body>
 </html>
-    `;
-};
+    `
+}

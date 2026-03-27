@@ -1,15 +1,19 @@
 export const OrderConfirmEmail = (order) => {
-  const LOGO_URL = 'https://wordpressbackend.whitemantis.ae/wp-content/uploads/2026/01/image.png';
-  const BACKEND_URL = 'https://wordpressbackend.whitemantis.ae';
+  const LOGO_URL = 'https://wordpressbackend.whitemantis.ae/wp-content/uploads/2026/01/image.png'
+  const BACKEND_URL = 'https://wordpressbackend.whitemantis.ae'
 
   const formatAddress = (addr) =>
-    addr ? `${addr.addressLine1}, ${addr.addressLine2 ? addr.addressLine2 + ', ' : ''}${addr.city}, ${addr.emirates}, ${addr.addressCountry}` : 'N/A';
+    addr
+      ? `${addr.addressLine1}, ${addr.addressLine2 ? addr.addressLine2 + ', ' : ''}${addr.city}, ${addr.emirates}, ${addr.addressCountry}`
+      : 'N/A'
 
-  const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  }) : 'N/A';
+  const orderDate = order.createdAt
+    ? new Date(order.createdAt).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : 'N/A'
 
   return `
 <!DOCTYPE html>
@@ -55,19 +59,23 @@ export const OrderConfirmEmail = (order) => {
               </div>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
-                ${order.items?.map(item => `
+                ${(order.items || [])
+                  .map(
+                    (item) => `
                   <tr>
                     <td style="padding: 15px 0; width: 80px;">
-                      <img src="${BACKEND_URL}${item.product.productImage.sizes.thumbnail.url}" width="60" style="display: block;">
+                      <img src="${BACKEND_URL}${item.product?.productImage?.sizes?.thumbnail?.url || item.product?.productImage?.url || ''}" width="60" style="display: block;">
                     </td>
                     <td style="padding: 15px 10px; vertical-align: middle;">
-                      <p style="font-weight: 700; font-size: 15px; color: #2F362A; margin: 0;">${item.productName}</p>
-                      <p style="font-weight: 400; font-size: 15px; color: #6E736A; margin: 0;">${item.variantName}g</p>
+                      <p style="font-weight: 700; font-size: 15px; color: #2F362A; margin: 0;">${item.productName || item.product?.name || 'Product'}</p>
+                      <p style="font-weight: 400; font-size: 15px; color: #6E736A; margin: 0;">${item.variantName || 'Regular'}${item.variantName ? 'g' : ''}</p>
                     </td>
                     <td align="center" style="padding: 15px 10px; font-size: 15px; color: #666;">×${item.quantity}</td>
                     <td align="right" style="padding: 15px 0; font-size: 15px; color: #333; font-weight: bold;">AED ${(item.price * item.quantity).toFixed(2)}</td>
                   </tr>
-                `).join('')}
+                `,
+                  )
+                  .join('')}
               </table>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 32px; font-size: 14px; color: #2F362A;">
@@ -122,5 +130,5 @@ export const OrderConfirmEmail = (order) => {
   </table>
 </body>
 </html>
-  `;
-};
+  `
+}

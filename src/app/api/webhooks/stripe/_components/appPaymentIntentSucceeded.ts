@@ -183,7 +183,7 @@ We're starting to prepare your order. You can track its status in the app.
 
 Happy brewing,
 Team White Mantis Cafe`.trim(),
-            html: CafeOrderConfirmationEmail({ order: order }),
+            html: CafeOrderConfirmationEmail(order),
           })
 
           console.log(`✅ App order confirmation email sent to ${userEmail}`)
