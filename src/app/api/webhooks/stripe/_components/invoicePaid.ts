@@ -106,6 +106,7 @@ export async function handleInvoicePaid(invoice: any) {
         couponDiscount: 0, // Subscriptions don't use coupons
         wtCoinsDiscount: isFirstInvoice ? (subscriptionDoc.financials?.wtCoinsDiscount ?? 0) : 0,
         shippingCharge: subscriptionDoc.financials?.shippingCharge ?? 0,
+        taxPercentage: subscriptionDoc.financials?.taxPercentage ?? 0,
         taxAmount: invoice.tax ? invoice.tax / 100 : (subscriptionDoc.financials?.taxAmount ?? 0),
         total: invoice.amount_paid / 100,
       },

@@ -108,7 +108,14 @@ export const SubOneTime: React.FC<InvoiceDocumentProps> = ({ data }) => {
             {data.billTo.address_2 && <Text style={styles.addrText}>{data.billTo.address_2}</Text>}
             <Text style={styles.addrText}>{data.billTo.country}</Text>
 
-            {data.shipTo && (
+            {data.shippingMethod === 'pickup' ? (
+              <View style={{ marginTop: 14 }}>
+                <Text style={styles.label}>Pick Up</Text>
+                <Text style={styles.addrBold}>White Mantis Roastery - Al Quoz</Text>
+                <Text style={styles.addrText}>Warehouse #2 – Al Quoz Industrial Area 4, Dubai</Text>
+                <Text style={styles.addrText}>10:00 AM – 7:00 PM</Text>
+              </View>
+            ) : data.shipTo ? (
               <View style={{ marginTop: 14 }}>
                 <Text style={styles.label}>Ship to</Text>
                 <Text style={styles.addrBold}>
@@ -119,7 +126,7 @@ export const SubOneTime: React.FC<InvoiceDocumentProps> = ({ data }) => {
                   {data.shipTo.city}, {data.shipTo.country}
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
 
           <View style={styles.addressIssuedCol}>

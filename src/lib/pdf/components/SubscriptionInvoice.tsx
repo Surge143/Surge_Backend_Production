@@ -94,17 +94,6 @@ export const SubscriptionInvoice: React.FC<InvoiceDocumentProps> = ({ data }) =>
             <Text style={{ ...styles.infoText, textAlign: 'right' }}>
               {data.metadata.invoiceDate}
             </Text>
-
-            {data.metadata.nextBillingDate && (
-              <>
-                <Text style={{ ...styles.label, marginTop: 10, textAlign: 'right' }}>
-                  Next Billing Date
-                </Text>
-                <Text style={{ ...styles.infoTextBold, textAlign: 'right' }}>
-                  {data.metadata.nextBillingDate}
-                </Text>
-              </>
-            )}
           </View>
         </View>
 
@@ -117,11 +106,16 @@ export const SubscriptionInvoice: React.FC<InvoiceDocumentProps> = ({ data }) =>
             </Text>
             <Text style={styles.addrText}>{data.billTo.address_1}</Text>
             {data.billTo.address_2 && <Text style={styles.addrText}>{data.billTo.address_2}</Text>}
-            <Text style={styles.addrText}>
-              {data.billTo.country} 
-            </Text>
+            <Text style={styles.addrText}>{data.billTo.country}</Text>
 
-            {data.shipTo && (
+            {data.shippingMethod === 'pickup' ? (
+              <View style={{ marginTop: 14 }}>
+                <Text style={styles.label}>Pick Up</Text>
+                <Text style={styles.addrBold}>White Mantis Roastery - Al Quoz</Text>
+                <Text style={styles.addrText}>Warehouse #2 – Al Quoz Industrial Area 4, Dubai</Text>
+                <Text style={styles.addrText}>10:00 AM – 7:00 PM</Text>
+              </View>
+            ) : data.shipTo ? (
               <View style={{ marginTop: 14 }}>
                 <Text style={styles.label}>Ship to</Text>
                 <Text style={styles.addrBold}>
@@ -132,7 +126,7 @@ export const SubscriptionInvoice: React.FC<InvoiceDocumentProps> = ({ data }) =>
                   {data.shipTo.city}, {data.shipTo.country} — {data.shipTo.postcode}
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
 
           <View style={styles.addressIssuedCol}>
@@ -164,7 +158,9 @@ export const SubscriptionInvoice: React.FC<InvoiceDocumentProps> = ({ data }) =>
             >
               <View style={{ ...styles.td, flex: 2, flexDirection: 'column' }}>
                 <Text>{item.name}</Text>
-                <Text style={{ color: colors.dark, fontSize: 8 }}>({item.weight})</Text>
+                {item.weight ? (
+                  <Text style={{ color: colors.dark, fontSize: 8 }}>({item.weight})</Text>
+                ) : null}
               </View>
 
               <Text style={{ ...styles.td, flex: 3, textAlign: 'center' }}>
@@ -186,10 +182,15 @@ export const SubscriptionInvoice: React.FC<InvoiceDocumentProps> = ({ data }) =>
         <View style={styles.totalsWrapper}>
           <View style={styles.totalsBlock}>
             <TotalRow label="Subtotal :" value={`AED ${data.subtotal.toFixed(0)}`} />
-            <TotalRow label="Shipping :" value={`AED ${data.subtotal.toFixed(0)}`} />
-            <TotalRow label="Coupon Discount:" value={`AED ${data.subtotal.toFixed(0)}`} />
-            <TotalRow label="Beans Discount:" value={`AED ${data.subtotal.toFixed(0)}`} />
-            {/* <TotalRow label="Shipping :" value={`AED ${data.shipping.toFixed(0)}`} /> */}
+            {data.shippingMethod !== 'pickup' && (
+              <TotalRow label="Shipping :" value={`AED ${data.shipping.toFixed(0)}`} />
+            )}
+            {(data.couponDiscount ?? 0) > 0 && (
+              <TotalRow label="Coupon Discount:" value={`AED ${data.couponDiscount!.toFixed(0)}`} />
+            )}
+            {(data.beansDiscount ?? 0) > 0 && (
+              <TotalRow label="Beans Discount:" value={`AED ${data.beansDiscount!.toFixed(0)}`} />
+            )}
             <TotalRow label={`${data.taxLabel} :`} value={`AED ${data.tax.toFixed(0)}`} />
             <View style={styles.totalDivider} />
             <View style={styles.totalFinalRow}>

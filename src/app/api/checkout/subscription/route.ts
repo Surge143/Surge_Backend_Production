@@ -252,6 +252,7 @@ export async function POST(req: NextRequest) {
               subscriptionDiscount: totalDiscount,
               wtCoinsDiscount: wtDiscount,
               shippingCharge,
+              taxPercentage: taxRate,
               taxAmount,
               total: finalTotal,
             },

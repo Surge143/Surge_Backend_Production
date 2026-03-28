@@ -107,17 +107,6 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
             <Text style={{ ...styles.infoText, textAlign: 'right' }}>
               {data.metadata.invoiceDate}
             </Text>
-
-            {isSubscription && data.metadata.nextBillingDate && (
-              <>
-                <Text style={{ ...styles.label, marginTop: 10, textAlign: 'right' }}>
-                  Next Billing Date
-                </Text>
-                <Text style={{ ...styles.infoTextBold, textAlign: 'right' }}>
-                  {data.metadata.nextBillingDate}
-                </Text>
-              </>
-            )}
           </View>
         </View>
 
@@ -139,7 +128,14 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
             <Text style={styles.addrText}>Email: {data.billTo.email || 'N/A'}</Text>
             <Text style={styles.addrText}>Phone: {data.billTo.phone || 'N/A'}</Text>
 
-            {data.shipTo && (
+            {data.shippingMethod === 'pickup' ? (
+              <View style={{ marginTop: 14 }}>
+                <Text style={styles.label}>Pick Up</Text>
+                <Text style={styles.addrBold}>White Mantis Roastery - Al Quoz</Text>
+                <Text style={styles.addrText}>Warehouse #2 – Al Quoz Industrial Area 4, Dubai</Text>
+                <Text style={styles.addrText}>10:00 AM – 7:00 PM</Text>
+              </View>
+            ) : data.shipTo ? (
               <View style={{ marginTop: 14 }}>
                 <Text style={styles.label}>Ship to</Text>
                 <Text style={styles.addrBold}>
@@ -153,7 +149,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
                   {data.shipTo.city}, {data.shipTo.country} — {data.shipTo.postcode}
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
 
           {/* Issued By — left edge aligns with Order Id above */}
