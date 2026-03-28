@@ -223,7 +223,7 @@ export function formatPayloadLineItems(items: any[]): InvoiceLineItem[] {
 
     return {
       id: item.id || index,
-      name: product.name || product.productTitle || 'Product',
+      name: item.productName || product.name || product.productTitle || 'Product',
       quantity: quantity,
       price: price,
       subtotal: total,
@@ -275,6 +275,7 @@ export function formatPayloadOrderToInvoice(order: any, paymentDetails?: any): I
     tax: parseFloat(order.financials?.taxAmount || 0),
     taxLabel: 'VAT tax',
     shipping: parseFloat(order.financials?.shippingCharge || 0),
+    shippingMethod: order.deliveryOption || '',
     discount:
       parseFloat(order.financials?.couponDiscount || 0) +
       parseFloat(order.financials?.wtCoinsDiscount || 0),
@@ -332,6 +333,7 @@ export function formatPayloadSubscriptionToInvoice(subscription: any): InvoiceDa
     tax: parseFloat(subscription.financials?.taxAmount || 0),
     taxLabel: 'VAT (5%)',
     shipping: parseFloat(subscription.financials?.shippingCharge || 0),
+    shippingMethod: subscription.deliveryOption || '',
     discount:
       parseFloat(subscription.financials?.couponDiscount || 0) +
       parseFloat(subscription.financials?.wtCoinsDiscount || 0),

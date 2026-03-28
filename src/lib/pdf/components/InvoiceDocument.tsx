@@ -228,7 +228,9 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
             {(data.beansDiscount ?? 0) > 0 && (
               <TotalRow label="Beans Discount :" value={`AED ${data.beansDiscount!.toFixed(0)}`} />
             )}
-            <TotalRow label="Shipping :" value={`AED ${data.shipping.toFixed(0)}`} />
+            {data.shippingMethod !== 'pickup' && (
+              <TotalRow label="Shipping :" value={`AED ${data.shipping.toFixed(0)}`} />
+            )}
             <TotalRow label={`${data.taxLabel} :`} value={`AED ${data.tax.toFixed(0)}`} />
             <View style={styles.totalDivider} />
             <View style={styles.totalFinalRow}>

@@ -106,9 +106,7 @@ export const SubOneTime: React.FC<InvoiceDocumentProps> = ({ data }) => {
             </Text>
             <Text style={styles.addrText}>{data.billTo.address_1}</Text>
             {data.billTo.address_2 && <Text style={styles.addrText}>{data.billTo.address_2}</Text>}
-            <Text style={styles.addrText}>
-              {data.billTo.country}
-            </Text>
+            <Text style={styles.addrText}>{data.billTo.country}</Text>
 
             {data.shipTo && (
               <View style={{ marginTop: 14 }}>
@@ -173,7 +171,9 @@ export const SubOneTime: React.FC<InvoiceDocumentProps> = ({ data }) => {
         <View style={styles.totalsWrapper}>
           <View style={styles.totalsBlock}>
             <TotalRow label="Subtotal :" value={`AED ${data.subtotal.toFixed(0)}`} />
-            <TotalRow label="Shipping :" value={`AED ${data.shipping.toFixed(0)}`} />
+            {data.shippingMethod !== 'pickup' && (
+              <TotalRow label="Shipping :" value={`AED ${data.shipping.toFixed(0)}`} />
+            )}
             {(data.couponDiscount ?? 0) > 0 && (
               <TotalRow label="Coupon Discount:" value={`AED ${data.couponDiscount!.toFixed(0)}`} />
             )}
