@@ -107,6 +107,9 @@ export const ShopCoupons: CollectionConfig = {
             }
           }
         }
+
+        if (data.code) data.code = data.code.toUpperCase()
+
         return data
       },
     ],

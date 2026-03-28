@@ -59,6 +59,9 @@ export const Coupon: CollectionConfig = {
         if (operation === 'create' && user) {
           data.createdBy = user.id
         }
+
+        if (data.code) data.code = data.code.toUpperCase()
+
         return data
       },
     ],
