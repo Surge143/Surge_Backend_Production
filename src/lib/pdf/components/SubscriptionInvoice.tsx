@@ -123,7 +123,7 @@ export const SubscriptionInvoice: React.FC<InvoiceDocumentProps> = ({ data }) =>
                 </Text>
                 <Text style={styles.addrText}>{data.shipTo.address_1}</Text>
                 <Text style={styles.addrText}>
-                  {data.shipTo.city}, {data.shipTo.country} — {data.shipTo.postcode}
+                  {data.shipTo.city}, {data.shipTo.country}
                 </Text>
               </View>
             ) : null}

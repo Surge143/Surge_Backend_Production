@@ -123,7 +123,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
             <Text style={styles.addrText}>{data.billTo.address_1}</Text>
             {data.billTo.address_2 && <Text style={styles.addrText}>{data.billTo.address_2}</Text>}
             <Text style={styles.addrText}>
-              {data.billTo.country} — {data.billTo.postcode}
+              {data.billTo.country}
             </Text>
             <Text style={styles.addrText}>Email: {data.billTo.email || 'N/A'}</Text>
             <Text style={styles.addrText}>Phone: {data.billTo.phone || 'N/A'}</Text>
@@ -146,7 +146,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
                   <Text style={styles.addrText}>{data.shipTo.address_2}</Text>
                 )}
                 <Text style={styles.addrText}>
-                  {data.shipTo.city}, {data.shipTo.country} — {data.shipTo.postcode}
+                  {data.shipTo.city}, {data.shipTo.country}
                 </Text>
               </View>
             ) : null}
