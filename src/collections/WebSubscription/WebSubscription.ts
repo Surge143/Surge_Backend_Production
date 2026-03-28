@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { linkGuestOrderToUser } from '../WebOrders/hooks/linkGuestToUser'
 import { refundHandler } from './endpoints/refundHandler'
+import { downloadInvoiceHandler } from './endpoints/downloadInvoice'
 import { awardReferralCoins } from '@/utilities/awardReferralCoins'
 
 function generateOrderID() {
@@ -30,6 +31,11 @@ export const WebSubscription: CollectionConfig = {
       path: '/:id/cancel',
       method: 'get',
       handler: refundHandler,
+    },
+    {
+      path: '/:id/invoice',
+      method: 'get',
+      handler: downloadInvoiceHandler,
     },
   ],
   access: {

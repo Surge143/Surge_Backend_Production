@@ -3,6 +3,7 @@ import { beforeValidateHook } from './hooks/beforeValidate'
 import { afterChangeHook } from './hooks/afterChange'
 import { afterDeleteHook } from './hooks/afterDelete'
 import { refundHandler } from './endpoints/refundHandler'
+import { downloadInvoiceHandler } from './endpoints/downloadInvoice'
 import { linkGuestOrderToUser } from '../WebOrders/hooks/linkGuestToUser'
 
 function generateOrderID() {
@@ -34,6 +35,11 @@ export const AppOrders: CollectionConfig = {
       path: '/:id/cancel',
       method: 'get',
       handler: refundHandler,
+    },
+    {
+      path: '/:id/invoice',
+      method: 'get',
+      handler: downloadInvoiceHandler,
     },
   ],
   hooks: {

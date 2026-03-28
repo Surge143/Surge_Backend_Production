@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { awardWTCoins, convertPointsToAED } from '@/utilities/wtCoins'
 import { refundHandler } from './endpoints/refundHandler'
+import { downloadInvoiceHandler } from './endpoints/downloadInvoice'
 import { linkGuestOrderToUser } from './hooks/linkGuestToUser'
 import { awardReferralCoins } from '@/utilities/awardReferralCoins'
 import { createOrderPaidNotification } from '@/utilities/orderNotifications'
@@ -36,6 +37,11 @@ export const WebOrders: CollectionConfig = {
       path: '/:id/cancel',
       method: 'get',
       handler: refundHandler,
+    },
+    {
+      path: '/:id/invoice',
+      method: 'get',
+      handler: downloadInvoiceHandler,
     },
   ],
   access: {
