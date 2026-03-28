@@ -1,10 +1,22 @@
-import React from "react";
-import { Document, Page, Link, Text, View, Svg, Path, G, Defs, ClipPath, Rect } from "@react-pdf/renderer";
-import { InvoiceData } from "../types/invoice.types";
-import { styles, colors as C } from "./InvoiceStyles";
+import React from 'react'
+import {
+  Document,
+  Page,
+  Link,
+  Text,
+  View,
+  Svg,
+  Path,
+  G,
+  Defs,
+  ClipPath,
+  Rect,
+} from '@react-pdf/renderer'
+import { InvoiceData } from '../types/invoice.types'
+import { styles, colors as C } from './InvoiceStyles'
 
 interface InvoiceDocumentProps {
-  data: InvoiceData;
+  data: InvoiceData
 }
 
 // ─── White Mantis SVG logo (exact paths from brand SVG) ──────────────────────
@@ -30,7 +42,7 @@ const DiamondLogo = () => (
       </ClipPath>
     </Defs>
   </Svg>
-);
+)
 
 // ─── Small helper ─────────────────────────────────────────────────────────────
 const TotalRow = ({ label, value }: { label: string; value: string }) => (
@@ -38,11 +50,11 @@ const TotalRow = ({ label, value }: { label: string; value: string }) => (
     <Text style={styles.totalRowLabel}>{label}</Text>
     <Text style={styles.totalRowValue}>{value}</Text>
   </View>
-);
+)
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
-  const isSubscription = data.type === "subscription";
+  const isSubscription = data.type === 'subscription'
 
   return (
     <Document>
@@ -70,13 +82,13 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
         */}
         <View style={styles.infoGrid}>
           {/* Recipient Column - takes all available space */}
-          <View style={{ flex: 1, flexDirection: "column", gap: 2 }}>
+          <View style={{ flex: 1, flexDirection: 'column', gap: 2 }}>
             <Text style={styles.label}>Recipient</Text>
             <Text style={styles.infoNameBold}>
               {data.billTo.first_name} {data.billTo.last_name}
             </Text>
-            <Text style={styles.infoText}>{data.billTo.email || "N/A"}</Text>
-            <Text style={styles.infoText}>{data.billTo.phone || "N/A"}</Text>
+            <Text style={styles.infoText}>{data.billTo.email || 'N/A'}</Text>
+            <Text style={styles.infoText}>{data.billTo.phone || 'N/A'}</Text>
           </View>
 
           {/* Order ID Column - fixed width or auto */}
@@ -86,22 +98,22 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
               #{data.metadata.orderNumber || data.metadata.subscriptionNumber}
             </Text>
             <Text style={{ ...styles.label, marginTop: 10 }}>Invoice no.</Text>
-            <Text style={styles.infoTextBold}>
-              {data.metadata.invoiceNumber}
-            </Text>
+            <Text style={styles.infoTextBold}>{data.metadata.invoiceNumber}</Text>
           </View>
 
           {/* Order Date Column - Pushed to the far right */}
           <View style={styles.infoColLast}>
-            <Text style={{ ...styles.label, textAlign: "right" }}>Order Date</Text>
-            <Text style={{ ...styles.infoText, textAlign: "right" }}>{data.metadata.invoiceDate}</Text>
+            <Text style={{ ...styles.label, textAlign: 'right' }}>Order Date</Text>
+            <Text style={{ ...styles.infoText, textAlign: 'right' }}>
+              {data.metadata.invoiceDate}
+            </Text>
 
             {isSubscription && data.metadata.nextBillingDate && (
               <>
-                <Text style={{ ...styles.label, marginTop: 10, textAlign: "right" }}>
+                <Text style={{ ...styles.label, marginTop: 10, textAlign: 'right' }}>
                   Next Billing Date
                 </Text>
-                <Text style={{ ...styles.infoTextBold, textAlign: "right" }}>
+                <Text style={{ ...styles.infoTextBold, textAlign: 'right' }}>
                   {data.metadata.nextBillingDate}
                 </Text>
               </>
@@ -120,18 +132,12 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
               {data.billTo.first_name} {data.billTo.last_name}
             </Text>
             <Text style={styles.addrText}>{data.billTo.address_1}</Text>
-            {data.billTo.address_2 && (
-              <Text style={styles.addrText}>{data.billTo.address_2}</Text>
-            )}
+            {data.billTo.address_2 && <Text style={styles.addrText}>{data.billTo.address_2}</Text>}
             <Text style={styles.addrText}>
               {data.billTo.country} — {data.billTo.postcode}
             </Text>
-            <Text style={styles.addrText}>
-              Email: {data.billTo.email || "N/A"}
-            </Text>
-            <Text style={styles.addrText}>
-              Phone: {data.billTo.phone || "N/A"}
-            </Text>
+            <Text style={styles.addrText}>Email: {data.billTo.email || 'N/A'}</Text>
+            <Text style={styles.addrText}>Phone: {data.billTo.phone || 'N/A'}</Text>
 
             {data.shipTo && (
               <View style={{ marginTop: 14 }}>
@@ -144,8 +150,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
                   <Text style={styles.addrText}>{data.shipTo.address_2}</Text>
                 )}
                 <Text style={styles.addrText}>
-                  {data.shipTo.city}, {data.shipTo.country} —{" "}
-                  {data.shipTo.postcode}
+                  {data.shipTo.city}, {data.shipTo.country} — {data.shipTo.postcode}
                 </Text>
               </View>
             )}
@@ -158,7 +163,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
             <Text style={styles.addrText}>Email: {data.company.email}</Text>
             <Text style={styles.addrText}>Phone: {data.company.phone}</Text>
             <Text style={styles.addrText}>
-              Address: {data.company.address},{"\n"}
+              Address: {data.company.address},{'\n'}
               {data.company.city}, {data.company.country}
             </Text>
           </View>
@@ -176,47 +181,34 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
           <View style={{ ...styles.tableRow, ...styles.tableHead }}>
             <Text style={{ ...styles.th, flex: 2 }}>Description</Text>
             {isSubscription && (
-              <Text style={{ ...styles.th, flex: 3, textAlign: "center" }}>
-                Frequency
-              </Text>
+              <Text style={{ ...styles.th, flex: 3, textAlign: 'center' }}>Frequency</Text>
             )}
-            <Text style={{ ...styles.th, flex: 0.8, textAlign: "center" }}>
-              Qty
-            </Text>
-            <Text style={{ ...styles.th, flex: 2, textAlign: "right" }}>
-              Unit Price
-            </Text>
-            <Text style={{ ...styles.th, flex: 2, textAlign: "right" }}>
-              Amount
-            </Text>
+            <Text style={{ ...styles.th, flex: 0.8, textAlign: 'center' }}>Qty</Text>
+            <Text style={{ ...styles.th, flex: 2, textAlign: 'right' }}>Unit Price</Text>
+            <Text style={{ ...styles.th, flex: 2, textAlign: 'right' }}>Amount</Text>
           </View>
 
           {/* Body Rows - Updated to match Header flex values perfectly */}
           {data.lineItems.map((item) => (
-            <View
-              key={item.id}
-              style={{ ...styles.tableRow, ...styles.tableBodyRow }}
-            >
+            <View key={item.id} style={{ ...styles.tableRow, ...styles.tableBodyRow }}>
               {/* Changed flex: 4 to flex: 2 to match Header */}
-              <View style={{ ...styles.td, flex: 2, flexDirection: "column" }}>
+              <View style={{ ...styles.td, flex: 2, flexDirection: 'column' }}>
                 <Text>{item.name}</Text>
                 <Text>({item.weight})</Text>
               </View>
               {isSubscription && (
-                <Text style={{ ...styles.td, flex: 3, textAlign: "center" }}>
-                  {item.frequency || "—"}
+                <Text style={{ ...styles.td, flex: 3, textAlign: 'center' }}>
+                  {item.frequency || '—'}
                 </Text>
               )}
 
-              <Text style={{ ...styles.td, flex: 0.8, textAlign: "center" }}>
-                {item.quantity}
-              </Text>
+              <Text style={{ ...styles.td, flex: 0.8, textAlign: 'center' }}>{item.quantity}</Text>
 
-              <Text style={{ ...styles.td, flex: 2, textAlign: "right" }}>
+              <Text style={{ ...styles.td, flex: 2, textAlign: 'right' }}>
                 AED {item.price.toFixed(0)}
               </Text>
 
-              <Text style={{ ...styles.td, flex: 2, textAlign: "right" }}>
+              <Text style={{ ...styles.td, flex: 2, textAlign: 'right' }}>
                 AED {(item.price * item.quantity).toFixed(0)}
               </Text>
             </View>
@@ -226,36 +218,22 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
         {/* ── TOTALS ── */}
         <View style={styles.totalsWrapper}>
           <View style={styles.totalsBlock}>
-            <TotalRow
-              label="Subtotal :"
-              value={`AED ${data.subtotal.toFixed(0)}`}
-            />
-            {data.couponDiscount > 0 && (
+            <TotalRow label="Subtotal :" value={`AED ${data.subtotal.toFixed(0)}`} />
+            {(data.couponDiscount ?? 0) > 0 && (
               <TotalRow
                 label="Coupon Discount :"
-                value={`AED ${data.couponDiscount.toFixed(0)}`}
+                value={`AED ${data.couponDiscount!.toFixed(0)}`}
               />
             )}
-            {data.beansDiscount > 0 && (
-              <TotalRow
-                label="Beans Discount :"
-                value={`AED ${data.beansDiscount.toFixed(0)}`}
-              />
+            {(data.beansDiscount ?? 0) > 0 && (
+              <TotalRow label="Beans Discount :" value={`AED ${data.beansDiscount!.toFixed(0)}`} />
             )}
-            <TotalRow
-              label="Shipping :"
-              value={`AED ${data.shipping.toFixed(0)}`}
-            />
-            <TotalRow
-              label={`${data.taxLabel} :`}
-              value={`AED ${data.tax.toFixed(0)}`}
-            />
+            <TotalRow label="Shipping :" value={`AED ${data.shipping.toFixed(0)}`} />
+            <TotalRow label={`${data.taxLabel} :`} value={`AED ${data.tax.toFixed(0)}`} />
             <View style={styles.totalDivider} />
             <View style={styles.totalFinalRow}>
               <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>
-                AED {Math.round(data.total)}
-              </Text>
+              <Text style={styles.totalValue}>AED {Math.round(data.total)}</Text>
             </View>
           </View>
         </View>
@@ -265,25 +243,19 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
           <View style={styles.footerTop}>
             <Text style={styles.thankYou}>Thank you for your purchase</Text>
             <Text style={styles.paidVia}>
-              Paid via{" "}
-              <Text style={{ color: C.dark, fontWeight: "bold" }}>Stripe</Text>
+              Paid via <Text style={{ color: C.dark, fontWeight: 'bold' }}>Stripe</Text>
             </Text>
           </View>
           <View style={styles.footerBottom}>
-            <Text style={{ color: C.dark, fontWeight: "bold" }}>
-              {data.company.taxId.split(":")[0]}:{" "}
+            <Text style={{ color: C.dark, fontWeight: 'bold' }}>
+              {data.company.taxId ? `${data.company.taxId.split(':')[0]}: ` : ''}
               <Text style={styles.trn}>
-                {data.company.taxId.split(":")[1]?.trim()}
+                {data.company.taxId ? data.company.taxId.split(':')[1]?.trim() : ''}
               </Text>
             </Text>
-            <View style={{ textAlign: "right" }}>
-              <Text style={styles.companyFooter}>
-                White Mantis Coffee LLC — Dubai, UAE
-              </Text>
-              <Link
-                src="http://localhost:3000/terms-and-conditions"
-                style={styles.terms}
-              >
+            <View style={{ textAlign: 'right' }}>
+              <Text style={styles.companyFooter}>White Mantis Coffee LLC — Dubai, UAE</Text>
+              <Link src="http://localhost:3000/terms-and-conditions" style={styles.terms}>
                 <Text>Terms and Conditions</Text>
               </Link>
             </View>
@@ -291,5 +263,5 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
         </View>
       </Page>
     </Document>
-  );
-};
+  )
+}
