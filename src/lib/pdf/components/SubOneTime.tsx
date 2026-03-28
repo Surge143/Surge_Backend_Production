@@ -107,7 +107,7 @@ export const SubOneTime: React.FC<InvoiceDocumentProps> = ({ data }) => {
             <Text style={styles.addrText}>{data.billTo.address_1}</Text>
             {data.billTo.address_2 && <Text style={styles.addrText}>{data.billTo.address_2}</Text>}
             <Text style={styles.addrText}>
-              {data.billTo.country} — {data.billTo.postcode}
+              {data.billTo.country} 
             </Text>
 
             {data.shipTo && (
@@ -118,7 +118,7 @@ export const SubOneTime: React.FC<InvoiceDocumentProps> = ({ data }) => {
                 </Text>
                 <Text style={styles.addrText}>{data.shipTo.address_1}</Text>
                 <Text style={styles.addrText}>
-                  {data.shipTo.city}, {data.shipTo.country} — {data.shipTo.postcode}
+                  {data.shipTo.city}, {data.shipTo.country}
                 </Text>
               </View>
             )}

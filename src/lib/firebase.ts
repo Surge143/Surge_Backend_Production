@@ -5,7 +5,9 @@ let messaging: admin.messaging.Messaging | undefined
 if (!admin.apps.length) {
   const projectId = process.env.FIREBASE_PROJECT_ID
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
-  const rawKey = process.env.FIREBASE_PRIVATE_KEY
+  const rawKey = process.env.FIREBASE_PRIVATE_KEY_BASE64
+    ? Buffer.from(process.env.FIREBASE_PRIVATE_KEY_BASE64, 'base64').toString('ascii')
+    : process.env.FIREBASE_PRIVATE_KEY
 
   if (projectId && clientEmail && rawKey) {
     // Handle escaped \n, literal newlines, and surrounding quotes (single or double)

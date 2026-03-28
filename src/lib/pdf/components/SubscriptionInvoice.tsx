@@ -118,7 +118,7 @@ export const SubscriptionInvoice: React.FC<InvoiceDocumentProps> = ({ data }) =>
             <Text style={styles.addrText}>{data.billTo.address_1}</Text>
             {data.billTo.address_2 && <Text style={styles.addrText}>{data.billTo.address_2}</Text>}
             <Text style={styles.addrText}>
-              {data.billTo.country} — {data.billTo.postcode}
+              {data.billTo.country} 
             </Text>
 
             {data.shipTo && (

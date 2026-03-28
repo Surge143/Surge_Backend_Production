@@ -215,6 +215,12 @@ export function formatPayloadLineItems(items: any[]): InvoiceLineItem[] {
     const quantity = parseInt(item.quantity) || 1
     const total = price * quantity
 
+    let rawWeight =
+      item.variantName || (typeof item.customizations === 'string' ? item.customizations : '') || ''
+    if (rawWeight && !rawWeight.toLowerCase().endsWith('g')) {
+      rawWeight += 'g'
+    }
+
     return {
       id: item.id || index,
       name: product.name || product.productTitle || 'Product',
@@ -224,10 +230,7 @@ export function formatPayloadLineItems(items: any[]): InvoiceLineItem[] {
       total: total,
       tax: 0, // Tax is often handled at the order level in Payload
       sku: product.sku || '',
-      weight:
-        item.variantName ||
-        (typeof item.customizations === 'string' ? item.customizations : '') ||
-        '',
+      weight: rawWeight,
       frequency: item.frequencyName || '',
     }
   })
