@@ -970,7 +970,6 @@ export const WebOrders: CollectionConfig = {
       type: 'text',
       unique: true,
       admin: {
-        hidden: true,
         readOnly: true,
       },
     },
@@ -978,7 +977,6 @@ export const WebOrders: CollectionConfig = {
       name: 'invoiceDate',
       type: 'date',
       admin: {
-        hidden: true,
         readOnly: true,
       },
     },

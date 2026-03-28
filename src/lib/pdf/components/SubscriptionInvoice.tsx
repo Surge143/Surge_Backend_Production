@@ -216,7 +216,7 @@ export const SubscriptionInvoice: React.FC<InvoiceDocumentProps> = ({ data }) =>
             </Text>
             <View style={{ textAlign: 'right' }}>
               <Text style={styles.companyFooter}>White Mantis Coffee LLC — Dubai, UAE</Text>
-              <Link src="http://localhost:3000/terms-and-conditions" style={styles.terms}>
+              <Link src="https://whitemantis.ae/terms-and-conditions" style={styles.terms}>
                 <Text>Terms and Conditions</Text>
               </Link>
             </View>

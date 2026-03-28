@@ -174,7 +174,7 @@ export function formatSubscriptionToInvoice(
 /**
  * Format Payload address to InvoiceAddress
  */
-export function formatPayloadAddress(address: any): InvoiceAddress {
+export function formatPayloadAddress(address: any, email?: string): InvoiceAddress {
   if (!address) {
     return {
       first_name: 'N/A',
@@ -184,6 +184,7 @@ export function formatPayloadAddress(address: any): InvoiceAddress {
       state: 'N/A',
       postcode: 'N/A',
       country: 'N/A',
+      email: email || '',
     }
   }
   return {
@@ -195,8 +196,12 @@ export function formatPayloadAddress(address: any): InvoiceAddress {
     state: address.emirates || address.state || '',
     postcode: address.postcode || '00000',
     country: address.addressCountry || 'United Arab Emirates',
-    email: address.email || '',
-    phone: address.phoneNumber || '',
+    email: email || address.email || '',
+    phone: address.phoneNumber
+      ? address.phoneNumber.startsWith('+')
+        ? address.phoneNumber
+        : '+971 ' + address.phoneNumber.replace(/^0/, '')
+      : '',
   }
 }
 
@@ -219,6 +224,11 @@ export function formatPayloadLineItems(items: any[]): InvoiceLineItem[] {
       total: total,
       tax: 0, // Tax is often handled at the order level in Payload
       sku: product.sku || '',
+      weight:
+        item.variantName ||
+        (typeof item.customizations === 'string' ? item.customizations : '') ||
+        '',
+      frequency: item.frequencyName || '',
     }
   })
 }
@@ -250,8 +260,13 @@ export function formatPayloadOrderToInvoice(order: any, paymentDetails?: any): I
       website: 'www.whitemantis.ae',
       taxId: 'TRN: 100123456700003',
     },
-    billTo: formatPayloadAddress(order.billingAddress || order.shippingAddress),
-    shipTo: order.shippingAddress ? formatPayloadAddress(order.shippingAddress) : undefined,
+    billTo: formatPayloadAddress(
+      order.billingAddress || order.shippingAddress,
+      order.email || order.user?.email,
+    ),
+    shipTo: order.shippingAddress
+      ? formatPayloadAddress(order.shippingAddress, order.email || order.user?.email)
+      : undefined,
     lineItems: formatPayloadLineItems(order.items || []),
     subtotal: parseFloat(order.financials?.subtotal || 0),
     tax: parseFloat(order.financials?.taxAmount || 0),
@@ -299,9 +314,15 @@ export function formatPayloadSubscriptionToInvoice(subscription: any): InvoiceDa
       website: 'www.whitemantis.ae',
       taxId: 'TRN: XXXXXXXXX',
     },
-    billTo: formatPayloadAddress(subscription.billingAddress || subscription.shippingAddress),
+    billTo: formatPayloadAddress(
+      subscription.billingAddress || subscription.shippingAddress,
+      subscription.email || subscription.user?.email,
+    ),
     shipTo: subscription.shippingAddress
-      ? formatPayloadAddress(subscription.shippingAddress)
+      ? formatPayloadAddress(
+          subscription.shippingAddress,
+          subscription.email || subscription.user?.email,
+        )
       : undefined,
     lineItems: formatPayloadLineItems(subscription.items || []),
     subtotal: parseFloat(subscription.financials?.subtotal || 0),

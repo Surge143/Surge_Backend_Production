@@ -194,7 +194,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
               {/* Changed flex: 4 to flex: 2 to match Header */}
               <View style={{ ...styles.td, flex: 2, flexDirection: 'column' }}>
                 <Text>{item.name}</Text>
-                <Text>({item.weight})</Text>
+                {item.weight ? <Text>({item.weight})</Text> : null}
               </View>
               {isSubscription && (
                 <Text style={{ ...styles.td, flex: 3, textAlign: 'center' }}>

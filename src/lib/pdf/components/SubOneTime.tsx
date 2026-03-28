@@ -153,7 +153,9 @@ export const SubOneTime: React.FC<InvoiceDocumentProps> = ({ data }) => {
             >
               <View style={{ ...styles.td, flex: 2, flexDirection: 'column' }}>
                 <Text>{item.name}</Text>
-                <Text style={{ color: colors.dark, fontSize: 8 }}>({item.weight})</Text>
+                {item.weight ? (
+                  <Text style={{ color: colors.dark, fontSize: 8 }}>({item.weight})</Text>
+                ) : null}
               </View>
 
               <Text style={{ ...styles.td, flex: 0.8, textAlign: 'center' }}>{item.quantity}</Text>
@@ -171,10 +173,13 @@ export const SubOneTime: React.FC<InvoiceDocumentProps> = ({ data }) => {
         <View style={styles.totalsWrapper}>
           <View style={styles.totalsBlock}>
             <TotalRow label="Subtotal :" value={`AED ${data.subtotal.toFixed(0)}`} />
-            <TotalRow label="Shipping :" value={`AED ${data.subtotal.toFixed(0)}`} />
-            <TotalRow label="Coupon Discount:" value={`AED ${data.subtotal.toFixed(0)}`} />
-            <TotalRow label="Beans Discount:" value={`AED ${data.subtotal.toFixed(0)}`} />
-            {/* <TotalRow label="Shipping :" value={`AED ${data.shipping.toFixed(0)}`} /> */}
+            <TotalRow label="Shipping :" value={`AED ${data.shipping.toFixed(0)}`} />
+            {(data.couponDiscount ?? 0) > 0 && (
+              <TotalRow label="Coupon Discount:" value={`AED ${data.couponDiscount!.toFixed(0)}`} />
+            )}
+            {(data.beansDiscount ?? 0) > 0 && (
+              <TotalRow label="Beans Discount:" value={`AED ${data.beansDiscount!.toFixed(0)}`} />
+            )}
             <TotalRow label={`${data.taxLabel} :`} value={`AED ${data.tax.toFixed(0)}`} />
             <View style={styles.totalDivider} />
             <View style={styles.totalFinalRow}>
@@ -201,7 +206,7 @@ export const SubOneTime: React.FC<InvoiceDocumentProps> = ({ data }) => {
             </Text>
             <View style={{ textAlign: 'right' }}>
               <Text style={styles.companyFooter}>White Mantis Coffee LLC — Dubai, UAE</Text>
-              <Link src="http://localhost:3000/terms-and-conditions" style={styles.terms}>
+              <Link src="https://whitemantis.ae/terms-and-conditions" style={styles.terms}>
                 <Text>Terms and Conditions</Text>
               </Link>
             </View>
