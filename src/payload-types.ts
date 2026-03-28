@@ -676,6 +676,10 @@ export interface Coupon {
    */
   code: string;
   /**
+   * Tagline to display on the coupon.
+   */
+  couponTagline: string;
+  /**
    * Inactive coupons cannot be applied at checkout even if the code is correct.
    */
   couponStatus: 'active' | 'inactive';
@@ -2546,6 +2550,7 @@ export interface ShopMenuSelect<T extends boolean = true> {
  */
 export interface CouponSelect<T extends boolean = true> {
   code?: T;
+  couponTagline?: T;
   couponStatus?: T;
   discountType?: T;
   discountAmount?: T;
