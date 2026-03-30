@@ -18,7 +18,7 @@ export const ProductsDashboard: React.FC<AdminViewProps> = async ({
     limit: 500,
     depth: 2,
     sort: 'name',
-    draft: true,
+    where: { _status: { equals: 'published' } },
     overrideAccess: true,
   })
 
