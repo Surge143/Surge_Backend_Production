@@ -39,10 +39,12 @@ export const OrderSection: React.FC<OrderSectionProps> = ({
   const advLabel =
     section.key === 'new' ? 'Start Prep' :
     section.key === 'queued' ? 'Start Preparing' :
+    section.key === 'slot-queue' ? 'Start Preparing' :
     section.key === 'prep' ? 'Mark Ready' : 'Complete'
   const advColor =
     section.key === 'new' ? C.new :
     section.key === 'queued' ? C.prep :
+    section.key === 'slot-queue' ? C.prep :
     section.key === 'prep' ? C.prep : C.ready
 
   return (
@@ -162,6 +164,7 @@ export const OrderSection: React.FC<OrderSectionProps> = ({
                 advLabel={advLabel}
                 advColor={advColor}
                 onAdvance={() => onAdvance(order)}
+                onCancel={(reason) => onReject(order, reason)}
                 loading={loading}
               />
             )}

@@ -1,5 +1,5 @@
 'use client'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import { C, SECTIONS, GLOBAL_STYLES, formatOrder } from './constants'
 import { TopBar } from './components/TopBar'
@@ -8,9 +8,9 @@ import { OrderRow } from './components/OrderRow'
 import { Toast } from './components/UIAtoms'
 
 interface Props {
-  initialOrders: any[]     // placed + shipped (active)
-  initialDelivered: any[]  // delivered
-  initialCancelled: any[]  // cancelled / refund-initiated / refunded
+  initialOrders: any[] // placed + shipped (active)
+  initialDelivered: any[] // delivered
+  initialCancelled: any[] // cancelled / refund-initiated / refunded
   shopDoc: any | null
   isAdmin?: boolean
   allShops?: any[]
@@ -41,6 +41,20 @@ export const StoreDashboardClient: React.FC<Props> = ({
   const [currentShopDoc, setCurrentShopDoc] = useState<any>(shopDoc)
   const [shopSwitching, setShopSwitching] = useState(false)
 
+  // ── Audio ──────────────────────────────────────────────────────────────────
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  useEffect(() => {
+    audioRef.current = new Audio('/audio/new-order.wav')
+    audioRef.current.volume = 0.7
+  }, [])
+  const playNewOrderSound = useCallback(() => {
+    if (!audioRef.current) return
+    audioRef.current.currentTime = 0
+    audioRef.current.play().catch(() => {
+      /* autoplay blocked until user interacts */
+    })
+  }, [])
+
   // ── Toast helper ───────────────────────────────────────────────────────────
   const notify = useCallback((msg: string, type = 'ok') => {
     setToast({ msg, type })
@@ -48,8 +62,7 @@ export const StoreDashboardClient: React.FC<Props> = ({
   }, [])
 
   // ── Loading helpers ────────────────────────────────────────────────────────
-  const setLoading = (id: string, v: boolean) =>
-    setLoadingIds((p) => ({ ...p, [id]: v }))
+  const setLoading = (id: string, v: boolean) => setLoadingIds((p) => ({ ...p, [id]: v }))
 
   // ── Shop switcher (admin only) ─────────────────────────────────────────────
   const handleShopSwitch = useCallback(
@@ -80,7 +93,17 @@ export const StoreDashboardClient: React.FC<Props> = ({
 
   // ── Socket.io ──────────────────────────────────────────────────────────────
   useEffect(() => {
-    const socket = io()
+    let socketUrl = process.env.NEXT_PUBLIC_SERVER_URL || ''
+    // Fallback for local network testing (e.g., accessing via 192.168.x.x instead of localhost)
+    if (
+      typeof window !== 'undefined' &&
+      socketUrl.includes('localhost') &&
+      !window.location.hostname.includes('localhost')
+    ) {
+      socketUrl = ''
+    }
+
+    const socket = io(socketUrl, { path: '/socket.io' })
 
     socket.on('web-order-created', (raw: any) => {
       if (raw.paymentStatus !== 'completed') return
@@ -89,6 +112,7 @@ export const StoreDashboardClient: React.FC<Props> = ({
         if (prev.find((o) => o.id === formatted.id)) return prev
         return [formatted, ...prev]
       })
+      playNewOrderSound()
       notify('🔔 New store order received!', 'ok')
     })
 
@@ -128,7 +152,7 @@ export const StoreDashboardClient: React.FC<Props> = ({
     return () => {
       socket.disconnect()
     }
-  }, [notify])
+  }, [notify, playNewOrderSound])
 
   // ── Filtering ──────────────────────────────────────────────────────────────
   const applyFilter = (o: any) => {
@@ -136,11 +160,8 @@ export const StoreDashboardClient: React.FC<Props> = ({
       const q = search.toLowerCase().replace(/^#/, '')
       const invoiceId = (o.raw?.invoiceId || '').toLowerCase()
       const rawId = String(o.raw?.id || '')
-      if (
-        !invoiceId.includes(q) &&
-        !rawId.includes(q) &&
-        !o.customer.toLowerCase().includes(q)
-      ) return false
+      if (!invoiceId.includes(q) && !rawId.includes(q) && !o.customer.toLowerCase().includes(q))
+        return false
     }
     if (filter === 'all') return true
     if (filter === 'delivery') return o.type === 'delivery'
@@ -242,7 +263,9 @@ export const StoreDashboardClient: React.FC<Props> = ({
         body: JSON.stringify({
           orderId: order.id,
           deliveryStatus: 'delivered',
-          deliveredOn: deliveredOnDate ? new Date(deliveredOnDate).toISOString() : new Date().toISOString(),
+          deliveredOn: deliveredOnDate
+            ? new Date(deliveredOnDate).toISOString()
+            : new Date().toISOString(),
         }),
       })
       if (!res.ok) {
@@ -391,21 +414,19 @@ export const StoreDashboardClient: React.FC<Props> = ({
                   borderBottom: `1px solid ${C.border}`,
                 }}
               >
-                {['ORDER', 'TIME', 'CUSTOMER', 'TYPE', 'ITEMS', 'AMOUNT', 'ACTIONS'].map(
-                  (h, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        fontSize: 10,
-                        color: C.textMute,
-                        letterSpacing: 0.8,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {h}
-                    </span>
-                  ),
-                )}
+                {['ORDER', 'TIME', 'CUSTOMER', 'TYPE', 'ITEMS', 'AMOUNT', 'ACTIONS'].map((h, i) => (
+                  <span
+                    key={i}
+                    style={{
+                      fontSize: 10,
+                      color: C.textMute,
+                      letterSpacing: 0.8,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {h}
+                  </span>
+                ))}
               </div>
 
               {sectionOrders.length === 0 && (
@@ -439,7 +460,6 @@ export const StoreDashboardClient: React.FC<Props> = ({
             </div>
           )
         })}
-
       </div>
 
       {/* Toast */}

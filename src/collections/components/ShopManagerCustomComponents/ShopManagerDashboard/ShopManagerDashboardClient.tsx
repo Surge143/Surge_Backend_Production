@@ -1,5 +1,5 @@
 'use client'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import { C, SECTIONS, GLOBAL_STYLES, formatOrder, getOrderSection } from './constants'
 import { TopBar } from './components/TopBar'
@@ -51,6 +51,20 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
 
   const shopId = currentShopId
 
+  // ── Audio ─────────────────────────────────────────────────────────────────
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  useEffect(() => {
+    audioRef.current = new Audio('/audio/new-order.wav')
+    audioRef.current.volume = 0.7
+  }, [])
+  const playNewOrderSound = useCallback(() => {
+    if (!audioRef.current) return
+    audioRef.current.currentTime = 0
+    audioRef.current.play().catch(() => {
+      /* autoplay blocked until user interacts */
+    })
+  }, [])
+
   // ── Toast helper ──────────────────────────────────────────────────────────
   const notify = useCallback((msg: string, type = 'ok') => {
     setToast({ msg, type })
@@ -87,7 +101,17 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
 
   // ── Socket.io ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    const socket = io()
+    let socketUrl = process.env.NEXT_PUBLIC_SERVER_URL || ''
+    // Fallback for local network testing (e.g., accessing via 192.168.x.x instead of localhost)
+    if (
+      typeof window !== 'undefined' &&
+      socketUrl.includes('localhost') &&
+      !window.location.hostname.includes('localhost')
+    ) {
+      socketUrl = ''
+    }
+
+    const socket = io(socketUrl, { path: '/socket.io' })
 
     const matchesShop = (raw: any) => {
       if (!currentShopId) return true
@@ -106,6 +130,7 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
         if (prev.find((o) => o.id === formatted.id)) return prev
         return [formatted, ...prev]
       })
+      playNewOrderSound()
       notify('🔔 New order received!', 'ok')
     })
 
@@ -131,9 +156,12 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
         setOrders((prev) => {
           const exists = prev.find((o) => o.id === formatted.id)
           if (exists) {
-            // Detect cron releasing a slot-queue order into the active queue
-            if (exists.status === 'slot-queue' && formatted.status === 'queued') {
-              notify(`🔔 Slot order #${formatted.no} is now in queue!`, 'ok')
+            // Detect cron releasing a slot-queue order into preparation
+            if (
+              exists.status === 'slot-queue' &&
+              (formatted.status === 'prep' || formatted.status === 'queued')
+            ) {
+              notify(`🔔 Slot order #${formatted.no} moved to preparation!`, 'ok')
             }
             return prev.map((o) => (o.id === formatted.id ? formatted : o))
           }
@@ -156,7 +184,7 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
     return () => {
       socket.disconnect()
     }
-  }, [notify, currentShopId])
+  }, [notify, playNewOrderSound, currentShopId])
 
   // ── Filtering ─────────────────────────────────────────────────────────────
   const applyFilter = (o: any) => {
@@ -197,14 +225,24 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
 
   const handleAdvance = async (order: any) => {
     const nextApiStatus =
-      order.status === 'queued' ? 'preparing' : order.status === 'prep' ? 'ready' : 'completed'
+      order.status === 'queued' || order.status === 'slot-queue'
+        ? 'preparing'
+        : order.status === 'prep'
+          ? 'ready'
+          : 'completed'
     // Map API status values to dashboard section keys for local state
-    const nextSectionKey: Record<string, string> = { preparing: 'prep', ready: 'ready', completed: 'completed' }
+    const nextSectionKey: Record<string, string> = {
+      preparing: 'prep',
+      ready: 'ready',
+      completed: 'completed',
+    }
 
     // Always mark both fields to avoid stale appOrderStatusDine confusing cron / hooks
+    // For slot-queue orders, also clear scheduledForPrep so the cron won't re-process them
     await patchOrder(order.id, {
       appOrderStatus: nextApiStatus,
       appOrderStatusDine: nextApiStatus,
+      ...(order.status === 'slot-queue' ? { scheduledForPrep: false } : {}),
     })
 
     if (nextApiStatus === 'completed') {
@@ -218,14 +256,14 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
     }
   }
 
-const handleAccept = async (order: any) => {
+  const handleAccept = async (order: any) => {
     const baristaId = selectedBaristas[order.id]
 
     // A slot order is "late" if its slot time is more than 30 mins from now.
     // Late slot orders are held in a hidden state (scheduledForPrep: true) until
     // the cron releases them into the Queued section at T-30.
     const THIRTY_MIN_MS = 30 * 60 * 1000
-    const isLateSlot = order.slotMs !== null && (order.slotMs - Date.now()) > THIRTY_MIN_MS
+    const isLateSlot = order.slotMs !== null && order.slotMs - Date.now() > THIRTY_MIN_MS
 
     await patchOrder(order.id, {
       orderAcceptance: 'accepted',
@@ -239,7 +277,9 @@ const handleAccept = async (order: any) => {
       // Move into the slot-queue section — cron will release it to 'queued' at T-30
       setOrders((prev) =>
         prev.map((o) =>
-          o.id !== order.id ? o : { ...o, status: 'slot-queue', baristaId: baristaId || o.baristaId },
+          o.id !== order.id
+            ? o
+            : { ...o, status: 'slot-queue', baristaId: baristaId || o.baristaId },
         ),
       )
       notify(`Accepted — queued for slot at ${order.slot} ⏱`, 'ok')
@@ -393,7 +433,15 @@ const handleAccept = async (order: any) => {
       {/* ── BODY ── */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         {/* Main scroll */}
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', position: 'relative', minWidth: 0 }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'auto',
+            position: 'relative',
+            minWidth: 0,
+          }}
+        >
           {SECTIONS.map((sec) => (
             <OrderSection
               key={sec.key}
@@ -457,7 +505,9 @@ const handleAccept = async (order: any) => {
               </button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
-              {rightPanel === 'slots' && <SlotsPanel slots={slots} orders={orders} onAct={handleSlotAct} />}
+              {rightPanel === 'slots' && (
+                <SlotsPanel slots={slots} orders={orders} onAct={handleSlotAct} />
+              )}
               {rightPanel === 'baristas' && <BaristasPanel baristas={baristas} orders={orders} />}
             </div>
           </div>

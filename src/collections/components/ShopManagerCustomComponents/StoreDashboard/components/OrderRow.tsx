@@ -45,6 +45,9 @@ export const OrderRow: React.FC<OrderRowProps> = ({
 }) => {
   const [refundOpen, setRefundOpen] = useState(false)
   const [refundReason, setRefundReason] = useState('')
+  // Separate state for the in-panel cancel form (shipped section) — avoids hiding the expanded panel
+  const [panelCancelOpen, setPanelCancelOpen] = useState(false)
+  const [panelCancelReason, setPanelCancelReason] = useState('')
   const [shipOpen, setShipOpen] = useState(false)
   const [deliverByDate, setDeliverByDate] = useState('')
   const [pickupOpen, setPickupOpen] = useState(false)
@@ -745,6 +748,91 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                   AED {Number(order.raw.financials.total || 0).toFixed(2)}
                 </span>
               </div>
+            </div>
+          )}
+
+          {/* Cancel & Refund — inside expanded panel for shipped orders */}
+          {sectionKey === 'shipped' && onRefund && (
+            <div style={{ marginTop: 16, borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
+              {!panelCancelOpen ? (
+                <button
+                  onClick={() => setPanelCancelOpen(true)}
+                  style={{
+                    padding: '5px 14px',
+                    background: 'none',
+                    border: `1px solid ${C.cancelled}`,
+                    borderRadius: 6,
+                    color: C.cancelled,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✕ Cancel & Refund
+                </button>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.textSub, letterSpacing: 0.4 }}>
+                    CANCEL REASON
+                  </div>
+                  <select
+                    value={panelCancelReason}
+                    onChange={(e) => setPanelCancelReason(e.target.value)}
+                    style={{
+                      padding: '6px 10px',
+                      background: C.bg,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 6,
+                      color: panelCancelReason ? C.text : C.textMute,
+                      fontSize: 12,
+                      outline: 'none',
+                      maxWidth: 280,
+                    }}
+                  >
+                    <option value="">Select a reason…</option>
+                    {REFUND_REASONS.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      onClick={() => { setPanelCancelOpen(false); setPanelCancelReason('') }}
+                      style={{
+                        padding: '5px 14px',
+                        background: 'none',
+                        border: `1px solid ${C.border}`,
+                        borderRadius: 6,
+                        color: C.textMute,
+                        fontSize: 11,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Back
+                    </button>
+                    <button
+                      disabled={!panelCancelReason || loading}
+                      onClick={() => {
+                        if (!panelCancelReason) return
+                        onRefund(panelCancelReason)
+                        setPanelCancelOpen(false)
+                        setPanelCancelReason('')
+                      }}
+                      style={{
+                        padding: '5px 16px',
+                        background: panelCancelReason ? C.cancelled : C.cancelled + '40',
+                        border: 'none',
+                        borderRadius: 6,
+                        color: '#fff',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: panelCancelReason && !loading ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      {loading ? '…' : 'Confirm Cancel'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
 import { C } from '../constants'
 import { ColLabel, AlertBox } from './UIAtoms'
 
@@ -115,6 +115,15 @@ export const NewOrderExpandedPanel: React.FC<NewOrderPanelProps> = ({
   </div>
 )
 
+const CANCEL_REASONS = [
+  'Customer requested cancellation',
+  'Out of stock',
+  'Item quality issue',
+  'Payment issue',
+  'Duplicate order',
+  'Other',
+]
+
 interface ExpandedPanelProps {
   order: any
   sectionColor: string
@@ -122,6 +131,7 @@ interface ExpandedPanelProps {
   advLabel: string
   advColor: string
   onAdvance: () => void
+  onCancel?: (reason: string) => void
   loading?: boolean
 }
 
@@ -132,8 +142,13 @@ export const OrderExpandedPanel: React.FC<ExpandedPanelProps> = ({
   advLabel,
   advColor,
   onAdvance,
+  onCancel,
   loading,
-}) => (
+}) => {
+  const [cancelOpen, setCancelOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+
+  return (
   <div
     className="slip"
     style={{
@@ -224,6 +239,92 @@ export const OrderExpandedPanel: React.FC<ExpandedPanelProps> = ({
           </AlertBox>
         </div>
       )}
+
+      {/* Cancel order — shown for queued / slot-queue / prep / ready sections */}
+      {onCancel && (
+        <div style={{ marginTop: 16, borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
+          {!cancelOpen ? (
+            <button
+              onClick={() => setCancelOpen(true)}
+              style={{
+                padding: '5px 14px',
+                background: 'none',
+                border: `1px solid ${C.cancelled}`,
+                borderRadius: 6,
+                color: C.cancelled,
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              ✕ Cancel Order
+            </button>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: C.textSub, letterSpacing: 0.4 }}>
+                CANCEL REASON
+              </div>
+              <select
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                style={{
+                  padding: '6px 10px',
+                  background: C.bg,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 6,
+                  color: cancelReason ? C.text : C.textMute,
+                  fontSize: 12,
+                  outline: 'none',
+                  maxWidth: 280,
+                }}
+              >
+                <option value="">Select a reason…</option>
+                {CANCEL_REASONS.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  onClick={() => { setCancelOpen(false); setCancelReason('') }}
+                  style={{
+                    padding: '5px 14px',
+                    background: 'none',
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 6,
+                    color: C.textMute,
+                    fontSize: 11,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Back
+                </button>
+                <button
+                  disabled={!cancelReason || loading}
+                  onClick={() => {
+                    if (!cancelReason) return
+                    onCancel(cancelReason)
+                    setCancelOpen(false)
+                    setCancelReason('')
+                  }}
+                  style={{
+                    padding: '5px 16px',
+                    background: cancelReason ? C.cancelled : C.cancelled + '40',
+                    border: 'none',
+                    borderRadius: 6,
+                    color: '#fff',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: cancelReason && !loading ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  {loading ? '…' : 'Confirm Cancel'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   </div>
-)
+  )
+}

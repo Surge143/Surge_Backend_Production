@@ -55,7 +55,7 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
 
-  // Fetch today's live orders (pending + accepted/active)
+  // Fetch today's live orders (pending + accepted/active + slot-queue)
   const { docs: liveOrders } = await req.payload.find({
     collection: 'app-orders',
     where: {
@@ -66,8 +66,6 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
             {
               and: [
                 { orderAcceptance: { equals: 'accepted' } },
-                // Exclude orders held in the "scheduled for later" hidden state
-                { scheduledForPrep: { not_equals: true } },
                 {
                   or: [
                     { appOrderStatus: { in: ['pending', 'preparing', 'ready'] } },
