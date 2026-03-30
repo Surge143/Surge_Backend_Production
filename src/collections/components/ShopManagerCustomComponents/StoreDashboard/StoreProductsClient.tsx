@@ -11,7 +11,7 @@ interface SubFreq {
 }
 
 interface MediaImg {
-  url?: string | null         // original full-size image — always use this
+  url?: string | null // original full-size image — always use this
   thumbnailURL?: string | null // DO NOT use — admin-only thumbnail
 }
 
@@ -53,15 +53,20 @@ interface Props {
   initialProducts: Product[]
 }
 
-type SortKey = 'name' | 'stockQuantity' | 'regularPrice' | 'inStock' | 'slug' | 'categories' | 'updatedAt'
+type SortKey =
+  | 'name'
+  | 'stockQuantity'
+  | 'regularPrice'
+  | 'inStock'
+  | 'slug'
+  | 'categories'
+  | 'updatedAt'
 type SortDir = 'asc' | 'desc'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function noVal(label: string) {
-  return (
-    <span style={{ color: '#4a4a4a', fontStyle: 'italic' }}>{`<No ${label}>`}</span>
-  )
+  return <span style={{ color: '#4a4a4a', fontStyle: 'italic' }}>{`<No ${label}>`}</span>
 }
 
 function SubBadge({ discount, freqs }: { discount?: number | null; freqs?: SubFreq[] | null }) {
@@ -69,20 +74,36 @@ function SubBadge({ discount, freqs }: { discount?: number | null; freqs?: SubFr
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       {/* Top row: icon + label + discount pill */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', gap: 4,
-          padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700,
-          background: 'var(--theme-elevation-100)', border: '1px solid rgba(99,102,241,0.5)', color: '#6366f1',
-          whiteSpace: 'nowrap',
-        }}>
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            padding: '2px 8px',
+            borderRadius: 4,
+            fontSize: 10,
+            fontWeight: 700,
+            background: 'var(--theme-elevation-100)',
+            border: '1px solid rgba(99,102,241,0.5)',
+            color: '#6366f1',
+            whiteSpace: 'nowrap',
+          }}
+        >
           ↻ Sub
         </span>
         {discount != null && (
-          <span style={{
-            padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700,
-            background: 'var(--theme-elevation-100)', border: '1px solid rgba(22,163,74,0.5)', color: '#16a34a',
-            whiteSpace: 'nowrap',
-          }}>
+          <span
+            style={{
+              padding: '2px 6px',
+              borderRadius: 4,
+              fontSize: 10,
+              fontWeight: 700,
+              background: 'var(--theme-elevation-100)',
+              border: '1px solid rgba(22,163,74,0.5)',
+              color: '#16a34a',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {discount}% off
           </span>
         )}
@@ -91,12 +112,21 @@ function SubBadge({ discount, freqs }: { discount?: number | null; freqs?: SubFr
       {freqs && freqs.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
           {freqs.map((f, i) => (
-            <span key={i} style={{
-              padding: '1px 6px', borderRadius: 3, fontSize: 10, fontWeight: 600,
-              background: 'var(--theme-elevation-50)', border: '1px solid var(--theme-elevation-200)', color: '#818cf8',
-              whiteSpace: 'nowrap',
-            }}>
-              {f.duration} {f.interval}{f.duration > 1 ? 's' : ''}
+            <span
+              key={i}
+              style={{
+                padding: '1px 6px',
+                borderRadius: 3,
+                fontSize: 10,
+                fontWeight: 600,
+                background: 'var(--theme-elevation-50)',
+                border: '1px solid var(--theme-elevation-200)',
+                color: '#818cf8',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {f.duration} {f.interval}
+              {f.duration > 1 ? 's' : ''}
             </span>
           ))}
         </div>
@@ -107,11 +137,17 @@ function SubBadge({ discount, freqs }: { discount?: number | null; freqs?: SubFr
 
 function fmtDate(iso?: string) {
   if (!iso) return null
-  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 
 function variantPriceRange(variants: Variant[]) {
-  const prices = variants.map((v) => v.variantSalePrice ?? v.variantRegularPrice).filter((p): p is number => p != null)
+  const prices = variants
+    .map((v) => v.variantSalePrice ?? v.variantRegularPrice)
+    .filter((p): p is number => p != null)
   if (!prices.length) return null
   const min = Math.min(...prices)
   const max = Math.max(...prices)
@@ -170,9 +206,32 @@ const BoolBadge: React.FC<{ value: boolean }> = ({ value }) => (
 )
 
 const SortIcon: React.FC<{ active: boolean; dir: SortDir }> = ({ active, dir }) => (
-  <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: 5, gap: 1, verticalAlign: 'middle', lineHeight: 1 }}>
-    <span style={{ fontSize: 7, color: active && dir === 'asc' ? '#fff' : 'var(--theme-elevation-250)' }}>▲</span>
-    <span style={{ fontSize: 7, color: active && dir === 'desc' ? '#fff' : 'var(--theme-elevation-250)' }}>▼</span>
+  <span
+    style={{
+      display: 'inline-flex',
+      flexDirection: 'column',
+      marginLeft: 5,
+      gap: 1,
+      verticalAlign: 'middle',
+      lineHeight: 1,
+    }}
+  >
+    <span
+      style={{
+        fontSize: 7,
+        color: active && dir === 'asc' ? '#fff' : 'var(--theme-elevation-250)',
+      }}
+    >
+      ▲
+    </span>
+    <span
+      style={{
+        fontSize: 7,
+        color: active && dir === 'desc' ? '#fff' : 'var(--theme-elevation-250)',
+      }}
+    >
+      ▼
+    </span>
   </span>
 )
 
@@ -216,11 +275,19 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
       const res = await fetch(`/api/web-products/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Delete failed')
       setProducts((prev) => prev.filter((p) => p.id !== id))
-      setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next })
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
     } catch {
       // silent — row stays in place
     } finally {
-      setDeletingIds((prev) => { const next = new Set(prev); next.delete(id); return next })
+      setDeletingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
       setPendingDeleteId(null)
     }
   }
@@ -266,21 +333,25 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
         body: JSON.stringify(body),
       })
       if (!res.ok) throw new Error()
-      setProducts((prev) => prev.map((p) => {
-        if (p.id !== productId) return p
-        if (variantId) {
-          return {
-            ...p,
-            variants: (p.variants ?? []).map((v) =>
-              v.id === variantId
-                ? { ...v, variantStockQuantity: Number(qty), variantInStock: inStock }
-                : v,
-            ),
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (p.id !== productId) return p
+          if (variantId) {
+            return {
+              ...p,
+              variants: (p.variants ?? []).map((v) =>
+                v.id === variantId
+                  ? { ...v, variantStockQuantity: Number(qty), variantInStock: inStock }
+                  : v,
+              ),
+            }
           }
-        }
-        return { ...p, stockQuantity: Number(qty), inStock }
-      }))
-    } catch { /* silent */ } finally {
+          return { ...p, stockQuantity: Number(qty), inStock }
+        }),
+      )
+    } catch {
+      /* silent */
+    } finally {
       setSavingStock(false)
       setEditingStock(null)
     }
@@ -306,7 +377,10 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-    else { setSortKey(key); setSortDir('asc') }
+    else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
   }
 
   const filtered = useMemo(() => {
@@ -324,12 +398,18 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
       if (statusFilter === 'published' && p._status !== 'published') return false
       if (statusFilter === 'draft' && p._status === 'published') return false
       if (stockFilter === 'instock') {
-        if (p.hasVariantOptions) { if (!(p.variants ?? []).some((v) => v.variantInStock)) return false }
-        else { if (!p.inStock) return false }
+        if (p.hasVariantOptions) {
+          if (!(p.variants ?? []).some((v) => v.variantInStock)) return false
+        } else {
+          if (!p.inStock) return false
+        }
       }
       if (stockFilter === 'outstock') {
-        if (p.hasVariantOptions) { if ((p.variants ?? []).some((v) => v.variantInStock)) return false }
-        else { if (p.inStock) return false }
+        if (p.hasVariantOptions) {
+          if ((p.variants ?? []).some((v) => v.variantInStock)) return false
+        } else {
+          if (p.inStock) return false
+        }
       }
       return true
     })
@@ -337,14 +417,37 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
     list = [...list].sort((a, b) => {
       let av: string | number, bv: string | number
       switch (sortKey) {
-        case 'name':         av = a.name;                                    bv = b.name; break
-        case 'stockQuantity':av = a.stockQuantity ?? -1;                     bv = b.stockQuantity ?? -1; break
-        case 'regularPrice': av = a.regularPrice ?? -1;                      bv = b.regularPrice ?? -1; break
-        case 'inStock':      av = a.inStock ? 1 : 0;                         bv = b.inStock ? 1 : 0; break
-        case 'slug':         av = a.slug ?? '';                              bv = b.slug ?? ''; break
-        case 'categories':   av = (a.categories as any)?.name ?? '';         bv = (b.categories as any)?.name ?? ''; break
-        case 'updatedAt':    av = a.updatedAt ?? '';                         bv = b.updatedAt ?? ''; break
-        default:             av = a.name;                                    bv = b.name
+        case 'name':
+          av = a.name
+          bv = b.name
+          break
+        case 'stockQuantity':
+          av = a.stockQuantity ?? -1
+          bv = b.stockQuantity ?? -1
+          break
+        case 'regularPrice':
+          av = a.regularPrice ?? -1
+          bv = b.regularPrice ?? -1
+          break
+        case 'inStock':
+          av = a.inStock ? 1 : 0
+          bv = b.inStock ? 1 : 0
+          break
+        case 'slug':
+          av = a.slug ?? ''
+          bv = b.slug ?? ''
+          break
+        case 'categories':
+          av = (a.categories as any)?.name ?? ''
+          bv = (b.categories as any)?.name ?? ''
+          break
+        case 'updatedAt':
+          av = a.updatedAt ?? ''
+          bv = b.updatedAt ?? ''
+          break
+        default:
+          av = a.name
+          bv = b.name
       }
       if (av < bv) return sortDir === 'asc' ? -1 : 1
       if (av > bv) return sortDir === 'asc' ? 1 : -1
@@ -371,14 +474,14 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
   }
 
   const columns: { key: SortKey | null; label: string }[] = [
-    { key: null,           label: '' },
-    { key: 'name',         label: 'Product Name' },
+    { key: null, label: '' },
+    { key: 'name', label: 'Product Name' },
     { key: 'regularPrice', label: 'Regular Price' },
-    { key: 'inStock',      label: 'In Stock' },
-    { key: 'stockQuantity',label: 'Stock Quantity' },
-    { key: null,           label: 'Subscription' },
-    { key: 'categories',   label: 'Categories' },
-    { key: 'updatedAt',    label: 'Updated At' },
+    { key: 'inStock', label: 'In Stock' },
+    { key: 'stockQuantity', label: 'Stock Quantity' },
+    { key: null, label: 'Subscription' },
+    { key: 'categories', label: 'Categories' },
+    { key: 'updatedAt', label: 'Updated At' },
   ]
 
   return (
@@ -517,11 +620,13 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
 
         {/* Stock filter */}
         <div style={{ display: 'flex', gap: 3 }}>
-          {([
-            { k: 'all', label: 'All Stock' },
-            { k: 'instock', label: 'In Stock' },
-            { k: 'outstock', label: 'Out of Stock' },
-          ] as const).map(({ k, label }) => (
+          {(
+            [
+              { k: 'all', label: 'All Stock' },
+              { k: 'instock', label: 'In Stock' },
+              { k: 'outstock', label: 'Out of Stock' },
+            ] as const
+          ).map(({ k, label }) => (
             <button
               key={k}
               onClick={() => setStockFilter(k)}
@@ -544,11 +649,24 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
         {/* Search */}
         <div style={{ position: 'relative', width: 220 }}>
           <svg
-            width="12" height="12" viewBox="0 0 24 24" fill="none"
-            stroke="var(--theme-elevation-300)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--theme-elevation-300)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              position: 'absolute',
+              left: 9,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none',
+            }}
           >
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             value={search}
@@ -572,10 +690,21 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
             <button
               onClick={() => setSearch('')}
               style={{
-                position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                background: 'none', border: 'none', color: 'var(--theme-elevation-300)', fontSize: 14, cursor: 'pointer', padding: 0, lineHeight: 1,
+                position: 'absolute',
+                right: 8,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: 'var(--theme-elevation-300)',
+                fontSize: 14,
+                cursor: 'pointer',
+                padding: 0,
+                lineHeight: 1,
               }}
-            >×</button>
+            >
+              ×
+            </button>
           )}
         </div>
       </div>
@@ -602,7 +731,9 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
             <input
               type="checkbox"
               checked={allSelected}
-              ref={(el) => { if (el) el.indeterminate = someSelected }}
+              ref={(el) => {
+                if (el) el.indeterminate = someSelected
+              }}
               onChange={toggleAll}
               style={{ cursor: 'pointer', accentColor: '#6b8aff' }}
             />
@@ -630,14 +761,30 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
             </div>
           ))}
           {/* Actions header */}
-          <div style={{ padding: '10px 8px', fontSize: 11, fontWeight: 600, color: 'var(--theme-elevation-350)', letterSpacing: 0.6, textTransform: 'uppercase' }}>
+          <div
+            style={{
+              padding: '10px 8px',
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--theme-elevation-350)',
+              letterSpacing: 0.6,
+              textTransform: 'uppercase',
+            }}
+          >
             Actions
           </div>
         </div>
 
         {/* Empty state */}
         {filtered.length === 0 && (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--theme-elevation-250)', fontSize: 13 }}>
+          <div
+            style={{
+              padding: 40,
+              textAlign: 'center',
+              color: 'var(--theme-elevation-250)',
+              fontSize: 13,
+            }}
+          >
             No products found
           </div>
         )}
@@ -645,11 +792,15 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
         {/* Product rows */}
         {filtered.map((product, rowIdx) => {
           const isSelected = selectedIds.has(product.id)
-          const hasVariants = Boolean(product.hasVariantOptions) && (product.variants?.length ?? 0) > 0
+          const hasVariants =
+            Boolean(product.hasVariantOptions) && (product.variants?.length ?? 0) > 0
           const variants = product.variants ?? []
-          const catName = typeof product.categories === 'object' && product.categories
-            ? ((product.categories as any).title ?? (product.categories as any).name) as string | undefined
-            : undefined
+          const catName =
+            typeof product.categories === 'object' && product.categories
+              ? (((product.categories as any).title ?? (product.categories as any).name) as
+                  | string
+                  | undefined)
+              : undefined
 
           return (
             <React.Fragment key={product.id}>
@@ -662,7 +813,11 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                   alignItems: 'center',
                   padding: '0 16px',
                   borderBottom: hasVariants ? 'none' : '1px solid var(--theme-elevation-100)',
-                  background: isSelected ? '#111d2e' : rowIdx % 2 === 0 ? 'var(--theme-elevation-0)' : 'var(--theme-elevation-50)',
+                  background: isSelected
+                    ? '#111d2e'
+                    : rowIdx % 2 === 0
+                      ? 'var(--theme-elevation-0)'
+                      : 'var(--theme-elevation-50)',
                   minWidth: 900,
                 }}
               >
@@ -682,25 +837,68 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                     <img
                       src={product.productImage.url}
                       alt={product.name}
-                      style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 4, display: 'block', border: '1px solid var(--theme-elevation-100)' }}
+                      style={{
+                        width: 44,
+                        height: 44,
+                        objectFit: 'contain',
+                        borderRadius: 4,
+                        display: 'block',
+                        border: '1px solid var(--theme-elevation-100)',
+                      }}
                     />
                   ) : (
-                    <div style={{ width: 44, height: 44, background: 'var(--theme-elevation-100)', borderRadius: 4, border: '1px solid var(--theme-elevation-100)' }} />
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        background: 'var(--theme-elevation-100)',
+                        borderRadius: 4,
+                        border: '1px solid var(--theme-elevation-100)',
+                      }}
+                    />
                   )}
                 </div>
 
                 {/* Product Name */}
-                <div style={{ padding: '10px 8px', minWidth: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div
+                  style={{
+                    padding: '10px 8px',
+                    minWidth: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
                   <StatusDot status={product._status} />
-                  <a
-                    href={`/admin/collections/web-products/${product.id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="spl-link"
-                    style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                  >
-                    {product.name}
-                  </a>
+                  <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                    <a
+                      href={`/admin/collections/web-products/${product.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="spl-link"
+                      style={{
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {product.name}
+                    </a>
+                    {product.tagline && (
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: 'var(--theme-elevation-400)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {product.tagline}
+                      </span>
+                    )}
+                  </div>
                   {hasVariants && (
                     <span
                       style={{
@@ -720,11 +918,13 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
 
                 {/* Regular Price */}
                 <div style={{ padding: '10px 8px', color: 'var(--theme-elevation-600)' }}>
-                  {hasVariants
-                    ? <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>
-                    : product.regularPrice != null
-                      ? `AED ${Number(product.regularPrice).toFixed(2)}`
-                      : noVal('Regular Price')}
+                  {hasVariants ? (
+                    <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>
+                  ) : product.regularPrice != null ? (
+                    `AED ${Number(product.regularPrice).toFixed(2)}`
+                  ) : (
+                    noVal('Regular Price')
+                  )}
                 </div>
 
                 {/* In Stock */}
@@ -732,14 +932,20 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                   {hasVariants ? (
                     <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>
                   ) : editingStock?.productId === product.id && !editingStock.variantId ? (
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+                    <label
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}
+                    >
                       <input
                         type="checkbox"
                         checked={editingStock.inStock}
-                        onChange={(e) => setEditingStock((s) => s ? { ...s, inStock: e.target.checked } : s)}
+                        onChange={(e) =>
+                          setEditingStock((s) => (s ? { ...s, inStock: e.target.checked } : s))
+                        }
                         style={{ accentColor: '#6b8aff', cursor: 'pointer' }}
                       />
-                      <span style={{ fontSize: 11, color: 'var(--theme-elevation-600)' }}>{editingStock.inStock ? 'In Stock' : 'Out'}</span>
+                      <span style={{ fontSize: 11, color: 'var(--theme-elevation-600)' }}>
+                        {editingStock.inStock ? 'In Stock' : 'Out'}
+                      </span>
                     </label>
                   ) : (
                     <BoolBadge value={Boolean(product.inStock)} />
@@ -757,43 +963,83 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                         min={0}
                         className="spl-qty-input"
                         value={editingStock.qty}
-                        onChange={(e) => setEditingStock((s) => s ? { ...s, qty: e.target.value } : s)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') saveStock(); if (e.key === 'Escape') setEditingStock(null) }}
+                        onChange={(e) =>
+                          setEditingStock((s) => (s ? { ...s, qty: e.target.value } : s))
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') saveStock()
+                          if (e.key === 'Escape') setEditingStock(null)
+                        }}
                         autoFocus
                       />
-                      <button className="spl-save-btn" onClick={saveStock} disabled={savingStock}>{savingStock ? '…' : '✓'}</button>
-                      <button className="spl-cancel-btn" onClick={() => setEditingStock(null)}>✕</button>
+                      <button className="spl-save-btn" onClick={saveStock} disabled={savingStock}>
+                        {savingStock ? '…' : '✓'}
+                      </button>
+                      <button className="spl-cancel-btn" onClick={() => setEditingStock(null)}>
+                        ✕
+                      </button>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <span>{product.stockQuantity != null ? product.stockQuantity : noVal('Stock Quantity')}</span>
+                      <span>
+                        {product.stockQuantity != null
+                          ? product.stockQuantity
+                          : noVal('Stock Quantity')}
+                      </span>
                       <button
                         className="spl-edit-btn"
                         title="Edit stock"
-                        onClick={() => startEditStock(product.id, product.stockQuantity ?? 0, Boolean(product.inStock))}
-                      >✎</button>
+                        onClick={() =>
+                          startEditStock(
+                            product.id,
+                            product.stockQuantity ?? 0,
+                            Boolean(product.inStock),
+                          )
+                        }
+                      >
+                        ✎
+                      </button>
                     </div>
                   )}
                 </div>
 
                 {/* Subscription */}
                 <div style={{ padding: '10px 8px' }}>
-                  {hasVariants
-                    ? (variants.some((v) => v.hasVariantSub)
-                        ? <span style={{ fontSize: 10, color: '#818cf8' }}>↻ See variants</span>
-                        : <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>)
-                    : product.hasSimpleSub
-                      ? <SubBadge discount={product.subscriptionDiscount} freqs={product.subFreq} />
-                      : <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>}
+                  {hasVariants ? (
+                    variants.some((v) => v.hasVariantSub) ? (
+                      <span style={{ fontSize: 10, color: '#818cf8' }}>↻ See variants</span>
+                    ) : (
+                      <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>
+                    )
+                  ) : product.hasSimpleSub ? (
+                    <SubBadge discount={product.subscriptionDiscount} freqs={product.subFreq} />
+                  ) : (
+                    <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>
+                  )}
                 </div>
 
                 {/* Categories */}
-                <div style={{ padding: '10px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--theme-elevation-600)' }}>
+                <div
+                  style={{
+                    padding: '10px 8px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    color: 'var(--theme-elevation-600)',
+                  }}
+                >
                   {catName || noVal('Categories')}
                 </div>
 
                 {/* Updated At */}
-                <div style={{ padding: '10px 8px', color: 'var(--theme-elevation-350)', fontSize: 12, whiteSpace: 'nowrap' }}>
+                <div
+                  style={{
+                    padding: '10px 8px',
+                    color: 'var(--theme-elevation-350)',
+                    fontSize: 12,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   {fmtDate(product.updatedAt) || noVal('Updated At')}
                 </div>
 
@@ -804,13 +1050,24 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                     disabled={deletingIds.has(product.id)}
                     title="Delete product"
                     style={{
-                      padding: '3px 8px', fontSize: 11,
-                      background: 'transparent', border: '1px solid var(--theme-elevation-150)',
-                      borderRadius: 3, color: 'var(--theme-elevation-350)', cursor: 'pointer',
-                      lineHeight: 1, opacity: deletingIds.has(product.id) ? 0.4 : 1,
+                      padding: '3px 8px',
+                      fontSize: 11,
+                      background: 'transparent',
+                      border: '1px solid var(--theme-elevation-150)',
+                      borderRadius: 3,
+                      color: 'var(--theme-elevation-350)',
+                      cursor: 'pointer',
+                      lineHeight: 1,
+                      opacity: deletingIds.has(product.id) ? 0.4 : 1,
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#ef4444' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'; e.currentTarget.style.color = 'var(--theme-elevation-350)' }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#ef4444'
+                      e.currentTarget.style.color = '#ef4444'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
+                      e.currentTarget.style.color = 'var(--theme-elevation-350)'
+                    }}
                   >
                     🗑
                   </button>
@@ -818,115 +1075,228 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
               </div>
 
               {/* ── Variant sub-rows ── */}
-              {hasVariants && variants.map((variant, vIdx) => {
-                const isLastVariant = vIdx === variants.length - 1
-                const varBg = rowIdx % 2 === 0 ? 'var(--theme-elevation-0)' : 'var(--theme-elevation-50)'
-                return (
-                  <div
-                    key={variant.id ?? vIdx}
-                    className="spl-var-row"
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: GRID_VAR,
-                      alignItems: 'center',
-                      padding: '0 16px',
-                      borderTop: '1px solid var(--theme-elevation-100)',
-                      borderBottom: isLastVariant ? '2px solid var(--theme-elevation-150)' : 'none',
-                      borderLeft: '3px solid var(--theme-elevation-150)',
-                      background: varBg,
-                      minWidth: 900,
-                    }}
-                  >
-                    {/* Checkbox placeholder */}
-                    <div />
+              {hasVariants &&
+                variants.map((variant, vIdx) => {
+                  const isLastVariant = vIdx === variants.length - 1
+                  const varBg =
+                    rowIdx % 2 === 0 ? 'var(--theme-elevation-0)' : 'var(--theme-elevation-50)'
+                  return (
+                    <div
+                      key={variant.id ?? vIdx}
+                      className="spl-var-row"
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: GRID_VAR,
+                        alignItems: 'center',
+                        padding: '0 16px',
+                        borderTop: '1px solid var(--theme-elevation-100)',
+                        borderBottom: isLastVariant
+                          ? '2px solid var(--theme-elevation-150)'
+                          : 'none',
+                        borderLeft: '3px solid var(--theme-elevation-150)',
+                        background: varBg,
+                        minWidth: 900,
+                      }}
+                    >
+                      {/* Checkbox placeholder */}
+                      <div />
 
-                    {/* Variant image with ↳ indicator */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 8px 6px 0' }}>
-                      <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11, flexShrink: 0 }}>↳</span>
-                      {variant.variantImage?.url ? (
-                        <img
-                          src={variant.variantImage.url}
-                          alt={variant.variantName}
-                          style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 3, display: 'block', border: '1px solid var(--theme-elevation-100)' }}
-                        />
-                      ) : (
-                        <div style={{ width: 32, height: 32, background: 'var(--theme-elevation-100)', borderRadius: 3, border: '1px solid var(--theme-elevation-100)', flexShrink: 0 }} />
-                      )}
-                    </div>
-
-                    {/* Variant name */}
-                    <div style={{ padding: '7px 8px', display: 'flex', alignItems: 'center', minWidth: 0 }}>
-                      <span style={{ fontSize: 12, color: 'var(--theme-elevation-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {variant.variantName}g
-                      </span>
-                    </div>
-
-                    {/* Regular Price */}
-                    <div style={{ padding: '7px 8px', fontSize: 12, color: 'var(--theme-elevation-600)' }}>
-                      {variant.variantRegularPrice != null
-                        ? `AED ${Number(variant.variantRegularPrice).toFixed(2)}`
-                        : noVal('Regular Price')}
-                    </div>
-
-                    {/* In Stock */}
-                    <div style={{ padding: '7px 8px' }}>
-                      {editingStock?.productId === product.id && editingStock.variantId === variant.id ? (
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={editingStock.inStock}
-                            onChange={(e) => setEditingStock((s) => s ? { ...s, inStock: e.target.checked } : s)}
-                            style={{ accentColor: '#6b8aff', cursor: 'pointer' }}
+                      {/* Variant image with ↳ indicator */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: '6px 8px 6px 0',
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: 'var(--theme-elevation-250)',
+                            fontSize: 11,
+                            flexShrink: 0,
+                          }}
+                        >
+                          ↳
+                        </span>
+                        {variant.variantImage?.url ? (
+                          <img
+                            src={variant.variantImage.url}
+                            alt={variant.variantName}
+                            style={{
+                              width: 32,
+                              height: 32,
+                              objectFit: 'contain',
+                              borderRadius: 3,
+                              display: 'block',
+                              border: '1px solid var(--theme-elevation-100)',
+                            }}
                           />
-                          <span style={{ fontSize: 11, color: 'var(--theme-elevation-600)' }}>{editingStock.inStock ? 'In Stock' : 'Out'}</span>
-                        </label>
-                      ) : (
-                        <BoolBadge value={Boolean(variant.variantInStock)} />
-                      )}
-                    </div>
-
-                    {/* Stock Qty */}
-                    <div style={{ padding: '7px 8px', fontSize: 12, color: 'var(--theme-elevation-600)' }}>
-                      {editingStock?.productId === product.id && editingStock.variantId === variant.id ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <input
-                            type="number"
-                            min={0}
-                            className="spl-qty-input"
-                            value={editingStock.qty}
-                            onChange={(e) => setEditingStock((s) => s ? { ...s, qty: e.target.value } : s)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') saveStock(); if (e.key === 'Escape') setEditingStock(null) }}
-                            autoFocus
+                        ) : (
+                          <div
+                            style={{
+                              width: 32,
+                              height: 32,
+                              background: 'var(--theme-elevation-100)',
+                              borderRadius: 3,
+                              border: '1px solid var(--theme-elevation-100)',
+                              flexShrink: 0,
+                            }}
                           />
-                          <button className="spl-save-btn" onClick={saveStock} disabled={savingStock}>{savingStock ? '…' : '✓'}</button>
-                          <button className="spl-cancel-btn" onClick={() => setEditingStock(null)}>✕</button>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <span>{variant.variantStockQuantity != null ? variant.variantStockQuantity : noVal('Stock Quantity')}</span>
-                          <button
-                            className="spl-edit-btn"
-                            title="Edit stock"
-                            onClick={() => startEditStock(product.id, variant.variantStockQuantity ?? 0, Boolean(variant.variantInStock), variant.id)}
-                          >✎</button>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
 
-                    {/* Subscription */}
-                    <div style={{ padding: '7px 8px' }}>
-                      {variant.hasVariantSub
-                        ? <SubBadge discount={variant.subscriptionDiscount} freqs={variant.subFreq} />
-                        : <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>}
-                    </div>
+                      {/* Variant name */}
+                      <div
+                        style={{
+                          padding: '7px 8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          minWidth: 0,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 12,
+                            color: 'var(--theme-elevation-600)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {variant.variantName}g
+                        </span>
+                      </div>
 
-                    {/* Categories, Updated, Actions — empty for variants */}
-                    <div />
-                    <div />
-                    <div />
-                  </div>
-                )
-              })}
+                      {/* Regular Price */}
+                      <div
+                        style={{
+                          padding: '7px 8px',
+                          fontSize: 12,
+                          color: 'var(--theme-elevation-600)',
+                        }}
+                      >
+                        {variant.variantRegularPrice != null
+                          ? `AED ${Number(variant.variantRegularPrice).toFixed(2)}`
+                          : noVal('Regular Price')}
+                      </div>
+
+                      {/* In Stock */}
+                      <div style={{ padding: '7px 8px' }}>
+                        {editingStock?.productId === product.id &&
+                        editingStock.variantId === variant.id ? (
+                          <label
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 5,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={editingStock.inStock}
+                              onChange={(e) =>
+                                setEditingStock((s) =>
+                                  s ? { ...s, inStock: e.target.checked } : s,
+                                )
+                              }
+                              style={{ accentColor: '#6b8aff', cursor: 'pointer' }}
+                            />
+                            <span style={{ fontSize: 11, color: 'var(--theme-elevation-600)' }}>
+                              {editingStock.inStock ? 'In Stock' : 'Out'}
+                            </span>
+                          </label>
+                        ) : (
+                          <BoolBadge value={Boolean(variant.variantInStock)} />
+                        )}
+                      </div>
+
+                      {/* Stock Qty */}
+                      <div
+                        style={{
+                          padding: '7px 8px',
+                          fontSize: 12,
+                          color: 'var(--theme-elevation-600)',
+                        }}
+                      >
+                        {editingStock?.productId === product.id &&
+                        editingStock.variantId === variant.id ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <input
+                              type="number"
+                              min={0}
+                              className="spl-qty-input"
+                              value={editingStock.qty}
+                              onChange={(e) =>
+                                setEditingStock((s) => (s ? { ...s, qty: e.target.value } : s))
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') saveStock()
+                                if (e.key === 'Escape') setEditingStock(null)
+                              }}
+                              autoFocus
+                            />
+                            <button
+                              className="spl-save-btn"
+                              onClick={saveStock}
+                              disabled={savingStock}
+                            >
+                              {savingStock ? '…' : '✓'}
+                            </button>
+                            <button
+                              className="spl-cancel-btn"
+                              onClick={() => setEditingStock(null)}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <span>
+                              {variant.variantStockQuantity != null
+                                ? variant.variantStockQuantity
+                                : noVal('Stock Quantity')}
+                            </span>
+                            <button
+                              className="spl-edit-btn"
+                              title="Edit stock"
+                              onClick={() =>
+                                startEditStock(
+                                  product.id,
+                                  variant.variantStockQuantity ?? 0,
+                                  Boolean(variant.variantInStock),
+                                  variant.id,
+                                )
+                              }
+                            >
+                              ✎
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Subscription */}
+                      <div style={{ padding: '7px 8px' }}>
+                        {variant.hasVariantSub ? (
+                          <SubBadge
+                            discount={variant.subscriptionDiscount}
+                            freqs={variant.subFreq}
+                          />
+                        ) : (
+                          <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>
+                            —
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Categories, Updated, Actions — empty for variants */}
+                      <div />
+                      <div />
+                      <div />
+                    </div>
+                  )
+                })}
             </React.Fragment>
           )
         })}
