@@ -22,6 +22,8 @@ export const C = {
   readyBorder: 'var(--smd-ready-border)',
   queuedBg: 'var(--smd-queued-bg)',
   queuedBorder: 'var(--smd-queued-border)',
+  slotQueueBg: 'var(--smd-slot-queue-bg)',
+  slotQueueBorder: 'var(--smd-slot-queue-border)',
   cancelBg: 'var(--smd-cancel-bg)',
   cancelBorder: 'var(--smd-cancel-border)',
   takeawayBg: 'var(--smd-takeaway-bg)',
@@ -35,6 +37,7 @@ export const C = {
   // ── Brand / status colours (hex — constant across themes) ──
   new: '#2563eb',
   queued: '#7c3aed',
+  slotQueue: '#0e7490',
   prep: '#d97706',
   ready: '#16a34a',
   cancelled: '#dc2626',
@@ -54,6 +57,7 @@ export const C = {
 export const SECTIONS = [
   { key: 'new', label: 'New Orders', color: C.new, bg: C.newBg, border: C.newBorder },
   { key: 'queued', label: 'Accepted — Waiting to start Preparation', color: C.queued, bg: C.queuedBg, border: C.queuedBorder },
+  { key: 'slot-queue', label: 'Queued for Later — Slot Orders', color: C.slotQueue, bg: C.slotQueueBg, border: C.slotQueueBorder },
   { key: 'prep', label: 'In Preparation', color: C.prep, bg: C.prepBg, border: C.prepBorder },
   { key: 'ready', label: 'Ready for Pickup', color: C.ready, bg: C.readyBg, border: C.readyBorder },
 ] as const
@@ -100,6 +104,8 @@ export const GLOBAL_STYLES = `
     --smd-ready-border: #bbf7d0;
     --smd-queued-bg: #f5f3ff;
     --smd-queued-border: #c4b5fd;
+    --smd-slot-queue-bg: #ecfeff;
+    --smd-slot-queue-border: #a5f3fc;
     --smd-cancel-bg: #fef2f2;
     --smd-cancel-border: #fecaca;
     --smd-takeaway-bg: #ecfeff;
@@ -143,6 +149,8 @@ export const GLOBAL_STYLES = `
     --smd-ready-border: #166534;
     --smd-queued-bg: #160b2e;
     --smd-queued-border: #6d28d9;
+    --smd-slot-queue-bg: #06161e;
+    --smd-slot-queue-border: #0e7490;
     --smd-cancel-bg: #1e0808;
     --smd-cancel-border: #991b1b;
     --smd-takeaway-bg: #061520;
@@ -210,12 +218,12 @@ export const GLOBAL_STYLES = `
 
 // ── Derived status helpers ──────────────────────────────────────────────────
 /** Map a raw Payload order doc → dashboard section key.
- *  Returns null for orders that should be hidden (scheduled for later slot). */
-export function getOrderSection(order: any): 'new' | 'queued' | 'prep' | 'ready' | null {
+ *  Returns null only for orders that are truly done / shouldn't be shown. */
+export function getOrderSection(order: any): 'new' | 'queued' | 'slot-queue' | 'prep' | 'ready' | null {
   if (order.orderAcceptance === 'pending') return 'new'
   if (order.orderAcceptance !== 'accepted') return null
-  // Slot orders accepted early are held in a hidden state until T-30
-  if (order.scheduledForPrep) return null
+  // Slot orders accepted early sit in slot-queue until the cron releases them at T-30
+  if (order.scheduledForPrep) return 'slot-queue'
   const status = order.orderType === 'dine-in' ? order.appOrderStatusDine : order.appOrderStatus
   if (status === 'preparing') return 'prep'
   if (status === 'ready') return 'ready'

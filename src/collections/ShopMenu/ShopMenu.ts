@@ -22,23 +22,7 @@ export const ShopMenu: CollectionConfig = {
     },
   },
   access: {
-    read: async ({ req: { user, payload } }) => {
-      if (!user) return false
-      if (user?.role === 'admin' || user?.role === 'super-admin') return true
-      if (user?.role === 'shop-manager') {
-        const managedShop = await payload.find({
-          collection: 'shop',
-          where: { shopManager: { equals: user.id } },
-          limit: 1,
-          depth: 0,
-        })
-        if (managedShop.docs.length > 0) {
-          return { shop: { equals: managedShop.docs[0].id } }
-        }
-        return false
-      }
-      return false
-    },
+    read: () => true,
     create: ({ req: { user } }) =>
       user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager',
     update: ({ req: { user } }) =>

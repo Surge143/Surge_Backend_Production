@@ -131,11 +131,14 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
         setOrders((prev) => {
           const exists = prev.find((o) => o.id === formatted.id)
           if (exists) {
-            // Normal update — replace in place
+            // Detect cron releasing a slot-queue order into the active queue
+            if (exists.status === 'slot-queue' && formatted.status === 'queued') {
+              notify(`🔔 Slot order #${formatted.no} is now in queue!`, 'ok')
+            }
             return prev.map((o) => (o.id === formatted.id ? formatted : o))
           }
-          // Order emerged from hidden scheduledForPrep state (cron released it)
-          notify(`🔔 Slot order #${formatted.no} is now queued!`, 'ok')
+          // Order wasn't in view yet — add it
+          notify(`🔔 Order #${formatted.no} appeared!`, 'ok')
           return [formatted, ...prev]
         })
       }
@@ -233,9 +236,13 @@ const handleAccept = async (order: any) => {
     })
 
     if (isLateSlot) {
-      // Remove from the dashboard — it will reappear via socket when cron fires at T-30
-      setOrders((prev) => prev.filter((o) => o.id !== order.id))
-      notify(`Accepted — will queue at ${order.slot} ⏱`, 'ok')
+      // Move into the slot-queue section — cron will release it to 'queued' at T-30
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id !== order.id ? o : { ...o, status: 'slot-queue', baristaId: baristaId || o.baristaId },
+        ),
+      )
+      notify(`Accepted — queued for slot at ${order.slot} ⏱`, 'ok')
     } else {
       setOrders((prev) =>
         prev.map((o) =>
@@ -339,7 +346,7 @@ const handleAccept = async (order: any) => {
     onLeave: () => setPeek(null),
   }
 
-  const counts = { new: 0, queued: 0, prep: 0, ready: 0 }
+  const counts = { new: 0, queued: 0, 'slot-queue': 0, prep: 0, ready: 0 }
   orders.forEach((o) => {
     if (o.status in counts) (counts as any)[o.status]++
   })
