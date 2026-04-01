@@ -19,23 +19,6 @@ export const createOrderPaidNotification = async (
   })
 }
 
-/** Order is being prepared (Cafe) */
-export const createOrderPreparingNotification = async (
-  payload: BasePayload,
-  userId: string | number,
-  orderId: string | number,
-) => {
-  await sendNotification({
-    payload,
-    userId,
-    title: 'Order Preparing ☕',
-    body: `Your order #${orderId} is now being prepared by our baristas.`,
-    notificationType: 'order',
-    origin: 'cafe',
-    data: { type: 'order_preparing', orderId: String(orderId) },
-  })
-}
-
 /** Order completed / ready for pickup */
 export const createOrderCompletedNotification = async (
   payload: BasePayload,
@@ -51,58 +34,6 @@ export const createOrderCompletedNotification = async (
     notificationType: 'order',
     origin,
     data: { type: 'order_completed', orderId: String(orderId) },
-  })
-}
-
-/** Order has been shipped (Store) */
-export const createOrderShippedNotification = async (
-  payload: BasePayload,
-  userId: string | number,
-  orderId: string | number,
-) => {
-  await sendNotification({
-    payload,
-    userId,
-    title: 'Order Shipped! 🚚',
-    body: `Your store order #${orderId} has been shipped and is on its way.`,
-    notificationType: 'order',
-    origin: 'store',
-    data: { type: 'order_shipped', orderId: String(orderId) },
-  })
-}
-
-/** Order has been delivered (Store) */
-export const createOrderDeliveredNotification = async (
-  payload: BasePayload,
-  userId: string | number,
-  orderId: string | number,
-) => {
-  await sendNotification({
-    payload,
-    userId,
-    title: 'Order Delivered! 📦',
-    body: `Your store order #${orderId} has been delivered. Enjoy!`,
-    notificationType: 'order',
-    origin: 'store',
-    data: { type: 'order_delivered', orderId: String(orderId) },
-  })
-}
-
-/** Order has been cancelled / refunded */
-export const createOrderCancelledNotification = async (
-  payload: BasePayload,
-  userId: string | number,
-  orderId: string | number,
-  origin: 'cafe' | 'store',
-) => {
-  await sendNotification({
-    payload,
-    userId,
-    title: 'Order Cancelled',
-    body: `Your order #${orderId} has been cancelled and a refund has been initiated.`,
-    notificationType: 'order',
-    origin,
-    data: { type: 'order_cancelled', orderId: String(orderId) },
   })
 }
 

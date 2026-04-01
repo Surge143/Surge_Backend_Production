@@ -2,9 +2,7 @@ import { CollectionAfterChangeHook } from 'payload'
 import { awardReferralCoins } from '@/utilities/awardReferralCoins'
 import {
   createOrderPaidNotification,
-  createOrderPreparingNotification,
   createOrderCompletedNotification,
-  createOrderCancelledNotification,
   createStampEarnedNotification,
 } from '@/utilities/orderNotifications'
 
@@ -50,31 +48,22 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({
       await awardReferralCoins(payload, userId, doc.id, 'app-orders')
     }
 
-    // --- ORDER STATUS: state transition notifications ---
+    // --- ORDER STATUS: completed notification + stamp accrual ---
     const orderStatus = doc.orderType === 'dine-in' ? doc.appOrderStatusDine : doc.appOrderStatus
     const prevOrderStatus =
       previousDoc?.orderType === 'dine-in'
         ? previousDoc?.appOrderStatusDine
         : previousDoc?.appOrderStatus
 
-    if (userId && orderStatus !== prevOrderStatus) {
-      // 1. Preparing
-      if (orderStatus === 'preparing') {
-        await createOrderPreparingNotification(payload, userId, doc.id)
-      }
-      // 2. Ready (This is what we called 'Completed' notification before)
-      else if (orderStatus === 'ready') {
-        await createOrderCompletedNotification(payload, userId, doc.id, 'cafe')
-      }
-      // 3. Cancelled
-      else if (orderStatus === 'cancelled') {
-        await createOrderCancelledNotification(payload, userId, doc.id, 'cafe')
-      }
-    }
-
-    // --- STAMP ACCRUAL (Only on Completion) ---
     const becameEligible =
       orderStatus === 'completed' && isNowPaid && (prevOrderStatus !== 'completed' || !wasPaid)
+
+    if (becameEligible && userId) {
+      // Notify user their order is ready
+      if (userId) {
+        await createOrderCompletedNotification(payload, userId, doc.id, 'cafe')
+      }
+    }
 
     // --- STAMP ACCRUAL ---
     try {

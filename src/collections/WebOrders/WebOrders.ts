@@ -4,12 +4,7 @@ import { refundHandler } from './endpoints/refundHandler'
 import { downloadInvoiceHandler } from './endpoints/downloadInvoice'
 import { linkGuestOrderToUser } from './hooks/linkGuestToUser'
 import { awardReferralCoins } from '@/utilities/awardReferralCoins'
-import {
-  createOrderPaidNotification,
-  createOrderShippedNotification,
-  createOrderDeliveredNotification,
-  createOrderCancelledNotification,
-} from '@/utilities/orderNotifications'
+import { createOrderPaidNotification } from '@/utilities/orderNotifications'
 import { sendEmail } from '@/lib/emailConfig'
 import { OrderShippedEmail } from '@/lib/emailTemplates/StoreOrderShipped'
 import { OrderDeliveredEmail } from '@/lib/emailTemplates/StoreOrderDelivered'
@@ -250,7 +245,7 @@ export const WebOrders: CollectionConfig = {
             }
 
             // 2. Notification: Trigger on PAYMENT
-            if (becamePaid) {
+            if (isNowPaid && !wasPaid) {
               await createOrderPaidNotification(payload, userId, doc.id, 'store')
 
               // 3. Award WTCoins if already delivered but not yet awarded (Payment after Delivery)
@@ -277,17 +272,6 @@ export const WebOrders: CollectionConfig = {
                 } catch (error) {
                   console.error('Error awarding WTCoins on payment after delivery:', error)
                 }
-              }
-            }
-
-            // 4. Notification: Trigger on DELIVERY STATUS changes
-            if (doc.deliveryStatus !== previousDoc?.deliveryStatus) {
-              if (doc.deliveryStatus === 'shipped') {
-                await createOrderShippedNotification(payload, userId, doc.id)
-              } else if (doc.deliveryStatus === 'delivered') {
-                await createOrderDeliveredNotification(payload, userId, doc.id)
-              } else if (doc.deliveryStatus === 'cancelled' || doc.paymentStatus === 'refunded') {
-                await createOrderCancelledNotification(payload, userId, doc.id, 'store')
               }
             }
           })
