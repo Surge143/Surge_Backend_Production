@@ -58,27 +58,12 @@ async function _sendPush(
     await fcm.send({
       token: pushToken,
       notification: { title, body },
-      data: {
-        ...data,
-        click_action: 'FLUTTER_NOTIFICATION_CLICK',
-      },
+      data,
       android: {
-        priority: 'high',
-        notification: {
-          sound: 'default',
-          channelId: 'default',
-          priority: 'high',
-          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
-        },
+        notification: { sound: 'default', priority: 'high' },
       },
       apns: {
-        payload: {
-          aps: {
-            sound: 'default',
-            badge: 1,
-            contentAvailable: true,
-          },
-        },
+        payload: { aps: { sound: 'default', badge: 1 } },
       },
     })
 
