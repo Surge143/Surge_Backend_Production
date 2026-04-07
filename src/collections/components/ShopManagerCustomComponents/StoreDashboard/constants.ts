@@ -53,7 +53,6 @@ export const FILTER_PRESETS = [
   { key: 'all', label: 'All' },
   { key: 'delivery', label: 'Delivery' },
   { key: 'pickup', label: 'Pickup' },
-  { key: 'subscription', label: 'Subscription' },
 ]
 
 export const GLOBAL_STYLES = `
@@ -177,7 +176,8 @@ export function formatOrder(o: any) {
   const phone = addr?.phoneNumber || ''
   const shippingAddress = addr
     ? {
-        name: [addr.addressFirstName, addr.addressLastName].filter(Boolean).join(' ').trim() || null,
+        name:
+          [addr.addressFirstName, addr.addressLastName].filter(Boolean).join(' ').trim() || null,
         line1: addr.addressLine1 || null,
         line2: addr.addressLine2 || null,
         city: addr.city || null,
@@ -204,7 +204,8 @@ export function formatOrder(o: any) {
 
   // ── Items ──────────────────────────────────────────────────────────────────
   const items = (o.items || []).map((item: any) => {
-    const productDoc = typeof item.product === 'object' && item.product !== null ? item.product : null
+    const productDoc =
+      typeof item.product === 'object' && item.product !== null ? item.product : null
     return {
       name: item.productName || productDoc?.name || 'Unnamed product',
       variant: item.variantName || '',

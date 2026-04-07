@@ -114,13 +114,6 @@ export const OrderRow: React.FC<OrderRowProps> = ({
               Pickup
             </Tag>
           )}
-          {order.reward && (
-            <div style={{ marginTop: 3 }}>
-              <Tag c="#7c3aed" bg="#f5f3ff">
-                Subscription
-              </Tag>
-            </div>
-          )}
         </div>
 
         {/* Items count */}
@@ -144,7 +137,10 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                   <ABtn
                     label={loading ? '…' : 'Ship'}
                     c={C.shipped}
-                    onClick={() => { setShipOpen((p) => !p); setRefundOpen(false) }}
+                    onClick={() => {
+                      setShipOpen((p) => !p)
+                      setRefundOpen(false)
+                    }}
                     disabled={loading}
                   />
                   {shipOpen && (
@@ -162,7 +158,15 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                         minWidth: 200,
                       }}
                     >
-                      <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600, letterSpacing: 0.5, marginBottom: 6 }}>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: C.textMute,
+                          fontWeight: 600,
+                          letterSpacing: 0.5,
+                          marginBottom: 6,
+                        }}
+                      >
                         DELIVERING BY DATE
                       </div>
                       <input
@@ -184,15 +188,42 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                       />
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button
-                          onClick={() => { setShipOpen(false); setDeliverByDate('') }}
-                          style={{ flex: 1, padding: '5px 0', background: 'none', border: `1px solid ${C.border}`, borderRadius: 6, color: C.textMute, fontSize: 11, cursor: 'pointer' }}
+                          onClick={() => {
+                            setShipOpen(false)
+                            setDeliverByDate('')
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '5px 0',
+                            background: 'none',
+                            border: `1px solid ${C.border}`,
+                            borderRadius: 6,
+                            color: C.textMute,
+                            fontSize: 11,
+                            cursor: 'pointer',
+                          }}
                         >
                           Cancel
                         </button>
                         <button
-                          onClick={() => { if (!deliverByDate) return; if (onShip) onShip(deliverByDate); setShipOpen(false); setDeliverByDate('') }}
+                          onClick={() => {
+                            if (!deliverByDate) return
+                            if (onShip) onShip(deliverByDate)
+                            setShipOpen(false)
+                            setDeliverByDate('')
+                          }}
                           disabled={!deliverByDate || loading}
-                          style={{ flex: 1, padding: '5px 0', background: deliverByDate ? C.shipped : C.shipped + '40', border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 600, cursor: deliverByDate && !loading ? 'pointer' : 'not-allowed' }}
+                          style={{
+                            flex: 1,
+                            padding: '5px 0',
+                            background: deliverByDate ? C.shipped : C.shipped + '40',
+                            border: 'none',
+                            borderRadius: 6,
+                            color: '#fff',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: deliverByDate && !loading ? 'pointer' : 'not-allowed',
+                          }}
                         >
                           {loading ? '…' : 'Confirm'}
                         </button>
@@ -206,7 +237,10 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                 <ABtn
                   label={loading ? '…' : 'Mark Ready'}
                   c={C.new}
-                  onClick={() => { if (onMarkReady) onMarkReady(); setRefundOpen(false) }}
+                  onClick={() => {
+                    if (onMarkReady) onMarkReady()
+                    setRefundOpen(false)
+                  }}
                   disabled={loading}
                 />
               )}
@@ -214,7 +248,10 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                 <ABtn
                   label="Cancel & Refund"
                   c={C.cancelled}
-                  onClick={() => { setRefundOpen((p) => !p); setShipOpen(false) }}
+                  onClick={() => {
+                    setRefundOpen((p) => !p)
+                    setShipOpen(false)
+                  }}
                   disabled={loading}
                 />
                 {refundOpen && (
@@ -334,7 +371,15 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                     minWidth: 200,
                   }}
                 >
-                  <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600, letterSpacing: 0.5, marginBottom: 6 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: C.textMute,
+                      fontWeight: 600,
+                      letterSpacing: 0.5,
+                      marginBottom: 6,
+                    }}
+                  >
                     DELIVERED ON DATE
                   </div>
                   <input
@@ -356,15 +401,42 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                   />
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button
-                      onClick={() => { setDeliverOpen(false); setDeliveredOnDate('') }}
-                      style={{ flex: 1, padding: '5px 0', background: 'none', border: `1px solid ${C.border}`, borderRadius: 6, color: C.textMute, fontSize: 11, cursor: 'pointer' }}
+                      onClick={() => {
+                        setDeliverOpen(false)
+                        setDeliveredOnDate('')
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '5px 0',
+                        background: 'none',
+                        border: `1px solid ${C.border}`,
+                        borderRadius: 6,
+                        color: C.textMute,
+                        fontSize: 11,
+                        cursor: 'pointer',
+                      }}
                     >
                       Cancel
                     </button>
                     <button
-                      onClick={() => { if (!deliveredOnDate) return; onDeliver && onDeliver(deliveredOnDate); setDeliverOpen(false); setDeliveredOnDate('') }}
+                      onClick={() => {
+                        if (!deliveredOnDate) return
+                        onDeliver && onDeliver(deliveredOnDate)
+                        setDeliverOpen(false)
+                        setDeliveredOnDate('')
+                      }}
                       disabled={!deliveredOnDate || loading}
-                      style={{ flex: 1, padding: '5px 0', background: deliveredOnDate ? C.new : C.new + '40', border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 600, cursor: deliveredOnDate && !loading ? 'pointer' : 'not-allowed' }}
+                      style={{
+                        flex: 1,
+                        padding: '5px 0',
+                        background: deliveredOnDate ? C.new : C.new + '40',
+                        border: 'none',
+                        borderRadius: 6,
+                        color: '#fff',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: deliveredOnDate && !loading ? 'pointer' : 'not-allowed',
+                      }}
                     >
                       {loading ? '…' : 'Confirm'}
                     </button>
@@ -397,7 +469,15 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                     minWidth: 200,
                   }}
                 >
-                  <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600, letterSpacing: 0.5, marginBottom: 6 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: C.textMute,
+                      fontWeight: 600,
+                      letterSpacing: 0.5,
+                      marginBottom: 6,
+                    }}
+                  >
                     PICKED UP DATE
                   </div>
                   <input
@@ -419,15 +499,42 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                   />
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button
-                      onClick={() => { setPickupOpen(false); setPickedUpDate('') }}
-                      style={{ flex: 1, padding: '5px 0', background: 'none', border: `1px solid ${C.border}`, borderRadius: 6, color: C.textMute, fontSize: 11, cursor: 'pointer' }}
+                      onClick={() => {
+                        setPickupOpen(false)
+                        setPickedUpDate('')
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '5px 0',
+                        background: 'none',
+                        border: `1px solid ${C.border}`,
+                        borderRadius: 6,
+                        color: C.textMute,
+                        fontSize: 11,
+                        cursor: 'pointer',
+                      }}
                     >
                       Cancel
                     </button>
                     <button
-                      onClick={() => { if (!pickedUpDate) return; if (onPickedUp) onPickedUp(pickedUpDate); setPickupOpen(false); setPickedUpDate('') }}
+                      onClick={() => {
+                        if (!pickedUpDate) return
+                        if (onPickedUp) onPickedUp(pickedUpDate)
+                        setPickupOpen(false)
+                        setPickedUpDate('')
+                      }}
                       disabled={!pickedUpDate || loading}
-                      style={{ flex: 1, padding: '5px 0', background: pickedUpDate ? C.new : C.new + '40', border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 600, cursor: pickedUpDate && !loading ? 'pointer' : 'not-allowed' }}
+                      style={{
+                        flex: 1,
+                        padding: '5px 0',
+                        background: pickedUpDate ? C.new : C.new + '40',
+                        border: 'none',
+                        borderRadius: 6,
+                        color: '#fff',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: pickedUpDate && !loading ? 'pointer' : 'not-allowed',
+                      }}
                     >
                       {loading ? '…' : 'Confirm'}
                     </button>
@@ -504,7 +611,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
             </div>
             <div>
               <span style={{ color: C.textMute, fontWeight: 600 }}>Origin: </span>
-              {order.origin === 'subscription' ? 'Subscription' : 'One-time'}
+              One-time
             </div>
             <div>
               <span style={{ color: C.textMute, fontWeight: 600 }}>Payment: </span>
@@ -533,7 +640,9 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                 <div style={{ fontSize: 11, color: C.textSub, marginBottom: 2 }}>{order.email}</div>
               )}
               {order.phone && (
-                <div style={{ fontSize: 11, color: C.textSub, marginBottom: 6 }}>+971 {order.phone}</div>
+                <div style={{ fontSize: 11, color: C.textSub, marginBottom: 6 }}>
+                  +971 {order.phone}
+                </div>
               )}
 
               {/* Shipping address with labels */}
@@ -772,7 +881,9 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                 </button>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: C.textSub, letterSpacing: 0.4 }}>
+                  <div
+                    style={{ fontSize: 11, fontWeight: 600, color: C.textSub, letterSpacing: 0.4 }}
+                  >
                     CANCEL REASON
                   </div>
                   <select
@@ -791,12 +902,17 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                   >
                     <option value="">Select a reason…</option>
                     {REFUND_REASONS.map((r) => (
-                      <option key={r} value={r}>{r}</option>
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
                     ))}
                   </select>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button
-                      onClick={() => { setPanelCancelOpen(false); setPanelCancelReason('') }}
+                      onClick={() => {
+                        setPanelCancelOpen(false)
+                        setPanelCancelReason('')
+                      }}
                       style={{
                         padding: '5px 14px',
                         background: 'none',

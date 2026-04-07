@@ -54,8 +54,6 @@ const TotalRow = ({ label, value }: { label: string; value: string }) => (
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
-  const isSubscription = data.type === 'subscription'
-
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -94,9 +92,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
           {/* Order ID Column - fixed width or auto */}
           <View style={styles.infoCol}>
             <Text style={styles.label}>Order Id</Text>
-            <Text style={styles.infoText}>
-              #{data.metadata.orderNumber || data.metadata.subscriptionNumber}
-            </Text>
+            <Text style={styles.infoText}>#{data.metadata.orderNumber}</Text>
             <Text style={{ ...styles.label, marginTop: 10 }}>Invoice no.</Text>
             <Text style={styles.infoTextBold}>{data.metadata.invoiceNumber}</Text>
           </View>
@@ -122,9 +118,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
             </Text>
             <Text style={styles.addrText}>{data.billTo.address_1}</Text>
             {data.billTo.address_2 && <Text style={styles.addrText}>{data.billTo.address_2}</Text>}
-            <Text style={styles.addrText}>
-              {data.billTo.country}
-            </Text>
+            <Text style={styles.addrText}>{data.billTo.country}</Text>
             <Text style={styles.addrText}>Email: {data.billTo.email || 'N/A'}</Text>
             <Text style={styles.addrText}>Phone: {data.billTo.phone || 'N/A'}</Text>
 
@@ -176,9 +170,6 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
           {/* Header Row - Keeping your original flex values exactly */}
           <View style={{ ...styles.tableRow, ...styles.tableHead }}>
             <Text style={{ ...styles.th, flex: 2 }}>Description</Text>
-            {isSubscription && (
-              <Text style={{ ...styles.th, flex: 3, textAlign: 'center' }}>Frequency</Text>
-            )}
             <Text style={{ ...styles.th, flex: 0.8, textAlign: 'center' }}>Qty</Text>
             <Text style={{ ...styles.th, flex: 2, textAlign: 'right' }}>Unit Price</Text>
             <Text style={{ ...styles.th, flex: 2, textAlign: 'right' }}>Amount</Text>
@@ -192,11 +183,6 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
                 <Text>{item.name}</Text>
                 {item.weight ? <Text>({item.weight})</Text> : null}
               </View>
-              {isSubscription && (
-                <Text style={{ ...styles.td, flex: 3, textAlign: 'center' }}>
-                  {item.frequency || '—'}
-                </Text>
-              )}
 
               <Text style={{ ...styles.td, flex: 0.8, textAlign: 'center' }}>{item.quantity}</Text>
 
@@ -241,7 +227,10 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
           <View style={styles.footerTop}>
             <Text style={styles.thankYou}>Thank you for your purchase</Text>
             <Text style={styles.paidVia}>
-              Paid via <Text style={{ color: C.dark, fontWeight: 'bold' }}>Stripe</Text>
+              Paid via{' '}
+              <Text style={{ color: C.dark, fontWeight: 'bold' }}>
+                {data.metadata.paymentMethod || 'Stripe'}
+              </Text>
             </Text>
           </View>
           <View style={styles.footerBottom}>

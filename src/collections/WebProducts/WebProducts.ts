@@ -114,56 +114,7 @@ export const WebProducts: CollectionConfig = {
                   required: true,
                   filterOptions: { mimeType: { contains: 'image' } },
                 },
-                {
-                  name: 'hasVariantSub',
-                  label: 'Has Subscription',
-                  type: 'checkbox',
-                  defaultValue: false,
-                },
-                {
-                  name: 'subscriptionDiscount',
-                  label: 'Subscription Discount',
-                  type: 'number',
-                  required: true,
-                  admin: { condition: (_, siblingData) => Boolean(siblingData?.hasVariantSub) },
-                },
-                {
-                  name: 'subFreq',
-                  label: 'Repeat Every',
-                  type: 'array',
-                  admin: {
-                    // Uses siblingData to check checkbox in the same array row
-                    condition: (_, siblingData) => Boolean(siblingData?.hasVariantSub),
-                  },
-                  fields: [
-                    {
-                      type: 'row',
-                      fields: [
-                        {
-                          name: 'duration',
-                          label: 'Every',
-                          type: 'number',
-                          min: 0,
-                          required: true,
-                          admin: { width: '50%' },
-                        },
-                        {
-                          name: 'interval',
-                          label: 'Interval',
-                          type: 'select',
-                          defaultValue: 'month',
-                          options: [
-                            { label: 'Year', value: 'year' },
-                            { label: 'Month', value: 'month' },
-                            { label: 'Week', value: 'week' },
-                            { label: 'Day', value: 'day' },
-                          ],
-                          admin: { width: '50%' },
-                        },
-                      ],
-                    },
-                  ],
-                },
+
                 {
                   type: 'row',
                   fields: [
@@ -289,62 +240,6 @@ export const WebProducts: CollectionConfig = {
                     width: '50%',
                     condition: (data) => Boolean(data?.inStock),
                   },
-                },
-              ],
-            },
-            {
-              name: 'hasSimpleSub',
-              label: 'Has Subscription',
-              type: 'checkbox',
-              defaultValue: false,
-              admin: {
-                condition: (data) => !data?.hasVariantOptions,
-              },
-            },
-            {
-              name: 'subscriptionDiscount',
-              label: 'Subscription Discount',
-              type: 'number',
-              min: 0,
-              max: 100,
-              required: true,
-              admin: {
-                condition: (data) => Boolean(data?.hasSimpleSub) && !data?.hasVariantOptions,
-              },
-            },
-            {
-              name: 'subFreq',
-              label: 'Repeat Every',
-              type: 'array',
-              admin: {
-                condition: (data) => Boolean(data?.hasSimpleSub) && !data?.hasVariantOptions,
-                description: 'Add subscription frequency',
-              },
-              fields: [
-                {
-                  type: 'row',
-                  fields: [
-                    {
-                      name: 'duration',
-                      label: 'Every',
-                      type: 'number',
-                      required: true,
-                      admin: { width: '50%' },
-                    },
-                    {
-                      name: 'interval',
-                      label: 'Interval',
-                      type: 'select',
-                      defaultValue: 'month',
-                      options: [
-                        { label: 'Year', value: 'year' },
-                        { label: 'Month', value: 'month' },
-                        { label: 'Week', value: 'week' },
-                        { label: 'Day', value: 'day' },
-                      ],
-                      admin: { width: '50%' },
-                    },
-                  ],
                 },
               ],
             },

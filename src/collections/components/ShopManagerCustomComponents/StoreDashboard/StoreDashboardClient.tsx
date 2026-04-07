@@ -166,7 +166,6 @@ export const StoreDashboardClient: React.FC<Props> = ({
     if (filter === 'all') return true
     if (filter === 'delivery') return o.type === 'delivery'
     if (filter === 'pickup') return o.type === 'pickup'
-    if (filter === 'subscription') return o.reward === true
     return true
   }
 

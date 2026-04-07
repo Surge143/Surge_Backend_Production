@@ -22,14 +22,12 @@ import { UserWTCoins } from './UserWTCoins/UserWTCoins'
 import { WebOrders } from './WebOrders/WebOrders'
 import { Slots } from './Slots/Slots'
 import { ShipAndTax } from './ShipAndTax/ShipAndTax'
-import { WebSubscription } from './WebSubscription/WebSubscription'
 import { WTStamps } from './WTStamps/WTStamps'
 import { UserPreferences } from './UserPreferences/UserPreferences'
 import { AppContactForm } from './AppContactForm/AppContactForm'
 import { WebContactForm } from './WebContactForm/WebContactForm'
 import { Notifications } from './Notifications/Notifications'
 import { AppBestSeller } from './AppBestSeller/AppBestSeller'
-import { Workshop } from './Workshops/Workshop'
 import { Blogs } from './Blogs/Blogs'
 import { Wholesale } from './Wholesale/Wholesale'
 import { AppBanners } from './AppBanner/AppBanner'
@@ -58,14 +56,12 @@ export const collections = [
   UserWTCoins,
   WebOrders,
   Slots,
-  WebSubscription,
   WTStamps,
   UserPreferences,
   AppContactForm,
   WebContactForm,
   Notifications,
   AppBestSeller,
-  Workshop,
   Blogs,
   Wholesale,
   AppBanners,

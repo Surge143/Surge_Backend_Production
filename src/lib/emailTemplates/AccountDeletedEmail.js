@@ -44,7 +44,7 @@ export const AccountDeletedEmail = (userData) => {
 
               <p style="font-size: 16px; color: #6E736A;">Hi ${userData.firstName || ''} ${userData.lastName || ''},</p>
               <p style="font-size: 16px; color: #6E736A; margin: 0; line-height: 1.5;">
-                Your White Mantis account has been permanently deleted. Your subscriptions have been cancelled. 
+                Your White Mantis account has been permanently deleted. 
                 Any order that was already shipped will still be delivered to you. 
                 All your personal data and account history have been permanently removed from our system.
               </p>

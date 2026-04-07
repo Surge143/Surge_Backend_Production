@@ -1,10 +1,10 @@
 import type { CollectionConfig } from 'payload'
 
 export const WTStamps: CollectionConfig = {
-  slug: 'wt-stamps',
+  slug: 'surge-stamps',
   labels: {
-    singular: 'Stamp',
-    plural: 'Stamps',
+    singular: 'Surge Stamp',
+    plural: 'Surge Stamps',
   },
   admin: {
     group: 'Loyalty & Rewards',
@@ -60,7 +60,7 @@ export const WTStamps: CollectionConfig = {
         {
           name: 'linkedOrder',
           type: 'relationship',
-          relationTo: ['web-orders', 'app-orders', 'web-subscription'],
+          relationTo: ['web-orders', 'app-orders'],
           admin: {
             condition: (data, siblingData) => siblingData.type === 'online',
           },
@@ -92,7 +92,7 @@ export const WTStamps: CollectionConfig = {
         {
           name: 'associatedOrder',
           type: 'relationship',
-          relationTo: ['web-orders', 'app-orders', 'web-subscription'],
+          relationTo: ['web-orders', 'app-orders'],
           validate: (value, { siblingData }) => {
             if (siblingData?.type === 'online' && !value) {
               return 'This field is required for online transactions'

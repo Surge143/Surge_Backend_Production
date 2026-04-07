@@ -1,13 +1,13 @@
 import type { GlobalConfig } from 'payload'
 
 export const WTCoins: GlobalConfig = {
-  slug: 'wt-coins',
+  slug: 'surge-coins',
   label: {
-    singular: 'WT Beans Configuration',
-    plural: 'WT Beans Configuration',
+    singular: 'Surge Coins Configuration',
+    plural: 'Surge Coins Configuration',
   },
   admin: {
-    description: 'Track beans earned and redeemed',
+    description: 'Track coins earned and redeemed',
     group: 'Loyalty & Rewards',
     hidden: ({ user }) => {
       const isAuthorized = user?.role === 'super-admin' || user?.role === 'admin' 

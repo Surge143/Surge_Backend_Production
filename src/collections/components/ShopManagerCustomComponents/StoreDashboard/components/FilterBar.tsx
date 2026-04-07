@@ -12,7 +12,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filter, onFilter }) => {
     all: { c: C.text, bg: C.bg, border: C.borderMid },
     delivery: { c: C.shipped, bg: C.shipBg, border: C.shipped },
     pickup: { c: C.new, bg: C.newBg, border: C.new },
-    subscription: { c: '#7c3aed', bg: '#f5f3ff', border: '#7c3aed' },
   }
 
   return (

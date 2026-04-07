@@ -84,7 +84,7 @@ export const DineInInvoice: React.FC<InvoiceDocumentProps> = ({ data }) => {
 
           <View style={styles.infoCol}>
             <Text style={styles.label}>Order Id</Text>
-            <Text style={styles.infoText}>#{data.metadata.subscriptionNumber}</Text>
+            <Text style={styles.infoText}>#{data.metadata.orderNumber}</Text>
             <Text style={{ ...styles.label, marginTop: 10 }}>Invoice no.</Text>
             <Text style={styles.infoTextBold}>{data.metadata.invoiceNumber}</Text>
           </View>
@@ -153,9 +153,12 @@ export const DineInInvoice: React.FC<InvoiceDocumentProps> = ({ data }) => {
         {/* ── FOOTER ── */}
         <View style={styles.footer}>
           <View style={styles.footerTop}>
-            <Text style={styles.thankYou}>Thank you for your subscription</Text>
+            <Text style={styles.thankYou}>Thank you for your purchase</Text>
             <Text style={styles.paidVia}>
-              Paid via <Text style={{ color: C.dark, fontWeight: 'bold' }}>Stripe</Text>
+              Paid via{' '}
+              <Text style={{ color: C.dark, fontWeight: 'bold' }}>
+                {data.metadata.paymentMethod || 'Stripe'}
+              </Text>
             </Text>
           </View>
           <View style={styles.footerBottom}>

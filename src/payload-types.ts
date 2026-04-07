@@ -90,14 +90,12 @@ export interface Config {
     'user-wt-coins': UserWtCoin;
     'web-orders': WebOrder;
     slots: Slot;
-    'web-subscription': WebSubscription;
-    'wt-stamps': WtStamp;
+    'surge-stamps': SurgeStamp;
     'user-preferences': UserPreference;
     'app-contact-form': AppContactForm;
     'web-contact-form': WebContactForm;
     notifications: Notification;
     'app-best-seller': AppBestSeller;
-    workshop: Workshop;
     blogs: Blog;
     wholesale: Wholesale;
     'app-banners': AppBanner;
@@ -139,14 +137,12 @@ export interface Config {
     'user-wt-coins': UserWtCoinsSelect<false> | UserWtCoinsSelect<true>;
     'web-orders': WebOrdersSelect<false> | WebOrdersSelect<true>;
     slots: SlotsSelect<false> | SlotsSelect<true>;
-    'web-subscription': WebSubscriptionSelect<false> | WebSubscriptionSelect<true>;
-    'wt-stamps': WtStampsSelect<false> | WtStampsSelect<true>;
+    'surge-stamps': SurgeStampsSelect<false> | SurgeStampsSelect<true>;
     'user-preferences': UserPreferencesSelect<false> | UserPreferencesSelect<true>;
     'app-contact-form': AppContactFormSelect<false> | AppContactFormSelect<true>;
     'web-contact-form': WebContactFormSelect<false> | WebContactFormSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     'app-best-seller': AppBestSellerSelect<false> | AppBestSellerSelect<true>;
-    workshop: WorkshopSelect<false> | WorkshopSelect<true>;
     blogs: BlogsSelect<false> | BlogsSelect<true>;
     wholesale: WholesaleSelect<false> | WholesaleSelect<true>;
     'app-banners': AppBannersSelect<false> | AppBannersSelect<true>;
@@ -165,11 +161,11 @@ export interface Config {
   };
   fallbackLocale: null;
   globals: {
-    'wt-coins': WtCoin;
+    'surge-coins': SurgeCoin;
     'ship-and-tax': ShipAndTax;
   };
   globalsSelect: {
-    'wt-coins': WtCoinsSelect<false> | WtCoinsSelect<true>;
+    'surge-coins': SurgeCoinsSelect<false> | SurgeCoinsSelect<true>;
     'ship-and-tax': ShipAndTaxSelect<false> | ShipAndTaxSelect<true>;
   };
   locale: null;
@@ -573,11 +569,6 @@ export interface Menu {
    * Enable this if this item can be redeemed for free once a customer has collected enough stamps.
    */
   isStampFreeProduct?: boolean | null;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -655,11 +646,6 @@ export interface ShopMenu {
    * Enable if this item can be redeemed for free once a customer has collected enough stamps. (Admin only — synced from Menu)
    */
   isStampFreeProduct?: boolean | null;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -764,15 +750,6 @@ export interface WebProduct {
          */
         variantName: string;
         variantImage: number | Media;
-        hasVariantSub?: boolean | null;
-        subscriptionDiscount?: number | null;
-        subFreq?:
-          | {
-              duration: number;
-              interval?: ('year' | 'month' | 'week' | 'day') | null;
-              id?: string | null;
-            }[]
-          | null;
         variantRegularPrice: number;
         variantSalePrice?: number | null;
         variantInStock?: boolean | null;
@@ -784,18 +761,6 @@ export interface WebProduct {
   salePrice?: number | null;
   inStock?: boolean | null;
   stockQuantity?: number | null;
-  hasSimpleSub?: boolean | null;
-  subscriptionDiscount?: number | null;
-  /**
-   * Add subscription frequency
-   */
-  subFreq?:
-    | {
-        duration: number;
-        interval?: ('year' | 'month' | 'week' | 'day') | null;
-        id?: string | null;
-      }[]
-    | null;
   /**
    * Upload product image that will be visible on Product Listing
    */
@@ -1240,10 +1205,6 @@ export interface UserWtCoin {
           | ({
               relationTo: 'app-orders';
               value: number | AppOrder;
-            } | null)
-          | ({
-              relationTo: 'web-subscription';
-              value: number | WebSubscription;
             } | null);
         offlineReferenceId?: string | null;
         expiryDate?: string | null;
@@ -1265,10 +1226,6 @@ export interface UserWtCoin {
           | ({
               relationTo: 'app-orders';
               value: number | AppOrder;
-            } | null)
-          | ({
-              relationTo: 'web-subscription';
-              value: number | WebSubscription;
             } | null);
         offlineReferenceId?: string | null;
         redeemedAt?: string | null;
@@ -1296,7 +1253,7 @@ export interface WebOrder {
    */
   email?: string | null;
   deliveryOption: 'delivery' | 'pickup';
-  origin: 'subscription' | 'one-time';
+  origin: 'one-time';
   /**
    * The payment ID from Stripe
    */
@@ -1401,124 +1358,12 @@ export interface WebOrder {
   createdAt: string;
 }
 /**
- * Manage customers on a repeat plan
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "web-subscription".
- */
-export interface WebSubscription {
-  id: number;
-  customerType?: ('guest' | 'user') | null;
-  /**
-   * Select the registered user account for this order.
-   */
-  user?: (number | null) | User;
-  deliveryOption: 'delivery' | 'pickup';
-  /**
-   * The ID from Stripe
-   */
-  stripeSubscriptionID?: string | null;
-  nextPaymentDate?: string | null;
-  /**
-   * Stored at checkout for guest-to-user linking.
-   */
-  email?: string | null;
-  items: {
-    product: number | WebProduct;
-    /**
-     * The ID of the variation
-     */
-    variantID?: string | null;
-    /**
-     * The name of the variation
-     */
-    variantName?: string | null;
-    /**
-     * The ID of the subscription frequency
-     */
-    subFreqID: string;
-    /**
-     * The name of the subscription frequency
-     */
-    frequencyName?: string | null;
-    quantity: number;
-    price: number;
-    productName?: string | null;
-    id?: string | null;
-  }[];
-  shippingAddress?: {
-    addressFirstName?: string | null;
-    addressLastName?: string | null;
-    addressLine1?: string | null;
-    addressLine2?: string | null;
-    city?: string | null;
-    emirates?: ('abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah') | null;
-    phoneNumber?: string | null;
-  };
-  billingAddress?: {
-    addressFirstName?: string | null;
-    addressLastName?: string | null;
-    addressLine1?: string | null;
-    city?: string | null;
-    emirates?: ('abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah') | null;
-    phoneNumber?: string | null;
-  };
-  paymentStatus: 'pending' | 'completed' | 'failed';
-  subsStatus?: ('active' | 'inactive' | 'cancelled') | null;
-  cancelReason?: string | null;
-  pointsUsed?: number | null;
-  financials: {
-    /**
-     * Product base price multiplied by quantity, before any discounts
-     */
-    subtotal: number;
-    /**
-     * Discount from the subscription plan percentage
-     */
-    subscriptionDiscount?: number | null;
-    /**
-     * Discount applied via WT Coins redemption
-     */
-    wtCoinsDiscount?: number | null;
-    /**
-     * Shipping fee (0 for pickup orders)
-     */
-    shippingCharge?: number | null;
-    /**
-     * Tax percentage applied on (subtotal − discounts + shipping)
-     */
-    taxPercentage?: number | null;
-    /**
-     * Tax applied on (subtotal − discounts + shipping)
-     */
-    taxAmount?: number | null;
-    /**
-     * Final recurring amount charged (first payment may differ due to WT Coins)
-     */
-    total: number;
-  };
-  stripeData?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  guestAccessToken?: string | null;
-  invoiceId?: string | null;
-  invoiceDate?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * Manage stamp card progress
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "wt-stamps".
+ * via the `definition` "surge-stamps".
  */
-export interface WtStamp {
+export interface SurgeStamp {
   id: number;
   user?: (number | null) | User;
   stampCount: number;
@@ -1539,10 +1384,6 @@ export interface WtStamp {
           | ({
               relationTo: 'app-orders';
               value: number | AppOrder;
-            } | null)
-          | ({
-              relationTo: 'web-subscription';
-              value: number | WebSubscription;
             } | null);
         offlineReferenceId?: string | null;
         id?: string | null;
@@ -1563,10 +1404,6 @@ export interface WtStamp {
           | ({
               relationTo: 'app-orders';
               value: number | AppOrder;
-            } | null)
-          | ({
-              relationTo: 'web-subscription';
-              value: number | WebSubscription;
             } | null);
         offlineReferenceId?: string | null;
         redeemedAt?: string | null;
@@ -1696,28 +1533,6 @@ export interface AppBestSeller {
   id: number;
   shop: number | Shop;
   products: (number | ShopMenu)[];
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Manage events and classes
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "workshop".
- */
-export interface Workshop {
-  id: number;
-  title: string;
-  workshopImage: number | Media;
-  eventDate: string;
-  calendyLink: string;
-  eventTime: string;
-  workshopDescription: string;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -2109,12 +1924,8 @@ export interface PayloadLockedDocument {
         value: number | Slot;
       } | null)
     | ({
-        relationTo: 'web-subscription';
-        value: number | WebSubscription;
-      } | null)
-    | ({
-        relationTo: 'wt-stamps';
-        value: number | WtStamp;
+        relationTo: 'surge-stamps';
+        value: number | SurgeStamp;
       } | null)
     | ({
         relationTo: 'user-preferences';
@@ -2135,10 +1946,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'app-best-seller';
         value: number | AppBestSeller;
-      } | null)
-    | ({
-        relationTo: 'workshop';
-        value: number | Workshop;
       } | null)
     | ({
         relationTo: 'blogs';
@@ -2443,8 +2250,6 @@ export interface MenuSelect<T extends boolean = true> {
       };
   isStampEligible?: T;
   isStampFreeProduct?: T;
-  generateSlug?: T;
-  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2539,8 +2344,6 @@ export interface ShopMenuSelect<T extends boolean = true> {
       };
   isStampEligible?: T;
   isStampFreeProduct?: T;
-  generateSlug?: T;
-  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2754,15 +2557,6 @@ export interface WebProductsSelect<T extends boolean = true> {
     | {
         variantName?: T;
         variantImage?: T;
-        hasVariantSub?: T;
-        subscriptionDiscount?: T;
-        subFreq?:
-          | T
-          | {
-              duration?: T;
-              interval?: T;
-              id?: T;
-            };
         variantRegularPrice?: T;
         variantSalePrice?: T;
         variantInStock?: T;
@@ -2773,15 +2567,6 @@ export interface WebProductsSelect<T extends boolean = true> {
   salePrice?: T;
   inStock?: T;
   stockQuantity?: T;
-  hasSimpleSub?: T;
-  subscriptionDiscount?: T;
-  subFreq?:
-    | T
-    | {
-        duration?: T;
-        interval?: T;
-        id?: T;
-      };
   productImage?: T;
   description?: T;
   categories?: T;
@@ -2960,76 +2745,9 @@ export interface SlotsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "web-subscription_select".
+ * via the `definition` "surge-stamps_select".
  */
-export interface WebSubscriptionSelect<T extends boolean = true> {
-  customerType?: T;
-  user?: T;
-  deliveryOption?: T;
-  stripeSubscriptionID?: T;
-  nextPaymentDate?: T;
-  email?: T;
-  items?:
-    | T
-    | {
-        product?: T;
-        variantID?: T;
-        variantName?: T;
-        subFreqID?: T;
-        frequencyName?: T;
-        quantity?: T;
-        price?: T;
-        productName?: T;
-        id?: T;
-      };
-  shippingAddress?:
-    | T
-    | {
-        addressFirstName?: T;
-        addressLastName?: T;
-        addressLine1?: T;
-        addressLine2?: T;
-        city?: T;
-        emirates?: T;
-        phoneNumber?: T;
-      };
-  billingAddress?:
-    | T
-    | {
-        addressFirstName?: T;
-        addressLastName?: T;
-        addressLine1?: T;
-        city?: T;
-        emirates?: T;
-        phoneNumber?: T;
-      };
-  paymentStatus?: T;
-  subsStatus?: T;
-  cancelReason?: T;
-  pointsUsed?: T;
-  financials?:
-    | T
-    | {
-        subtotal?: T;
-        subscriptionDiscount?: T;
-        wtCoinsDiscount?: T;
-        shippingCharge?: T;
-        taxPercentage?: T;
-        taxAmount?: T;
-        total?: T;
-      };
-  stripeData?: T;
-  guestAccessToken?: T;
-  invoiceId?: T;
-  invoiceDate?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "wt-stamps_select".
- */
-export interface WtStampsSelect<T extends boolean = true> {
+export interface SurgeStampsSelect<T extends boolean = true> {
   user?: T;
   stampCount?: T;
   stampReward?: T;
@@ -3125,22 +2843,6 @@ export interface NotificationsSelect<T extends boolean = true> {
 export interface AppBestSellerSelect<T extends boolean = true> {
   shop?: T;
   products?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "workshop_select".
- */
-export interface WorkshopSelect<T extends boolean = true> {
-  title?: T;
-  workshopImage?: T;
-  eventDate?: T;
-  calendyLink?: T;
-  eventTime?: T;
-  workshopDescription?: T;
-  generateSlug?: T;
-  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3345,12 +3047,12 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * Track beans earned and redeemed
+ * Track coins earned and redeemed
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "wt-coins".
+ * via the `definition` "surge-coins".
  */
-export interface WtCoin {
+export interface SurgeCoin {
   id: number;
   /**
    * Points to earn per order in percentage
@@ -3410,9 +3112,9 @@ export interface ShipAndTax {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "wt-coins_select".
+ * via the `definition` "surge-coins_select".
  */
-export interface WtCoinsSelect<T extends boolean = true> {
+export interface SurgeCoinsSelect<T extends boolean = true> {
   pointsEarn?: T;
   pointsToAed?: T;
   rewardExpiry?: T;

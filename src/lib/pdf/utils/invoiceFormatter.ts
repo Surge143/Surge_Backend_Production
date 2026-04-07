@@ -116,62 +116,6 @@ export function formatOrderToInvoice(order: any, paymentDetails?: any): InvoiceD
 }
 
 /**
- * Convert WooCommerce subscription to InvoiceData
- */
-export function formatSubscriptionToInvoice(
-  subscription: any,
-  stripeSubscription?: any,
-  latestInvoice?: any,
-): InvoiceData {
-  const currencySymbol = getCurrencySymbol(subscription.currency || 'AED')
-
-  // Use latest invoice data if available from Stripe
-  const invoiceDate = latestInvoice?.created
-    ? new Date(latestInvoice.created * 1000).toISOString()
-    : subscription.date_created
-
-  return {
-    metadata: {
-      invoiceNumber: latestInvoice?.number || `INV-SUB-${subscription.id}`,
-      invoiceDate: formatDate(invoiceDate),
-      subscriptionNumber: subscription.id,
-      paymentMethod: subscription.payment_method_title || 'Stripe',
-      transactionId: latestInvoice?.payment_intent || stripeSubscription?.latest_invoice || '',
-    },
-    company: {
-      name: 'White Mantis',
-      logo: '/logo.png',
-      address: 'Your Company Address',
-      city: 'Dubai',
-      state: 'Dubai',
-      postcode: '00000',
-      country: 'UAE',
-      email: 'info@whitemantis.com',
-      phone: '+971-XXX-XXXX',
-      website: 'www.whitemantis.com',
-      taxId: 'TRN: XXXXXXXXX',
-    },
-    billTo: formatAddress(subscription.billing),
-    shipTo: subscription.shipping ? formatAddress(subscription.shipping) : undefined,
-    lineItems: formatLineItems(subscription.line_items || []),
-    subtotal:
-      parseFloat(subscription.total) -
-      parseFloat(subscription.total_tax) -
-      parseFloat(subscription.shipping_total || 0),
-    tax: parseFloat(subscription.total_tax) || 0,
-    taxLabel: subscription.tax_lines?.[0]?.label || 'VAT',
-    shipping: parseFloat(subscription.shipping_total) || 0,
-    shippingMethod: subscription.shipping_lines?.[0]?.method_title || '',
-    discount: parseFloat(subscription.discount_total) || 0,
-    discountLabel: subscription.coupon_lines?.[0]?.code || '',
-    total: parseFloat(subscription.total) || 0,
-    currency: subscription.currency || 'AED',
-    currencySymbol,
-    notes: subscription.customer_note || '',
-    terms: 'This is a recurring subscription. Thank you for your business!',
-  }
-}
-/**
  * Format Payload address to InvoiceAddress
  */
 export function formatPayloadAddress(address: any, email?: string): InvoiceAddress {
@@ -231,7 +175,6 @@ export function formatPayloadLineItems(items: any[]): InvoiceLineItem[] {
       tax: 0, // Tax is often handled at the order level in Payload
       sku: product.sku || '',
       weight: rawWeight,
-      frequency: item.frequencyName || '',
     }
   })
 }
@@ -288,61 +231,6 @@ export function formatPayloadOrderToInvoice(order: any, paymentDetails?: any): I
     notes: '',
     terms: 'White Mantis Coffee LLC — Dubai, UAE\nTerms & Condition',
     type: 'order',
-  }
-}
-
-/**
- * Convert Payload subscription to InvoiceData
- */
-export function formatPayloadSubscriptionToInvoice(subscription: any): InvoiceData {
-  const currencySymbol = 'AED'
-
-  return {
-    metadata: {
-      invoiceNumber: `INV-SUB-${subscription.id}`,
-      invoiceDate: formatDate(subscription.createdAt || new Date().toISOString()),
-      subscriptionNumber: subscription.id,
-      paymentMethod: 'Credit Card',
-      transactionId: subscription.stripeSubscriptionId || '',
-    },
-    company: {
-      name: 'White Mantis',
-      logo: '/logo.png',
-      address: 'Dubai Coffee Roastery',
-      city: 'Dubai',
-      state: 'Dubai',
-      postcode: '00000',
-      country: 'UAE',
-      email: 'info@whitemantis.ae',
-      phone: '+971-XXX-XXXX',
-      website: 'www.whitemantis.ae',
-      taxId: 'TRN: XXXXXXXXX',
-    },
-    billTo: formatPayloadAddress(
-      subscription.billingAddress || subscription.shippingAddress,
-      subscription.email || subscription.user?.email,
-    ),
-    shipTo: subscription.shippingAddress
-      ? formatPayloadAddress(
-          subscription.shippingAddress,
-          subscription.email || subscription.user?.email,
-        )
-      : undefined,
-    lineItems: formatPayloadLineItems(subscription.items || []),
-    subtotal: parseFloat(subscription.financials?.subtotal || 0),
-    tax: parseFloat(subscription.financials?.taxAmount || 0),
-    taxLabel: 'VAT (5%)',
-    shipping: parseFloat(subscription.financials?.shippingCharge || 0),
-    shippingMethod: subscription.deliveryOption || '',
-    discount:
-      parseFloat(subscription.financials?.couponDiscount || 0) +
-      parseFloat(subscription.financials?.wtCoinsDiscount || 0),
-    discountLabel: 'Discounts',
-    total: parseFloat(subscription.financials?.total || 0),
-    currency: 'AED',
-    currencySymbol,
-    notes: '',
-    terms: 'This is a recurring subscription receipt from White Mantis.',
   }
 }
 

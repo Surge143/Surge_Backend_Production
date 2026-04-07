@@ -107,7 +107,7 @@ export const UserWTCoins: CollectionConfig = {
         {
           name: 'linkedOrder',
           type: 'relationship',
-          relationTo: ['web-orders', 'app-orders', 'web-subscription'],
+          relationTo: ['web-orders', 'app-orders'],
           admin: {
             condition: (data, siblingData) => siblingData.type === 'online',
           },
@@ -140,7 +140,7 @@ export const UserWTCoins: CollectionConfig = {
         {
           name: 'associatedOrder',
           type: 'relationship',
-          relationTo: ['web-orders', 'app-orders', 'web-subscription'],
+          relationTo: ['web-orders', 'app-orders'],
           validate: (value, { siblingData }) => {
             if (siblingData?.type === 'online' && !value) {
               return 'This field is required for online transactions'

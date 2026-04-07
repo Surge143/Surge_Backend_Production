@@ -113,7 +113,7 @@ export function welcomeEmailTemplate(name) {
 
     <p class="message">
       We’re glad to have you here. Your Whitemantis account is now active.
-      Enjoy faster checkout and easy access to your orders and subscriptions.
+      Enjoy faster checkout and easy access to your orders.
     </p>
 
     <a href="https://whitemantis.ae" class="cta-button">
@@ -125,5 +125,5 @@ export function welcomeEmailTemplate(name) {
   </div>
 </body>
 </html>
-  `.trim();
+  `.trim()
 }

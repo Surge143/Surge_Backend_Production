@@ -384,10 +384,7 @@ export const WebOrders: CollectionConfig = {
                       name: 'origin',
                       type: 'select',
                       required: true,
-                      options: [
-                        { label: 'Subscription', value: 'subscription' },
-                        { label: 'One Time', value: 'one-time' },
-                      ],
+                      options: [{ label: 'One Time', value: 'one-time' }],
                       admin: { width: '33%', readOnly: true },
                     },
                     {

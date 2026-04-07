@@ -369,8 +369,5 @@ export const ShopMenu: CollectionConfig = {
         },
       ],
     },
-    slugField({
-      useAsSlug: 'name',
-    }),
   ],
 }

@@ -11,8 +11,7 @@ export const Menu: CollectionConfig = {
     group: 'Cafe Management',
     description: 'Add or edit food & drink items',
     hidden: ({ user }) => {
-      const isAuthorized =
-        user?.role === 'super-admin' || user?.role === 'admin'
+      const isAuthorized = user?.role === 'super-admin' || user?.role === 'admin'
       return !isAuthorized
     },
   },
@@ -379,8 +378,5 @@ export const Menu: CollectionConfig = {
         },
       ],
     },
-    slugField({
-      useAsSlug: 'name',
-    }),
   ],
 }

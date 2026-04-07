@@ -3,7 +3,7 @@ import { welcomeEmailTemplate } from '@/lib/emailTemplates/WelcomeEmail'
 
 /**
  * Fires after a new user account is created.
- * Finds all guest orders (web-orders, app-orders, web-subscription) that share
+ * Finds all guest orders (web-orders, app-orders) that share
  * the new user's email and back-fills the user relationship on each one.
  */
 export const afterUserCreated: CollectionAfterChangeHook = async ({
@@ -37,7 +37,6 @@ export const afterUserCreated: CollectionAfterChangeHook = async ({
   const collections: Array<{ slug: string; hasCustomerType: boolean }> = [
     { slug: 'web-orders', hasCustomerType: true },
     { slug: 'app-orders', hasCustomerType: false },
-    { slug: 'web-subscription', hasCustomerType: true },
   ]
 
   for (const { slug, hasCustomerType } of collections) {

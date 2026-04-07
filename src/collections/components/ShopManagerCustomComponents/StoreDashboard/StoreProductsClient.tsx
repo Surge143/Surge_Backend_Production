@@ -23,9 +23,6 @@ interface Variant {
   variantInStock?: boolean | null
   variantStockQuantity?: number | null
   variantImage?: MediaImg | null
-  hasVariantSub?: boolean | null
-  subscriptionDiscount?: number | null
-  subFreq?: SubFreq[] | null
 }
 
 interface Product {
@@ -44,9 +41,6 @@ interface Product {
   _status?: string | null
   updatedAt?: string
   createdAt?: string
-  hasSimpleSub?: boolean | null
-  subscriptionDiscount?: number | null
-  subFreq?: SubFreq[] | null
 }
 
 interface Props {
@@ -67,72 +61,6 @@ type SortDir = 'asc' | 'desc'
 
 function noVal(label: string) {
   return <span style={{ color: '#4a4a4a', fontStyle: 'italic' }}>{`<No ${label}>`}</span>
-}
-
-function SubBadge({ discount, freqs }: { discount?: number | null; freqs?: SubFreq[] | null }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      {/* Top row: icon + label + discount pill */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 4,
-            padding: '2px 8px',
-            borderRadius: 4,
-            fontSize: 10,
-            fontWeight: 700,
-            background: 'var(--theme-elevation-100)',
-            border: '1px solid rgba(99,102,241,0.5)',
-            color: '#6366f1',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          ↻ Sub
-        </span>
-        {discount != null && (
-          <span
-            style={{
-              padding: '2px 6px',
-              borderRadius: 4,
-              fontSize: 10,
-              fontWeight: 700,
-              background: 'var(--theme-elevation-100)',
-              border: '1px solid rgba(22,163,74,0.5)',
-              color: '#16a34a',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {discount}% off
-          </span>
-        )}
-      </div>
-      {/* Frequency pills */}
-      {freqs && freqs.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-          {freqs.map((f, i) => (
-            <span
-              key={i}
-              style={{
-                padding: '1px 6px',
-                borderRadius: 3,
-                fontSize: 10,
-                fontWeight: 600,
-                background: 'var(--theme-elevation-50)',
-                border: '1px solid var(--theme-elevation-200)',
-                color: '#818cf8',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {f.duration} {f.interval}
-              {f.duration > 1 ? 's' : ''}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  )
 }
 
 function fmtDate(iso?: string) {
@@ -183,8 +111,8 @@ const STYLES = `
 `
 
 // Grid columns: checkbox | image | name | price | in-stock | stock-qty | subscription | categories | updated | actions
-const GRID = '36px 56px 1fr 130px 110px 180px 150px 130px 100px 70px'
-const GRID_VAR = '36px 56px 1fr 130px 110px 180px 150px 130px 100px 70px'
+const GRID = '36px 56px 1fr 130px 110px 180px 130px 100px 70px'
+const GRID_VAR = '36px 56px 1fr 130px 110px 180px 130px 100px 70px'
 
 // ── Sub-components ───────────────────────────────────────────────────────────
 
@@ -479,7 +407,6 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
     { key: 'regularPrice', label: 'Regular Price' },
     { key: 'inStock', label: 'In Stock' },
     { key: 'stockQuantity', label: 'Stock Quantity' },
-    { key: null, label: 'Subscription' },
     { key: 'categories', label: 'Categories' },
     { key: 'updatedAt', label: 'Updated At' },
   ]
@@ -1003,19 +930,9 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                   )}
                 </div>
 
-                {/* Subscription */}
+                {/* Subscription placeholder - removed */}
                 <div style={{ padding: '10px 8px' }}>
-                  {hasVariants ? (
-                    variants.some((v) => v.hasVariantSub) ? (
-                      <span style={{ fontSize: 10, color: '#818cf8' }}>↻ See variants</span>
-                    ) : (
-                      <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>
-                    )
-                  ) : product.hasSimpleSub ? (
-                    <SubBadge discount={product.subscriptionDiscount} freqs={product.subFreq} />
-                  ) : (
-                    <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>
-                  )}
+                  <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>
                 </div>
 
                 {/* Categories */}
@@ -1276,18 +1193,9 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                         )}
                       </div>
 
-                      {/* Subscription */}
+                      {/* Subscription placeholder - removed */}
                       <div style={{ padding: '7px 8px' }}>
-                        {variant.hasVariantSub ? (
-                          <SubBadge
-                            discount={variant.subscriptionDiscount}
-                            freqs={variant.subFreq}
-                          />
-                        ) : (
-                          <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>
-                            —
-                          </span>
-                        )}
+                        <span style={{ color: 'var(--theme-elevation-250)', fontSize: 11 }}>—</span>
                       </div>
 
                       {/* Categories, Updated, Actions — empty for variants */}
