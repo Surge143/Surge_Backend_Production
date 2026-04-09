@@ -37,7 +37,7 @@ export default function ContactPage() {
           </h1>
           <p style={{ fontSize: '20px', opacity: 0.6, marginBottom: '48px', lineHeight: '1.6' }}>
             Whether you have a question about our roasts, want to partner with us, or just want to
-            chat about coffee, we're all ears.
+            chat about coffee, we&apos;re all ears.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
@@ -60,7 +60,7 @@ export default function ContactPage() {
             >
               <div style={{ fontSize: '48px', marginBottom: '20px' }}>✉️</div>
               <h2 style={{ fontSize: '24px', fontWeight: '800' }}>Message Received</h2>
-              <p style={{ opacity: 0.6, marginTop: '12px' }}>We'll get back to you shortly.</p>
+              <p style={{ opacity: 0.6, marginTop: '12px' }}>We&apos;ll get back to you shortly.</p>
               <button
                 onClick={() => setSuccess(false)}
                 className="btn-outline"

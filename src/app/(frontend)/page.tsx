@@ -10,7 +10,7 @@ export default function LandingPage() {
             Elevate Your Brew
           </h1>
           <p style={{ fontSize: '20px', opacity: 0.6, maxWidth: '600px', margin: '0 auto' }}>
-            Dubai's premier specialty coffee destination. Experience craftsmanship in every bean and
+            Dubai&apos;s premier specialty coffee destination. Experience craftsmanship in every bean and
             every cup.
           </p>
         </header>

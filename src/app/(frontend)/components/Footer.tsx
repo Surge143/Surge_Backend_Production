@@ -12,7 +12,7 @@ export const Footer = () => {
             <h2 style={styles.footerTitle}>WHITE MANTIS</h2>
           </div>
           <p style={styles.description}>
-            Elevating the coffee experience through craftsmanship and community. Dubai's premier
+            Elevating the coffee experience through craftsmanship and community. Dubai&apos;s premier
             specialty roastery and cafe.
           </p>
         </div>

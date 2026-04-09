@@ -26,7 +26,7 @@ export default function StoreApp() {
             Artisan Roasts
           </h1>
           <p style={{ fontSize: '18px', opacity: 0.6, maxWidth: '600px', margin: '0 auto 40px' }}>
-            Explore our curated collection of specialty beans, sourced directly from the world's
+            Explore our curated collection of specialty beans, sourced directly from the world&apos;s
             most renowned farms.
           </p>
           <div className="flex-center" style={{ gap: '16px' }}>
