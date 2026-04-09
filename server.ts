@@ -58,19 +58,24 @@ app.prepare().then(() => {
   httpServer.listen(port, () => {
     console.log(`> Ready on http://${hostname}:${port}`)
 
-    // ── Slot preparation cron — runs every minute ──────────────────
-    // Finds accepted+queued orders whose slot time is ≤ 30 min away
-    // and automatically moves them to "preparing".
-    const cronSecret = process.env.CRON_SECRET || 'slot-cron-internal'
-    new Cron('* * * * *', async () => {
-      try {
-        await fetch(`http://localhost:${port}/api/cron/slot-preparation`, {
-          headers: { 'x-cron-secret': cronSecret },
-        })
-      } catch (err) {
-        console.error('[SlotCron] fetch error:', err)
-      }
-    })
-    console.log('[SlotCron] Slot preparation cron started (every minute)')
+    // ── Slot preparation cron — opt-in via ENABLE_CRON=true ───────
+    // Disabled by default so it does not run in serverless / Vercel
+    // deployments. Set ENABLE_CRON=true on a self-hosted server to
+    // activate the every-minute slot-preparation job.
+    if (process.env.ENABLE_CRON === 'true') {
+      const cronSecret = process.env.CRON_SECRET || 'slot-cron-internal'
+      new Cron('* * * * *', async () => {
+        try {
+          await fetch(`http://localhost:${port}/api/cron/slot-preparation`, {
+            headers: { 'x-cron-secret': cronSecret },
+          })
+        } catch (err) {
+          console.error('[SlotCron] fetch error:', err)
+        }
+      })
+      console.log('[SlotCron] Slot preparation cron started (every minute)')
+    } else {
+      console.log('[SlotCron] Cron disabled (set ENABLE_CRON=true to enable)')
+    }
   })
 })
