@@ -19,6 +19,7 @@
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
+    "@jhb.software/payload-cloudinary-plugin": "^0.3.3",
     "@payloadcms/db-mongodb": "3.76.1",
     "@payloadcms/db-postgres": "3.76.1",
     "@payloadcms/next": "3.76.1",
@@ -29,6 +30,7 @@
     "@react-pdf/renderer": "^4.3.2",
     "@stripe/react-stripe-js": "^5.6.0",
     "@stripe/stripe-js": "^8.7.0",
+    "cloudinary": "^2.9.0",
     "croner": "^10.0.1",
     "cross-env": "^7.0.3",
     "csv-stringify": "^6.6.0",

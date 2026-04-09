@@ -9,7 +9,7 @@ import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { importExportPlugin } from 'payload-import-export'
 import { collections, globals } from './collections'
 import { getServerSideURL } from '@/utilities/getURL'
-import { s3Storage } from '@payloadcms/storage-s3'
+import { payloadCloudinaryPlugin } from '@jhb.software/payload-cloudinary-plugin'
 import sharp from 'sharp'
 
 const filename = fileURLToPath(import.meta.url)
@@ -73,25 +73,17 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
-    s3Storage({
-      collections: {
-        media: {
-          prefix: 'uploads',
-          generateFileURL: ({ filename, prefix }) => {
-            return `https://storage-admin-api.whitemantis.ae/whitemantis/${prefix}/${filename}`
-          },
-        },
+    // Cloudinary storage plugin — handles uploads for the media collection.
+    // Files are sent directly to Cloudinary; nothing is written to local disk.
+    // Credentials are read from .env: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+    payloadCloudinaryPlugin({
+      collections: { media: true }, // apply only to the Media collection
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME as string,
+      credentials: {
+        apiKey: process.env.CLOUDINARY_API_KEY as string,
+        apiSecret: process.env.CLOUDINARY_API_SECRET as string,
       },
-      bucket: process.env.S3_BUCKET as string,
-      config: {
-        credentials: {
-          accessKeyId: process.env.S3_ACCESS_KEY as string,
-          secretAccessKey: process.env.S3_SECRET_KEY as string,
-        },
-        endpoint: process.env.S3_ENDPOINT!,
-        region: 'us-east-1',
-        forcePathStyle: true,
-      },
+      folder: 'surge-uploads', // all uploads go into this Cloudinary folder
     }),
     importExportPlugin({
       collections: ['web-products', 'app-orders'],

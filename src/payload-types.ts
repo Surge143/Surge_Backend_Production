@@ -300,8 +300,8 @@ export interface User {
  */
 export interface Media {
   id: number;
+  cloudinaryPublicId?: string | null;
   alt: string;
-  prefix?: string | null;
   folder?: (number | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
@@ -742,6 +742,10 @@ export interface WebProduct {
   id: number;
   name: string;
   tagline: string;
+  /**
+   * Choose the product type. Coffee fields appear for Beans/Drip Bags/Capsules; Merchandise fields appear for Mugs/Apparel/Equipment.
+   */
+  productType: 'coffee' | 'merchandise';
   hasVariantOptions?: boolean | null;
   variants?:
     | {
@@ -779,23 +783,27 @@ export interface WebProduct {
     | number
     | boolean
     | null;
-  farm: string;
-  tastingNotes: string;
-  variety: string;
-  process: string;
-  altitude: string;
-  finish: string;
-  body: string;
-  aroma: string;
-  roast: string;
-  farmDescription: string;
-  videoBanner: number | Media;
-  recommendedProducts?: (number | WebProduct)[] | null;
+  farm?: string | null;
+  tastingNotes?: string | null;
+  variety?: string | null;
+  process?: string | null;
+  altitude?: string | null;
+  finish?: string | null;
+  body?: string | null;
+  aroma?: string | null;
+  roast?: string | null;
+  farmDescription?: string | null;
+  videoBanner?: (number | null) | Media;
   brewGuide?: {
     filter?: boolean | null;
     espresso?: boolean | null;
     milk?: boolean | null;
   };
+  material?: string | null;
+  dimensions?: string | null;
+  weight?: string | null;
+  careInstructions?: string | null;
+  recommendedProducts?: (number | WebProduct)[] | null;
   meta?: {
     title?: string | null;
     /**
@@ -2123,8 +2131,8 @@ export interface AppCategoriesSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  cloudinaryPublicId?: T;
   alt?: T;
-  prefix?: T;
   folder?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2551,6 +2559,7 @@ export interface WebSubCategoriesSelect<T extends boolean = true> {
 export interface WebProductsSelect<T extends boolean = true> {
   name?: T;
   tagline?: T;
+  productType?: T;
   hasVariantOptions?: T;
   variants?:
     | T
@@ -2582,7 +2591,6 @@ export interface WebProductsSelect<T extends boolean = true> {
   roast?: T;
   farmDescription?: T;
   videoBanner?: T;
-  recommendedProducts?: T;
   brewGuide?:
     | T
     | {
@@ -2590,6 +2598,11 @@ export interface WebProductsSelect<T extends boolean = true> {
         espresso?: T;
         milk?: T;
       };
+  material?: T;
+  dimensions?: T;
+  weight?: T;
+  careInstructions?: T;
+  recommendedProducts?: T;
   meta?:
     | T
     | {

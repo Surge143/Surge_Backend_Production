@@ -7,6 +7,34 @@ import {
 } from '@payloadcms/plugin-seo/fields'
 import { type CollectionConfig } from 'payload'
 
+// ─── Helper: isCoffee / isMerchandise ────────────────────────────────────────
+// These are reused in `admin.condition` and `validate` throughout the file.
+// `data` is the full document object that Payload passes to condition callbacks.
+const isCoffee = (data: Record<string, unknown>) => data?.productType === 'coffee'
+const isMerchandise = (data: Record<string, unknown>) => data?.productType === 'merchandise'
+
+// ─── Shared validator: only enforce "required" when the product is Coffee ─────
+// If the product type is NOT coffee, return true (skip validation).
+// If it IS coffee and the value is empty, show the error message.
+const requiredForCoffee =
+  (label: string) =>
+  (val: unknown, { data }: { data: Record<string, unknown> }) => {
+    if (!isCoffee(data)) return true // not a coffee product – skip
+    if (!val || (typeof val === 'string' && val.trim() === ''))
+      return `${label} is required for coffee products.`
+    return true
+  }
+
+// ─── Shared validator: only enforce "required" when the product is Merchandise ─
+const requiredForMerchandise =
+  (label: string) =>
+  (val: unknown, { data }: { data: Record<string, unknown> }) => {
+    if (!isMerchandise(data)) return true // not a merchandise product – skip
+    if (!val || (typeof val === 'string' && val.trim() === ''))
+      return `${label} is required for merchandise products.`
+    return true
+  }
+
 export const WebProducts: CollectionConfig = {
   slug: 'web-products',
   labels: {
@@ -24,6 +52,7 @@ export const WebProducts: CollectionConfig = {
     defaultColumns: [
       'productImage',
       'name',
+      'productType',
       'categories',
       'regularPrice',
       'salePrice',
@@ -73,9 +102,32 @@ export const WebProducts: CollectionConfig = {
         placeholder: 'Enter Tagline',
       },
     },
+
+    // ─── Product Type Selector ──────────────────────────────────────────────
+    // This single field drives all the conditional visibility below.
+    // "coffee"       → shows Coffee Characteristics, hides Merchandise Details
+    // "merchandise"  → shows Merchandise Details, hides Coffee Characteristics
+    {
+      name: 'productType',
+      label: 'Product Type',
+      type: 'select',
+      required: true,
+      defaultValue: 'coffee',
+      admin: {
+        description:
+          'Choose the product type. Coffee fields appear for Beans/Drip Bags/Capsules; Merchandise fields appear for Mugs/Apparel/Equipment.',
+        position: 'sidebar',
+      },
+      options: [
+        { label: '☕ Coffee (Beans, Drip Bags, Capsules)', value: 'coffee' },
+        { label: '🛍️ Merchandise (Mugs, Apparel, Equipment)', value: 'merchandise' },
+      ],
+    },
+
     {
       type: 'tabs',
       tabs: [
+        // ─── Tab 1: Pricing and Stock ──────────────────────────────────────
         {
           label: 'Pricing and Stock',
           fields: [
@@ -91,6 +143,7 @@ export const WebProducts: CollectionConfig = {
               type: 'array',
               required: true,
               admin: {
+                // Only show the variants array when the checkbox above is ticked
                 condition: (data) => Boolean(data?.hasVariantOptions),
                 components: {
                   Cell: '@/collections/WebProducts/components/cells/VariantsCell#VariantsCell',
@@ -245,6 +298,8 @@ export const WebProducts: CollectionConfig = {
             },
           ],
         },
+
+        // ─── Tab 2: Product Details ────────────────────────────────────────
         {
           label: 'Product Details',
           fields: [
@@ -287,98 +342,204 @@ export const WebProducts: CollectionConfig = {
                 position: 'sidebar',
               },
             },
+
+            // ─── Coffee Characteristics ──────────────────────────────────
+            // These fields are only shown (and only validated) when productType === 'coffee'.
+            // A coffee product describes where it came from, how it tastes, and how to brew it.
             {
-              type: 'row',
+              type: 'collapsible',
+              label: '☕ Coffee Characteristics',
+              // Hide the entire section when the product is Merchandise
+              admin: { condition: (data) => isCoffee(data) },
               fields: [
                 {
-                  name: 'farm',
-                  label: 'Farm',
-                  type: 'text',
-                  required: true,
-                  admin: { width: '33.33%' },
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'farm',
+                      label: 'Farm',
+                      type: 'text',
+                      // No hardcoded `required: true` — validation is driven by productType
+                      admin: { width: '33.33%' },
+                      validate: requiredForCoffee('Farm'),
+                    },
+                    {
+                      name: 'tastingNotes',
+                      label: 'Tasting Notes',
+                      type: 'text',
+                      admin: { width: '33.33%' },
+                      validate: requiredForCoffee('Tasting Notes'),
+                    },
+                    {
+                      name: 'variety',
+                      label: 'Variety',
+                      type: 'text',
+                      admin: { width: '33.33%' },
+                      validate: requiredForCoffee('Variety'),
+                    },
+                  ],
                 },
                 {
-                  name: 'tastingNotes',
-                  label: 'Tasting Notes',
-                  type: 'text',
-                  required: true,
-                  admin: { width: '33.33%' },
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'process',
+                      label: 'Process',
+                      type: 'text',
+                      admin: { width: '33.33%' },
+                      validate: requiredForCoffee('Process'),
+                    },
+                    {
+                      name: 'altitude',
+                      label: 'Altitude',
+                      type: 'text',
+                      admin: { width: '33.33%' },
+                      validate: requiredForCoffee('Altitude'),
+                    },
+                    {
+                      name: 'finish',
+                      label: 'Finish',
+                      type: 'text',
+                      admin: { width: '33.33%' },
+                      validate: requiredForCoffee('Finish'),
+                    },
+                  ],
                 },
                 {
-                  name: 'variety',
-                  label: 'Variety',
-                  type: 'text',
-                  required: true,
-                  admin: { width: '33.33%' },
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'body',
+                      label: 'Body',
+                      type: 'text',
+                      admin: { width: '33.33%' },
+                      validate: requiredForCoffee('Body'),
+                    },
+                    {
+                      name: 'aroma',
+                      label: 'Aroma',
+                      type: 'text',
+                      admin: { width: '33.33%' },
+                      validate: requiredForCoffee('Aroma'),
+                    },
+                    {
+                      name: 'roast',
+                      label: 'Roast',
+                      type: 'text',
+                      admin: { width: '33.33%' },
+                      validate: requiredForCoffee('Roast'),
+                    },
+                  ],
+                },
+                {
+                  name: 'farmDescription',
+                  label: 'Farm Description',
+                  type: 'textarea',
+                  validate: requiredForCoffee('Farm Description'),
+                },
+                {
+                  name: 'videoBanner',
+                  label: 'Video Banner',
+                  type: 'upload',
+                  relationTo: 'media',
+                  filterOptions: { mimeType: { contains: 'video' } },
+                  // Video banner is required only for coffee products
+                  validate: (val, { data }) => {
+                    if (!isCoffee(data)) return true
+                    if (!val) return 'Video Banner is required for coffee products.'
+                    return true
+                  },
+                },
+                {
+                  name: 'brewGuide',
+                  label: 'Brew Guide',
+                  type: 'group',
+                  fields: [
+                    {
+                      type: 'row',
+                      fields: [
+                        {
+                          name: 'filter',
+                          label: 'Filter',
+                          type: 'checkbox',
+                          admin: { width: '33.33%' },
+                        },
+                        {
+                          name: 'espresso',
+                          label: 'Espresso',
+                          type: 'checkbox',
+                          admin: { width: '33.33%' },
+                        },
+                        { name: 'milk', label: 'Milk', type: 'checkbox', admin: { width: '33.33%' } },
+                      ],
+                    },
+                  ],
                 },
               ],
             },
+
+            // ─── Merchandise Details ─────────────────────────────────────
+            // Shown only when productType === 'merchandise'.
+            // These fields replace the coffee-specific characteristics section.
             {
-              type: 'row',
+              type: 'collapsible',
+              label: '🛍️ Merchandise Details',
+              // Hide the entire section when the product is Coffee
+              admin: { condition: (data) => isMerchandise(data) },
               fields: [
                 {
-                  name: 'process',
-                  label: 'Process',
-                  type: 'text',
-                  required: true,
-                  admin: { width: '33.33%' },
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'material',
+                      label: 'Material',
+                      type: 'text',
+                      admin: {
+                        width: '50%',
+                        placeholder: 'e.g. Ceramic, Cotton, Stainless Steel',
+                      },
+                      validate: requiredForMerchandise('Material'),
+                    },
+                    {
+                      name: 'dimensions',
+                      label: 'Dimensions',
+                      type: 'text',
+                      admin: {
+                        width: '50%',
+                        placeholder: 'e.g. 10cm × 8cm × 12cm',
+                      },
+                      validate: requiredForMerchandise('Dimensions'),
+                    },
+                  ],
                 },
                 {
-                  name: 'altitude',
-                  label: 'Altitude',
-                  type: 'text',
-                  required: true,
-                  admin: { width: '33.33%' },
-                },
-                {
-                  name: 'finish',
-                  label: 'Finish',
-                  type: 'text',
-                  required: true,
-                  admin: { width: '50%' },
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'weight',
+                      label: 'Weight',
+                      type: 'text',
+                      admin: {
+                        width: '50%',
+                        placeholder: 'e.g. 350g',
+                      },
+                      validate: requiredForMerchandise('Weight'),
+                    },
+                    {
+                      name: 'careInstructions',
+                      label: 'Care Instructions',
+                      type: 'text',
+                      admin: {
+                        width: '50%',
+                        placeholder: 'e.g. Hand wash only, do not bleach',
+                      },
+                      validate: requiredForMerchandise('Care Instructions'),
+                    },
+                  ],
                 },
               ],
             },
-            {
-              type: 'row',
-              fields: [
-                {
-                  name: 'body',
-                  label: 'Body',
-                  type: 'text',
-                  required: true,
-                  admin: { width: '33.33%' },
-                },
-                {
-                  name: 'aroma',
-                  label: 'Aroma',
-                  type: 'text',
-                  required: true,
-                  admin: { width: '33.33%' },
-                },
-                {
-                  name: 'roast',
-                  label: 'Roast',
-                  type: 'text',
-                  required: true,
-                  admin: { width: '33.33%' },
-                },
-              ],
-            },
-            {
-              name: 'farmDescription',
-              label: 'Farm Description',
-              type: 'textarea',
-              required: true,
-            },
-            {
-              name: 'videoBanner',
-              label: 'Video Banner',
-              type: 'upload',
-              relationTo: 'media',
-              required: true,
-              filterOptions: { mimeType: { contains: 'video' } },
-            },
+
             {
               name: 'recommendedProducts',
               label: 'Recommended Products',
@@ -392,33 +553,10 @@ export const WebProducts: CollectionConfig = {
                 },
               },
             },
-            {
-              name: 'brewGuide',
-              label: 'Brew Guide',
-              type: 'group',
-              fields: [
-                {
-                  type: 'row',
-                  fields: [
-                    {
-                      name: 'filter',
-                      label: 'Filter',
-                      type: 'checkbox',
-                      admin: { width: '33.33%' },
-                    },
-                    {
-                      name: 'espresso',
-                      label: 'Espresso',
-                      type: 'checkbox',
-                      admin: { width: '33.33%' },
-                    },
-                    { name: 'milk', label: 'Milk', type: 'checkbox', admin: { width: '33.33%' } },
-                  ],
-                },
-              ],
-            },
           ],
         },
+
+        // ─── Tab 3: SEO ────────────────────────────────────────────────────
         {
           name: 'meta',
           label: 'SEO',
