@@ -229,7 +229,7 @@ export const POST = async (req: NextRequest) => {
                     financials: {
                         subtotal,
                         couponDiscount,
-                        wtCoinsDiscount: wtDiscount,
+                        surgeCoinsDiscount: wtDiscount,
                         shippingCharge,
                         taxPercentage: taxRate,
                         taxAmount,

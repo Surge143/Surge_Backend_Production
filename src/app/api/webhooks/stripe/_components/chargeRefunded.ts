@@ -125,7 +125,7 @@ export async function handleChargeRefunded(charge: any) {
     if (userId && pointsUsed > 0) {
         try {
             const userRewards = await payload.find({
-                collection: 'user-wt-coins',
+                collection: 'user-surge-coins',
                 where: { user: { equals: userId } },
             })
 
@@ -145,7 +145,7 @@ export async function handleChargeRefunded(charge: any) {
                 })
 
                 await (payload.update as any)({
-                    collection: 'user-wt-coins',
+                    collection: 'user-surge-coins',
                     id: userWTCoins.id,
                     data: {
                         totalBalance: restoredBalance,

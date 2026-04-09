@@ -221,9 +221,9 @@ export function formatPayloadOrderToInvoice(order: any, paymentDetails?: any): I
     shippingMethod: order.deliveryOption || '',
     discount:
       parseFloat(order.financials?.couponDiscount || 0) +
-      parseFloat(order.financials?.wtCoinsDiscount || 0),
+      parseFloat(order.financials?.surgeCoinsDiscount || 0),
     couponDiscount: parseFloat(order.financials?.couponDiscount || 0),
-    beansDiscount: parseFloat(order.financials?.wtCoinsDiscount || 0),
+    beansDiscount: parseFloat(order.financials?.surgeCoinsDiscount || 0),
     discountLabel: 'Discounts',
     total: parseFloat(order.financials?.total || 0),
     currency: 'AED',
@@ -284,9 +284,9 @@ export function formatAppOrderToInvoice(order: any): InvoiceData {
     shipping: 0,
     discount:
       parseFloat(order.financials?.couponDiscount || 0) +
-      parseFloat(order.financials?.wtCoinsDiscount || 0),
+      parseFloat(order.financials?.surgeCoinsDiscount || 0),
     couponDiscount: parseFloat(order.financials?.couponDiscount || 0),
-    beansDiscount: parseFloat(order.financials?.wtCoinsDiscount || 0),
+    beansDiscount: parseFloat(order.financials?.surgeCoinsDiscount || 0),
     discountLabel: 'Discounts',
     total: parseFloat(order.financials?.total || 0),
     currency: 'AED',

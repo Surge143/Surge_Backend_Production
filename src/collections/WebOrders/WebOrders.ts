@@ -185,10 +185,10 @@ export const WebOrders: CollectionConfig = {
                     ? data.financials.total
                     : originalDoc.financials?.total || 0
 
-                const wtCoinsDiscount = pointsUsed
+                const surgeCoinsDiscount = pointsUsed
                   ? await convertPointsToAED(payload, pointsUsed)
                   : 0
-                const realMoneySpent = Math.max(0, totalAmount - wtCoinsDiscount)
+                const realMoneySpent = Math.max(0, totalAmount - surgeCoinsDiscount)
 
                 if (realMoneySpent > 0) {
                   await awardWTCoins(payload, userId, realMoneySpent, originalDoc.id)
@@ -253,10 +253,10 @@ export const WebOrders: CollectionConfig = {
                 try {
                   const totalAmount = doc.financials?.total || 0
                   const pointsUsed = doc.pointsUsed || 0
-                  const wtCoinsDiscount = pointsUsed
+                  const surgeCoinsDiscount = pointsUsed
                     ? await convertPointsToAED(payload, pointsUsed)
                     : 0
-                  const realMoneySpent = Math.max(0, totalAmount - wtCoinsDiscount)
+                  const realMoneySpent = Math.max(0, totalAmount - surgeCoinsDiscount)
 
                   if (realMoneySpent > 0) {
                     await awardWTCoins(payload, userId, realMoneySpent, doc.id)
@@ -810,7 +810,7 @@ export const WebOrders: CollectionConfig = {
                     {
                       name: 'couponCode',
                       type: 'relationship',
-                      relationTo: 'coupon',
+                      relationTo: 'surge-coupon',
                       admin: {
                         width: '50%',
                         readOnly: true,
@@ -874,13 +874,13 @@ export const WebOrders: CollectionConfig = {
                       },
                     },
                     {
-                      name: 'wtCoinsDiscount',
-                      label: 'WT Coins Discount',
+                      name: 'surgeCoinsDiscount',
+                      label: 'Surge Coins Discount',
                       type: 'number',
                       admin: {
                         width: '33%',
                         readOnly: true,
-                        description: 'Discount applied via WT Coins redemption',
+                        description: 'Discount applied via Surge Coins redemption',
                       },
                     },
                     {

@@ -77,8 +77,8 @@ export interface Config {
     menu: Menu;
     shop: Shop;
     'shop-menu': ShopMenu;
-    coupon: Coupon;
-    'shop-coupon': ShopCoupon;
+    'surge-coupon': SurgeCoupon;
+    'surge-shop-coupon': SurgeShopCoupon;
     otp: Otp;
     'app-cart': AppCart;
     wishlist: Wishlist;
@@ -87,7 +87,7 @@ export interface Config {
     'web-sub-categories': WebSubCategory;
     'web-products': WebProduct;
     'web-cart': WebCart;
-    'user-wt-coins': UserWtCoin;
+    'user-surge-coins': UserSurgeCoin;
     'web-orders': WebOrder;
     slots: Slot;
     'surge-stamps': SurgeStamp;
@@ -124,8 +124,8 @@ export interface Config {
     menu: MenuSelect<false> | MenuSelect<true>;
     shop: ShopSelect<false> | ShopSelect<true>;
     'shop-menu': ShopMenuSelect<false> | ShopMenuSelect<true>;
-    coupon: CouponSelect<false> | CouponSelect<true>;
-    'shop-coupon': ShopCouponSelect<false> | ShopCouponSelect<true>;
+    'surge-coupon': SurgeCouponSelect<false> | SurgeCouponSelect<true>;
+    'surge-shop-coupon': SurgeShopCouponSelect<false> | SurgeShopCouponSelect<true>;
     otp: OtpSelect<false> | OtpSelect<true>;
     'app-cart': AppCartSelect<false> | AppCartSelect<true>;
     wishlist: WishlistSelect<false> | WishlistSelect<true>;
@@ -134,7 +134,7 @@ export interface Config {
     'web-sub-categories': WebSubCategoriesSelect<false> | WebSubCategoriesSelect<true>;
     'web-products': WebProductsSelect<false> | WebProductsSelect<true>;
     'web-cart': WebCartSelect<false> | WebCartSelect<true>;
-    'user-wt-coins': UserWtCoinsSelect<false> | UserWtCoinsSelect<true>;
+    'user-surge-coins': UserSurgeCoinsSelect<false> | UserSurgeCoinsSelect<true>;
     'web-orders': WebOrdersSelect<false> | WebOrdersSelect<true>;
     slots: SlotsSelect<false> | SlotsSelect<true>;
     'surge-stamps': SurgeStampsSelect<false> | SurgeStampsSelect<true>;
@@ -415,6 +415,14 @@ export interface Shop {
      * Country is fixed to UAE for this cafe group.
      */
     country?: string | null;
+    /**
+     * Decimal degrees, e.g. 25.2048
+     */
+    latitude?: number | null;
+    /**
+     * Decimal degrees, e.g. 55.2708
+     */
+    longitude?: number | null;
   };
   /**
    * Immediately opens/closes shop for customers.
@@ -653,9 +661,9 @@ export interface ShopMenu {
  * Create and manage store discount codes
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "coupon".
+ * via the `definition` "surge-coupon".
  */
-export interface Coupon {
+export interface SurgeCoupon {
   id: number;
   /**
    * Unique code customers enter at checkout. Use uppercase letters and numbers only.
@@ -838,9 +846,9 @@ export interface WebCategory {
  * Create and manage discount codes
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "shop-coupon".
+ * via the `definition` "surge-shop-coupon".
  */
-export interface ShopCoupon {
+export interface SurgeShopCoupon {
   id: number;
   /**
    * Unique code customers enter at checkout. Use uppercase letters and numbers only.
@@ -891,7 +899,7 @@ export interface ShopCoupon {
    */
   usageLimitPerUser: number;
   shop?: (number | null) | Shop;
-  couponRelation: (number | Coupon)[];
+  couponRelation: (number | SurgeCoupon)[];
   createdBy?: (number | null) | Admin;
   couponFor?: {
     website?: boolean | null;
@@ -1040,7 +1048,7 @@ export interface AppOrder {
   timeSelection?: ('now' | 'custom') | null;
   slot?: (number | null) | Slot;
   isCouponUsed?: boolean | null;
-  coupon?: (number | null) | ShopCoupon;
+  coupon?: (number | null) | SurgeShopCoupon;
   coinsUsed?: number | null;
   stampRewards?: (number | ShopMenu)[] | null;
   financials?: {
@@ -1053,9 +1061,9 @@ export interface AppOrder {
      */
     couponDiscount?: number | null;
     /**
-     * Discount applied via WT Coins redemption
+     * Discount applied via Surge Coins redemption
      */
-    wtCoinsDiscount?: number | null;
+    surgeCoinsDiscount?: number | null;
     /**
      * Tax applied on order total after discounts
      */
@@ -1181,9 +1189,9 @@ export interface WebCart {
  * View and adjust customer coin balances
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "user-wt-coins".
+ * via the `definition` "user-surge-coins".
  */
-export interface UserWtCoin {
+export interface UserSurgeCoin {
   id: number;
   /**
    * User who owns this balance
@@ -1313,7 +1321,7 @@ export interface WebOrder {
   refundReason?: string | null;
   refundedOn?: string | null;
   refundedAmount?: number | null;
-  couponCode?: (number | null) | Coupon;
+  couponCode?: (number | null) | SurgeCoupon;
   pointsUsed?: number | null;
   financials: {
     /**
@@ -1329,9 +1337,9 @@ export interface WebOrder {
      */
     couponDiscount?: number | null;
     /**
-     * Discount applied via WT Coins redemption
+     * Discount applied via Surge Coins redemption
      */
-    wtCoinsDiscount?: number | null;
+    surgeCoinsDiscount?: number | null;
     /**
      * Tax rate applied on taxable amount
      */
@@ -1880,12 +1888,12 @@ export interface PayloadLockedDocument {
         value: number | ShopMenu;
       } | null)
     | ({
-        relationTo: 'coupon';
-        value: number | Coupon;
+        relationTo: 'surge-coupon';
+        value: number | SurgeCoupon;
       } | null)
     | ({
-        relationTo: 'shop-coupon';
-        value: number | ShopCoupon;
+        relationTo: 'surge-shop-coupon';
+        value: number | SurgeShopCoupon;
       } | null)
     | ({
         relationTo: 'otp';
@@ -1920,8 +1928,8 @@ export interface PayloadLockedDocument {
         value: number | WebCart;
       } | null)
     | ({
-        relationTo: 'user-wt-coins';
-        value: number | UserWtCoin;
+        relationTo: 'user-surge-coins';
+        value: number | UserSurgeCoin;
       } | null)
     | ({
         relationTo: 'web-orders';
@@ -2291,6 +2299,8 @@ export interface ShopSelect<T extends boolean = true> {
         city?: T;
         emirates?: T;
         country?: T;
+        latitude?: T;
+        longitude?: T;
       };
   isShopOpen?: T;
   shopManager?: T;
@@ -2357,9 +2367,9 @@ export interface ShopMenuSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "coupon_select".
+ * via the `definition` "surge-coupon_select".
  */
-export interface CouponSelect<T extends boolean = true> {
+export interface SurgeCouponSelect<T extends boolean = true> {
   code?: T;
   couponTagline?: T;
   couponStatus?: T;
@@ -2386,9 +2396,9 @@ export interface CouponSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "shop-coupon_select".
+ * via the `definition` "surge-shop-coupon_select".
  */
-export interface ShopCouponSelect<T extends boolean = true> {
+export interface SurgeShopCouponSelect<T extends boolean = true> {
   code?: T;
   couponStatus?: T;
   discountType?: T;
@@ -2501,7 +2511,7 @@ export interface AppOrdersSelect<T extends boolean = true> {
     | {
         subtotal?: T;
         couponDiscount?: T;
-        wtCoinsDiscount?: T;
+        surgeCoinsDiscount?: T;
         taxAmount?: T;
         total?: T;
       };
@@ -2634,9 +2644,9 @@ export interface WebCartSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "user-wt-coins_select".
+ * via the `definition` "user-surge-coins_select".
  */
-export interface UserWtCoinsSelect<T extends boolean = true> {
+export interface UserSurgeCoinsSelect<T extends boolean = true> {
   user?: T;
   totalBalance?: T;
   coinEarningHistory?:
@@ -2727,7 +2737,7 @@ export interface WebOrdersSelect<T extends boolean = true> {
         subtotal?: T;
         shippingCharge?: T;
         couponDiscount?: T;
-        wtCoinsDiscount?: T;
+        surgeCoinsDiscount?: T;
         taxPercentage?: T;
         taxAmount?: T;
         total?: T;

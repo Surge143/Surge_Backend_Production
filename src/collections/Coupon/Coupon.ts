@@ -4,7 +4,7 @@ import { getShopCouponsHandler as getWebCouponsHandler } from './endpoints/getWe
 import { validateFutureDate } from '@/utilities/validateFutureDate'
 
 export const Coupon: CollectionConfig = {
-  slug: 'coupon',
+  slug: 'surge-coupon',
   labels: {
     singular: 'Coupon',
     plural: 'Coupons',
@@ -92,7 +92,7 @@ export const Coupon: CollectionConfig = {
           if (!hasChanged) return doc
 
           const shopCoupons = await payload.find({
-            collection: 'shop-coupon',
+            collection: 'surge-shop-coupon',
             where: { couponRelation: { equals: doc.id } },
             depth: 0,
             limit: 1000, // Increase limit to ensure all linked coupons are updated
@@ -102,7 +102,7 @@ export const Coupon: CollectionConfig = {
             await Promise.all(
               shopCoupons.docs.map((shopCoupon) =>
                 payload.update({
-                  collection: 'shop-coupon',
+                  collection: 'surge-shop-coupon',
                   id: shopCoupon.id,
                   data: {
                     couponStatus: doc.couponStatus,

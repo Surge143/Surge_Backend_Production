@@ -198,6 +198,29 @@ export const Shop: CollectionConfig = {
             description: 'Country is fixed to UAE for this cafe group.',
           },
         },
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'latitude',
+              label: 'Latitude',
+              type: 'number',
+              admin: {
+                width: '50%',
+                description: 'Decimal degrees, e.g. 25.2048',
+              },
+            },
+            {
+              name: 'longitude',
+              label: 'Longitude',
+              type: 'number',
+              admin: {
+                width: '50%',
+                description: 'Decimal degrees, e.g. 55.2708',
+              },
+            },
+          ],
+        },
       ],
     },
     // --- Sidebar (Logic Kept Untouched) ---

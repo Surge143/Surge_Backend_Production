@@ -351,7 +351,7 @@ export const POST = async (req: NextRequest) => {
 
         if (stampRewards) {
             const userStamps = await payload.find({
-                collection: 'wt-stamps',
+                collection: 'surge-stamps',
                 where: { user: { equals: user.id } },
                 limit: 1,
                 depth: 0,
@@ -439,7 +439,7 @@ export const POST = async (req: NextRequest) => {
             financials: {
                 subtotal,
                 couponDiscount,
-                wtCoinsDiscount: wtDiscount,
+                surgeCoinsDiscount: wtDiscount,
                 taxAmount,
                 total: finalTotal,
             },

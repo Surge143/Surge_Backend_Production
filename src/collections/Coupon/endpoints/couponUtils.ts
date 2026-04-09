@@ -17,7 +17,7 @@ export const validateCoupon = async (
 
         // 1. Try to find in the base 'coupon' collection first (Web/Global)
         const coupons = await payload.find({
-            collection: 'coupon',
+            collection: 'surge-coupon',
             where: {
                 code: {
                     equals: couponCode,

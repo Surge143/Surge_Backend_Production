@@ -14,7 +14,7 @@ export const calculateWTCoinsDiscount = async (
 
     // 1. FETCH USER BALANCE
     const userRewards = await payload.find({
-        collection: 'user-wt-coins',
+        collection: 'user-surge-coins',
         where: { user: { equals: userId } },
         depth: 0,
         limit: 1,
@@ -25,7 +25,7 @@ export const calculateWTCoinsDiscount = async (
 
     // 2. FETCH GLOBAL CONFIGURATION
     const WTCoinsConfiguration: any = await payload.findGlobal({
-        slug: 'wt-coins',
+        slug: 'surge-coins',
         depth: 0,
         select: {
             minPointsPerOrder: true,

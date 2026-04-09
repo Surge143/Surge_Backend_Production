@@ -28,7 +28,7 @@ export async function GET(
     }
 
     const usertotalBeans = await payload.find({
-      collection: 'user-wt-coins',
+      collection: 'user-surge-coins',
       where: {
         user: {
           equals: decryptedToken,
@@ -40,7 +40,7 @@ export async function GET(
     })
 
     const userStamps = await payload.find({
-      collection: 'wt-stamps',
+      collection: 'surge-stamps',
       where: {
         user: {
           equals: decryptedToken,

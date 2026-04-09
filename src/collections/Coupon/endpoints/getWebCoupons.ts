@@ -5,7 +5,7 @@ export const getShopCouponsHandler: PayloadHandler = async (req) => {
 
   try {
     const coupons = await payload.find({
-      collection: 'coupon',
+      collection: 'surge-coupon',
       where: {
         and: [
           {

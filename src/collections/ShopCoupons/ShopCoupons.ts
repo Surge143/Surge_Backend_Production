@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 import { validateFutureDate } from '@/utilities/validateFutureDate'
 
 export const ShopCoupons: CollectionConfig = {
-  slug: 'shop-coupon',
+  slug: 'surge-shop-coupon',
   labels: {
     singular: 'Cafe Coupon',
     plural: 'Cafe Coupons',
@@ -46,7 +46,7 @@ export const ShopCoupons: CollectionConfig = {
         if (!id) return false
         try {
           const shopCoupon = await payload.findByID({
-            collection: 'shop-coupon',
+            collection: 'surge-shop-coupon',
             id: String(id),
             depth: 2,
           })
@@ -316,7 +316,7 @@ export const ShopCoupons: CollectionConfig = {
     {
       name: 'couponRelation',
       type: 'relationship',
-      relationTo: 'coupon',
+      relationTo: 'surge-coupon',
       hasMany: true,
       required: true,
       admin: {

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
     // Find existing stamp record for user
     const stampRecords = await payload.find({
-      collection: 'wt-stamps',
+      collection: 'surge-stamps',
       where: {
         user: {
           equals: decryptedToken,
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
     if (recordId) {
       await payload.update({
-        collection: 'wt-stamps',
+        collection: 'surge-stamps',
         id: recordId,
         data: {
           stampCount,
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       })
     } else {
       await payload.create({
-        collection: 'wt-stamps',
+        collection: 'surge-stamps',
         data: {
           user: decryptedToken,
           stampCount,

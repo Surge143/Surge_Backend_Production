@@ -2,10 +2,10 @@ import type { CollectionConfig, CollectionAfterChangeHook } from 'payload'
 import { validateFutureDate } from '@/utilities/validateFutureDate'
 
 export const UserWTCoins: CollectionConfig = {
-  slug: 'user-wt-coins',
+  slug: 'user-surge-coins',
   labels: {
-    singular: 'WT Beans Customer',
-    plural: 'WT Beans Customers',
+    singular: 'Surge Coins Customer',
+    plural: 'Surge Coins Customers',
   },
   admin: {
     description: 'View and adjust customer coin balances',

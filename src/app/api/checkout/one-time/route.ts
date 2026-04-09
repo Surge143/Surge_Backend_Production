@@ -241,7 +241,7 @@ export async function POST(req: NextRequest) {
                     financials: {
                         subtotal,
                         couponDiscount,
-                        wtCoinsDiscount: wtDiscount,
+                        surgeCoinsDiscount: wtDiscount,
                         shippingCharge,
                         taxPercentage: taxRate,
                         taxAmount,

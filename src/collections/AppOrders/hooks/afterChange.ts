@@ -89,11 +89,11 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({
         }
 
         const coinsUsed = (latestDoc as any).coinsUsed || 0
-        const wtCoinsDiscount = (latestDoc as any).financials?.wtCoinsDiscount || 0
+        const surgeCoinsDiscount = (latestDoc as any).financials?.surgeCoinsDiscount || 0
 
-        if (coinsUsed > 0 || wtCoinsDiscount > 0) {
+        if (coinsUsed > 0 || surgeCoinsDiscount > 0) {
           console.log(
-            `[afterChange] Order ${doc.id} used WTCoins (${coinsUsed}) or has discount (${wtCoinsDiscount}). Skipping stamp accrual.`,
+            `[afterChange] Order ${doc.id} used WTCoins (${coinsUsed}) or has discount (${surgeCoinsDiscount}). Skipping stamp accrual.`,
           )
 
           await payload.update({
@@ -145,7 +145,7 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({
           }
 
           const userStampsDocs = await payload.find({
-            collection: 'wt-stamps',
+            collection: 'surge-stamps',
             where: { user: { equals: stampUserId } },
             limit: 1,
             depth: 0,
@@ -156,7 +156,7 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({
 
           if (!userStampsDoc) {
             userStampsDoc = await payload.create({
-              collection: 'wt-stamps',
+              collection: 'surge-stamps',
               data: {
                 user: stampUserId,
                 stampCount: 0,
@@ -178,7 +178,7 @@ export const afterChangeHook: CollectionAfterChangeHook = async ({
           }
 
           await payload.update({
-            collection: 'wt-stamps',
+            collection: 'surge-stamps',
             id: userStampsDoc.id,
             data: {
               stampCount: newStampCount,

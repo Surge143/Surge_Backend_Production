@@ -13,7 +13,7 @@ export async function awardWTCoins(
   try {
     // Fetch WTCoins configuration
     const wtCoinsConfig = await payload.findGlobal({
-      slug: 'wt-coins',
+      slug: 'surge-coins',
       depth: 1,
       overrideAccess: true,
     })
@@ -38,7 +38,7 @@ export async function awardWTCoins(
     expiryDate.setMonth(expiryDate.getMonth() + expiryMonths)
 
     const userRewards = await payload.find({
-      collection: 'user-wt-coins',
+      collection: 'user-surge-coins',
       where: { user: { equals: userId } },
       depth: 0,
       overrideAccess: true,
@@ -49,7 +49,7 @@ export async function awardWTCoins(
     if (userRewards.docs.length === 0) {
       // Create new record
       userWTCoins = await payload.create({
-        collection: 'user-wt-coins',
+        collection: 'user-surge-coins',
         data: {
           user: userId as any,
           totalBalance: pointsToAward,
@@ -114,7 +114,7 @@ export async function awardWTCoins(
       }, 0)
 
       await payload.update({
-        collection: 'user-wt-coins',
+        collection: 'user-surge-coins',
         id: userWTCoins.id,
         data: {
           coinEarningHistory: newHistory,
@@ -150,7 +150,7 @@ export async function deductWTCoins(
 
     // Find user's WTCoins record
     const userRewards = await payload.find({
-      collection: 'user-wt-coins',
+      collection: 'user-surge-coins',
       where: { user: { equals: userId } },
       depth: 0,
       overrideAccess: true,
@@ -226,9 +226,9 @@ export async function deductWTCoins(
     }, 0)
     console.log(`   - New computed totalBalance: ${newTotalBalance}`)
 
-    console.log(`   - Executing payload.update for user-wt-coins record ${record.id}...`)
+    console.log(`   - Executing payload.update for user-surge-coins record ${record.id}...`)
     const updateResult = await payload.update({
-      collection: 'user-wt-coins',
+      collection: 'user-surge-coins',
       id: record.id,
       data: {
         coinEarningHistory: updatedHistory,
@@ -268,7 +268,7 @@ export async function deductWTCoins(
 export async function convertPointsToAED(payload: Payload, points: number): Promise<number> {
   try {
     const wtCoinsConfig = await payload.findGlobal({
-      slug: 'wt-coins',
+      slug: 'surge-coins',
       depth: 1,
       overrideAccess: true,
     })

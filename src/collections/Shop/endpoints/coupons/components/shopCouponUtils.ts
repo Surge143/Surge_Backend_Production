@@ -18,7 +18,7 @@ export const validateAppCoupon = async (
 
         if (shopId) {
             const shopCoupons = await payload.find({
-                collection: 'shop-coupon',
+                collection: 'surge-shop-coupon',
                 where: {
                     and: [
                         { shop: { equals: shopId } },

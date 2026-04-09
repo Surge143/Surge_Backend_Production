@@ -110,9 +110,9 @@ export async function awardReferralCoins(
 
     console.log(`[awardReferralCoins] Lock acquired for user ${userId}. Awarding coins...`)
 
-    // 3. Read reward amounts from wt-coins global
+    // 3. Read reward amounts from surge-coins global
     const wtCoinsConfig = await payload.findGlobal({
-      slug: 'wt-coins',
+      slug: 'surge-coins',
       depth: 0,
       overrideAccess: true,
     })
@@ -126,7 +126,7 @@ export async function awardReferralCoins(
 
     if (coinsForReferred === 0 && coinsForReferrer === 0) {
       console.log(
-        '[awardReferralCoins] Both referral reward amounts are 0 in wt-coins global. No coins to credit.',
+        '[awardReferralCoins] Both referral reward amounts are 0 in surge-coins global. No coins to credit.',
       )
       return
     }
@@ -180,7 +180,7 @@ export async function awardReferralCoins(
 }
 
 /**
- * Finds or creates a user-wt-coins document and adds coins to the balance.
+ * Finds or creates a user-surge-coins document and adds coins to the balance.
  */
 async function creditCoins(
   payload: Payload,
@@ -192,7 +192,7 @@ async function creditCoins(
 ): Promise<void> {
   // Find existing balance doc
   const existing = await payload.find({
-    collection: 'user-wt-coins',
+    collection: 'user-surge-coins',
     where: { user: { equals: userId } },
     limit: 1,
     depth: 0,
@@ -229,7 +229,7 @@ async function creditCoins(
     }, 0)
 
     await payload.update({
-      collection: 'user-wt-coins',
+      collection: 'user-surge-coins',
       id: doc.id,
       data: {
         coinEarningHistory: newHistory,
@@ -240,7 +240,7 @@ async function creditCoins(
     })
   } else {
     await payload.create({
-      collection: 'user-wt-coins',
+      collection: 'user-surge-coins',
       data: {
         user: userId,
         totalBalance: amount,

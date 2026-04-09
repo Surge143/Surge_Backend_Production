@@ -211,7 +211,7 @@ async function deductStampRewards(
 ) {
   try {
     const stampResult = await payload.find({
-      collection: 'wt-stamps',
+      collection: 'surge-stamps',
       where: { user: { equals: userId } },
       limit: 1,
       overrideAccess: true,
@@ -233,7 +233,7 @@ async function deductStampRewards(
     }))
 
     await payload.update({
-      collection: 'wt-stamps',
+      collection: 'surge-stamps',
       id: userStamps.id,
       data: {
         stampReward: newRewardBalance,

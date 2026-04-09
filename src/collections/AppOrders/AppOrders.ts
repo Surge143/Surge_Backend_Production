@@ -310,7 +310,7 @@ export const AppOrders: CollectionConfig = {
                 {
                   name: 'coupon',
                   type: 'relationship',
-                  relationTo: 'shop-coupon',
+                  relationTo: 'surge-shop-coupon',
                   admin: {
                     width: '70%',
                     readOnly: true,
@@ -324,6 +324,7 @@ export const AppOrders: CollectionConfig = {
               fields: [
                 {
                   name: 'coinsUsed',
+                  label: 'Surge Coins Used',
                   type: 'number',
                   admin: { width: '50%', readOnly: true },
                 },
@@ -373,13 +374,13 @@ export const AppOrders: CollectionConfig = {
                   type: 'row',
                   fields: [
                     {
-                      name: 'wtCoinsDiscount',
-                      label: 'WT Coins Discount',
+                      name: 'surgeCoinsDiscount',
+                      label: 'Surge Coins Discount',
                       type: 'number',
                       admin: {
                         width: '50%',
                         readOnly: true,
-                        description: 'Discount applied via WT Coins redemption',
+                        description: 'Discount applied via Surge Coins redemption',
                       },
                     },
                     {

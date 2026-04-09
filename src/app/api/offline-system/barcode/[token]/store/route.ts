@@ -35,11 +35,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     // 0. Fetch initial states and configuration
     const [WTCoinsConfiguration, userCoinRecords] = await Promise.all([
       payload.findGlobal({
-        slug: 'wt-coins',
+        slug: 'surge-coins',
         depth: 0,
       }) as any,
       payload.find({
-        collection: 'user-wt-coins',
+        collection: 'user-surge-coins',
         where: { user: { equals: userId } },
         limit: 1,
       }),
@@ -138,7 +138,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     }
 
     await payload.update({
-      collection: 'user-wt-coins',
+      collection: 'user-surge-coins',
       id: beanRecord.id,
       data: {
         coinEarningHistory: updatedBeanHistory,

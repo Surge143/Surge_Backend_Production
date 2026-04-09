@@ -40,12 +40,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     // 0. FETCH INITIAL STATES for Summary
     const [stampRecords, userCoinRecords] = await Promise.all([
       payload.find({
-        collection: 'wt-stamps',
+        collection: 'surge-stamps',
         where: { user: { equals: userId } },
         limit: 1,
       }),
       payload.find({
-        collection: 'user-wt-coins',
+        collection: 'user-surge-coins',
         where: { user: { equals: userId } },
         limit: 1,
       }),
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
     if (beansRedeemed) {
       const WTCoinsConfiguration: any = await payload.findGlobal({
-        slug: 'wt-coins',
+        slug: 'surge-coins',
         depth: 0,
       })
 
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     // 2. EXECUTION
     if (stampsRewardRedeemed && stampRecord) {
       await payload.update({
-        collection: 'wt-stamps',
+        collection: 'surge-stamps',
         id: stampRecord.id,
         data: {
           stampReward: (stampRecord.stampReward || 0) - 1,
@@ -170,7 +170,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
     if (beansRedeemed && beanRecord && pointsToRedeem > 0) {
       await payload.update({
-        collection: 'user-wt-coins',
+        collection: 'user-surge-coins',
         id: beanRecord.id,
         data: {
           coinEarningHistory: updatedBeanHistory,
