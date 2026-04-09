@@ -50,7 +50,6 @@ export const getAllItemsHandler: PayloadHandler = async (req) => {
                 dietaryType: item.dietaryType,
                 isStampEligible: item.isStampEligible,
                 isStampFreeProduct: item.isStampFreeProduct,
-                slug: item.slug,
             }
         })
 
