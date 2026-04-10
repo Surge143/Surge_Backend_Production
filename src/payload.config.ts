@@ -11,7 +11,6 @@ import { collections, globals } from './collections'
 import { getServerSideURL } from '@/utilities/getURL'
 import { payloadCloudinaryPlugin } from '@jhb.software/payload-cloudinary-plugin'
 import sharp from 'sharp'
-import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -71,7 +70,6 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
       options: '-c timezone=Asia/Dubai',
     },
-    migrations,
   }),
   sharp,
   plugins: [
