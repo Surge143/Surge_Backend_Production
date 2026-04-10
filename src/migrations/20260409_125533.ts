@@ -1,6 +1,21 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
+export async function up({ db, payload }: MigrateUpArgs): Promise<void> {
+  // Guard: if the schema was already created via Payload's dev-mode auto-push,
+  // skip re-running all the CREATE TYPE / CREATE TABLE statements — they would
+  // fail with "already exists". Payload will still mark this migration as run.
+  const existing = await db.execute(sql`
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'users'
+    LIMIT 1
+  `)
+  if ((existing as any).rows?.length > 0 || (existing as any).length > 0) {
+    payload.logger.info(
+      '[migration] Schema already exists (dev-mode push detected) — skipping initial CREATE statements.',
+    )
+    return
+  }
+
   await db.execute(sql`
    CREATE TYPE "public"."enum_users_addresses_emirates" AS ENUM('abu_dhabi', 'dubai', 'sharjah', 'ajman', 'umm_al_quwain', 'ras_al_khaimah', 'fujairah');
   CREATE TYPE "public"."enum_users_role" AS ENUM('customer');
@@ -1912,7 +1927,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "payload_migrations_created_at_idx" ON "payload_migrations" USING btree ("created_at");`)
 }
 
-export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
+export async function down({ db }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
    DROP TABLE "users_addresses" CASCADE;
   DROP TABLE "users_sessions" CASCADE;
