@@ -820,6 +820,10 @@ export interface WebProduct {
     image?: (number | null) | Media;
     description?: string | null;
   };
+  /**
+   * Automatically set to the admin who last saved this product.
+   */
+  updatedBy?: (number | null) | Admin;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -2620,6 +2624,7 @@ export interface WebProductsSelect<T extends boolean = true> {
         image?: T;
         description?: T;
       };
+  updatedBy?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -180,6 +180,17 @@ const StatusDot: React.FC<{ status?: string | null }> = ({ status }) => {
   )
 }
 
+// ── URL guard ────────────────────────────────────────────────────────────────
+// Payload's local file serving route (/api/media/file/...) always returns 404
+// when disableLocalStorage is true and Cloudinary doesn't have the publicId.
+// Detect these broken URLs upfront so we skip straight to the placeholder.
+function isServableUrl(url?: string | null): boolean {
+  if (!url) return false
+  // Local Payload file route — will 404 without local storage
+  if (url.includes('/api/media/file/')) return false
+  return true
+}
+
 // ── Main Component ───────────────────────────────────────────────────────────
 
 export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
@@ -193,6 +204,9 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [pendingDeleteId, setPendingDeleteId] = useState<string | number | null>(null)
   const [deletingIds, setDeletingIds] = useState<Set<string | number>>(new Set())
+  // Tracks products whose image failed to load at runtime (safety net for any
+  // unexpected 404s that slip past isServableUrl)
+  const [brokenImgs, setBrokenImgs] = useState<Set<string | number>>(new Set())
   const { openModal } = useModal()
 
   const DELETE_MODAL = 'products-dashboard-delete-confirm'
@@ -758,12 +772,16 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                   />
                 </div>
 
-                {/* Image — uses full url, never thumbnailURL */}
+                {/* Image — guard against local Payload URLs that 404 when Cloudinary
+                    doesn't have the publicId, and degrade gracefully at runtime */}
                 <div style={{ padding: '8px 8px 8px 0', display: 'flex', alignItems: 'center' }}>
-                  {product.productImage?.url ? (
+                  {isServableUrl(product.productImage?.url) && !brokenImgs.has(product.id) ? (
                     <img
-                      src={product.productImage.url}
-                      alt={product.name}
+                      src={product.productImage!.url!}
+                      alt=""
+                      onError={() =>
+                        setBrokenImgs((prev) => new Set(prev).add(product.id))
+                      }
                       style={{
                         width: 44,
                         height: 44,
@@ -781,8 +799,20 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                         background: 'var(--theme-elevation-100)',
                         borderRadius: 4,
                         border: '1px solid var(--theme-elevation-100)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
-                    />
+                    >
+                      {/* image icon placeholder */}
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="var(--theme-elevation-250)" strokeWidth="1.5"
+                        strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <polyline points="21 15 16 10 5 21" />
+                      </svg>
+                    </div>
                   )}
                 </div>
 
