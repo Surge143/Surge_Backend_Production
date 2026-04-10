@@ -16,7 +16,7 @@ export const Header = () => {
         <div style={styles.left}>
           <Link href="/" style={styles.logoContainer}>
             <Logo size={32} className="text-gradient" />
-            <span style={styles.logoText}>WHITE MANTIS</span>
+            <span style={styles.logoText}>SURGE</span>
           </Link>
 
           <nav className="desktop-only" style={styles.nav}>

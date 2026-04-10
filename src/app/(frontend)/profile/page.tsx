@@ -161,7 +161,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <h1 style={{ fontSize: '40px', fontWeight: '900' }}>
-              {user.firstName ? `${user.firstName} ${user.lastName || ''}` : 'Mantis Member'}
+              {user.firstName ? `${user.firstName} ${user.lastName || ''}` : 'Surge Member'}
             </h1>
             <p style={{ opacity: 0.6 }}>{user.email}</p>
           </div>

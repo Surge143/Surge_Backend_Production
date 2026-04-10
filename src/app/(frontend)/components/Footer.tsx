@@ -9,7 +9,7 @@ export const Footer = () => {
         <div style={styles.brandSide}>
           <div style={styles.logoLine}>
             <Logo size={40} className="text-gradient" />
-            <h2 style={styles.footerTitle}>WHITE MANTIS</h2>
+            <h2 style={styles.footerTitle}>SURGE</h2>
           </div>
           <p style={styles.description}>
             Elevating the coffee experience through craftsmanship and community. Dubai&apos;s premier
@@ -55,7 +55,7 @@ export const Footer = () => {
       </div>
 
       <div className="container" style={styles.bottom}>
-        <p>© 2026 White Mantis Coffee Roasters. All rights reserved.</p>
+        <p>© 2026 Surge Coffee Roasters. All rights reserved.</p>
         <div style={styles.socials}>{/* Social icons could go here */}</div>
       </div>
     </footer>

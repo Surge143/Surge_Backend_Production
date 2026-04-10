@@ -95,7 +95,7 @@ export default function ProductDetailPage() {
 
           <p style={{ lineHeight: '1.8', opacity: 0.7, marginBottom: '40px' }}>
             {product.description ||
-              'Our signature roast, crafted with precision and passion. Experience the deep, complex flavors that only White Mantis can provide.'}
+              'Our signature roast, crafted with precision and passion. Experience the deep, complex flavors that only Surge can provide.'}
           </p>
 
           {/* Variants */}

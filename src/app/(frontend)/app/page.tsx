@@ -83,7 +83,7 @@ export default function CafeApp() {
               </div>
               <div style={{ padding: '24px' }}>
                 <h3 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>
-                  {shop.address?.city || 'White Mantis Boutique'}
+                  {shop.address?.city || 'Surge Boutique'}
                 </h3>
                 <p style={{ fontSize: '14px', opacity: 0.6, marginBottom: '20px' }}>
                   {shop.address?.street}

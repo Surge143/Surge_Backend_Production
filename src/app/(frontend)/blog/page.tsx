@@ -28,7 +28,7 @@ export default function BlogPage() {
     <div className="container animate-up" style={{ padding: '60px 0' }}>
       <header style={{ textAlign: 'center', marginBottom: '80px' }}>
         <h1 style={{ fontSize: '56px', fontWeight: '900', marginBottom: '16px' }}>
-          The Mantis Journal
+          The Surge Journal
         </h1>
         <p style={{ opacity: 0.6, fontSize: '20px' }}>
           Stories of coffee, craftsmanship, and culture.
