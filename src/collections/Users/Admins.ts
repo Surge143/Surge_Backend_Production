@@ -97,7 +97,7 @@ export const Admins: CollectionConfig = {
   },
 
   admin: {
-    useAsTitle: 'name',
+    useAsTitle: 'email',
     group: 'Profiles',
     hidden: ({ user }) => {
       const isAuthorized =
@@ -176,7 +176,7 @@ export const Admins: CollectionConfig = {
 
   hooks: {
     beforeValidate: [
-      ({ data, req, operation }) => {
+      ({ data, req }) => {
         if (req.user && data?.role) {
           const userLevel = roleHierarchy[req.user?.role as string] || 999
           const targetLevel = roleHierarchy[data.role as string] || 999

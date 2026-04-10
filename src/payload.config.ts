@@ -11,6 +11,7 @@ import { collections, globals } from './collections'
 import { getServerSideURL } from '@/utilities/getURL'
 import { payloadCloudinaryPlugin } from '@jhb.software/payload-cloudinary-plugin'
 import sharp from 'sharp'
+import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -70,6 +71,7 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
       options: '-c timezone=Asia/Dubai',
     },
+    migrations,
   }),
   sharp,
   plugins: [
@@ -77,7 +79,14 @@ export default buildConfig({
     // Files are sent directly to Cloudinary; nothing is written to local disk.
     // Credentials are read from .env: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
     payloadCloudinaryPlugin({
-      collections: { media: true }, // apply only to the Media collection
+      collections: {
+        media: {
+          // Return direct Cloudinary URLs in API responses instead of
+          // Payload's /api/media/file/ proxy route. Required so the admin
+          // product list can render images (isServableUrl blocks proxy URLs).
+          disablePayloadAccessControl: true,
+        },
+      },
       cloudName: process.env.CLOUDINARY_CLOUD_NAME as string,
       credentials: {
         apiKey: process.env.CLOUDINARY_API_KEY as string,
