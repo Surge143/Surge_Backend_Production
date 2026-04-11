@@ -36,6 +36,25 @@ function generateAppleClientSecret(): string {
 }
 
 export const authOptions: NextAuthOptions = {
+  // Apple uses form_post: a cross-site POST from appleid.apple.com to our callback.
+  // Browsers drop SameSite=Lax cookies on cross-site POSTs, killing both the PKCE
+  // code_verifier and state cookies before NextAuth can read them.
+  // Fix: override those cookies to SameSite=None;Secure so they survive the POST.
+  cookies: {
+    pkceCodeVerifier: {
+      name: 'next-auth.pkce.code_verifier',
+      options: { httpOnly: true, sameSite: 'none', path: '/', secure: true },
+    },
+    state: {
+      name: 'next-auth.state',
+      options: { httpOnly: true, sameSite: 'none', path: '/', secure: true },
+    },
+    callbackUrl: {
+      name: 'next-auth.callback-url',
+      options: { httpOnly: true, sameSite: 'none', path: '/', secure: true },
+    },
+  },
+
   providers: [
     AppleProvider({
       clientId: process.env.APPLE_ID!,
@@ -50,10 +69,6 @@ export const authOptions: NextAuthOptions = {
           response_mode: 'form_post',
         },
       },
-      // Apple's form_post callback is a cross-origin POST — the browser drops
-      // SameSite=Lax cookies, so the PKCE code_verifier cookie never arrives.
-      // Disable PKCE and use state verification instead (Apple supports state).
-      checks: ['state'],
     }),
   ],
 
