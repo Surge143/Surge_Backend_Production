@@ -50,6 +50,10 @@ export const authOptions: NextAuthOptions = {
           response_mode: 'form_post',
         },
       },
+      // Apple's form_post callback is a cross-origin POST — the browser drops
+      // SameSite=Lax cookies, so the PKCE code_verifier cookie never arrives.
+      // Disable PKCE and use state verification instead (Apple supports state).
+      checks: ['state'],
     }),
   ],
 
