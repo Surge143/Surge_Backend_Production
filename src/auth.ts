@@ -39,7 +39,17 @@ export const authOptions: NextAuthOptions = {
   providers: [
     AppleProvider({
       clientId: process.env.APPLE_ID!,
+      // Lazily generated per cold-start so env vars are always available
       clientSecret: generateAppleClientSecret(),
+      authorization: {
+        params: {
+          // Apple requires form_post when requesting name/email scopes.
+          // Without this, Apple sends the callback as a GET with no user info
+          // in the body, and profile.email / profile.name will be undefined.
+          scope: 'name email',
+          response_mode: 'form_post',
+        },
+      },
     }),
   ],
 
@@ -50,32 +60,28 @@ export const authOptions: NextAuthOptions = {
      * bridge route can set the Payload cookie without an extra DB call.
      */
     async jwt({ token, account, profile }) {
-      if (account?.provider === 'apple' && profile) {
+      if (account?.provider === 'apple') {
         try {
           const payload = await getPayload()
 
-          const appleSubId: string = profile.sub as string
-          const email: string = (profile.email as string) || ''
-          const firstName: string = (profile as any).name?.firstName || ''
-          const lastName: string = (profile as any).name?.lastName || ''
+          // Apple only sends the full profile on the FIRST sign-in.
+          // On subsequent calls (token refresh), profile is undefined.
+          // account.providerAccountId is always the Apple sub (unique user ID).
+          const appleSubId: string =
+            (profile?.sub as string) || account.providerAccountId || ''
+          const email: string = (profile?.email as string) || ''
+          const firstName: string = (profile as any)?.name?.firstName || ''
+          const lastName: string = (profile as any)?.name?.lastName || ''
           const isPrivateEmail =
-            (profile as any).is_private_email === true ||
-            (profile as any).is_private_email === 'true' ||
+            (profile as any)?.is_private_email === true ||
+            (profile as any)?.is_private_email === 'true' ||
             email.endsWith('@privaterelay.appleid.com')
 
-          // 1. Try to find existing user
+          // 1. Try to find existing user by appleSubId first (works across logins),
+          //    then fall back to email match
           let userDoc: any = null
 
-          if (!isPrivateEmail && email) {
-            const byEmail = await payload.find({
-              collection: 'users',
-              where: { email: { equals: email } },
-              limit: 1,
-            })
-            userDoc = byEmail.docs[0] || null
-          }
-
-          if (!userDoc && appleSubId) {
+          if (appleSubId) {
             const bySubId = await payload.find({
               collection: 'users',
               where: { appleSubId: { equals: appleSubId } },
@@ -84,10 +90,24 @@ export const authOptions: NextAuthOptions = {
             userDoc = bySubId.docs[0] || null
           }
 
-          // 2. Create or update
+          if (!userDoc && !isPrivateEmail && email) {
+            const byEmail = await payload.find({
+              collection: 'users',
+              where: { email: { equals: email } },
+              limit: 1,
+            })
+            userDoc = byEmail.docs[0] || null
+          }
+
+          // If we found a user, just log them in with their existing password
+          // (we re-set it to a new random value each time so it can't be guessed)
           const randomPassword = crypto.randomBytes(16).toString('hex')
 
           if (!userDoc) {
+            // New user — require at least an email (Apple private relay is fine too)
+            if (!email && !isPrivateEmail) {
+              throw new Error('Apple returned no email — cannot create user without email')
+            }
             userDoc = await payload.create({
               collection: 'users',
               data: {
@@ -102,7 +122,7 @@ export const authOptions: NextAuthOptions = {
             })
           } else {
             const updateData: Record<string, any> = { password: randomPassword }
-            if (!userDoc.appleSubId) {
+            if (!userDoc.appleSubId && appleSubId) {
               updateData.appleSubId = appleSubId
               updateData.isApplePrivateEmail = isPrivateEmail
             }
