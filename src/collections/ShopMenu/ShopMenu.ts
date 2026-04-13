@@ -77,8 +77,8 @@ export const ShopMenu: CollectionConfig = {
           }
         }
 
-        // Prevent duplicate product names within the same shop
-        if (data.name && data.shop) {
+        // Prevent duplicate product names within the same shop (create only)
+        if (operation === 'create' && data.name && data.shop) {
           const existing = await payload.find({
             collection: 'shop-menu',
             where: {

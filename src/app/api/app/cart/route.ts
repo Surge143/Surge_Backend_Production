@@ -193,22 +193,28 @@ export async function POST(request: NextRequest) {
         if (!user || !payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
         const body = await request.json()
-        const { productId, quantity = 1, customizations, vId } = body
+        const { productId, quantity = 1, customizations, vId, shopId } = body
 
         if (!productId) return NextResponse.json({ error: 'Product ID is required' }, { status: 400 })
 
         // 1. Discover relationTo for the new product
         let incomingRelation: 'shop-menu' | 'web-products' = 'shop-menu';
+        let resolvedShopId: any = shopId || null;
         try {
-            const inShop = await payload.findByID({ collection: 'shop-menu', id: productId, depth: 0, disableErrors: true }).catch(() => null);
+            const inShop = await payload.findByID({ collection: 'shop-menu', id: productId, depth: 0, disableErrors: true }).catch(() => null) as any;
             if (!inShop) {
                 const inWeb = await payload.findByID({ collection: 'web-products', id: productId, depth: 0, disableErrors: true }).catch(() => null);
                 if (inWeb) incomingRelation = 'web-products';
+            } else if (inShop?.shop && !resolvedShopId) {
+                // Derive shopId from the product's own shop field if caller didn't send it
+                resolvedShopId = typeof inShop.shop === 'object' ? inShop.shop.id : inShop.shop;
             }
         } catch {
-            // If both lookups fail, default remains 'shop-menu'
+            // default remains 'shop-menu'
         }
-        console.log(`[Cart POST] productId=${productId} -> incomingRelation=${incomingRelation}`);
+
+        const newOrigin = incomingRelation === 'shop-menu' ? 'cafe' : 'store';
+        console.log(`[Cart POST] productId=${productId} -> relation=${incomingRelation} origin=${newOrigin} shop=${resolvedShopId}`);
 
         // 2. Fetch existing cart
         const carts = await (payload as any).find({
@@ -222,12 +228,9 @@ export async function POST(request: NextRequest) {
         const cart = carts.docs[0]
         const items = cart?.items || []
 
-        // 3. Mixed Cart Validation
+        // 3. Mixed Cart Validation (only when cart has items)
         if (items.length > 0) {
             const currentOrigin = cart?.origin;
-            const newOrigin = incomingRelation === 'shop-menu' ? 'cafe' : 'store';
-            console.log(`[Cart POST] currentOrigin=${currentOrigin} newOrigin=${newOrigin}`);
-
             if (currentOrigin && currentOrigin !== newOrigin) {
                 return NextResponse.json({
                     error: 'MIXED_CART',
@@ -247,25 +250,29 @@ export async function POST(request: NextRequest) {
             customizations: customizations || null,
         })
 
+        // Build cart data — always include origin (required field) and shop for cafe items
+        const cartData: Record<string, any> = {
+            user: user.id,
+            origin: newOrigin,
+            items,
+        }
+        if (newOrigin === 'cafe' && resolvedShopId) {
+            cartData.shop = resolvedShopId;
+        }
+
         let updatedCart
         if (cart) {
             updatedCart = await (payload as any).update({
                 collection: 'app-cart',
                 id: cart.id,
-                data: {
-                    user: user.id,
-                    items: items,
-                },
+                data: cartData,
                 depth: 0,
                 select: { user: true, items: true, shop: true, origin: true }
             })
         } else {
             updatedCart = await (payload as any).create({
                 collection: 'app-cart',
-                data: {
-                    user: user.id,
-                    items: items,
-                },
+                data: cartData,
                 depth: 0,
                 select: { items: true, shop: true, origin: true }
             })
@@ -274,8 +281,10 @@ export async function POST(request: NextRequest) {
         if (!updatedCart) throw new Error('Failed to create or update cart')
 
         return NextResponse.json({
+            success: true,
             items: await mapAppCartItems(payload, updatedCart.items || []),
-            shop: updatedCart.shop ? (typeof updatedCart.shop === 'object' ? updatedCart.shop : { id: updatedCart.shop }) : null
+            shop: updatedCart.shop ? (typeof updatedCart.shop === 'object' ? updatedCart.shop : { id: updatedCart.shop }) : null,
+            origin: updatedCart.origin,
         })
     } catch (error: any) {
         console.error('AppCart POST Error:', error)

@@ -76,6 +76,7 @@ export default function ProfilePage() {
       const res = await fetch(`/api/users/${user.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(profileForm),
       })
       if (res.ok) {
@@ -172,8 +173,8 @@ export default function ProfilePage() {
           </button>
           <button
             className="btn-primary"
-            onClick={() => {
-              logout()
+            onClick={async () => {
+              await logout()
               router.push('/')
             }}
           >

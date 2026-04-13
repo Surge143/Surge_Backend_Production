@@ -2,9 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
-interface User {
+export interface User {
   id: string
   email: string
+  contactEmail?: string
   name?: string
   firstName?: string
   lastName?: string
@@ -21,7 +22,7 @@ interface UserContextType {
   user: User | null
   loading: boolean
   login: (userData: User) => void
-  logout: () => void
+  logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
 
@@ -32,8 +33,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for existing session (e.g., via cookies or API)
-    fetch('/api/users/me')
+    // Payload CMS exposes /api/users/me — returns { user } when cookie is valid
+    fetch('/api/users/me', { credentials: 'include' })
       .then((res) => {
         if (res.ok) return res.json()
         throw new Error('Not authenticated')
@@ -44,18 +45,25 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const login = (userData: User) => setUser(userData)
-  const logout = () => {
+
+  const logout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST', credentials: 'include' })
+    } catch {
+      // Even if the server call fails, clear local state
+    }
     setUser(null)
-    document.cookie = 'payload-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
   }
 
   const refreshUser = async () => {
     try {
-      const res = await fetch('/api/users/me')
-      const data = await res.json()
-      if (data.user) setUser(data.user)
-    } catch (e) {
-      console.error('Refresh user failed', e)
+      const res = await fetch('/api/users/me', { credentials: 'include' })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.user) setUser(data.user)
+      }
+    } catch {
+      // ignore
     }
   }
 

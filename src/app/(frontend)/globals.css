@@ -50,6 +50,13 @@ button {
   transition: var(--transition);
 }
 
+select,
+option {
+  background: #1a1410;
+  color: var(--foreground);
+  font-family: inherit;
+}
+
 /* Glassmorphism */
 .glass {
   background: var(--glass);
@@ -141,6 +148,13 @@ button {
   box-shadow: 0 10px 25px rgba(230, 126, 34, 0.3);
 }
 
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+}
+
 .btn-outline {
   border: 1px solid var(--glass-border);
   color: white;
@@ -193,4 +207,167 @@ button {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ─── Variant Badge ──────────────────────────────────────────────────────── */
+.variant-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(196, 164, 132, 0.15);
+  color: var(--primary);
+  border: 1px solid rgba(196, 164, 132, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* ─── Selection Option (variant selector) ───────────────────────────────── */
+.selection-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: white;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: left;
+}
+
+.selection-option:hover {
+  background: var(--glass-hover);
+  border-color: var(--primary);
+}
+
+.selection-option.selected {
+  background: rgba(196, 164, 132, 0.15);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* ─── Skeleton Loader ────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s infinite;
+  border-radius: 12px;
+}
+
+/* ─── Cart Drawer ────────────────────────────────────────────────────────── */
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+
+@keyframes slideOutRight {
+  from { transform: translateX(0);   opacity: 1; }
+  to   { transform: translateX(100%); opacity: 0; }
+}
+
+.cart-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1100;
+  animation: fadeIn 0.25s ease;
+}
+
+.cart-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: min(460px, 100vw);
+  background: #0f0c09;
+  border-left: 1px solid var(--glass-border);
+  z-index: 1101;
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── Toast Notification ─────────────────────────────────────────────────── */
+@keyframes slideInUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(196, 164, 132, 0.15);
+  border: 1px solid rgba(196, 164, 132, 0.4);
+  color: var(--primary);
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  z-index: 2000;
+  animation: slideInUp 0.3s ease;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+}
+
+/* ─── Category Filter Pills ──────────────────────────────────────────────── */
+.category-pill {
+  padding: 8px 20px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  border: 1px solid var(--glass-border);
+  color: rgba(255,255,255,0.6);
+  background: var(--glass);
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.category-pill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.category-pill.active {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  border-color: transparent;
+  color: var(--secondary);
+}
+
+/* ─── Stripe Element Container ───────────────────────────────────────────── */
+.stripe-element-wrapper {
+  padding: 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  transition: border-color 0.2s;
+}
+
+.stripe-element-wrapper:focus-within {
+  border-color: var(--primary);
 }
