@@ -244,7 +244,7 @@ export function formatAppOrderToInvoice(order: any): InvoiceData {
   const user = typeof order.user === 'object' ? order.user : null
   const firstName = user?.firstName || 'Guest'
   const lastName = user?.lastName || ''
-  const email = order.email || user?.email || ''
+  const email = order.email || user?.contactEmail || user?.email || ''
 
   return {
     metadata: {

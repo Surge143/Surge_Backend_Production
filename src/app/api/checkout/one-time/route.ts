@@ -228,7 +228,7 @@ export async function POST(req: NextRequest) {
                 data: {
                     customerType: user ? 'user' : 'guest',
                     user: user?.id,
-                    email: (user as any)?.email || email,
+                    email: (user as any)?.contactEmail ?? (user as any)?.email ?? email,
                     deliveryOption,
                     origin: 'one-time',
                     items: orderItems,
@@ -258,7 +258,7 @@ export async function POST(req: NextRequest) {
 
             // --- CREATE STRIPE PAYMENT INTENT ---
             try {
-                const customerEmail = (user as any)?.email || email;
+                const customerEmail = (user as any)?.contactEmail ?? (user as any)?.email ?? email;
                 if (!customerEmail) {
                     return NextResponse.json({ error: 'Email is required for checkout' }, { status: 400 });
                 }

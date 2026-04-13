@@ -74,30 +74,49 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     /**
-     * On first Apple sign-in: find or create the user in Payload CMS,
-     * then store the Payload token + user in the NextAuth JWT so the
-     * bridge route can set the Payload cookie without an extra DB call.
+     * Runs on every Apple sign-in (and on session refresh).
+     * Finds or creates the Payload user, then stores the Payload token in the
+     * NextAuth JWT so the bridge route can set the payload-token cookie.
+     *
+     * Apple edge cases handled here:
+     *  - Hide My Email  → relay address stored, updated if it changes later
+     *  - Email once     → subsequent logins have no profile; appleSubId used instead
+     *  - Duplicates     → email-match links existing OTP accounts to Apple
+     *  - Relay changes  → on appleSubId match, email field updated if it differs
+     *  - No email       → synthetic placeholder email generated so user can be created
      */
     async jwt({ token, account, profile }) {
       if (account?.provider === 'apple') {
         try {
           const payload = await getPayload()
 
-          // Apple only sends the full profile on the FIRST sign-in.
-          // On subsequent calls (token refresh), profile is undefined.
-          // account.providerAccountId is always the Apple sub (unique user ID).
+          // Apple only sends full profile on the FIRST sign-in.
+          // On all later logins profile is undefined — use account.providerAccountId
+          // which is always the stable Apple sub (unique per user+app pair).
           const appleSubId: string =
             (profile?.sub as string) || account.providerAccountId || ''
-          const email: string = (profile?.email as string) || ''
+          const rawEmail: string = (profile?.email as string) || ''
           const firstName: string = (profile as any)?.name?.firstName || ''
           const lastName: string = (profile as any)?.name?.lastName || ''
           const isPrivateEmail =
             (profile as any)?.is_private_email === true ||
             (profile as any)?.is_private_email === 'true' ||
-            email.endsWith('@privaterelay.appleid.com')
+            rawEmail.endsWith('@privaterelay.appleid.com')
 
-          // 1. Try to find existing user by appleSubId first (works across logins),
-          //    then fall back to email match
+          // Case 5 — No email at all: Apple sometimes sends no email on first login.
+          // Generate a deterministic synthetic address so the required email field
+          // in Payload is satisfied. Flagged with isApplePrivateEmail so the app
+          // knows it is not a real address.
+          const email =
+            rawEmail || (appleSubId ? `apple_${appleSubId}@privaterelay.surge.com` : '')
+
+          if (!email) {
+            throw new Error('[Apple] No email and no sub — cannot identify user')
+          }
+
+          // ── 1. Lookup ─────────────────────────────────────────────────────────
+          // Priority: appleSubId → real-email match (never match relay addresses).
+          // appleSubId is stable across logins and covers Cases 1, 2, 4.
           let userDoc: any = null
 
           if (appleSubId) {
@@ -109,24 +128,23 @@ export const authOptions: NextAuthOptions = {
             userDoc = bySubId.docs[0] || null
           }
 
-          if (!userDoc && !isPrivateEmail && email) {
+          // Case 3 — Duplicate prevention: if the user previously registered via
+          // OTP with their real Apple email, find them and link the Apple account.
+          // Skip for relay addresses — they will never match a real-email account.
+          if (!userDoc && !isPrivateEmail && rawEmail) {
             const byEmail = await payload.find({
               collection: 'users',
-              where: { email: { equals: email } },
+              where: { email: { equals: rawEmail } },
               limit: 1,
             })
             userDoc = byEmail.docs[0] || null
           }
 
-          // If we found a user, just log them in with their existing password
-          // (we re-set it to a new random value each time so it can't be guessed)
+          // ── 2. Create or update ───────────────────────────────────────────────
           const randomPassword = crypto.randomBytes(16).toString('hex')
 
           if (!userDoc) {
-            // New user — require at least an email (Apple private relay is fine too)
-            if (!email && !isPrivateEmail) {
-              throw new Error('Apple returned no email — cannot create user without email')
-            }
+            // Brand-new user (covers Case 1 relay, Case 5 synthetic email)
             userDoc = await payload.create({
               collection: 'users',
               data: {
@@ -136,15 +154,30 @@ export const authOptions: NextAuthOptions = {
                 role: 'customer',
                 password: randomPassword,
                 appleSubId,
-                isApplePrivateEmail: isPrivateEmail,
+                isApplePrivateEmail: isPrivateEmail || email.endsWith('@privaterelay.surge.com'),
               } as any,
             })
           } else {
             const updateData: Record<string, any> = { password: randomPassword }
+
+            // Stamp appleSubId on accounts found via email-match (Case 3 linking)
             if (!userDoc.appleSubId && appleSubId) {
               updateData.appleSubId = appleSubId
               updateData.isApplePrivateEmail = isPrivateEmail
             }
+
+            // Case 1 & 4 — Relay email changed: user reconnected Apple after
+            // revoking, Apple issued a new relay address. Update stored email
+            // so future relay-based lookups still work.
+            if (
+              userDoc.appleSubId === appleSubId &&
+              rawEmail &&
+              rawEmail !== userDoc.email
+            ) {
+              updateData.email = rawEmail
+              updateData.isApplePrivateEmail = isPrivateEmail
+            }
+
             userDoc = await payload.update({
               collection: 'users',
               id: userDoc.id,
@@ -152,7 +185,7 @@ export const authOptions: NextAuthOptions = {
             })
           }
 
-          // 3. Login to get a Payload JWT token
+          // ── 3. Log in to get a Payload JWT ────────────────────────────────────
           const loginResult = await payload.login({
             collection: 'users',
             data: { email: userDoc.email, password: randomPassword },

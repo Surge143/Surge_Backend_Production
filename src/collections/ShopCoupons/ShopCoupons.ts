@@ -36,7 +36,12 @@ export const ShopCoupons: CollectionConfig = {
   },
 
   access: {
-    read: () => true,
+    read: ({ req: { user } }) => {
+      if (user?.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return true
+    },
     create: ({ req: { user } }) =>
       user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager',
     update: async ({ req: { user, payload }, id }) => {
@@ -77,10 +82,12 @@ export const ShopCoupons: CollectionConfig = {
       }
       return false
     },
-    delete: async ({ req: { user } }) => {
+    delete: ({ req: { user } }) => {
       if (!user) return false
-      if (user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager')
-        return true
+      if (user.role === 'admin' || user.role === 'super-admin') return true
+      if (user.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
       return false
     },
   },

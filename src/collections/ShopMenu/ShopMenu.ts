@@ -22,13 +22,30 @@ export const ShopMenu: CollectionConfig = {
     },
   },
   access: {
-    read: () => true,
+    read: ({ req: { user } }) => {
+      if (user?.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return true
+    },
     create: ({ req: { user } }) =>
       user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager',
-    update: ({ req: { user } }) =>
-      user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager',
-    delete: ({ req: { user } }) =>
-      user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager',
+    update: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.role === 'admin' || user.role === 'super-admin') return true
+      if (user.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return false
+    },
+    delete: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.role === 'admin' || user.role === 'super-admin') return true
+      if (user.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return false
+    },
   },
   hooks: {
     beforeChange: [

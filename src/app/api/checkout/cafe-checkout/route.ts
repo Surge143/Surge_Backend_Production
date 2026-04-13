@@ -403,12 +403,13 @@ export const POST = async (req: NextRequest) => {
         if (savedStripeId) {
             stripeCustomerId = savedStripeId;
         } else {
-            const existingCustomers = await stripe.customers.list({ email: user.email, limit: 1 });
+            const stripeEmail = (user as any).contactEmail ?? user.email;
+            const existingCustomers = await stripe.customers.list({ email: stripeEmail, limit: 1 });
             if (existingCustomers.data.length > 0) {
                 stripeCustomerId = existingCustomers.data[0].id;
             } else {
                 const customer = await stripe.customers.create({
-                    email: user.email,
+                    email: stripeEmail,
                     name: `${(user as any).firstName || ''} ${(user as any).lastName || ''}`.trim(),
                 });
                 stripeCustomerId = customer.id;
@@ -426,7 +427,7 @@ export const POST = async (req: NextRequest) => {
 
         const orderData: any = {
             user: user?.id,
-            email: user.email,
+            email: (user as any).contactEmail ?? user.email,
             shop: shopId,
             items: processedItems,
             orderType: orderType,
