@@ -907,7 +907,7 @@ export interface SurgeShopCoupon {
    */
   usageLimitPerUser: number;
   shop: number | Shop;
-  couponRelation: (number | SurgeCoupon)[];
+  couponRelation?: (number | SurgeCoupon)[] | null;
   createdBy?: (number | null) | Admin;
   couponFor?: {
     website?: boolean | null;
@@ -1556,7 +1556,7 @@ export interface Notification {
 export interface AppBestSeller {
   id: number;
   shop: number | Shop;
-  products: (number | ShopMenu)[];
+  products?: (number | ShopMenu)[] | null;
   updatedAt: string;
   createdAt: string;
 }

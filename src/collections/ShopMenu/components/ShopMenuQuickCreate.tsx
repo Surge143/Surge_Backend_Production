@@ -151,6 +151,12 @@ export const ShopMenuQuickCreate: React.FC = () => {
         }
     }
 
+    // Shops visible to this user in the dropdown
+    const myShops = user?.role === 'shop-manager'
+        ? shops.filter(s => String(typeof s.shopManager === 'object' ? s.shopManager?.id : s.shopManager) === String(user.id))
+        : shops
+    const showShopDropdown = user?.role !== 'shop-manager' || myShops.length > 1
+
     return (
         <div className={styles.quickCreateContainer} style={{ marginBottom: '1rem' }}>
             <Button
@@ -166,16 +172,18 @@ export const ShopMenuQuickCreate: React.FC = () => {
                 <div className={styles.modalContainer}>
                     <div className={styles.modalHeader}>
                         <h2>Select Products for Shop Menu</h2>
-                        {user?.role !== 'shop-manager' && (
+                        {showShopDropdown && (
                             <div className={styles.shopSelectWrapper} style={{ width: '250px' }}>
                                 <SelectInput
                                     path="shopSelect"
                                     name="shopSelect"
                                     label="Select Shop"
-                                    options={shops.map(s => ({ label: String(s.title || s.name || s.id), value: String(s.id) }))}
+                                    options={myShops.map(s => ({
+                                        label: String(s.address?.street || s.address?.city || s.id),
+                                        value: String(s.id),
+                                    }))}
                                     value={selectedShop}
                                     onChange={(val: any) => {
-                                        // Payload 3.0 SelectInput might pass the value string or the whole object
                                         const newValue = typeof val === 'object' && val !== null ? val.value : val;
                                         setSelectedShop(newValue);
                                     }}

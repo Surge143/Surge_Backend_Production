@@ -79,25 +79,46 @@ export const Slots: CollectionConfig = {
           }
         }
 
-        // 2. ENFORCE SINGLE "NOW" SLOT ACROSS COLLECTION
-        if (data.timeSelection === 'now') {
+        // 2. ENFORCE SINGLE "NOW" SLOT PER SHOP
+        if (data.timeSelection === 'now' && data.shop) {
           const existingNow = await payload.find({
             collection: 'slots',
             where: {
               and: [
                 { timeSelection: { equals: 'now' } },
-                // If updating, don't count the current record itself
+                { shop: { equals: data.shop } },
                 { id: { not_equals: data.id || '' } },
               ],
             },
             limit: 1,
+            overrideAccess: true,
           })
 
           if (existingNow.totalDocs > 0) {
             throw new APIError(
-              'A "Now" slot already exists. You must change the existing one to "Specific Time" before creating a new one.',
-              400, // Bad Request status code
+              'A "Now" slot already exists for this shop. Change the existing one to "Specific Time" first.',
+              400,
             )
+          }
+        }
+
+        // 3. ENFORCE UNIQUE SLOT TIME PER SHOP
+        if (data.timeSelection === 'custom' && data.slot && data.shop) {
+          const existingSlot = await payload.find({
+            collection: 'slots',
+            where: {
+              and: [
+                { slot: { equals: data.slot } },
+                { shop: { equals: data.shop } },
+                { id: { not_equals: data.id || '' } },
+              ],
+            },
+            limit: 1,
+            overrideAccess: true,
+          })
+
+          if (existingSlot.totalDocs > 0) {
+            throw new APIError('A slot with this time already exists for this shop.', 400)
           }
         }
 
@@ -145,7 +166,6 @@ export const Slots: CollectionConfig = {
       name: 'slot',
       type: 'date',
       label: 'Slot Time',
-      unique: true,
       admin: {
         date: {
           pickerAppearance: 'timeOnly',

@@ -335,7 +335,6 @@ export const ShopCoupons: CollectionConfig = {
       type: 'relationship',
       relationTo: 'surge-coupon',
       hasMany: true,
-      required: true,
       admin: {
         position: 'sidebar',
         readOnly: true,
