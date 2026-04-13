@@ -421,7 +421,6 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
         onGoLive={() => handleStoreStatus('live')}
         onPause={() => handleStoreStatus('paused')}
         shopName={currentShopDoc?.address?.street || 'White Mantis'}
-        isAdmin={isAdmin}
         allShops={allShops}
         currentShopId={currentShopId}
         onShopChange={handleShopSwitch}

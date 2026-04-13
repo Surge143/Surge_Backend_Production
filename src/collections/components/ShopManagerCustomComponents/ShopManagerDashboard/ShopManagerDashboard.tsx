@@ -27,13 +27,13 @@ export const ShopManagerDashboard: React.FC<AdminViewProps> = async ({
   let allShops: any[] = []
 
   if (!isAdmin) {
-    // Shop-manager: locked to their own shop
+    // Shop-manager: fetch all their managed shops so multi-shop managers can switch
     const shopResult = await req.payload.find({
       collection: 'shop',
       where: { shopManager: { equals: currentUser.id } },
-      limit: 1,
       depth: 0,
     })
+    allShops = shopResult.docs
     shopDoc = shopResult.docs[0] || null
   } else {
     // Admin/super-admin: fetch all shops for the picker
