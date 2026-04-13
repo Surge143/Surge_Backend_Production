@@ -18,6 +18,32 @@ export const Slots: CollectionConfig = {
       return !isAuthorized
     },
   },
+  access: {
+    read: ({ req: { user } }) => {
+      if (user?.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return true
+    },
+    create: ({ req: { user } }) =>
+      user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager',
+    update: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.role === 'admin' || user.role === 'super-admin') return true
+      if (user.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return false
+    },
+    delete: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.role === 'admin' || user.role === 'super-admin') return true
+      if (user.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return false
+    },
+  },
   hooks: {
     beforeChange: [
       async ({ data, req, operation }) => {
@@ -26,13 +52,30 @@ export const Slots: CollectionConfig = {
         // 1. AUTO-ASSIGN SHOP AND MANAGER (Existing Logic)
         if (operation === 'create' && user) {
           data.shopManager = user.id
-          const managedShop = await payload.find({
-            collection: 'shop',
-            where: { shopManager: { equals: user.id } },
-            limit: 1,
-          })
-          if (managedShop.docs.length > 0) {
-            data.shop = managedShop.docs[0].id
+
+          if (user.role === 'shop-manager') {
+            const managedShops = await payload.find({
+              collection: 'shop',
+              where: { shopManager: { equals: user.id } },
+              depth: 0,
+            })
+
+            if (managedShops.docs.length === 0) {
+              throw new APIError('You do not have a shop assigned to your account.', 400)
+            } else if (managedShops.docs.length === 1) {
+              data.shop = managedShops.docs[0].id
+            } else {
+              if (!data.shop) {
+                throw new APIError(
+                  'You manage multiple shops. Please select a shop before saving.',
+                  400,
+                )
+              }
+              const isOwned = managedShops.docs.some((s) => String(s.id) === String(data.shop))
+              if (!isOwned) {
+                throw new APIError('The selected shop does not belong to your account.', 403)
+              }
+            }
           }
         }
 
@@ -159,9 +202,15 @@ export const Slots: CollectionConfig = {
       type: 'relationship',
       relationTo: 'shop',
       label: 'Shop',
+      filterOptions: ({ user }) => {
+        if (user?.role === 'shop-manager') {
+          return { shopManager: { equals: user.id } }
+        }
+        return true
+      },
       admin: {
         position: 'sidebar',
-        description: 'Auto-assigned based on your manager account.',
+        description: 'Auto-assigned for single-shop managers. Select your shop if you manage multiple.',
       },
     },
     {

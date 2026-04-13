@@ -98,19 +98,25 @@ export const ShopCoupons: CollectionConfig = {
         if (operation === 'create' && user) {
           data.createdBy = user.id
 
-          if (user?.role === 'shop-manager' && !data.shop) {
-            try {
-              const shops = await payload.find({
-                collection: 'shop',
-                where: { shopManager: { equals: user.id } },
-                limit: 1,
-                depth: 0,
-              })
-              if (shops.docs.length > 0) {
-                data.shop = shops.docs[0].id
+          if (user?.role === 'shop-manager') {
+            const managedShops = await payload.find({
+              collection: 'shop',
+              where: { shopManager: { equals: user.id } },
+              depth: 0,
+            })
+
+            if (managedShops.docs.length === 0) {
+              throw new Error('You do not have a shop assigned to your account.')
+            } else if (managedShops.docs.length === 1) {
+              data.shop = managedShops.docs[0].id
+            } else {
+              if (!data.shop) {
+                throw new Error('You manage multiple shops. Please select a shop before saving.')
               }
-            } catch (e) {
-              console.error('Could not auto-fill shop for shop-manager:', e)
+              const isOwned = managedShops.docs.some((s) => String(s.id) === String(data.shop))
+              if (!isOwned) {
+                throw new Error('The selected shop does not belong to your account.')
+              }
             }
           }
         }
@@ -314,10 +320,14 @@ export const ShopCoupons: CollectionConfig = {
       type: 'relationship',
       relationTo: 'shop',
       required: true,
+      filterOptions: ({ user }) => {
+        if (user?.role === 'shop-manager') {
+          return { shopManager: { equals: user.id } }
+        }
+        return true
+      },
       admin: {
         position: 'sidebar',
-        condition: (data, siblingData, { user }) => user?.role !== 'shop-manager',
-        readOnly: true,
       },
     },
     {

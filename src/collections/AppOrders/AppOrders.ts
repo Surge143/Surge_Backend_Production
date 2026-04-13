@@ -72,7 +72,12 @@ export const AppOrders: CollectionConfig = {
     afterDelete: [afterDeleteHook],
   },
   access: {
-    read: () => true,
+    read: ({ req: { user } }) => {
+      if (user?.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return true
+    },
     create: () => true,
     update: () => true,
     delete: () => true,

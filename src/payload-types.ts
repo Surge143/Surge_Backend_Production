@@ -273,6 +273,10 @@ export interface User {
    * Whether the user signed in with an Apple private relay email.
    */
   isApplePrivateEmail?: boolean | null;
+  /**
+   * Real email for communications (order confirmations, notifications). Collected post-login from Apple users who used Hide My Email or phone number auth.
+   */
+  contactEmail?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -587,7 +591,7 @@ export interface Menu {
 export interface ShopMenu {
   id: number;
   name: string;
-  shop?: (number | null) | Shop;
+  shop: number | Shop;
   menuRelation?: (number | Menu)[] | null;
   createdBy?: (number | null) | Admin;
   /**
@@ -902,7 +906,7 @@ export interface SurgeShopCoupon {
    * Max number of times a single customer can use this coupon.
    */
   usageLimitPerUser: number;
-  shop?: (number | null) | Shop;
+  shop: number | Shop;
   couponRelation: (number | SurgeCoupon)[];
   createdBy?: (number | null) | Admin;
   couponFor?: {
@@ -1129,7 +1133,7 @@ export interface Slot {
    */
   currentLoad?: number | null;
   /**
-   * Auto-assigned based on your manager account.
+   * Auto-assigned for single-shop managers. Select your shop if you manage multiple.
    */
   shop?: (number | null) | Shop;
   /**
@@ -2082,6 +2086,7 @@ export interface UsersSelect<T extends boolean = true> {
   barcodeToken?: T;
   appleSubId?: T;
   isApplePrivateEmail?: T;
+  contactEmail?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

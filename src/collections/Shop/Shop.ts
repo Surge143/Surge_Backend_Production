@@ -21,7 +21,7 @@ export const Shop: CollectionConfig = {
     { path: '/:shopId/barista', method: 'get', handler: getBaristaHandler },
   ],
   admin: {
-    useAsTitle: 'shopManager',
+    useAsTitle: 'id',
     defaultColumns: ['isShopOpen', 'shopManager', 'address.city', 'openingTime', 'closingTime'],
     group: 'Cafe Management',
     description: 'Manage your cafe locations',

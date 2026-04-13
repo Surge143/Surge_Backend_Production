@@ -57,19 +57,27 @@ export const AppBestSeller: CollectionConfig = {
     beforeChange: [
       async ({ data, req, operation }) => {
         if (operation === 'create') {
-          // Step 1: For shop-managers, auto-assign their managed shop FIRST
+          // Step 1: For shop-managers, resolve shop assignment
           // so the upsert check below can use the correct shop ID
-          if (req.user?.role === 'shop-manager' && !data.shop) {
-            const managedShop = await req.payload.find({
+          if (req.user?.role === 'shop-manager') {
+            const managedShops = await req.payload.find({
               collection: 'shop',
               where: { shopManager: { equals: req.user.id } },
-              limit: 1,
               depth: 0,
             })
-            if (managedShop.docs.length > 0) {
-              data.shop = managedShop.docs[0].id
-            } else {
+
+            if (managedShops.docs.length === 0) {
               throw new Error('No shop assigned to your account.')
+            } else if (managedShops.docs.length === 1) {
+              data.shop = managedShops.docs[0].id
+            } else {
+              if (!data.shop) {
+                throw new Error('You manage multiple shops. Please select a shop before saving.')
+              }
+              const isOwned = managedShops.docs.some((s) => String(s.id) === String(data.shop))
+              if (!isOwned) {
+                throw new Error('The selected shop does not belong to your account.')
+              }
             }
           }
 
@@ -105,6 +113,12 @@ export const AppBestSeller: CollectionConfig = {
       relationTo: 'shop',
       required: true,
       unique: true,
+      filterOptions: ({ user }) => {
+        if (user?.role === 'shop-manager') {
+          return { shopManager: { equals: user.id } }
+        }
+        return true
+      },
       admin: {
         position: 'sidebar',
       },
