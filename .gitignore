@@ -54,3 +54,4 @@ src/config/*
 
 # Developer activity logs (local only)
 devlog/
+.planning/

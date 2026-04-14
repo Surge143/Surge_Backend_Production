@@ -106,6 +106,7 @@ export default function CafeCheckoutPage() {
   const [dbOrderId, setDbOrderId] = useState<string | null>(null)
   const [successOrderId, setSuccessOrderId] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [apiSubtotal, setApiSubtotal] = useState<number | null>(null)
 
   // Fetch cart
   useEffect(() => {
@@ -114,6 +115,9 @@ export default function CafeCheckoutPage() {
       .then((d) => {
         setCart(d.items || [])
         setShop(d.shop || null)
+        if (typeof d.subtotal === 'number') {
+          setApiSubtotal(d.subtotal)
+        }
       })
       .catch(() => { })
       .finally(() => setCartLoading(false))
@@ -122,7 +126,7 @@ export default function CafeCheckoutPage() {
   // Fetch coins
   useEffect(() => {
     if (!user) return
-    fetch(`/api/user-wt-coins?where[user][equals]=${user.id}`)
+    fetch(`/api/user-surge-coins?where[user][equals]=${user.id}`)
       .then((r) => r.json())
       .then((d) => setCoinBalance(d.docs?.[0]?.totalBalance || 0))
       .catch(() => { })
@@ -138,7 +142,9 @@ export default function CafeCheckoutPage() {
       .catch(() => { })
   }, [shop])
 
-  const subtotal = cart.reduce((s, item) => s + item.price * item.quantity, 0)
+  const subtotal = apiSubtotal !== null
+    ? apiSubtotal
+    : cart.reduce((s, item) => s + (item.price || 0) * (item.quantity || 1), 0)
   const shopId = shop?.id || shop
   const displaySuccessOrderId = successOrderId ? String(successOrderId) : ''
   const displayDbOrderId = dbOrderId ? String(dbOrderId) : ''

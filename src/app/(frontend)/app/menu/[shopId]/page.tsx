@@ -84,10 +84,14 @@ export default function ShopMenuPage() {
       .then((r) => r.json())
       .then((d) => {
         const items = d.items || []
+        // Prefer the server-computed subtotal; fall back to item-level calculation
+        const subtotal = typeof d.subtotal === 'number'
+          ? d.subtotal
+          : items.reduce((s: number, i: any) => s + (i.price || 0) * (i.quantity || 1), 0)
         setCartSummary({
           items,
           totalCount: items.reduce((s: number, i: any) => s + i.quantity, 0),
-          subtotal: items.reduce((s: number, i: any) => s + i.price * i.quantity, 0),
+          subtotal,
         })
       })
       .catch(() => {})

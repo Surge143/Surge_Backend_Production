@@ -181,13 +181,15 @@ async function buildAppCartResponse(payload: any, userId: string | number) {
         where: { user: { equals: userId } },
         limit: 1,
         depth: 0,
-        select: { items: true, shop: true, origin: true },
     })
 
     const cart = carts.docs[0]
+    const mappedItems = await mapAppCartItems(payload, cart?.items || [])
+    const subtotal = mappedItems.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0)
 
     return {
-        items: await mapAppCartItems(payload, cart?.items || []),
+        items: mappedItems,
+        subtotal,
         shop: cart?.shop ? (typeof cart.shop === 'object' ? cart.shop : { id: cart.shop }) : null,
         origin: cart?.origin || 'cafe',
     }
