@@ -329,10 +329,10 @@ export const POST = async (req: NextRequest) => {
                 return NextResponse.json({ error: result.error }, { status: result.status || 400 });
             }
 
-            const discountResult = calculateCouponDiscount(result.coupon, subtotal, processedItems.map(item => ({
-                product: typeof item.product.value === 'object' ? item.product.value.id : item.product.value,
+            const discountResult = calculateCouponDiscount(result.coupon, subtotal, processedItems.map((item) => ({
+                product: item.product,
                 price: item.price,
-                quantity: item.quantity
+                quantity: item.quantity,
             })));
 
             if ('error' in discountResult) {
@@ -488,7 +488,7 @@ export const POST = async (req: NextRequest) => {
             success: true,
             message: "Order created successfully",
             clientSecret: paymentIntent.client_secret,
-            dbOrderId: orderDoc.id,
+            dbOrderId: String(orderDoc.id),
             stripeCustomerId,
         }, { status: 200 });
 

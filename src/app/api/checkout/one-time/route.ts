@@ -313,21 +313,21 @@ export async function POST(req: NextRequest) {
                     success: true,
                     message: "Order created successfully",
                     clientSecret: paymentIntent.client_secret,
-                    dbOrderId: orderDoc.id,
+                    dbOrderId: String(orderDoc.id),
                     guestAccessToken,
                     stripeCustomerId,
                 }, { status: 200 });
 
             } catch (stripeError: any) {
                 console.error('Stripe Error:', stripeError);
-                return NextResponse.json({ error: stripeError.message || 'Payment processing failed' }, { status: 500 });
+                return NextResponse.json({ error: stripeError?.message || 'Payment processing failed' }, { status: 500 });
             }
         } catch (dbError) {
             console.error('Database Error:', dbError);
-            return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+            return NextResponse.json({ error: (dbError as any)?.message || 'Failed to create order' }, { status: 500 });
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Global Error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: error?.message || 'Internal Server Error' }, { status: 500 });
     }
 }

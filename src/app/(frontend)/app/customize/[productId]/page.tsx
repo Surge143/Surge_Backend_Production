@@ -27,6 +27,21 @@ interface MenuProduct {
   customizations?: Array<{ sections: Section[] }>
 }
 
+interface AppCartResponse {
+  error?: string
+  items?: any[]
+  origin?: 'cafe' | 'store'
+  shop?: { id?: string | number } | string | number | null
+}
+
+const parseJsonSafely = async <T,>(res: Response): Promise<T | null> => {
+  try {
+    return (await res.json()) as T
+  } catch {
+    return null
+  }
+}
+
 const Toast: React.FC<{ message: string; visible: boolean }> = ({ message, visible }) => {
   if (!visible) return null
   return <div className="toast">{message}</div>
@@ -46,6 +61,7 @@ export default function CustomizePage() {
   const [toastMsg, setToastMsg] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [mixedCartPending, setMixedCartPending] = useState(false)
+  const [mixedCartOrigin, setMixedCartOrigin] = useState<'cafe' | 'store'>('store')
   const [pendingCustomizations, setPendingCustomizations] = useState<any[]>([])
   const [selections, setSelections] = useState<Record<string, any>>({})
 
@@ -103,6 +119,7 @@ export default function CustomizePage() {
     setAdding(true)
     try {
       if (clearFirst) {
+        await fetch('/api/website/cart/clear', { method: 'POST', credentials: 'include' }).catch(() => {})
         await fetch('/api/app/cart', { method: 'DELETE', credentials: 'include' })
       }
       const res = await fetch('/api/app/cart', {
@@ -116,9 +133,10 @@ export default function CustomizePage() {
           shopId,
         }),
       })
-      const data = await res.json()
+      const data = await parseJsonSafely<AppCartResponse>(res)
       if (!res.ok) {
-        if (data.error === 'MIXED_CART') {
+        if (data?.error === 'MIXED_CART') {
+          setMixedCartOrigin(data?.origin === 'cafe' || (data as any)?.currentOrigin === 'cafe' ? 'cafe' : 'store')
           setPendingCustomizations(customizationsFlat)
           setMixedCartPending(true)
           return
@@ -127,7 +145,11 @@ export default function CustomizePage() {
           router.push('/login')
           return
         }
-        showToast(data.error || 'Failed to add to cart')
+        showToast(data?.error || 'Failed to add to cart')
+        return
+      }
+      if (!Array.isArray(data?.items) || data.items.length === 0) {
+        showToast('Item was not added to cart. Please try again.')
         return
       }
       showToast('Added to cart! ✅')
@@ -290,7 +312,7 @@ export default function CustomizePage() {
               Replace Cart?
             </h3>
             <p style={{ fontSize: '15px', opacity: 0.7, textAlign: 'center', lineHeight: '1.6' }}>
-              Your cart has <strong style={{ color: 'var(--primary)' }}>Store</strong> items.
+              Your cart has <strong style={{ color: 'var(--primary)' }}>{mixedCartOrigin === 'cafe' ? 'Cafe' : 'Store'}</strong> items.
               Adding a Cafe item will clear your current cart.
             </p>
             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
@@ -299,7 +321,7 @@ export default function CustomizePage() {
                 style={{ flex: 1, padding: '14px' }}
                 onClick={() => setMixedCartPending(false)}
               >
-                Keep Store Cart
+                Keep {mixedCartOrigin === 'cafe' ? 'Cafe' : 'Store'} Cart
               </button>
               <button
                 className="btn-primary"

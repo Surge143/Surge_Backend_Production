@@ -38,6 +38,25 @@ interface TaxShipping {
   shippingCharge: number
 }
 
+interface CheckoutResponse {
+  error?: string
+  clientSecret?: string | null
+  dbOrderId?: string | number | null
+}
+
+const getErrorMessage = (fallback: string, value: unknown) => {
+  if (typeof value === 'string' && value.trim()) return value
+  return fallback
+}
+
+const parseJsonSafely = async <T,>(res: Response): Promise<T | null> => {
+  try {
+    return (await res.json()) as T
+  } catch {
+    return null
+  }
+}
+
 // ─── Stripe Payment Form (inner) ──────────────────────────────────────────────
 
 interface PaymentFormProps {
@@ -45,9 +64,19 @@ interface PaymentFormProps {
   onSuccess: (orderId: string) => void
   onError: (msg: string) => void
   clearCart: () => void
+  billingDetails: {
+    name?: string
+    email?: string
+    phone?: string
+    address: {
+      line1?: string
+      city?: string
+      country: string
+    }
+  }
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ dbOrderId, onSuccess, onError, clearCart }) => {
+const PaymentForm: React.FC<PaymentFormProps> = ({ dbOrderId, onSuccess, onError, clearCart, billingDetails }) => {
   const stripe = useStripe()
   const elements = useElements()
   const [paying, setPaying] = useState(false)
@@ -60,6 +89,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ dbOrderId, onSuccess, onError
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       redirect: 'if_required',
+      confirmParams: {
+        payment_method_data: {
+          billing_details: billingDetails,
+        },
+      },
     })
 
     if (error) {
@@ -80,7 +114,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ dbOrderId, onSuccess, onError
         <PaymentElement
           options={{
             layout: 'tabs',
-            fields: { billingDetails: { address: 'never' } },
           }}
         />
       </div>
@@ -206,15 +239,23 @@ export default function CheckoutPage() {
         body: JSON.stringify(body),
       })
 
-      const data = await res.json()
+      const data = await parseJsonSafely<CheckoutResponse>(res)
 
       if (!res.ok) {
-        setCheckoutError(data.error || 'Failed to create order. Please try again.')
+        setCheckoutError(getErrorMessage('Failed to create order. Please try again.', data?.error))
         return
       }
 
-      setClientSecret(data.clientSecret)
-      setDbOrderId(data.dbOrderId)
+      const nextClientSecret = typeof data?.clientSecret === 'string' ? data.clientSecret : ''
+      const nextOrderId = data?.dbOrderId !== null && data?.dbOrderId !== undefined ? String(data.dbOrderId) : ''
+
+      if (!nextClientSecret || !nextOrderId) {
+        setCheckoutError('Checkout response was incomplete. Please try again.')
+        return
+      }
+
+      setClientSecret(nextClientSecret)
+      setDbOrderId(nextOrderId)
     } catch (err: any) {
       setCheckoutError(err.message || 'An unexpected error occurred.')
     } finally {
@@ -226,16 +267,19 @@ export default function CheckoutPage() {
 
   const taxAmount = subtotal * (taxShipping.taxRate / 100)
   const finalTotal = subtotal + taxShipping.shippingCharge + taxAmount
+  const displaySuccessOrderId = successOrderId ? String(successOrderId) : ''
+  const displayDbOrderId = dbOrderId ? String(dbOrderId) : ''
+  const readyForPayment = typeof clientSecret === 'string' && clientSecret.length > 0 && !!displayDbOrderId
 
   // ─── Success state ─────────────────────────────────────────────────────────
 
-  if (successOrderId) {
+  if (displaySuccessOrderId) {
     return (
       <div className="container flex-center animate-up" style={{ minHeight: '70vh', flexDirection: 'column', gap: '24px', textAlign: 'center' }}>
         <div style={{ fontSize: '72px' }}>🎉</div>
         <h1 style={{ fontSize: '48px', fontWeight: '900' }}>Order Placed!</h1>
         <p style={{ fontSize: '18px', opacity: 0.6, maxWidth: '500px' }}>
-          Your order <strong style={{ color: 'var(--primary)' }}>#{successOrderId.slice(-8).toUpperCase()}</strong> has been placed and payment confirmed. You&apos;ll receive an email confirmation shortly.
+          Your order <strong style={{ color: 'var(--primary)' }}>#{displaySuccessOrderId.slice(-8).toUpperCase()}</strong> has been placed and payment confirmed. You&apos;ll receive an email confirmation shortly.
         </p>
         <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
           <button className="btn-primary" onClick={() => router.push('/profile')}>
@@ -251,7 +295,7 @@ export default function CheckoutPage() {
 
   // ─── Empty cart ────────────────────────────────────────────────────────────
 
-  if (totalItems === 0 && !clientSecret) {
+  if (totalItems === 0 && !readyForPayment) {
     return (
       <div className="container flex-center animate-up" style={{ minHeight: '70vh', flexDirection: 'column', gap: '20px', textAlign: 'center' }}>
         <div style={{ fontSize: '64px' }}>🛒</div>
@@ -266,7 +310,7 @@ export default function CheckoutPage() {
 
   // ─── Payment step (Stripe Elements rendered) ───────────────────────────────
 
-  if (clientSecret && dbOrderId) {
+  if (readyForPayment) {
     const stripeAppearance = {
       theme: 'night' as const,
       variables: {
@@ -284,14 +328,24 @@ export default function CheckoutPage() {
       <div className="container animate-up" style={{ padding: '60px 0', maxWidth: '600px' }}>
         <h1 style={{ fontSize: '36px', fontWeight: '900', marginBottom: '8px' }}>Complete Payment</h1>
         <p style={{ opacity: 0.5, marginBottom: '40px', fontSize: '14px' }}>
-          Order #{dbOrderId.slice(-8).toUpperCase()} · AED {finalTotal.toFixed(2)}
+          Order #{displayDbOrderId.slice(-8).toUpperCase()} · AED {finalTotal.toFixed(2)}
         </p>
 
         <div className="glass" style={{ padding: '32px' }}>
-          <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
+          <Elements stripe={stripePromise} options={{ clientSecret: clientSecret!, appearance: stripeAppearance }}>
             <PaymentForm
-              dbOrderId={dbOrderId}
+              dbOrderId={displayDbOrderId}
               clearCart={clearCart}
+              billingDetails={{
+                name: `${address.addressFirstName} ${address.addressLastName}`.trim() || undefined,
+                email: email || undefined,
+                phone: address.phoneNumber || undefined,
+                address: {
+                  line1: address.street || undefined,
+                  city: address.city || undefined,
+                  country: 'AE',
+                },
+              }}
               onSuccess={(id) => {
                 setSuccessOrderId(id)
                 refreshCart()

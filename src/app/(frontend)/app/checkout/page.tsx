@@ -9,15 +9,40 @@ import Link from 'next/link'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
+interface CheckoutResponse {
+  error?: string
+  clientSecret?: string | null
+  dbOrderId?: string | number | null
+}
+
+const getErrorMessage = (fallback: string, value: unknown) => {
+  if (typeof value === 'string' && value.trim()) return value
+  return fallback
+}
+
+const parseJsonSafely = async <T,>(res: Response): Promise<T | null> => {
+  try {
+    return (await res.json()) as T
+  } catch {
+    return null
+  }
+}
+
 // ─── Payment Form ────────────────────────────────────────────────────────────
 
 interface PaymentFormProps {
   dbOrderId: string
   onSuccess: (id: string) => void
   onError: (msg: string) => void
+  billingDetails: {
+    email?: string
+    address: {
+      country: string
+    }
+  }
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ dbOrderId, onSuccess, onError }) => {
+const PaymentForm: React.FC<PaymentFormProps> = ({ dbOrderId, onSuccess, onError, billingDetails }) => {
   const stripe = useStripe()
   const elements = useElements()
   const [paying, setPaying] = useState(false)
@@ -29,6 +54,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ dbOrderId, onSuccess, onError
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       redirect: 'if_required',
+      confirmParams: {
+        payment_method_data: {
+          billing_details: billingDetails,
+        },
+      },
     })
     if (error) {
       onError(error.message || 'Payment failed')
@@ -44,7 +74,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ dbOrderId, onSuccess, onError
   return (
     <form onSubmit={handlePay} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div className="stripe-element-wrapper">
-        <PaymentElement options={{ layout: 'tabs', fields: { billingDetails: { address: 'never' } } }} />
+        <PaymentElement options={{ layout: 'tabs' }} />
       </div>
       <button className="btn-primary" type="submit" disabled={!stripe || paying}
         style={{ padding: '18px', fontSize: '15px' }} id="cafe-pay-now-btn">
@@ -85,7 +115,7 @@ export default function CafeCheckoutPage() {
         setCart(d.items || [])
         setShop(d.shop || null)
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setCartLoading(false))
   }, [])
 
@@ -95,7 +125,7 @@ export default function CafeCheckoutPage() {
     fetch(`/api/user-wt-coins?where[user][equals]=${user.id}`)
       .then((r) => r.json())
       .then((d) => setCoinBalance(d.docs?.[0]?.totalBalance || 0))
-      .catch(() => {})
+      .catch(() => { })
   }, [user])
 
   // Fetch slots for selected shop
@@ -105,11 +135,14 @@ export default function CafeCheckoutPage() {
     fetch(`/api/slots?where[shop][equals]=${shopId}&where[isActive][equals]=true&limit=20`)
       .then((r) => r.json())
       .then((d) => setSlots(d.docs || []))
-      .catch(() => {})
+      .catch(() => { })
   }, [shop])
 
   const subtotal = cart.reduce((s, item) => s + item.price * item.quantity, 0)
   const shopId = shop?.id || shop
+  const displaySuccessOrderId = successOrderId ? String(successOrderId) : ''
+  const displayDbOrderId = dbOrderId ? String(dbOrderId) : ''
+  const readyForPayment = typeof clientSecret === 'string' && clientSecret.length > 0 && !!displayDbOrderId
 
   const handlePlaceOrder = async () => {
     if (!shopId) { setError('Missing shop information.'); return }
@@ -130,13 +163,21 @@ export default function CafeCheckoutPage() {
           useWTCoins,
         }),
       })
-      const data = await res.json()
+      const data = await parseJsonSafely<CheckoutResponse>(res)
       if (!res.ok) {
-        setError(data.error || 'Failed to place order')
+        setError(getErrorMessage('Failed to place order', data?.error))
         return
       }
-      setClientSecret(data.clientSecret)
-      setDbOrderId(data.dbOrderId)
+      const nextClientSecret = typeof data?.clientSecret === 'string' ? data.clientSecret : ''
+      const nextOrderId = data?.dbOrderId !== null && data?.dbOrderId !== undefined ? String(data.dbOrderId) : ''
+
+      if (!nextClientSecret || !nextOrderId) {
+        setError('Checkout response was incomplete. Please try again.')
+        return
+      }
+
+      setClientSecret(nextClientSecret)
+      setDbOrderId(nextOrderId)
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred')
     } finally {
@@ -146,13 +187,13 @@ export default function CafeCheckoutPage() {
 
   // ─── Success ─────────────────────────────────────────────────────────────
 
-  if (successOrderId) {
+  if (displaySuccessOrderId) {
     return (
       <div className="container flex-center animate-up" style={{ minHeight: '70vh', flexDirection: 'column', gap: '24px', textAlign: 'center' }}>
         <div style={{ fontSize: '72px' }}>☕</div>
         <h1 style={{ fontSize: '48px', fontWeight: '900' }}>Order Placed!</h1>
         <p style={{ fontSize: '18px', opacity: 0.6, maxWidth: '480px' }}>
-          Your cafe order <strong style={{ color: 'var(--primary)' }}>#{successOrderId.toString().slice(-8).toUpperCase()}</strong> is being prepared. We&apos;ll notify you when it&apos;s ready.
+          Your cafe order <strong style={{ color: 'var(--primary)' }}>#{displaySuccessOrderId.slice(-8).toUpperCase()}</strong> is being prepared. We&apos;ll notify you when it&apos;s ready.
         </p>
         <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
           <button className="btn-primary" onClick={() => router.push('/profile')}>View Orders</button>
@@ -164,27 +205,33 @@ export default function CafeCheckoutPage() {
 
   // ─── Payment Step ─────────────────────────────────────────────────────────
 
-  if (clientSecret && dbOrderId) {
+  if (readyForPayment) {
     return (
       <div className="container animate-up" style={{ padding: '60px 0', maxWidth: '580px' }}>
         <h1 style={{ fontSize: '36px', fontWeight: '900', marginBottom: '8px' }}>Complete Payment</h1>
         <p style={{ opacity: 0.5, marginBottom: '40px', fontSize: '14px' }}>
-          Order #{dbOrderId.toString().slice(-8).toUpperCase()} · AED {subtotal.toFixed(2)}
+          Order #{displayDbOrderId.slice(-8).toUpperCase()} · AED {subtotal.toFixed(2)}
         </p>
         <div className="glass" style={{ padding: '32px' }}>
           <Elements stripe={stripePromise} options={{
-            clientSecret,
+            clientSecret: clientSecret!,
             appearance: {
               theme: 'night',
               variables: { colorPrimary: '#c4a484', colorBackground: '#0f0c09', colorText: '#f5f5f5', fontFamily: 'Outfit, sans-serif', borderRadius: '12px' }
             }
           }}>
             <PaymentForm
-              dbOrderId={dbOrderId}
+              dbOrderId={displayDbOrderId}
+              billingDetails={{
+                email: user?.email || undefined,
+                address: {
+                  country: 'AE',
+                },
+              }}
               onSuccess={(id) => {
                 setSuccessOrderId(id)
                 // Clear app cart
-                fetch('/api/app/cart', { method: 'DELETE', credentials: 'include' }).catch(() => {})
+                fetch('/api/app/cart', { method: 'DELETE', credentials: 'include' }).catch(() => { })
               }}
               onError={(msg) => { setError(msg); setClientSecret(null) }}
             />

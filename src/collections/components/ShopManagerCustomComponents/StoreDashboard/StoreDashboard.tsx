@@ -20,18 +20,6 @@ export const StoreDashboard: React.FC<AdminViewProps> = async ({
     redirect('/admin')
   }
 
-  // Admin/super-admin: fetch all shops for the picker
-  let shopDoc: any = null
-  let allShops: any[] = []
-
-  const shopResult = await req.payload.find({
-    collection: 'shop',
-    limit: 100,
-    depth: 0,
-  })
-  allShops = shopResult.docs
-  shopDoc = shopResult.docs[0] || null
-
   // Today's date range (for delivered/cancelled sections only)
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
@@ -97,9 +85,6 @@ export const StoreDashboard: React.FC<AdminViewProps> = async ({
         initialOrders={activeOrders as any}
         initialDelivered={deliveredOrders as any}
         initialCancelled={cancelledOrders as any}
-        shopDoc={shopDoc as any}
-        isAdmin={true}
-        allShops={allShops as any}
       />
     </DefaultTemplate>
   )

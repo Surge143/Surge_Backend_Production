@@ -364,7 +364,7 @@ export default function ProfilePage() {
               orders.map((order, i) => (
                 <div key={i} style={styles.orderRow}>
                   <div>
-                    <p style={{ fontWeight: '800' }}>Order #{order.id.slice(-6)}</p>
+                    <p style={{ fontWeight: '800' }}>Order #{String(order.id).slice(-6)}</p>
                     <p style={{ fontSize: '12px', opacity: 0.5 }}>
                       {new Date(order.createdAt).toLocaleDateString()}
                     </p>

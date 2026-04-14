@@ -1,5 +1,5 @@
 'use client'
-import React, { useRef, useState, useEffect } from 'react'
+import React from 'react'
 import { C } from '../constants'
 import { SearchIcon, StoreIcon } from './UIAtoms'
 
@@ -7,42 +7,9 @@ interface TopBarProps {
   counts: { new: number; shipped: number }
   search: string
   onSearch: (v: string) => void
-  shopName?: string
-  isAdmin?: boolean
-  allShops?: any[]
-  currentShopId?: string | null
-  onShopChange?: (shopId: string) => void
-  shopSwitching?: boolean
 }
 
-export const TopBar: React.FC<TopBarProps> = ({
-  counts,
-  search,
-  onSearch,
-  shopName,
-  isAdmin = false,
-  allShops = [],
-  currentShopId,
-  onShopChange,
-  shopSwitching = false,
-}) => {
-  const [dropOpen, setDropOpen] = useState(false)
-  const dropRef = useRef<HTMLDivElement>(null)
-
-  const canSwitch = isAdmin && allShops.length > 1 && !!onShopChange
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!dropOpen) return
-    const handler = (e: MouseEvent) => {
-      if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
-        setDropOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [dropOpen])
-
+export const TopBar: React.FC<TopBarProps> = ({ counts, search, onSearch }) => {
   const chipData = [
     { key: 'new' as const, label: 'New', color: C.new, bg: C.newBg, border: C.newBorder },
     {
@@ -66,110 +33,27 @@ export const TopBar: React.FC<TopBarProps> = ({
         minWidth: 0,
       }}
     >
-      {/* Brand — clickable shop switcher for admins */}
-      <div style={{ position: 'relative', marginRight: 4 }} ref={dropRef}>
+      {/* Brand */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 4 }}>
         <div
-          onClick={() => canSwitch && setDropOpen((p) => !p)}
           style={{
+            width: 30,
+            height: 30,
+            background: C.new,
+            borderRadius: 8,
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
-            cursor: canSwitch ? 'pointer' : 'default',
-            padding: canSwitch ? '4px 8px 4px 4px' : undefined,
-            borderRadius: 8,
-            border: canSwitch ? `1px solid ${dropOpen ? C.new : 'transparent'}` : 'none',
-            background: dropOpen ? C.newBg : 'transparent',
-            transition: 'all .12s',
+            justifyContent: 'center',
+            flexShrink: 0,
           }}
         >
-          <div
-            style={{
-              width: 30,
-              height: 30,
-              background: C.new,
-              borderRadius: 8,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <StoreIcon />
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.2 }}>
-                {shopSwitching ? 'Loading…' : shopName || 'White Mantis Store'}
-              </span>
-              {canSwitch && (
-                <span style={{ fontSize: 10, color: C.textMute, lineHeight: 1 }}>
-                  {dropOpen ? '▲' : '▼'}
-                </span>
-              )}
-            </div>
-          </div>
+          <StoreIcon />
         </div>
-
-        {/* Dropdown */}
-        {dropOpen && canSwitch && (
-          <div
-            className="peekIn"
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 6px)',
-              left: 0,
-              zIndex: 999,
-              background: C.surface,
-              border: `1px solid ${C.border}`,
-              borderRadius: 10,
-              boxShadow: '0 8px 24px rgba(0,0,0,.12)',
-              minWidth: 220,
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                padding: '8px 12px 6px',
-                fontSize: 10,
-                fontWeight: 600,
-                color: C.textMute,
-                letterSpacing: 0.5,
-              }}
-            >
-              SELECT SHOP
-            </div>
-            {allShops.map((s: any) => {
-              const id = String(s.id)
-              const label = s.address?.street || s.name || `Shop ${id}`
-              const isSelected = id === currentShopId
-              return (
-                <div
-                  key={id}
-                  className="hrow"
-                  onClick={() => {
-                    onShopChange!(id)
-                    setDropOpen(false)
-                  }}
-                  style={{
-                    padding: '9px 14px',
-                    fontSize: 12,
-                    fontWeight: isSelected ? 600 : 400,
-                    color: isSelected ? C.new : C.text,
-                    background: isSelected ? C.newBg : 'transparent',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    borderTop: `1px solid ${C.border}`,
-                  }}
-                >
-                  <span>{label}</span>
-                  {isSelected && <span style={{ fontSize: 11, color: C.new }}>✓</span>}
-                </div>
-              )
-            })}
-          </div>
-        )}
+        <div>
+          <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.2 }}>
+            Store Dashboard
+          </span>
+        </div>
       </div>
 
       {/* Count chips */}

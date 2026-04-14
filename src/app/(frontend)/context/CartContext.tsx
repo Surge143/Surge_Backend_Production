@@ -138,6 +138,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Clear the existing cart then add the new item
     setLoading(true)
     try {
+      await fetch('/api/app/cart', { method: 'DELETE', credentials: 'include' }).catch(() => {})
       await fetch('/api/website/cart/clear', { method: 'POST', credentials: 'include' })
       const res = await fetch('/api/website/cart', {
         method: 'POST',
