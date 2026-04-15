@@ -66,6 +66,16 @@ export const StoreDashboardClient: React.FC<Props> = ({
 
     const socket = io(socketUrl, { path: '/socket.io' })
 
+    socket.on('connect', () => {
+      console.log('[Socket.IO Store] ✅ Connected, id:', socket.id)
+    })
+    socket.on('connect_error', (err) => {
+      console.error('[Socket.IO Store] ❌ Connection error:', err.message)
+    })
+    socket.on('disconnect', (reason) => {
+      console.warn('[Socket.IO Store] Disconnected:', reason)
+    })
+
     socket.on('web-order-created', (raw: any) => {
       if (raw.paymentStatus !== 'completed') return
       const formatted = formatOrder(raw)
