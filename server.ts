@@ -6,7 +6,8 @@ import { parse } from 'url'
 import { Cron } from 'croner'
 
 const dev = process.env.NODE_ENV !== 'production'
-const hostname = 'localhost'
+// const hostname = 'localhost'
+const hostname = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost'
 const port = parseInt(process.env.PORT || '3000', 10)
 
 // when using middleware `hostname` and `port` must be provided below

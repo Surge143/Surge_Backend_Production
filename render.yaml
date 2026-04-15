@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: surge-backend
+    env: node
+    plan: free
+    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm run build
+    startCommand: cross-env NODE_ENV=production NODE_OPTIONS=--no-deprecation tsx server.ts
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ENABLE_CRON
+        value: true
