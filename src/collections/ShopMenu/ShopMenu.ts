@@ -288,9 +288,6 @@ export const ShopMenu: CollectionConfig = {
                   name: 'template',
                   type: 'relationship',
                   relationTo: 'customization-template',
-                  admin: {
-                    readOnly: true,
-                  },
                 },
                 {
                   name: 'sections',

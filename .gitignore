@@ -55,3 +55,5 @@ src/config/*
 # Developer activity logs (local only)
 devlog/
 .planning/
+docs/
+/README.md

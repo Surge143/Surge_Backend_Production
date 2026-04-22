@@ -114,7 +114,7 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
                 const currentShopId = data.shop || (originalDoc?.shop ? (typeof originalDoc.shop === 'object' ? originalDoc.shop.id : originalDoc.shop) : null);
 
                 // If the shop of the new item is different from the cart's current shop
-                if (currentShopId && currentShopId !== targetShopId) {
+                if (currentShopId && String(currentShopId) !== String(targetShopId)) {
                     // WIPE: Keep only items belonging to the new shop
                     // First, we need to fetch all incoming shop items to check their shops
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,7 +125,7 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
                     }));
 
                     data.items = itemsWithShops
-                        .filter(pkg => pkg.shop === targetShopId)
+                        .filter(pkg => String(pkg.shop) === String(targetShopId))
                         .map(pkg => pkg.item);
 
                     data.shop = targetShopId;
@@ -192,8 +192,12 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
 
                 if (!shopMenuItem) continue;
 
-                // Shop consistency check
-                if (shopId && shopMenuItem.shop !== shopId) {
+                // Shop consistency check — normalize both sides to string to avoid number/string type mismatch
+                const itemShopId = typeof shopMenuItem.shop === 'object' && shopMenuItem.shop !== null
+                    ? String(shopMenuItem.shop.id)
+                    : String(shopMenuItem.shop ?? '');
+                const cartShopId = String(shopId ?? '');
+                if (cartShopId && itemShopId && itemShopId !== cartShopId) {
                     throw new Error(`Item ${shopMenuItem.name} does not belong to the selected shop.`);
                 }
 

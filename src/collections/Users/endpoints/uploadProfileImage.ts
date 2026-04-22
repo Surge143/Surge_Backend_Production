@@ -36,9 +36,9 @@ export const uploadProfileImage: PayloadHandler = async (req) => {
         }
 
         // --- VALIDATIONS ---
-        const MAX_SIZE = 100 * 1024
+        const MAX_SIZE = 1 * 1024 * 1024
         if (buffer.length > MAX_SIZE) {
-            return NextResponse.json({ error: 'Image size exceeds 100KB limit' }, { status: 400 })
+            return NextResponse.json({ error: 'Image size exceeds 1MB limit' }, { status: 400 })
         }
 
         const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
