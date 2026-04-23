@@ -2,7 +2,8 @@ import { PayloadHandler } from "payload";
 
 export const getAllItemsHandler: PayloadHandler = async (req) => {
     const { payload, query } = req
-    const { shopId, categoryId } = (req.routeParams || {}) as any
+    const { shopId } = (req.routeParams || {}) as any
+    const categoryId = query.categoryId as string | undefined
     const page = parseInt(query.page as string) || 1
     const limit = parseInt(query.limit as string) || 10
 

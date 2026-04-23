@@ -70,6 +70,15 @@ export const ShopMenuQuickCreate: React.FC = () => {
         ))
     }
 
+    const stripIds = (value: any): any => {
+        if (Array.isArray(value)) return value.map(stripIds)
+        if (value && typeof value === 'object') {
+            const { id: _id, ...rest } = value
+            return Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, stripIds(v)]))
+        }
+        return value
+    }
+
     const handleCreate = async () => {
         if (selectedItems.length === 0) {
             alert('Please select at least one product.')
@@ -120,7 +129,7 @@ export const ShopMenuQuickCreate: React.FC = () => {
                     dietaryType: globalItem.dietaryType,
                     stockCount: parseInt(String(selection?.stockCount ?? 0)) || 0,
                     inStock: selection?.inStock ?? true,
-                    customizations: globalItem.customizations,
+                    customizations: stripIds(globalItem.customizations),
                 }
 
                 const res = await fetch('/api/shop-menu', {

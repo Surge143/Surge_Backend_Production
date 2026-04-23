@@ -55,7 +55,7 @@ import { ExportSaveButton as ExportSaveButton_7d8c2ee66d868f2af498f46de2c9b2f8 }
 import { ImportPreview as ImportPreview_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
 import { FolderTypeField as FolderTypeField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
 import { ShopManagerDashboardLink as ShopManagerDashboardLink_167428d647347319b1ef8a5907bede83 } from '@/collections/components/Navbar/ShopManagerDashboardLink'
-import { S3ClientUploadHandler as S3ClientUploadHandler_payloadcms_storage_s3 } from '@payloadcms/storage-s3/client'
+import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
 import { ImportExportProvider as ImportExportProvider_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
 import { ShopManagerDashboard as ShopManagerDashboard_8333465cff1e575b1730266ecf0cec9a } from '@/collections/components/ShopManagerCustomComponents/ShopManagerDashboard/ShopManagerDashboard'
 import { StoreDashboard as StoreDashboard_3c37493a0b0d21ca3fcbccd797c23d1a } from '@/collections/components/ShopManagerCustomComponents/StoreDashboard/StoreDashboard'
@@ -119,7 +119,7 @@ export const importMap = {
   "payload-import-export/rsc#ImportPreview": ImportPreview_7d8c2ee66d868f2af498f46de2c9b2f8,
   "@payloadcms/next/client#FolderTypeField": FolderTypeField_2b8867833a34864a02ddf429b0728a40,
   "@/collections/components/Navbar/ShopManagerDashboardLink#ShopManagerDashboardLink": ShopManagerDashboardLink_167428d647347319b1ef8a5907bede83,
-  "@payloadcms/storage-s3/client#S3ClientUploadHandler": S3ClientUploadHandler_payloadcms_storage_s3,
+  "@payloadcms/storage-s3/client#S3ClientUploadHandler": S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24,
   "payload-import-export/rsc#ImportExportProvider": ImportExportProvider_7d8c2ee66d868f2af498f46de2c9b2f8,
   "@/collections/components/ShopManagerCustomComponents/ShopManagerDashboard/ShopManagerDashboard#ShopManagerDashboard": ShopManagerDashboard_8333465cff1e575b1730266ecf0cec9a,
   "@/collections/components/ShopManagerCustomComponents/StoreDashboard/StoreDashboard#StoreDashboard": StoreDashboard_3c37493a0b0d21ca3fcbccd797c23d1a,

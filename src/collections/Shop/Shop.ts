@@ -16,7 +16,6 @@ export const Shop: CollectionConfig = {
     { path: '/:shopId/coupons/:couponCode', method: 'get', handler: validateAppCouponHandler },
     { path: '/:shopId/coupons', method: 'get', handler: getShopCouponsHandler },
     { path: '/:shopId/menu-items', method: 'get', handler: getAllItemsHandler },
-    { path: '/:shopId/menu-items/category/:categoryId', method: 'get', handler: getAllItemsHandler },
     { path: '/:shopId/best-seller', method: 'get', handler: getBestSellerHandler },
     { path: '/:shopId/menu-items/:itemId', method: 'get', handler: individualItemHandler },
     { path: '/:shopId/barista', method: 'get', handler: getBaristaHandler },

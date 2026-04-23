@@ -78,11 +78,7 @@ export default buildConfig({
   plugins: [
     s3Storage({
       collections: {
-        media: {
-          disablePayloadAccessControl: true,
-          generateFileURL: ({ filename, prefix }) =>
-            `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET}/${prefix ? `${prefix}/` : ''}${filename}`,
-        },
+        media: true,
       },
       bucket: process.env.S3_BUCKET as string,
       config: {
