@@ -31,6 +31,12 @@ export const AppCategories: CollectionConfig = {
       type: 'text',
       required: true,
     },
+    {
+      name: 'image',
+      type: 'upload',
+      relationTo: 'media',
+      required: true,
+    },
     slugField({
       useAsSlug: 'title'
     })

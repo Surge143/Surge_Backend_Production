@@ -2,7 +2,7 @@ import { PayloadHandler } from "payload";
 
 export const getAllItemsHandler: PayloadHandler = async (req) => {
     const { payload, query } = req
-    const { shopId } = (req.routeParams || {}) as any
+    const { shopId, categoryId } = (req.routeParams || {}) as any
     const page = parseInt(query.page as string) || 1
     const limit = parseInt(query.limit as string) || 10
 
@@ -11,7 +11,6 @@ export const getAllItemsHandler: PayloadHandler = async (req) => {
     }
 
     try {
-        // ... existing shop check ...
         const shop = await payload.findByID({
             collection: 'shop',
             id: shopId,
@@ -21,14 +20,15 @@ export const getAllItemsHandler: PayloadHandler = async (req) => {
             return Response.json({ error: 'Shop not found' }, { status: 404 })
         }
 
-        // 1. Find the menu items for the specific shop with pagination
+        const whereClause: any = { shop: { equals: shopId } }
+
+        if (categoryId) {
+            whereClause.category = { equals: categoryId }
+        }
+
         const menuItems = await payload.find({
             collection: 'shop-menu',
-            where: {
-                shop: {
-                    equals: shopId,
-                },
-            },
+            where: whereClause,
             depth: 1,
             page,
             limit,
