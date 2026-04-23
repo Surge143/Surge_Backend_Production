@@ -66,6 +66,12 @@ export const Blogs: CollectionConfig = {
               },
             },
             {
+              name: 'shortDescription',
+              label: 'Short Description',
+              type: 'text',
+              required: true,
+            },
+            {
               name: 'featuredImage',
               label: 'Featured Hero Image',
               type: 'upload',

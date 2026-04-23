@@ -304,7 +304,6 @@ export interface User {
  */
 export interface Media {
   id: number;
-  cloudinaryPublicId?: string | null;
   alt: string;
   folder?: (number | null) | FolderInterface;
   updatedAt: string;
@@ -445,6 +444,7 @@ export interface Shop {
 export interface AppCategory {
   id: number;
   title: string;
+  image: number | Media;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -1569,6 +1569,7 @@ export interface AppBestSeller {
 export interface Blog {
   id: number;
   title: string;
+  shortDescription: string;
   /**
    * This image appears at the top of the blog and in social share previews.
    */
@@ -2138,6 +2139,7 @@ export interface AdminsSelect<T extends boolean = true> {
  */
 export interface AppCategoriesSelect<T extends boolean = true> {
   title?: T;
+  image?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
@@ -2148,7 +2150,6 @@ export interface AppCategoriesSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
-  cloudinaryPublicId?: T;
   alt?: T;
   folder?: T;
   updatedAt?: T;
@@ -2885,6 +2886,7 @@ export interface AppBestSellerSelect<T extends boolean = true> {
  */
 export interface BlogsSelect<T extends boolean = true> {
   title?: T;
+  shortDescription?: T;
   featuredImage?: T;
   content?: T;
   relatedBlogs?: T;

@@ -22,7 +22,6 @@ export const Media: CollectionConfig = {
   ],
   upload: {
     disableLocalStorage: true,
-    staticDir: 'tmp',
     adminThumbnail: 'thumbnail',
     mimeTypes: ['image/*', 'video/*'],
     imageSizes: [
