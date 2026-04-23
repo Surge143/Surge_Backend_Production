@@ -3,7 +3,7 @@ import { PayloadHandler } from "payload";
 export const getAllItemsHandler: PayloadHandler = async (req) => {
     const { payload, query } = req
     const { shopId } = (req.routeParams || {}) as any
-    const categoryId = query.categoryId as string | undefined
+    const categorySlug = query.categorySlug as string | undefined
     const page = parseInt(query.page as string) || 1
     const limit = parseInt(query.limit as string) || 10
 
@@ -23,8 +23,19 @@ export const getAllItemsHandler: PayloadHandler = async (req) => {
 
         const whereClause: any = { shop: { equals: shopId } }
 
-        if (categoryId) {
-            whereClause.category = { equals: categoryId }
+        if (categorySlug) {
+            const categoryResult = await payload.find({
+                collection: 'app-categories',
+                where: { slug: { equals: categorySlug } },
+                limit: 1,
+                depth: 0,
+            })
+
+            if (categoryResult.totalDocs === 0) {
+                return Response.json({ error: 'Category not found' }, { status: 404 })
+            }
+
+            whereClause.category = { equals: categoryResult.docs[0].id }
         }
 
         const menuItems = await payload.find({

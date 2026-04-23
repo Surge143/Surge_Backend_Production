@@ -70,11 +70,16 @@ export const ShopMenuQuickCreate: React.FC = () => {
         ))
     }
 
-    const stripIds = (value: any): any => {
-        if (Array.isArray(value)) return value.map(stripIds)
+    const cleanForPost = (value: any, isArrayItem = false): any => {
+        if (Array.isArray(value)) return value.map(item => cleanForPost(item, true))
         if (value && typeof value === 'object') {
+            if (!isArrayItem && 'id' in value) {
+                // Populated relationship object — collapse to its ID
+                return value.id
+            }
+            // Array row — strip the row ID, recurse into field values
             const { id: _id, ...rest } = value
-            return Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, stripIds(v)]))
+            return Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, cleanForPost(v, false)]))
         }
         return value
     }
@@ -129,7 +134,7 @@ export const ShopMenuQuickCreate: React.FC = () => {
                     dietaryType: globalItem.dietaryType,
                     stockCount: parseInt(String(selection?.stockCount ?? 0)) || 0,
                     inStock: selection?.inStock ?? true,
-                    customizations: stripIds(globalItem.customizations),
+                    customizations: cleanForPost(globalItem.customizations),
                 }
 
                 const res = await fetch('/api/shop-menu', {
