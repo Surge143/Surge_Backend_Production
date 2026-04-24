@@ -181,14 +181,11 @@ const StatusDot: React.FC<{ status?: string | null }> = ({ status }) => {
 }
 
 // ── URL guard ────────────────────────────────────────────────────────────────
-// Payload's local file serving route (/api/media/file/...) always returns 404
-// when disableLocalStorage is true and Cloudinary doesn't have the publicId.
-// Detect these broken URLs upfront so we skip straight to the placeholder.
+// With S3 storage (acl: public-read), both direct S3 URLs and Payload's
+// /api/media/file/ proxy route are valid. Only reject null/empty strings.
+// The onError handler below catches any runtime 404s as a safety net.
 function isServableUrl(url?: string | null): boolean {
-  if (!url) return false
-  // Local Payload file route — will 404 without local storage
-  if (url.includes('/api/media/file/')) return false
-  return true
+  return Boolean(url)
 }
 
 // ── Main Component ───────────────────────────────────────────────────────────
@@ -772,8 +769,7 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                   />
                 </div>
 
-                {/* Image — guard against local Payload URLs that 404 when Cloudinary
-                    doesn't have the publicId, and degrade gracefully at runtime */}
+                {/* Image — degrade gracefully at runtime if the S3 URL is broken */}
                 <div style={{ padding: '8px 8px 8px 0', display: 'flex', alignItems: 'center' }}>
                   {isServableUrl(product.productImage?.url) && !brokenImgs.has(product.id) ? (
                     <img
