@@ -842,6 +842,7 @@ export interface WebProduct {
 export interface WebCategory {
   id: number;
   title: string;
+  image: number | Media;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -2540,6 +2541,7 @@ export interface AppOrdersSelect<T extends boolean = true> {
  */
 export interface WebCategoriesSelect<T extends boolean = true> {
   title?: T;
+  image?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;

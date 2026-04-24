@@ -34,6 +34,12 @@ export const WebCategories: CollectionConfig = {
       type: 'text',
       required: true,
     },
+    {
+      name: 'image',
+      type: 'upload',
+      relationTo: 'media',
+      required: true,
+    },
     slugField({
       useAsSlug: 'title',
     }),
