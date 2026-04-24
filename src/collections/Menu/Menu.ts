@@ -360,6 +360,10 @@ export const Menu: CollectionConfig = {
               name: 'isStampEligible',
               label: 'Stamp Eligible',
               type: 'checkbox',
+              access: {
+                update: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+                create: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+              },
               admin: {
                 description:
                   'Enable this to allow customers to earn a loyalty stamp when they purchase this item.',
@@ -369,6 +373,10 @@ export const Menu: CollectionConfig = {
               name: 'isStampFreeProduct',
               label: 'Stamp Free Product',
               type: 'checkbox',
+              access: {
+                update: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+                create: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+              },
               admin: {
                 description:
                   'Enable this if this item can be redeemed for free once a customer has collected enough stamps.',

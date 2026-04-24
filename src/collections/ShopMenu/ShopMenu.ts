@@ -97,7 +97,21 @@ export const ShopMenu: CollectionConfig = {
           delete data.isStampEligible
           delete data.isStampFreeProduct
         }
-
+        // On create, inherit loyalty flags from the linked Menu item
+        if (operation === 'create' && data.menuRelation?.length) {
+          const menuIds = data.menuRelation.map((id: any) => (typeof id === 'object' ? id.id : id))
+          const menuItems = await payload.find({
+            collection: 'menu',
+            where: { id: { in: menuIds } },
+            depth: 0,
+            overrideAccess: true,
+          })
+          const menuItem = menuItems.docs[0]
+          if (menuItem) {
+            data.isStampEligible = menuItem.isStampEligible ?? false
+            data.isStampFreeProduct = menuItem.isStampFreeProduct ?? false
+          }
+        }
         return data
       },
     ],
@@ -385,11 +399,14 @@ export const ShopMenu: CollectionConfig = {
               label: 'Stamp Eligible',
               type: 'checkbox',
               defaultValue: false,
+              access: {
+                update: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+                create: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+              },
               admin: {
                 description:
                   'Enable to allow customers to earn a loyalty stamp when purchasing this item. (Admin only — synced from Menu)',
                 condition: (data, siblingData, { user }) => user?.role !== 'shop-manager',
-                readOnly: true,
               },
             },
             {
@@ -397,11 +414,14 @@ export const ShopMenu: CollectionConfig = {
               label: 'Stamp Free Product',
               type: 'checkbox',
               defaultValue: false,
+              access: {
+                update: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+                create: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
+              },
               admin: {
                 description:
                   'Enable if this item can be redeemed for free once a customer has collected enough stamps. (Admin only — synced from Menu)',
                 condition: (data, siblingData, { user }) => user?.role !== 'shop-manager',
-                readOnly: true,
               },
             },
           ],
