@@ -40,6 +40,50 @@ export const WebCategories: CollectionConfig = {
       relationTo: 'media',
       required: true,
     },
+    {
+      name: 'brewingGuide',
+      type: 'group',
+      fields: [
+        {
+          name: 'tabs',
+          label: 'Tabs',
+          type: 'array',
+          fields: [
+            {
+              name: 'tabName',
+              type: 'text',
+              required: true,
+            },
+            {
+              name: 'video',
+              type: 'upload',
+              relationTo: 'media',
+              required: true,
+              admin: {
+                description: 'Upload video',
+              },
+              filterOptions: { mimeType: { contains: 'video' } },
+            },
+            {
+              name: 'parameters',
+              type: 'array',
+              required: true,
+              fields: [
+                {
+                  name: 'label',
+                  type: 'text',
+                },
+                {
+                  name: 'value',
+                  required: true,
+                  type: 'text',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
     slugField({
       useAsSlug: 'title',
     }),

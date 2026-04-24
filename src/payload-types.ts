@@ -843,6 +843,23 @@ export interface WebCategory {
   id: number;
   title: string;
   image: number | Media;
+  brewingGuide?: {
+    tabs?:
+      | {
+          tabName: string;
+          /**
+           * Upload video
+           */
+          video: number | Media;
+          parameters: {
+            label?: string | null;
+            value: string;
+            id?: string | null;
+          }[];
+          id?: string | null;
+        }[]
+      | null;
+  };
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -2542,6 +2559,24 @@ export interface AppOrdersSelect<T extends boolean = true> {
 export interface WebCategoriesSelect<T extends boolean = true> {
   title?: T;
   image?: T;
+  brewingGuide?:
+    | T
+    | {
+        tabs?:
+          | T
+          | {
+              tabName?: T;
+              video?: T;
+              parameters?:
+                | T
+                | {
+                    label?: T;
+                    value?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+      };
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
