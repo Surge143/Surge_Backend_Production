@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
             collection: 'wishlist',
             where: { user: { equals: user.id } },
             limit: 1,
+            depth: 0
         });
 
         const wishlist = wishlists.docs?.[0];
@@ -246,6 +247,7 @@ export async function DELETE(request: NextRequest) {
             collection: 'wishlist',
             where: { user: { equals: user.id } },
             limit: 1,
+            depth: 0
         });
 
         const wishlist: any = wishlists.docs?.[0];
