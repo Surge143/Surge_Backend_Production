@@ -18,6 +18,32 @@ export const Slots: CollectionConfig = {
       return !isAuthorized
     },
   },
+  access: {
+    read: ({ req: { user } }) => {
+      if (user?.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return true
+    },
+    create: ({ req: { user } }) =>
+      user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager',
+    update: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.role === 'admin' || user.role === 'super-admin') return true
+      if (user.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return false
+    },
+    delete: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.role === 'admin' || user.role === 'super-admin') return true
+      if (user.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return false
+    },
+  },
   hooks: {
     beforeChange: [
       async ({ data, req, operation }) => {
@@ -26,35 +52,73 @@ export const Slots: CollectionConfig = {
         // 1. AUTO-ASSIGN SHOP AND MANAGER (Existing Logic)
         if (operation === 'create' && user) {
           data.shopManager = user.id
-          const managedShop = await payload.find({
-            collection: 'shop',
-            where: { shopManager: { equals: user.id } },
-            limit: 1,
-          })
-          if (managedShop.docs.length > 0) {
-            data.shop = managedShop.docs[0].id
+
+          if (user.role === 'shop-manager') {
+            const managedShops = await payload.find({
+              collection: 'shop',
+              where: { shopManager: { equals: user.id } },
+              depth: 0,
+            })
+
+            if (managedShops.docs.length === 0) {
+              throw new APIError('You do not have a shop assigned to your account.', 400)
+            } else if (managedShops.docs.length === 1) {
+              data.shop = managedShops.docs[0].id
+            } else {
+              if (!data.shop) {
+                throw new APIError(
+                  'You manage multiple shops. Please select a shop before saving.',
+                  400,
+                )
+              }
+              const isOwned = managedShops.docs.some((s) => String(s.id) === String(data.shop))
+              if (!isOwned) {
+                throw new APIError('The selected shop does not belong to your account.', 403)
+              }
+            }
           }
         }
 
-        // 2. ENFORCE SINGLE "NOW" SLOT ACROSS COLLECTION
-        if (data.timeSelection === 'now') {
+        // 2. ENFORCE SINGLE "NOW" SLOT PER SHOP
+        if (data.timeSelection === 'now' && data.shop) {
           const existingNow = await payload.find({
             collection: 'slots',
             where: {
               and: [
                 { timeSelection: { equals: 'now' } },
-                // If updating, don't count the current record itself
+                { shop: { equals: data.shop } },
                 { id: { not_equals: data.id || '' } },
               ],
             },
             limit: 1,
+            overrideAccess: true,
           })
 
           if (existingNow.totalDocs > 0) {
             throw new APIError(
-              'A "Now" slot already exists. You must change the existing one to "Specific Time" before creating a new one.',
-              400, // Bad Request status code
+              'A "Now" slot already exists for this shop. Change the existing one to "Specific Time" first.',
+              400,
             )
+          }
+        }
+
+        // 3. ENFORCE UNIQUE SLOT TIME PER SHOP
+        if (data.timeSelection === 'custom' && data.slot && data.shop) {
+          const existingSlot = await payload.find({
+            collection: 'slots',
+            where: {
+              and: [
+                { slot: { equals: data.slot } },
+                { shop: { equals: data.shop } },
+                { id: { not_equals: data.id || '' } },
+              ],
+            },
+            limit: 1,
+            overrideAccess: true,
+          })
+
+          if (existingSlot.totalDocs > 0) {
+            throw new APIError('A slot with this time already exists for this shop.', 400)
           }
         }
 
@@ -102,7 +166,6 @@ export const Slots: CollectionConfig = {
       name: 'slot',
       type: 'date',
       label: 'Slot Time',
-      unique: true,
       admin: {
         date: {
           pickerAppearance: 'timeOnly',
@@ -159,9 +222,15 @@ export const Slots: CollectionConfig = {
       type: 'relationship',
       relationTo: 'shop',
       label: 'Shop',
+      filterOptions: ({ user }) => {
+        if (user?.role === 'shop-manager') {
+          return { shopManager: { equals: user.id } }
+        }
+        return true
+      },
       admin: {
         position: 'sidebar',
-        description: 'Auto-assigned based on your manager account.',
+        description: 'Auto-assigned for single-shop managers. Select your shop if you manage multiple.',
       },
     },
     {

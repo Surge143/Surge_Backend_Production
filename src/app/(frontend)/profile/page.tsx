@@ -76,6 +76,7 @@ export default function ProfilePage() {
       const res = await fetch(`/api/users/${user.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(profileForm),
       })
       if (res.ok) {
@@ -161,7 +162,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <h1 style={{ fontSize: '40px', fontWeight: '900' }}>
-              {user.firstName ? `${user.firstName} ${user.lastName || ''}` : 'Mantis Member'}
+              {user.firstName ? `${user.firstName} ${user.lastName || ''}` : 'Surge Member'}
             </h1>
             <p style={{ opacity: 0.6 }}>{user.email}</p>
           </div>
@@ -172,8 +173,8 @@ export default function ProfilePage() {
           </button>
           <button
             className="btn-primary"
-            onClick={() => {
-              logout()
+            onClick={async () => {
+              await logout()
               router.push('/')
             }}
           >
@@ -363,7 +364,7 @@ export default function ProfilePage() {
               orders.map((order, i) => (
                 <div key={i} style={styles.orderRow}>
                   <div>
-                    <p style={{ fontWeight: '800' }}>Order #{order.id.slice(-6)}</p>
+                    <p style={{ fontWeight: '800' }}>Order #{String(order.id).slice(-6)}</p>
                     <p style={{ fontSize: '12px', opacity: 0.5 }}>
                       {new Date(order.createdAt).toLocaleDateString()}
                     </p>

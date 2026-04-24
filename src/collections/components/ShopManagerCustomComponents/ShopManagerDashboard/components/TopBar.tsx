@@ -14,7 +14,6 @@ interface TopBarProps {
   onGoLive: () => void
   onPause: () => void
   shopName?: string
-  isAdmin?: boolean
   allShops?: any[]
   currentShopId?: string | null
   onShopChange?: (shopId: string) => void
@@ -32,7 +31,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onGoLive,
   onPause,
   shopName,
-  isAdmin = false,
+
   allShops = [],
   currentShopId,
   onShopChange,
@@ -45,7 +44,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   const [dropOpen, setDropOpen] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
 
-  const canSwitch = isAdmin && allShops.length > 1 && !!onShopChange
+  const canSwitch = allShops.length > 1 && !!onShopChange
 
   // Close dropdown on outside click
   useEffect(() => {

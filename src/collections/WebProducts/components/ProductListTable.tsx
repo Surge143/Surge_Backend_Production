@@ -23,7 +23,9 @@ interface Product {
   salePrice?: number | null
   inStock?: boolean | null
   stockQuantity?: number | null
-  productImage?: { url?: string } | null
+  // Payload sometimes returns a bare numeric ID instead of the populated
+  // media object when draft=true and depth=1. We resolve these below.
+  productImage?: { url?: string } | number | null
   categories?: { name?: string } | null
   updatedAt?: string
 }
@@ -92,8 +94,44 @@ export const ProductListTable: React.FC = () => {
   useEffect(() => {
     fetch('/api/web-products?limit=500&depth=1&sort=name&draft=true')
       .then((r) => r.json())
-      .then((data) => {
-        setProducts(data.docs ?? [])
+      .then(async (data) => {
+        const docs: Product[] = data.docs ?? []
+
+        // ── Batch-resolve any productImage that came back as a bare ID ────────
+        // With drafts enabled, Payload sometimes skips populating relationships
+        // and returns just the numeric ID. We collect all such IDs, fetch them
+        // in a single /api/media request, then merge the results back.
+        const unresolvedIds = [
+          ...new Set(
+            docs
+              .map((p) => p.productImage)
+              .filter((img): img is number => typeof img === 'number'),
+          ),
+        ]
+
+        if (unresolvedIds.length > 0) {
+          try {
+            const mediaRes = await fetch(
+              `/api/media?where[id][in]=${unresolvedIds.join(',')}&limit=${unresolvedIds.length}&depth=0`,
+            )
+            const mediaData = await mediaRes.json()
+            const mediaMap: Record<number, { url?: string }> = {}
+            for (const m of mediaData.docs ?? []) {
+              mediaMap[m.id] = m
+            }
+            // Swap bare IDs for the full media objects
+            for (const p of docs) {
+              if (typeof p.productImage === 'number') {
+                p.productImage = mediaMap[p.productImage] ?? null
+              }
+            }
+          } catch {
+            // Non-fatal: images might just not show for this render
+          }
+        }
+        // ────────────────────────────────────────────────────────────────────
+
+        setProducts(docs)
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -165,8 +203,10 @@ export const ProductListTable: React.FC = () => {
             />
             {search && (
               <button onClick={() => setSearch('')}
-                style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', color: '#444', fontSize: 14, cursor: 'pointer', padding: 0 }}>
+                style={{
+                  position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', color: '#444', fontSize: 14, cursor: 'pointer', padding: 0
+                }}>
                 ×
               </button>
             )}
@@ -225,16 +265,20 @@ export const ProductListTable: React.FC = () => {
                         : '1px solid var(--theme-elevation-150, #161616)',
                   }}
                 >
-                  {/* Image */}
+                  {/* Image — productImage is always a resolved object by this point */}
                   <div style={{ padding: '10px 8px 10px 10px' }}>
-                    {product.productImage?.url ? (
+                    {typeof product.productImage === 'object' && product.productImage?.url ? (
                       <img src={product.productImage.url} alt={product.name}
-                        style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 4, display: 'block',
-                          border: '1px solid var(--theme-elevation-200, #1e1e1e)' }} />
+                        style={{
+                          width: 36, height: 36, objectFit: 'cover', borderRadius: 4, display: 'block',
+                          border: '1px solid var(--theme-elevation-200, #1e1e1e)'
+                        }} />
                     ) : (
-                      <div style={{ width: 36, height: 36, borderRadius: 4,
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 4,
                         background: 'var(--theme-elevation-150, #1a1a1a)',
-                        border: '1px solid var(--theme-elevation-200, #1e1e1e)' }} />
+                        border: '1px solid var(--theme-elevation-200, #1e1e1e)'
+                      }} />
                     )}
                   </div>
 
@@ -265,16 +309,20 @@ export const ProductListTable: React.FC = () => {
                       )}
                     </div>
                     {product.slug && (
-                      <div style={{ fontSize: 11, color: '#555', marginTop: 2, overflow: 'hidden',
-                        textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{
+                        fontSize: 11, color: '#555', marginTop: 2, overflow: 'hidden',
+                        textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                      }}>
                         {product.slug}
                       </div>
                     )}
                   </div>
 
                   {/* Category */}
-                  <div style={{ padding: '10px 8px', fontSize: 12, color: '#888',
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{
+                    padding: '10px 8px', fontSize: 12, color: '#888',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                  }}>
                     {(product.categories as any)?.name ?? '—'}
                   </div>
 
@@ -343,8 +391,10 @@ export const ProductListTable: React.FC = () => {
                       </div>
 
                       {/* Variant name */}
-                      <div style={{ padding: '7px 8px', fontSize: 12, color: '#888',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{
+                        padding: '7px 8px', fontSize: 12, color: '#888',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                      }}>
                         {v.variantName}
                       </div>
 

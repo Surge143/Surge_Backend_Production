@@ -144,7 +144,7 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
 
       console.log(`ℹ️ Charge ID: ${chargeId}, Receipt URL: ${receiptUrl}`)
 
-      await payload.update({
+      const updatedOrder = await payload.update({
         collection: 'app-orders',
         id: orderId,
         data: {
@@ -164,6 +164,14 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
         overrideAccess: true,
       })
       console.log(`✅ Order ${orderId} successfully marked as paid`)
+
+      // --- DIRECT SOCKET EMIT (belt-and-suspenders alongside afterChange hook) ---
+      try {
+        const { emitOrderCreated } = await import('@/utilities/socket')
+        emitOrderCreated(updatedOrder)
+      } catch (socketErr) {
+        console.error('[Socket] Failed to emit order-created from webhook handler:', socketErr)
+      }
 
       // Send order confirmation email
       try {

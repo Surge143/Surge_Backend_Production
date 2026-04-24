@@ -180,6 +180,14 @@ const StatusDot: React.FC<{ status?: string | null }> = ({ status }) => {
   )
 }
 
+// ── URL guard ────────────────────────────────────────────────────────────────
+// With S3 storage (acl: public-read), both direct S3 URLs and Payload's
+// /api/media/file/ proxy route are valid. Only reject null/empty strings.
+// The onError handler below catches any runtime 404s as a safety net.
+function isServableUrl(url?: string | null): boolean {
+  return Boolean(url)
+}
+
 // ── Main Component ───────────────────────────────────────────────────────────
 
 export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
@@ -193,6 +201,9 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [pendingDeleteId, setPendingDeleteId] = useState<string | number | null>(null)
   const [deletingIds, setDeletingIds] = useState<Set<string | number>>(new Set())
+  // Tracks products whose image failed to load at runtime (safety net for any
+  // unexpected 404s that slip past isServableUrl)
+  const [brokenImgs, setBrokenImgs] = useState<Set<string | number>>(new Set())
   const { openModal } = useModal()
 
   const DELETE_MODAL = 'products-dashboard-delete-confirm'
@@ -758,12 +769,15 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                   />
                 </div>
 
-                {/* Image — uses full url, never thumbnailURL */}
+                {/* Image — degrade gracefully at runtime if the S3 URL is broken */}
                 <div style={{ padding: '8px 8px 8px 0', display: 'flex', alignItems: 'center' }}>
-                  {product.productImage?.url ? (
+                  {isServableUrl(product.productImage?.url) && !brokenImgs.has(product.id) ? (
                     <img
-                      src={product.productImage.url}
-                      alt={product.name}
+                      src={product.productImage!.url!}
+                      alt=""
+                      onError={() =>
+                        setBrokenImgs((prev) => new Set(prev).add(product.id))
+                      }
                       style={{
                         width: 44,
                         height: 44,
@@ -781,8 +795,20 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                         background: 'var(--theme-elevation-100)',
                         borderRadius: 4,
                         border: '1px solid var(--theme-elevation-100)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
-                    />
+                    >
+                      {/* image icon placeholder */}
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="var(--theme-elevation-250)" strokeWidth="1.5"
+                        strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <polyline points="21 15 16 10 5 21" />
+                      </svg>
+                    </div>
                   )}
                 </div>
 

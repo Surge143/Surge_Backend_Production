@@ -43,7 +43,7 @@ export default function ContactPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             <div>
               <h4 style={styles.label}>Email Us</h4>
-              <p style={{ fontSize: '18px', fontWeight: '700' }}>hello@whitemantis.ae</p>
+              <p style={{ fontSize: '18px', fontWeight: '700' }}>hello@surge.ae</p>
             </div>
             <div>
               <h4 style={styles.label}>Visit Us</h4>

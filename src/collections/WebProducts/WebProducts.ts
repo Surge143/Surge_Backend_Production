@@ -76,6 +76,20 @@ export const WebProducts: CollectionConfig = {
     },
     maxPerDoc: 50,
   },
+
+  // ─── Hooks ────────────────────────────────────────────────────────────────
+  // Stamp the currently-logged-in admin onto every save so the Versions panel
+  // can show "last edited by" information alongside each snapshot.
+  hooks: {
+    beforeChange: [
+      ({ data, req }) => {
+        if (req.user?.id) {
+          data.updatedBy = req.user.id
+        }
+        return data
+      },
+    ],
+  },
   access: {
     read: () => true,
     update: () => true,
@@ -578,6 +592,23 @@ export const WebProducts: CollectionConfig = {
         },
       ],
     },
+    // ─── Last Edited By (Sidebar) ──────────────────────────────────────────
+    // Auto-populated by the beforeChange hook above; never editable by hand.
+    // Because Payload versions the full document, every version snapshot will
+    // contain whoever triggered that particular save — making this the easiest
+    // way to see "who made this change" in the Versions panel.
+    {
+      name: 'updatedBy',
+      label: 'Last Edited By',
+      type: 'relationship',
+      relationTo: 'admins',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Automatically set to the admin who last saved this product.',
+      },
+    },
+
     {
       name: 'slug',
       type: 'text',

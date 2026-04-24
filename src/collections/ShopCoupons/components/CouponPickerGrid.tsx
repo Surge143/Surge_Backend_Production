@@ -51,7 +51,7 @@ export const CouponPickerGrid: React.FC<CouponPickerGridProps> = ({
                 // Fetch existing shop-coupons for this shop to exclude already-added coupons
                 if (shopId) {
                     const shopCouponsRes = await fetch(
-                        `/api/shop-coupon?limit=1000&where[shop][equals]=${shopId}&depth=1`
+                        `/api/surge-shop-coupon?limit=1000&where[shop][equals]=${shopId}&depth=1`
                     )
                     if (!shopCouponsRes.ok) throw new Error('Failed to fetch existing shop coupons')
                     const shopCouponsData = await shopCouponsRes.json()
@@ -75,7 +75,7 @@ export const CouponPickerGrid: React.FC<CouponPickerGridProps> = ({
                 // Fetch active, published coupons that apply to the app.
                 // using &where[_status][equals]=published ensures only published docs are returned.
                 const res = await fetch(
-                    '/api/coupon?limit=1000&where[couponFor.app][equals]=true&where[couponStatus][equals]=active&where[_status][equals]=published&draft=false'
+                    '/api/surge-coupon?limit=1000&where[couponFor.app][equals]=true&where[couponStatus][equals]=active&where[_status][equals]=published&draft=false'
                 )
                 if (!res.ok) throw new Error('Failed to fetch coupons')
                 const data = await res.json()

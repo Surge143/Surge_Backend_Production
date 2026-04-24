@@ -51,3 +51,9 @@ node_modules/
 
 src/config/FirebaseConfig.json
 src/config/*
+
+# Developer activity logs (local only)
+devlog/
+.planning/
+docs/
+/README.md

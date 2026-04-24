@@ -70,6 +70,20 @@ export const ShopMenuQuickCreate: React.FC = () => {
         ))
     }
 
+    const cleanForPost = (value: any, isArrayItem = false): any => {
+        if (Array.isArray(value)) return value.map(item => cleanForPost(item, true))
+        if (value && typeof value === 'object') {
+            if (!isArrayItem && 'id' in value) {
+                // Populated relationship object — collapse to its ID
+                return value.id
+            }
+            // Array row — strip the row ID, recurse into field values
+            const { id: _id, ...rest } = value
+            return Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, cleanForPost(v, false)]))
+        }
+        return value
+    }
+
     const handleCreate = async () => {
         if (selectedItems.length === 0) {
             alert('Please select at least one product.')
@@ -120,7 +134,7 @@ export const ShopMenuQuickCreate: React.FC = () => {
                     dietaryType: globalItem.dietaryType,
                     stockCount: parseInt(String(selection?.stockCount ?? 0)) || 0,
                     inStock: selection?.inStock ?? true,
-                    customizations: globalItem.customizations,
+                    customizations: cleanForPost(globalItem.customizations),
                 }
 
                 const res = await fetch('/api/shop-menu', {
@@ -151,6 +165,12 @@ export const ShopMenuQuickCreate: React.FC = () => {
         }
     }
 
+    // Shops visible to this user in the dropdown
+    const myShops = user?.role === 'shop-manager'
+        ? shops.filter(s => String(typeof s.shopManager === 'object' ? s.shopManager?.id : s.shopManager) === String(user.id))
+        : shops
+    const showShopDropdown = user?.role !== 'shop-manager' || myShops.length > 1
+
     return (
         <div className={styles.quickCreateContainer} style={{ marginBottom: '1rem' }}>
             <Button
@@ -166,16 +186,18 @@ export const ShopMenuQuickCreate: React.FC = () => {
                 <div className={styles.modalContainer}>
                     <div className={styles.modalHeader}>
                         <h2>Select Products for Shop Menu</h2>
-                        {user?.role !== 'shop-manager' && (
+                        {showShopDropdown && (
                             <div className={styles.shopSelectWrapper} style={{ width: '250px' }}>
                                 <SelectInput
                                     path="shopSelect"
                                     name="shopSelect"
                                     label="Select Shop"
-                                    options={shops.map(s => ({ label: String(s.title || s.name || s.id), value: String(s.id) }))}
+                                    options={myShops.map(s => ({
+                                        label: String(s.address?.street || s.address?.city || s.id),
+                                        value: String(s.id),
+                                    }))}
                                     value={selectedShop}
                                     onChange={(val: any) => {
-                                        // Payload 3.0 SelectInput might pass the value string or the whole object
                                         const newValue = typeof val === 'object' && val !== null ? val.value : val;
                                         setSelectedShop(newValue);
                                     }}

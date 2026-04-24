@@ -106,7 +106,7 @@ export const ShopCouponQuickCreate: React.FC = () => {
             // Fetch full coupon data for all selected items
             const fullCoupons = await Promise.all(
                 selectedItems.map(item =>
-                    fetch(`/api/coupon/${item.couponId}?draft=false`).then(res => {
+                    fetch(`/api/surge-coupon/${item.couponId}?draft=false`).then(res => {
                         if (!res.ok) throw new Error(`Failed to fetch coupon ${item.couponId}`)
                         return res.json()
                     })
@@ -142,7 +142,7 @@ export const ShopCouponQuickCreate: React.FC = () => {
                         usageCount: 0,
                     }
 
-                    return fetch('/api/shop-coupon', {
+                    return fetch('/api/surge-shop-coupon', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload),
@@ -154,7 +154,7 @@ export const ShopCouponQuickCreate: React.FC = () => {
             if (failed.length === 0) {
                 resetModal()
                 closeModal(modalSlug)
-                router.push('/admin/collections/shop-coupon')
+                router.push('/admin/collections/surge-shop-coupon')
                 router.refresh()
             } else {
                 // Try to extract error messages from failed responses
@@ -185,22 +185,28 @@ export const ShopCouponQuickCreate: React.FC = () => {
                     <div className={styles.modalHeader}>
                         <h2>Select Coupons for Shop</h2>
 
-                        {/* Shop selector — hidden for shop-managers since their shop is auto-selected */}
-                        {user?.role !== 'shop-manager' && (
-                            <div className={styles.shopSelectWrapper} style={{ width: '250px' }}>
-                                <SelectInput
-                                    path="shopSelect"
-                                    name="shopSelect"
-                                    label="Select Shop"
-                                    options={shops.map(s => ({
-                                        label: String(s.title || s.name || s.id),
-                                        value: String(s.id),
-                                    }))}
-                                    value={selectedShop}
-                                    onChange={handleShopChange}
-                                />
-                            </div>
-                        )}
+                        {/* Shop selector — shown for admins and multi-shop managers */}
+                        {(() => {
+                            const myShops = user?.role === 'shop-manager'
+                                ? shops.filter(s => String(typeof s.shopManager === 'object' ? s.shopManager?.id : s.shopManager) === String(user.id))
+                                : shops
+                            const showShopDropdown = user?.role !== 'shop-manager' || myShops.length > 1
+                            return showShopDropdown ? (
+                                <div className={styles.shopSelectWrapper} style={{ width: '250px' }}>
+                                    <SelectInput
+                                        path="shopSelect"
+                                        name="shopSelect"
+                                        label="Select Shop"
+                                        options={myShops.map(s => ({
+                                            label: String(s.address?.street || s.address?.city || s.id),
+                                            value: String(s.id),
+                                        }))}
+                                        value={selectedShop}
+                                        onChange={handleShopChange}
+                                    />
+                                </div>
+                            ) : null
+                        })()}
 
                         <div className={styles.searchWrapper} style={{ flexGrow: 1, display: 'flex', gap: '15px', alignItems: 'flex-end' }}>
                             <div style={{ flex: 1 }}>

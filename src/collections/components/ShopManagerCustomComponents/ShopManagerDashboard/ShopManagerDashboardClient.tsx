@@ -113,6 +113,16 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
 
     const socket = io(socketUrl, { path: '/socket.io' })
 
+    socket.on('connect', () => {
+      console.log('[Socket.IO Cafe] ✅ Connected, id:', socket.id)
+    })
+    socket.on('connect_error', (err) => {
+      console.error('[Socket.IO Cafe] ❌ Connection error:', err.message)
+    })
+    socket.on('disconnect', (reason) => {
+      console.warn('[Socket.IO Cafe] Disconnected:', reason)
+    })
+
     const matchesShop = (raw: any) => {
       if (!currentShopId) return true
       const rawShopId =
@@ -421,7 +431,6 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
         onGoLive={() => handleStoreStatus('live')}
         onPause={() => handleStoreStatus('paused')}
         shopName={currentShopDoc?.address?.street || 'White Mantis'}
-        isAdmin={isAdmin}
         allShops={allShops}
         currentShopId={currentShopId}
         onShopChange={handleShopSwitch}

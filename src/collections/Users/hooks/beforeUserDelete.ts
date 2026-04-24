@@ -44,7 +44,7 @@ export const beforeUserDelete: CollectionBeforeDeleteHook = async ({ id, req }) 
 
   try {
     await sendEmail({
-      to: user?.email as string,
+      to: ((user as any)?.contactEmail ?? user?.email) as string,
       subject: 'Account Deleted',
       body: `User account with ID ${id} has been deleted.`.trim(),
       html: AccountDeletedEmail(user),

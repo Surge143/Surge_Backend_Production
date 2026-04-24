@@ -22,13 +22,30 @@ export const ShopMenu: CollectionConfig = {
     },
   },
   access: {
-    read: () => true,
+    read: ({ req: { user } }) => {
+      if (user?.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return true
+    },
     create: ({ req: { user } }) =>
       user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager',
-    update: ({ req: { user } }) =>
-      user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager',
-    delete: ({ req: { user } }) =>
-      user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'shop-manager',
+    update: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.role === 'admin' || user.role === 'super-admin') return true
+      if (user.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return false
+    },
+    delete: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.role === 'admin' || user.role === 'super-admin') return true
+      if (user.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } }
+      }
+      return false
+    },
   },
   hooks: {
     beforeChange: [
@@ -37,20 +54,41 @@ export const ShopMenu: CollectionConfig = {
           data.createdBy = user.id
         }
 
-        // If shop-manager is creating, force the shop to be their managed shop
+        // Handle shop assignment for shop-managers on create
         if (user?.role === 'shop-manager' && operation === 'create') {
-          const managedShop = await payload.find({
+          const managedShops = await payload.find({
             collection: 'shop',
-            where: {
-              shopManager: { equals: user.id },
-            },
-            limit: 1,
+            where: { shopManager: { equals: user.id } },
+            depth: 0,
           })
 
-          if (managedShop.docs.length > 0) {
-            data.shop = managedShop.docs[0].id
-          } else {
+          if (managedShops.docs.length === 0) {
             throw new Error('You do not have a shop assigned to your account.')
+          } else if (managedShops.docs.length === 1) {
+            data.shop = managedShops.docs[0].id
+          } else {
+            if (!data.shop) {
+              throw new Error('You manage multiple shops. Please select a shop before saving.')
+            }
+            const isOwned = managedShops.docs.some((s) => String(s.id) === String(data.shop))
+            if (!isOwned) {
+              throw new Error('The selected shop does not belong to your account.')
+            }
+          }
+        }
+
+        // Prevent duplicate product names within the same shop (create only)
+        if (operation === 'create' && data.name && data.shop) {
+          const existing = await payload.find({
+            collection: 'shop-menu',
+            where: {
+              and: [{ name: { equals: data.name } }, { shop: { equals: data.shop } }],
+            },
+            limit: 1,
+            overrideAccess: true,
+          })
+          if (existing.totalDocs > 0) {
+            throw new Error(`A product named "${data.name}" already exists for this shop.`)
           }
         }
 
@@ -78,10 +116,14 @@ export const ShopMenu: CollectionConfig = {
       type: 'relationship',
       relationTo: 'shop',
       required: true,
+      filterOptions: ({ user }) => {
+        if (user?.role === 'shop-manager') {
+          return { shopManager: { equals: user.id } }
+        }
+        return true
+      },
       admin: {
-        condition: (data, siblingData, { user }) => user?.role !== 'shop-manager',
         position: 'sidebar',
-        readOnly: true,
       },
     },
     {
@@ -246,9 +288,6 @@ export const ShopMenu: CollectionConfig = {
                   name: 'template',
                   type: 'relationship',
                   relationTo: 'customization-template',
-                  admin: {
-                    readOnly: true,
-                  },
                 },
                 {
                   name: 'sections',

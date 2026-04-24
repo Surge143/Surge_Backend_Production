@@ -109,9 +109,11 @@ export async function POST(req: NextRequest) {
             }, { status: 200 });
 
             if (token) {
-                res.cookies.set('paylaod-token', token, {
+                res.cookies.set('payload-token', token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                    path: '/',
                     maxAge: 60 * 60 * 24 * 7,
                 });
             }

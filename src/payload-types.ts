@@ -273,6 +273,10 @@ export interface User {
    * Whether the user signed in with an Apple private relay email.
    */
   isApplePrivateEmail?: boolean | null;
+  /**
+   * Real email for communications (order confirmations, notifications). Collected post-login from Apple users who used Hide My Email or phone number auth.
+   */
+  contactEmail?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -300,7 +304,6 @@ export interface User {
  */
 export interface Media {
   id: number;
-  cloudinaryPublicId?: string | null;
   alt: string;
   folder?: (number | null) | FolderInterface;
   updatedAt: string;
@@ -441,6 +444,7 @@ export interface Shop {
 export interface AppCategory {
   id: number;
   title: string;
+  image: number | Media;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -587,7 +591,7 @@ export interface Menu {
 export interface ShopMenu {
   id: number;
   name: string;
-  shop?: (number | null) | Shop;
+  shop: number | Shop;
   menuRelation?: (number | Menu)[] | null;
   createdBy?: (number | null) | Admin;
   /**
@@ -820,6 +824,10 @@ export interface WebProduct {
     image?: (number | null) | Media;
     description?: string | null;
   };
+  /**
+   * Automatically set to the admin who last saved this product.
+   */
+  updatedBy?: (number | null) | Admin;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -834,6 +842,7 @@ export interface WebProduct {
 export interface WebCategory {
   id: number;
   title: string;
+  image: number | Media;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -898,8 +907,8 @@ export interface SurgeShopCoupon {
    * Max number of times a single customer can use this coupon.
    */
   usageLimitPerUser: number;
-  shop?: (number | null) | Shop;
-  couponRelation: (number | SurgeCoupon)[];
+  shop: number | Shop;
+  couponRelation?: (number | SurgeCoupon)[] | null;
   createdBy?: (number | null) | Admin;
   couponFor?: {
     website?: boolean | null;
@@ -1125,7 +1134,7 @@ export interface Slot {
    */
   currentLoad?: number | null;
   /**
-   * Auto-assigned based on your manager account.
+   * Auto-assigned for single-shop managers. Select your shop if you manage multiple.
    */
   shop?: (number | null) | Shop;
   /**
@@ -1548,7 +1557,7 @@ export interface Notification {
 export interface AppBestSeller {
   id: number;
   shop: number | Shop;
-  products: (number | ShopMenu)[];
+  products?: (number | ShopMenu)[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1561,6 +1570,7 @@ export interface AppBestSeller {
 export interface Blog {
   id: number;
   title: string;
+  shortDescription: string;
   /**
    * This image appears at the top of the blog and in social share previews.
    */
@@ -2078,6 +2088,7 @@ export interface UsersSelect<T extends boolean = true> {
   barcodeToken?: T;
   appleSubId?: T;
   isApplePrivateEmail?: T;
+  contactEmail?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -2129,6 +2140,7 @@ export interface AdminsSelect<T extends boolean = true> {
  */
 export interface AppCategoriesSelect<T extends boolean = true> {
   title?: T;
+  image?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
@@ -2139,7 +2151,6 @@ export interface AppCategoriesSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
-  cloudinaryPublicId?: T;
   alt?: T;
   folder?: T;
   updatedAt?: T;
@@ -2530,6 +2541,7 @@ export interface AppOrdersSelect<T extends boolean = true> {
  */
 export interface WebCategoriesSelect<T extends boolean = true> {
   title?: T;
+  image?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
@@ -2620,6 +2632,7 @@ export interface WebProductsSelect<T extends boolean = true> {
         image?: T;
         description?: T;
       };
+  updatedBy?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2875,6 +2888,7 @@ export interface AppBestSellerSelect<T extends boolean = true> {
  */
 export interface BlogsSelect<T extends boolean = true> {
   title?: T;
+  shortDescription?: T;
   featuredImage?: T;
   content?: T;
   relatedBlogs?: T;

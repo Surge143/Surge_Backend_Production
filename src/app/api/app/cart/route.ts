@@ -51,6 +51,26 @@ function getRelationTo(productWrapper: any): string | null {
     return null;
 }
 
+function getCartItemId(item: any, fallbackIndex: number): string {
+    if (item?.id !== null && item?.id !== undefined) {
+        return String(item.id);
+    }
+
+    const productId = getProductId(item?.product) ?? 'unknown';
+    const relationTo = getRelationTo(item?.product) ?? 'shop-menu';
+    const vId = item?.vId ?? '';
+    return `${relationTo}:${productId}:${vId}:${fallbackIndex}`;
+}
+
+function getCustomizationPrice(customizations: any): number {
+    if (!Array.isArray(customizations)) return 0;
+
+    return customizations.reduce((sum: number, selection: any) => {
+        const price = Number(selection?.price ?? 0);
+        return sum + (Number.isFinite(price) ? price : 0);
+    }, 0);
+}
+
 async function mapAppCartItems(payload: any, items: any[]) {
     if (!items || items.length === 0) return [];
 
@@ -90,19 +110,20 @@ async function mapAppCartItems(payload: any, items: any[]) {
     const shopMenuMap = new Map<string, any>((shopMenuFetched.docs as any[]).map(p => [String(p.id), p]));
     const webProductsMap = new Map<string, any>((webProductsFetched.docs as any[]).map(p => [String(p.id), p]));
 
-    return items.map((item: any) => {
+    return items.map((item: any, index: number) => {
         const productId = getProductId(item.product);
         const relationTo = getRelationTo(item.product) ?? (shopMenuMap.has(String(productId)) ? 'shop-menu' : 'web-products');
+        const itemId = getCartItemId(item, index);
 
         if (!productId) {
-            return { id: item.id, productId: null, vId: null, relationTo, name: 'Unknown', price: 0, quantity: item.quantity || 1, image: null, tagline: '', customizations: [] };
+            return { id: itemId, productId: null, vId: null, relationTo, name: 'Unknown', price: 0, quantity: item.quantity || 1, image: null, tagline: '', customizations: [] };
         }
 
         const product: any = relationTo === 'shop-menu' ? shopMenuMap.get(productId) : webProductsMap.get(productId);
 
         if (!product) {
             console.warn(`[Cart] Product not found: ${relationTo}:${productId}`);
-            return { id: item.id, productId, vId: item.vId, relationTo, name: 'Unknown', price: 0, quantity: item.quantity || 1, image: null, tagline: '', customizations: [] };
+            return { id: itemId, productId, vId: item.vId, relationTo, name: 'Unknown', price: 0, quantity: item.quantity || 1, image: null, tagline: '', customizations: [] };
         }
 
         // Both shop-menu and web-products use 'name'
@@ -118,8 +139,8 @@ async function mapAppCartItems(payload: any, items: any[]) {
         let variantName: string | undefined;
 
         if (relationTo === 'shop-menu') {
-            // Cafe item — straightforward pricing
-            price = Number(product.salePrice ?? product.regularPrice ?? 0);
+            // Cafe item — include customization pricing in the unit total
+            price = Number(product.salePrice ?? product.regularPrice ?? 0) + getCustomizationPrice(item.customizations);
         } else {
             // Store item — check for variant
             if (product.hasVariantOptions && Array.isArray(product.variants) && product.variants.length > 0) {
@@ -139,7 +160,7 @@ async function mapAppCartItems(payload: any, items: any[]) {
         }
 
         return {
-            id: item.id,
+            id: itemId,
             productId,
             vId: item.vId || null,
             relationTo,
@@ -154,33 +175,32 @@ async function mapAppCartItems(payload: any, items: any[]) {
     });
 }
 
+async function buildAppCartResponse(payload: any, userId: string | number) {
+    const carts = await payload.find({
+        collection: 'app-cart',
+        where: { user: { equals: userId } },
+        limit: 1,
+        depth: 0,
+    })
+
+    const cart = carts.docs[0]
+    const mappedItems = await mapAppCartItems(payload, cart?.items || [])
+    const subtotal = mappedItems.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0)
+
+    return {
+        items: mappedItems,
+        subtotal,
+        shop: cart?.shop ? (typeof cart.shop === 'object' ? cart.shop : { id: cart.shop }) : null,
+        origin: cart?.origin || 'cafe',
+    }
+}
+
 export async function GET() {
     try {
         const { user, payload } = await getAuthContext()
         if (!user || !payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-        const carts = await payload.find({
-            collection: 'app-cart',
-            where: { user: { equals: user.id } },
-            limit: 1,
-            depth: 2,
-        })
-
-        const cart = carts.docs[0]
-        const rawItems = cart?.items || []
-        const shop = cart?.shop
-
-        // DEBUG: log raw items to diagnose product lookup failures
-        // console.log('[Cart GET] raw items:', JSON.stringify(rawItems, null, 2))
-
-        const mappedItems = await mapAppCartItems(payload, rawItems)
-        // console.log('[Cart GET] mapped items:', JSON.stringify(mappedItems, null, 2))
-
-        return NextResponse.json({
-            items: mappedItems,
-            shop: shop ? (typeof shop === 'object' ? shop : { id: shop }) : null,
-            origin: cart?.origin || 'cafe'
-        })
+        return NextResponse.json(await buildAppCartResponse(payload, user.id))
     } catch (error: any) {
         console.error('AppCart GET Error:', error)
         return NextResponse.json({ error: error.message }, { status: 500 })
@@ -193,24 +213,49 @@ export async function POST(request: NextRequest) {
         if (!user || !payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
         const body = await request.json()
-        const { productId, quantity = 1, customizations, vId } = body
+        const { productId, quantity = 1, customizations, vId, shopId } = body
 
         if (!productId) return NextResponse.json({ error: 'Product ID is required' }, { status: 400 })
 
         // 1. Discover relationTo for the new product
         let incomingRelation: 'shop-menu' | 'web-products' = 'shop-menu';
+        let resolvedShopId: any = shopId || null;
         try {
-            const inShop = await payload.findByID({ collection: 'shop-menu', id: productId, depth: 0, disableErrors: true }).catch(() => null);
+            const inShop = await payload.findByID({ collection: 'shop-menu', id: productId, depth: 0, disableErrors: true }).catch(() => null) as any;
             if (!inShop) {
                 const inWeb = await payload.findByID({ collection: 'web-products', id: productId, depth: 0, disableErrors: true }).catch(() => null);
                 if (inWeb) incomingRelation = 'web-products';
+            } else if (inShop?.shop && !resolvedShopId) {
+                // Derive shopId from the product's own shop field if caller didn't send it
+                resolvedShopId = typeof inShop.shop === 'object' ? inShop.shop.id : inShop.shop;
             }
         } catch {
-            // If both lookups fail, default remains 'shop-menu'
+            // default remains 'shop-menu'
         }
-        console.log(`[Cart POST] productId=${productId} -> incomingRelation=${incomingRelation}`);
 
-        // 2. Fetch existing cart
+        const newOrigin = incomingRelation === 'shop-menu' ? 'cafe' : 'store';
+        console.log(`[Cart POST] productId=${productId} -> relation=${incomingRelation} origin=${newOrigin} shop=${resolvedShopId}`);
+
+        // 2. Prevent mixing against the separate website cart
+        if (newOrigin === 'cafe') {
+            const webCarts = await (payload as any).find({
+                collection: 'web-cart',
+                where: { user: { equals: user.id } },
+                limit: 1,
+                depth: 0,
+                select: { items: true },
+            })
+
+            if ((webCarts.docs[0]?.items || []).length > 0) {
+                return NextResponse.json({
+                    error: 'MIXED_CART',
+                    message: 'Your store cart already contains items. Clear it before adding cafe items.',
+                    currentOrigin: 'store',
+                }, { status: 400 })
+            }
+        }
+
+        // 3. Fetch existing cart
         const carts = await (payload as any).find({
             collection: 'app-cart',
             where: { user: { equals: user.id } },
@@ -220,14 +265,11 @@ export async function POST(request: NextRequest) {
         })
 
         const cart = carts.docs[0]
-        const items = cart?.items || []
+        const items = [...(cart?.items || [])]
 
-        // 3. Mixed Cart Validation
+        // 4. Mixed Cart Validation (only when cart has items)
         if (items.length > 0) {
             const currentOrigin = cart?.origin;
-            const newOrigin = incomingRelation === 'shop-menu' ? 'cafe' : 'store';
-            console.log(`[Cart POST] currentOrigin=${currentOrigin} newOrigin=${newOrigin}`);
-
             if (currentOrigin && currentOrigin !== newOrigin) {
                 return NextResponse.json({
                     error: 'MIXED_CART',
@@ -247,35 +289,36 @@ export async function POST(request: NextRequest) {
             customizations: customizations || null,
         })
 
-        let updatedCart
+        // Build cart data — always include origin (required field) and shop for cafe items
+        const cartData: Record<string, any> = {
+            user: user.id,
+            origin: newOrigin,
+            items,
+        }
+        if (newOrigin === 'cafe' && resolvedShopId) {
+            cartData.shop = resolvedShopId;
+        }
+
         if (cart) {
-            updatedCart = await (payload as any).update({
+            await (payload as any).update({
                 collection: 'app-cart',
                 id: cart.id,
-                data: {
-                    user: user.id,
-                    items: items,
-                },
+                data: cartData,
                 depth: 0,
                 select: { user: true, items: true, shop: true, origin: true }
             })
         } else {
-            updatedCart = await (payload as any).create({
+            await (payload as any).create({
                 collection: 'app-cart',
-                data: {
-                    user: user.id,
-                    items: items,
-                },
+                data: cartData,
                 depth: 0,
                 select: { items: true, shop: true, origin: true }
             })
         }
 
-        if (!updatedCart) throw new Error('Failed to create or update cart')
-
         return NextResponse.json({
-            items: await mapAppCartItems(payload, updatedCart.items || []),
-            shop: updatedCart.shop ? (typeof updatedCart.shop === 'object' ? updatedCart.shop : { id: updatedCart.shop }) : null
+            success: true,
+            ...(await buildAppCartResponse(payload, user.id)),
         })
     } catch (error: any) {
         console.error('AppCart POST Error:', error)
@@ -302,7 +345,7 @@ export async function PATCH(request: NextRequest) {
         if (!cart) return NextResponse.json({ error: 'Cart not found' }, { status: 404 })
 
         const items = [...(cart.items || [])]
-        const index = items.findIndex((item: any) => String(item.id) === String(itemId))
+        const index = items.findIndex((item: any, idx: number) => getCartItemId(item, idx) === String(itemId))
 
         if (index === -1) return NextResponse.json({ error: 'Item not found in cart' }, { status: 404 })
 
@@ -320,7 +363,7 @@ export async function PATCH(request: NextRequest) {
             items[index].customizations = customizations
         }
 
-        const updatedCart = await (payload as any).update({
+        await (payload as any).update({
             collection: 'app-cart',
             id: cart.id,
             data: { items },
@@ -328,13 +371,7 @@ export async function PATCH(request: NextRequest) {
             select: { user: true, items: true, origin: true, shop: true }
         })
 
-        if (!updatedCart) throw new Error('Failed to update cart')
-
-        return NextResponse.json({
-            items: await mapAppCartItems(payload, updatedCart.items || []),
-            origin: updatedCart.origin,
-            shop: updatedCart.shop ? (typeof updatedCart.shop === 'object' ? updatedCart.shop : { id: updatedCart.shop }) : null
-        })
+        return NextResponse.json(await buildAppCartResponse(payload, user.id))
     } catch (error: any) {
         console.error('AppCart PATCH Error:', error)
         return NextResponse.json({ error: error.message }, { status: 500 })
@@ -361,20 +398,15 @@ export async function DELETE(request: NextRequest) {
         if (!cart) return NextResponse.json({ items: [] })
 
         if (itemId) {
-            const items = (cart.items || []).filter((item: any) => String(item.id) !== String(itemId))
-            const updatedCart = await (payload as any).update({
+            const items = (cart.items || []).filter((item: any, idx: number) => getCartItemId(item, idx) !== String(itemId))
+            await (payload as any).update({
                 collection: 'app-cart',
                 id: cart.id,
                 data: { items },
                 depth: 0,
                 select: { user: true, items: true, origin: true, shop: true }
             })
-            if (!updatedCart) throw new Error('Failed to update cart')
-            return NextResponse.json({
-                items: await mapAppCartItems(payload, updatedCart.items || []),
-                origin: updatedCart.origin,
-                shop: updatedCart.shop ? (typeof updatedCart.shop === 'object' ? updatedCart.shop : { id: updatedCart.shop }) : null
-            })
+            return NextResponse.json(await buildAppCartResponse(payload, user.id))
         } else {
             // Clear all items instead of deleting the document (safer).
             // We keep the old origin/shop values to satisfy "required" constraints,
@@ -385,7 +417,11 @@ export async function DELETE(request: NextRequest) {
                 data: { items: [] },
                 overrideAccess: true,
             })
-            return NextResponse.json({ items: [], origin: cart.origin, shop: cart.shop })
+            return NextResponse.json({
+                items: [],
+                origin: cart.origin,
+                shop: cart.shop ? (typeof cart.shop === 'object' ? cart.shop : { id: cart.shop }) : null,
+            })
         }
     } catch (error: any) {
         console.error('AppCart DELETE Error:', error)

@@ -9,7 +9,7 @@ import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { importExportPlugin } from 'payload-import-export'
 import { collections, globals } from './collections'
 import { getServerSideURL } from '@/utilities/getURL'
-import { payloadCloudinaryPlugin } from '@jhb.software/payload-cloudinary-plugin'
+import { s3Storage } from '@payloadcms/storage-s3'
 import sharp from 'sharp'
 
 const filename = fileURLToPath(import.meta.url)
@@ -44,6 +44,9 @@ export default buildConfig({
         '@/collections/components/Navbar/ShopManagerDashboardLink#ShopManagerDashboardLink',
       ],
     },
+    importMap: {
+      baseDir: path.resolve(dirname),
+    },
     user: Admins.slug,
   },
   cors: [
@@ -73,17 +76,21 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
-    // Cloudinary storage plugin — handles uploads for the media collection.
-    // Files are sent directly to Cloudinary; nothing is written to local disk.
-    // Credentials are read from .env: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
-    payloadCloudinaryPlugin({
-      collections: { media: true }, // apply only to the Media collection
-      cloudName: process.env.CLOUDINARY_CLOUD_NAME as string,
-      credentials: {
-        apiKey: process.env.CLOUDINARY_API_KEY as string,
-        apiSecret: process.env.CLOUDINARY_API_SECRET as string,
+    s3Storage({
+      collections: {
+        media: true,
       },
-      folder: 'surge-uploads', // all uploads go into this Cloudinary folder
+      bucket: process.env.S3_BUCKET as string,
+      config: {
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_KEY as string,
+          secretAccessKey: process.env.S3_SECRET_KEY as string,
+        },
+        endpoint: process.env.S3_ENDPOINT as string,
+        region: process.env.S3_REGION || 'us-east-1',
+        forcePathStyle: true,
+      },
+      acl: 'public-read',
     }),
     importExportPlugin({
       collections: ['web-products', 'app-orders'],

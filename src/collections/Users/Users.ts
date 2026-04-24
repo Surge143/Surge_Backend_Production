@@ -407,6 +407,13 @@ export const Users: CollectionConfig = {
         hidden: true,
       },
     },
+    {
+      name: 'contactEmail',
+      type: 'email',
+      admin: {
+        description: 'Real email for communications (order confirmations, notifications). Collected post-login from Apple users who used Hide My Email or phone number auth.',
+      },
+    },
   ],
   lockDocuments: false,
 }

@@ -329,10 +329,10 @@ export const POST = async (req: NextRequest) => {
                 return NextResponse.json({ error: result.error }, { status: result.status || 400 });
             }
 
-            const discountResult = calculateCouponDiscount(result.coupon, subtotal, processedItems.map(item => ({
-                product: typeof item.product.value === 'object' ? item.product.value.id : item.product.value,
+            const discountResult = calculateCouponDiscount(result.coupon, subtotal, processedItems.map((item) => ({
+                product: item.product,
                 price: item.price,
-                quantity: item.quantity
+                quantity: item.quantity,
             })));
 
             if ('error' in discountResult) {
@@ -403,12 +403,13 @@ export const POST = async (req: NextRequest) => {
         if (savedStripeId) {
             stripeCustomerId = savedStripeId;
         } else {
-            const existingCustomers = await stripe.customers.list({ email: user.email, limit: 1 });
+            const stripeEmail = (user as any).contactEmail ?? user.email;
+            const existingCustomers = await stripe.customers.list({ email: stripeEmail, limit: 1 });
             if (existingCustomers.data.length > 0) {
                 stripeCustomerId = existingCustomers.data[0].id;
             } else {
                 const customer = await stripe.customers.create({
-                    email: user.email,
+                    email: stripeEmail,
                     name: `${(user as any).firstName || ''} ${(user as any).lastName || ''}`.trim(),
                 });
                 stripeCustomerId = customer.id;
@@ -426,7 +427,7 @@ export const POST = async (req: NextRequest) => {
 
         const orderData: any = {
             user: user?.id,
-            email: user.email,
+            email: (user as any).contactEmail ?? user.email,
             shop: shopId,
             items: processedItems,
             orderType: orderType,
@@ -487,7 +488,7 @@ export const POST = async (req: NextRequest) => {
             success: true,
             message: "Order created successfully",
             clientSecret: paymentIntent.client_secret,
-            dbOrderId: orderDoc.id,
+            dbOrderId: String(orderDoc.id),
             stripeCustomerId,
         }, { status: 200 });
 

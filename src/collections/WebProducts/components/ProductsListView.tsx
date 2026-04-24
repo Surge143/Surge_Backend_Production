@@ -9,8 +9,44 @@ export const ProductsListView: React.FC = () => {
   useEffect(() => {
     fetch('/api/web-products?limit=500&depth=2&sort=name&draft=true')
       .then((r) => r.json())
-      .then((data) => {
-        setProducts(data.docs ?? [])
+      .then(async (data) => {
+        const docs: any[] = data.docs ?? []
+
+        // ── Batch-resolve bare productImage IDs ─────────────────────────────
+        // With draft=true, Payload sometimes skips populating relationship
+        // fields and returns just a numeric ID even at depth=2. We collect
+        // all such IDs, fetch them in ONE /api/media request, then swap
+        // each number for the real { url, ... } media object.
+        const unresolvedIds = [
+          ...new Set(
+            docs
+              .map((p: any) => p.productImage)
+              .filter((img: any): img is number => typeof img === 'number'),
+          ),
+        ]
+
+        if (unresolvedIds.length > 0) {
+          try {
+            const mediaRes = await fetch(
+              `/api/media?where[id][in]=${unresolvedIds.join(',')}&limit=${unresolvedIds.length}&depth=0`,
+            )
+            const mediaData = await mediaRes.json()
+            const mediaMap: Record<number, any> = {}
+            for (const m of mediaData.docs ?? []) {
+              mediaMap[m.id] = m
+            }
+            for (const p of docs) {
+              if (typeof p.productImage === 'number') {
+                p.productImage = mediaMap[p.productImage] ?? null
+              }
+            }
+          } catch {
+            // Non-fatal — images simply won't show for this render
+          }
+        }
+        // ────────────────────────────────────────────────────────────────────
+
+        setProducts(docs)
         setLoading(false)
       })
       .catch(() => setLoading(false))

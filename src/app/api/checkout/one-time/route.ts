@@ -228,7 +228,7 @@ export async function POST(req: NextRequest) {
                 data: {
                     customerType: user ? 'user' : 'guest',
                     user: user?.id,
-                    email: (user as any)?.email || email,
+                    email: (user as any)?.contactEmail ?? (user as any)?.email ?? email,
                     deliveryOption,
                     origin: 'one-time',
                     items: orderItems,
@@ -258,7 +258,7 @@ export async function POST(req: NextRequest) {
 
             // --- CREATE STRIPE PAYMENT INTENT ---
             try {
-                const customerEmail = (user as any)?.email || email;
+                const customerEmail = (user as any)?.contactEmail ?? (user as any)?.email ?? email;
                 if (!customerEmail) {
                     return NextResponse.json({ error: 'Email is required for checkout' }, { status: 400 });
                 }
@@ -313,21 +313,21 @@ export async function POST(req: NextRequest) {
                     success: true,
                     message: "Order created successfully",
                     clientSecret: paymentIntent.client_secret,
-                    dbOrderId: orderDoc.id,
+                    dbOrderId: String(orderDoc.id),
                     guestAccessToken,
                     stripeCustomerId,
                 }, { status: 200 });
 
             } catch (stripeError: any) {
                 console.error('Stripe Error:', stripeError);
-                return NextResponse.json({ error: stripeError.message || 'Payment processing failed' }, { status: 500 });
+                return NextResponse.json({ error: stripeError?.message || 'Payment processing failed' }, { status: 500 });
             }
         } catch (dbError) {
             console.error('Database Error:', dbError);
-            return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+            return NextResponse.json({ error: (dbError as any)?.message || 'Failed to create order' }, { status: 500 });
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Global Error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: error?.message || 'Internal Server Error' }, { status: 500 });
     }
 }

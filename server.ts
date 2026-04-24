@@ -6,7 +6,8 @@ import { parse } from 'url'
 import { Cron } from 'croner'
 
 const dev = process.env.NODE_ENV !== 'production'
-const hostname = 'localhost'
+// const hostname = 'localhost'
+const hostname = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost'
 const port = parseInt(process.env.PORT || '3000', 10)
 
 // when using middleware `hostname` and `port` must be provided below
@@ -44,8 +45,8 @@ app.prepare().then(() => {
     },
   })
 
-  // @ts-ignore
-  global.io = io
+  // @ts-ignore — globalThis works in both tsx and Next.js webpack module contexts
+  ;(globalThis as any).io = io
 
   io.on('connection', (socket) => {
     console.log('[Socket.IO] Client connected:', socket.id)

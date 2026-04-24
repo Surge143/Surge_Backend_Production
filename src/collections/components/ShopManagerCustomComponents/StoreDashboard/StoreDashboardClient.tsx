@@ -11,18 +11,12 @@ interface Props {
   initialOrders: any[] // placed + shipped (active)
   initialDelivered: any[] // delivered
   initialCancelled: any[] // cancelled / refund-initiated / refunded
-  shopDoc: any | null
-  isAdmin?: boolean
-  allShops?: any[]
 }
 
 export const StoreDashboardClient: React.FC<Props> = ({
   initialOrders,
   initialDelivered,
   initialCancelled,
-  shopDoc,
-  isAdmin = false,
-  allShops = [],
 }) => {
   // ── State ──────────────────────────────────────────────────────────────────
   const [orders, setOrders] = useState<any[]>(() => initialOrders.map(formatOrder))
@@ -34,12 +28,6 @@ export const StoreDashboardClient: React.FC<Props> = ({
   const [expanded, setExpanded] = useState<string | null>(null)
   const [loadingIds, setLoadingIds] = useState<Record<string, boolean>>({})
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null)
-
-  const [currentShopId, setCurrentShopId] = useState<string | null>(
-    shopDoc?.id ? String(shopDoc.id) : null,
-  )
-  const [currentShopDoc, setCurrentShopDoc] = useState<any>(shopDoc)
-  const [shopSwitching, setShopSwitching] = useState(false)
 
   // ── Audio ──────────────────────────────────────────────────────────────────
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -64,33 +52,6 @@ export const StoreDashboardClient: React.FC<Props> = ({
   // ── Loading helpers ────────────────────────────────────────────────────────
   const setLoading = (id: string, v: boolean) => setLoadingIds((p) => ({ ...p, [id]: v }))
 
-  // ── Shop switcher (admin only) ─────────────────────────────────────────────
-  const handleShopSwitch = useCallback(
-    async (newShopId: string) => {
-      if (newShopId === currentShopId) return
-      setShopSwitching(true)
-      try {
-        const res = await fetch(`/api/store-manager/dashboard-data?shopId=${newShopId}`)
-        if (!res.ok) throw new Error('Failed to load shop data')
-        const data = await res.json()
-        setOrders(data.orders.map(formatOrder))
-        setDelivered(data.delivered.map(formatOrder))
-        setCancelled(data.cancelled.map(formatOrder))
-        setCurrentShopId(newShopId)
-        const shopResult = allShops.find((s: any) => String(s.id) === newShopId)
-        setCurrentShopDoc(shopResult || null)
-        setExpanded(null)
-        setSearch('')
-        setFilter('all')
-      } catch (e: any) {
-        notify(e.message || 'Failed to switch shop', 'err')
-      } finally {
-        setShopSwitching(false)
-      }
-    },
-    [currentShopId, allShops, notify],
-  )
-
   // ── Socket.io ──────────────────────────────────────────────────────────────
   useEffect(() => {
     let socketUrl = process.env.NEXT_PUBLIC_SERVER_URL || ''
@@ -104,6 +65,16 @@ export const StoreDashboardClient: React.FC<Props> = ({
     }
 
     const socket = io(socketUrl, { path: '/socket.io' })
+
+    socket.on('connect', () => {
+      console.log('[Socket.IO Store] ✅ Connected, id:', socket.id)
+    })
+    socket.on('connect_error', (err) => {
+      console.error('[Socket.IO Store] ❌ Connection error:', err.message)
+    })
+    socket.on('disconnect', (reason) => {
+      console.warn('[Socket.IO Store] Disconnected:', reason)
+    })
 
     socket.on('web-order-created', (raw: any) => {
       if (raw.paymentStatus !== 'completed') return
@@ -315,8 +286,6 @@ export const StoreDashboardClient: React.FC<Props> = ({
     shipped: orders.filter((o) => o.status === 'shipped').length,
   }
 
-  const shopName = currentShopDoc?.name || 'Store Dashboard'
-
   return (
     <div
       className="std-root"
@@ -338,12 +307,6 @@ export const StoreDashboardClient: React.FC<Props> = ({
         counts={counts}
         search={search}
         onSearch={setSearch}
-        shopName={shopName}
-        isAdmin={isAdmin}
-        allShops={allShops}
-        currentShopId={currentShopId}
-        onShopChange={handleShopSwitch}
-        shopSwitching={shopSwitching}
       />
 
       <FilterBar filter={filter} onFilter={setFilter} />

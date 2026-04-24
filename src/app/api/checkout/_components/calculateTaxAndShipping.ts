@@ -10,20 +10,22 @@ export const calculateTaxAndShipping = async (
     deliveryOption: 'delivery' | 'pickup',
     shippingAddress?: ShippingAddress | null
 ) => {
-    const taxAndShippingResult: any = await payload.findGlobal({
-        slug: 'ship-and-tax',
-        depth: 0,
-        select: {
-            tax: true,
-            emirateCharges: true,
-        }
-    });
+    let taxAndShippingResult: any = null;
 
-    if (!taxAndShippingResult) {
-        throw new Error('Tax and shipping configuration not found');
+    try {
+        taxAndShippingResult = await payload.findGlobal({
+            slug: 'ship-and-tax',
+            depth: 0,
+            select: {
+                tax: true,
+                emirateCharges: true,
+            }
+        });
+    } catch (error) {
+        console.warn('[calculateTaxAndShipping] Falling back to zero tax/shipping because global config could not be loaded.', error);
     }
 
-    const taxRate = taxAndShippingResult.tax || 0;
+    const taxRate = taxAndShippingResult?.tax || 0;
     let shippingCharge = 0;
 
     if (deliveryOption === 'delivery') {
@@ -31,12 +33,13 @@ export const calculateTaxAndShipping = async (
         if (!emirateKey) {
             throw new Error('Shipping address must include an emirate for delivery');
         }
-        // Map the emirate key to the global configuration field
-        shippingCharge = taxAndShippingResult.emirateCharges?.[emirateKey] || 0;
 
-        // Optional: Validate that the emirate actually exists in your config
-        if (taxAndShippingResult.emirateCharges && !(emirateKey in taxAndShippingResult.emirateCharges)) {
-            throw new Error(`Invalid or unsupported emirate: ${emirateKey}`);
+        if (taxAndShippingResult?.emirateCharges) {
+            shippingCharge = taxAndShippingResult.emirateCharges?.[emirateKey] || 0;
+
+            if (!(emirateKey in taxAndShippingResult.emirateCharges)) {
+                console.warn(`[calculateTaxAndShipping] Unsupported emirate key "${emirateKey}". Falling back to 0 shipping.`);
+            }
         }
     }
 
