@@ -164,10 +164,12 @@ export const Users: CollectionConfig = {
       name: 'gender',
       label: 'Gender',
       type: 'select',
+      defaultValue: 'gender',
+      required: false,
       options: [
         { label: 'Male', value: 'male' },
         { label: 'Female', value: 'female' },
-        { label: 'Other', value: 'other' },
+        { label: 'Gender', value: 'gender' },
       ],
       admin: {
         readOnly: true,
@@ -411,7 +413,8 @@ export const Users: CollectionConfig = {
       name: 'contactEmail',
       type: 'email',
       admin: {
-        description: 'Real email for communications (order confirmations, notifications). Collected post-login from Apple users who used Hide My Email or phone number auth.',
+        description:
+          'Real email for communications (order confirmations, notifications). Collected post-login from Apple users who used Hide My Email or phone number auth.',
       },
     },
   ],

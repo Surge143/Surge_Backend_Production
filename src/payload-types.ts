@@ -100,6 +100,7 @@ export interface Config {
     wholesale: Wholesale;
     'app-banners': AppBanner;
     newsletters: Newsletter;
+    events: Event;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -147,6 +148,7 @@ export interface Config {
     wholesale: WholesaleSelect<false> | WholesaleSelect<true>;
     'app-banners': AppBannersSelect<false> | AppBannersSelect<true>;
     newsletters: NewslettersSelect<false> | NewslettersSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -224,7 +226,7 @@ export interface AdminAuthOperations {
 export interface User {
   id: number;
   role?: 'customer' | null;
-  gender?: ('male' | 'female' | 'other') | null;
+  gender?: ('male' | 'female' | 'gender') | null;
   phone?: string | null;
   firstName?: string | null;
   lastName?: string | null;
@@ -1797,6 +1799,28 @@ export interface Newsletter {
   createdAt: string;
 }
 /**
+ * Bookings received for Surge events
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  eventDate: string;
+  timeWindow: string;
+  expectedGuests: number;
+  eventType: string;
+  package: string;
+  addons?: string | null;
+  location: string;
+  message: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
@@ -2101,6 +2125,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'newsletters';
         value: number | Newsletter;
+      } | null)
+    | ({
+        relationTo: 'events';
+        value: number | Event;
       } | null)
     | ({
         relationTo: 'exports';
@@ -3110,6 +3138,25 @@ export interface AppBannersSelect<T extends boolean = true> {
  */
 export interface NewslettersSelect<T extends boolean = true> {
   email?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  fullName?: T;
+  email?: T;
+  phoneNumber?: T;
+  eventDate?: T;
+  timeWindow?: T;
+  expectedGuests?: T;
+  eventType?: T;
+  package?: T;
+  addons?: T;
+  location?: T;
+  message?: T;
   updatedAt?: T;
   createdAt?: T;
 }

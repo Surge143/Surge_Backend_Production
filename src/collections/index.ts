@@ -32,6 +32,7 @@ import { Blogs } from './Blogs/Blogs'
 import { Wholesale } from './Wholesale/Wholesale'
 import { AppBanners } from './AppBanner/AppBanner'
 import { Newsletter } from './Newsletter/Newsletter'
+import { Events } from './Events/Events'
 
 export const collections = [
   Users,
@@ -66,6 +67,7 @@ export const collections = [
   Wholesale,
   AppBanners,
   Newsletter,
+  Events,
 ]
 
 export const globals = [WTCoins, ShipAndTax]
