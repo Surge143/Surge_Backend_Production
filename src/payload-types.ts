@@ -432,8 +432,17 @@ export interface Shop {
    */
   isShopOpen?: boolean | null;
   shopManager: number | Admin;
+  /**
+   * The email of the admin who last updated this shop.
+   */
+  lastUpdatedBy?: string | null;
+  /**
+   * The email of the admin who created this shop.
+   */
+  createdBy?: string | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Organize items into groups
@@ -450,8 +459,17 @@ export interface AppCategory {
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * The email of the admin who last updated this category.
+   */
+  lastUpdatedBy?: string | null;
+  /**
+   * The email of the admin who created this category.
+   */
+  createdBy?: string | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * More specific groupings within a category
@@ -468,8 +486,17 @@ export interface AppSubCategory {
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * The email of the admin who last updated this sub-category.
+   */
+  lastUpdatedBy?: string | null;
+  /**
+   * The email of the admin who created this sub-category.
+   */
+  createdBy?: string | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Sizes, add-ons, and modifiers
@@ -581,8 +608,17 @@ export interface Menu {
    * Enable this if this item can be redeemed for free once a customer has collected enough stamps.
    */
   isStampFreeProduct?: boolean | null;
+  /**
+   * The email of the admin who last updated this item.
+   */
+  lastUpdatedBy?: string | null;
+  /**
+   * The email of the admin who created this item.
+   */
+  createdBy?: string | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -658,8 +694,13 @@ export interface ShopMenu {
    * Enable if this item can be redeemed for free once a customer has collected enough stamps. (Admin only — synced from Menu)
    */
   isStampFreeProduct?: boolean | null;
+  /**
+   * The email of the admin who last updated this item.
+   */
+  lastUpdatedBy?: string | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Create and manage store discount codes
@@ -740,6 +781,10 @@ export interface SurgeCoupon {
     app?: boolean | null;
   };
   usageCount?: number | null;
+  /**
+   * The email of the admin who last updated this coupon.
+   */
+  lastUpdatedBy?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -825,9 +870,13 @@ export interface WebProduct {
     description?: string | null;
   };
   /**
-   * Automatically set to the admin who last saved this product.
+   * The email of the admin who last updated this product.
    */
-  updatedBy?: (number | null) | Admin;
+  lastUpdatedBy?: string | null;
+  /**
+   * The email of the admin who created this product.
+   */
+  createdBy?: string | null;
   slug: string;
   updatedAt: string;
   createdAt: string;
@@ -865,8 +914,17 @@ export interface WebCategory {
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * The email of the admin who last updated this category.
+   */
+  lastUpdatedBy?: string | null;
+  /**
+   * The email of the admin who created this category.
+   */
+  createdBy?: string | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Create and manage discount codes
@@ -939,6 +997,10 @@ export interface SurgeShopCoupon {
    * Internal counter of how many times this coupon has been used.
    */
   usageCount?: number | null;
+  /**
+   * The email of the admin who last updated this coupon.
+   */
+  lastUpdatedBy?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -1158,8 +1220,17 @@ export interface Slot {
    * The manager who created this slot.
    */
   shopManager?: (number | null) | Admin;
+  /**
+   * The email of the admin who last updated this slot.
+   */
+  lastUpdatedBy?: string | null;
+  /**
+   * The email of the admin who created this slot.
+   */
+  createdBy?: string | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * More specific product groupings
@@ -1188,8 +1259,17 @@ export interface WebSubCategory {
         id?: string | null;
       }[]
     | null;
+  /**
+   * The email of the admin who last updated this sub-category.
+   */
+  lastUpdatedBy?: string | null;
+  /**
+   * The email of the admin who created this sub-category.
+   */
+  createdBy?: string | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Follow up on customers who didn't check out
@@ -1575,6 +1655,14 @@ export interface AppBestSeller {
   id: number;
   shop: number | Shop;
   products?: (number | ShopMenu)[] | null;
+  /**
+   * The email of the admin who last updated this.
+   */
+  lastUpdatedBy?: string | null;
+  /**
+   * The email of the admin who created this.
+   */
+  createdBy?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1636,6 +1724,14 @@ export interface Blog {
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * The email of the admin who last updated this blog.
+   */
+  lastUpdatedBy?: string | null;
+  /**
+   * The email of the admin who created this blog.
+   */
+  createdBy?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -2160,8 +2256,11 @@ export interface AppCategoriesSelect<T extends boolean = true> {
   image?: T;
   generateSlug?: T;
   slug?: T;
+  lastUpdatedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2205,8 +2304,11 @@ export interface AppSubCategoriesSelect<T extends boolean = true> {
   parentCategory?: T;
   generateSlug?: T;
   slug?: T;
+  lastUpdatedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2294,8 +2396,11 @@ export interface MenuSelect<T extends boolean = true> {
       };
   isStampEligible?: T;
   isStampFreeProduct?: T;
+  lastUpdatedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2332,8 +2437,11 @@ export interface ShopSelect<T extends boolean = true> {
       };
   isShopOpen?: T;
   shopManager?: T;
+  lastUpdatedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2390,8 +2498,10 @@ export interface ShopMenuSelect<T extends boolean = true> {
       };
   isStampEligible?: T;
   isStampFreeProduct?: T;
+  lastUpdatedBy?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2418,6 +2528,7 @@ export interface SurgeCouponSelect<T extends boolean = true> {
         app?: T;
       };
   usageCount?: T;
+  lastUpdatedBy?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -2448,6 +2559,7 @@ export interface SurgeShopCouponSelect<T extends boolean = true> {
       };
   isPubliclyVisible?: T;
   usageCount?: T;
+  lastUpdatedBy?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -2579,8 +2691,11 @@ export interface WebCategoriesSelect<T extends boolean = true> {
       };
   generateSlug?: T;
   slug?: T;
+  lastUpdatedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2606,8 +2721,11 @@ export interface WebSubCategoriesSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  lastUpdatedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2667,7 +2785,8 @@ export interface WebProductsSelect<T extends boolean = true> {
         image?: T;
         description?: T;
       };
-  updatedBy?: T;
+  lastUpdatedBy?: T;
+  createdBy?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2811,8 +2930,11 @@ export interface SlotsSelect<T extends boolean = true> {
   currentLoad?: T;
   shop?: T;
   shopManager?: T;
+  lastUpdatedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2914,6 +3036,8 @@ export interface NotificationsSelect<T extends boolean = true> {
 export interface AppBestSellerSelect<T extends boolean = true> {
   shop?: T;
   products?: T;
+  lastUpdatedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2939,6 +3063,8 @@ export interface BlogsSelect<T extends boolean = true> {
   isFeatured?: T;
   generateSlug?: T;
   slug?: T;
+  lastUpdatedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -3154,6 +3280,11 @@ export interface SurgeCoin {
    * WTCoins awarded to the new user who used a referral code on their first order.
    */
   referralRewardForReferred: number;
+  /**
+   * The email of the admin who last updated this configuration.
+   */
+  lastUpdatedBy?: string | null;
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -3179,6 +3310,11 @@ export interface ShipAndTax {
     ras_al_khaimah?: number | null;
     fujairah?: number | null;
   };
+  /**
+   * The email of the admin who last updated this configuration.
+   */
+  lastUpdatedBy?: string | null;
+  _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -3194,6 +3330,8 @@ export interface SurgeCoinsSelect<T extends boolean = true> {
   minPointsPerOrder?: T;
   referralRewardForReferrer?: T;
   referralRewardForReferred?: T;
+  lastUpdatedBy?: T;
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -3215,6 +3353,8 @@ export interface ShipAndTaxSelect<T extends boolean = true> {
         ras_al_khaimah?: T;
         fujairah?: T;
       };
+  lastUpdatedBy?: T;
+  _status?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

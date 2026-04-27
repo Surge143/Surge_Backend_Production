@@ -18,6 +18,14 @@ export const WebSubCategories: CollectionConfig = {
       return !isAuthorized
     },
   },
+  versions: {
+    drafts: {
+      autosave: {
+        interval: 3000,
+      },
+    },
+    maxPerDoc: 50,
+  },
   fields: [
     {
       name: 'parentCategory',
@@ -48,6 +56,46 @@ export const WebSubCategories: CollectionConfig = {
           ],
         },
       ],
+    },
+    {
+      name: 'lastUpdatedBy',
+      label: 'Last Edited By',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'The email of the admin who last updated this sub-category.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, value }) => {
+            if (req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
+      },
+    },
+    {
+      name: 'createdBy',
+      label: 'Created By',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'The email of the admin who created this sub-category.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, operation, value }) => {
+            if (operation === 'create' && req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
+      },
     },
   ],
 }

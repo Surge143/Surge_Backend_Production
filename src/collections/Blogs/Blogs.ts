@@ -31,7 +31,12 @@ export const Blogs: CollectionConfig = {
     },
   },
   versions: {
-    drafts: true,
+    drafts: {
+      autosave: {
+        interval: 3000,
+      },
+    },
+    maxPerDoc: 50,
   },
   hooks: {
     beforeValidate: [
@@ -199,6 +204,46 @@ export const Blogs: CollectionConfig = {
     slugField({
       useAsSlug: 'title',
     }),
+    {
+      name: 'lastUpdatedBy',
+      label: 'Last Edited By',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'The email of the admin who last updated this blog.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, value }) => {
+            if (req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
+      },
+    },
+    {
+      name: 'createdBy',
+      label: 'Created By',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'The email of the admin who created this blog.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, operation, value }) => {
+            if (operation === 'create' && req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
+      },
+    },
   ],
   timestamps: true,
 }

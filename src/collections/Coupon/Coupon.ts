@@ -24,7 +24,7 @@ export const Coupon: CollectionConfig = {
   versions: {
     drafts: {
       autosave: {
-        interval: 1000,
+        interval: 3000,
       },
     },
     maxPerDoc: 50,
@@ -384,6 +384,26 @@ export const Coupon: CollectionConfig = {
       type: 'number',
       defaultValue: 0,
       admin: { hidden: true },
+    },
+    {
+      name: 'lastUpdatedBy',
+      label: 'Last Edited By',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'The email of the admin who last updated this coupon.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, value }) => {
+            if (req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
+      },
     },
   ],
 }

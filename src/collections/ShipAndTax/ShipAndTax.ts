@@ -13,6 +13,13 @@ export const ShipAndTax: GlobalConfig = {
       return !isAuthorized
     },
   },
+  versions: {
+    drafts: {
+      autosave: {
+        interval: 3000,
+      },
+    },
+  },
   access: {
     read: () => true,
     update: ({ req: { user } }) => user?.role === 'super-admin' || user?.role === 'admin',
@@ -107,6 +114,26 @@ export const ShipAndTax: GlobalConfig = {
           ],
         },
       ],
+    },
+    {
+      name: 'lastUpdatedBy',
+      label: 'Last Edited By',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'The email of the admin who last updated this configuration.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, value }) => {
+            if (req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
+      },
     },
   ],
 }

@@ -71,24 +71,10 @@ export const WebProducts: CollectionConfig = {
   versions: {
     drafts: {
       autosave: {
-        interval: 1000,
+        interval: 3000,
       },
     },
     maxPerDoc: 50,
-  },
-
-  // ─── Hooks ────────────────────────────────────────────────────────────────
-  // Stamp the currently-logged-in admin onto every save so the Versions panel
-  // can show "last edited by" information alongside each snapshot.
-  hooks: {
-    beforeChange: [
-      ({ data, req }) => {
-        if (req.user?.id) {
-          data.updatedBy = req.user.id
-        }
-        return data
-      },
-    ],
   },
   access: {
     read: () => true,
@@ -592,20 +578,44 @@ export const WebProducts: CollectionConfig = {
         },
       ],
     },
-    // ─── Last Edited By (Sidebar) ──────────────────────────────────────────
-    // Auto-populated by the beforeChange hook above; never editable by hand.
-    // Because Payload versions the full document, every version snapshot will
-    // contain whoever triggered that particular save — making this the easiest
-    // way to see "who made this change" in the Versions panel.
     {
-      name: 'updatedBy',
+      name: 'lastUpdatedBy',
       label: 'Last Edited By',
-      type: 'relationship',
-      relationTo: 'admins',
+      type: 'text',
       admin: {
         position: 'sidebar',
         readOnly: true,
-        description: 'Automatically set to the admin who last saved this product.',
+        description: 'The email of the admin who last updated this product.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, value }) => {
+            if (req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
+      },
+    },
+    {
+      name: 'createdBy',
+      label: 'Created By',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'The email of the admin who created this product.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, operation, value }) => {
+            if (operation === 'create' && req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
       },
     },
 

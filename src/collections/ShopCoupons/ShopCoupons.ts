@@ -8,7 +8,11 @@ export const ShopCoupons: CollectionConfig = {
     plural: 'Cafe Coupons',
   },
   versions: {
-    drafts: true,
+    drafts: {
+      autosave: {
+        interval: 3000,
+      },
+    },
     maxPerDoc: 50,
   },
   admin: {
@@ -394,6 +398,26 @@ export const ShopCoupons: CollectionConfig = {
       admin: {
         hidden: true,
         description: 'Internal counter of how many times this coupon has been used.',
+      },
+    },
+    {
+      name: 'lastUpdatedBy',
+      label: 'Last Edited By',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'The email of the admin who last updated this coupon.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, value }) => {
+            if (req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
       },
     },
   ],

@@ -21,6 +21,14 @@ export const ShopMenu: CollectionConfig = {
       return !isAuthorized
     },
   },
+  versions: {
+    drafts: {
+      autosave: {
+        interval: 3000,
+      },
+    },
+    maxPerDoc: 50,
+  },
   access: {
     read: ({ req: { user } }) => {
       if (user?.role === 'shop-manager') {
@@ -322,6 +330,7 @@ export const ShopMenu: CollectionConfig = {
                     {
                       name: 'selectionType',
                       type: 'radio',
+                      enumName: 'sm_sect_sel_type',
                       options: [
                         { label: 'Single', value: 'single' },
                         { label: 'Multiple', value: 'multiple' },
@@ -427,6 +436,26 @@ export const ShopMenu: CollectionConfig = {
           ],
         },
       ],
+    },
+    {
+      name: 'lastUpdatedBy',
+      label: 'Last Edited By',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'The email of the admin who last updated this item.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, value }) => {
+            if (req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
+      },
     },
   ],
 }

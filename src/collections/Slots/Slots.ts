@@ -18,6 +18,14 @@ export const Slots: CollectionConfig = {
       return !isAuthorized
     },
   },
+  versions: {
+    drafts: {
+      autosave: {
+        interval: 3000,
+      },
+    },
+    maxPerDoc: 50,
+  },
   access: {
     read: ({ req: { user } }) => {
       if (user?.role === 'shop-manager') {
@@ -242,6 +250,46 @@ export const Slots: CollectionConfig = {
         position: 'sidebar',
         readOnly: true,
         description: 'The manager who created this slot.',
+      },
+    },
+    {
+      name: 'lastUpdatedBy',
+      label: 'Last Edited By',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'The email of the admin who last updated this slot.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, value }) => {
+            if (req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
+      },
+    },
+    {
+      name: 'createdBy',
+      label: 'Created By (Email)',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'The email of the admin who created this slot.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, operation, value }) => {
+            if (operation === 'create' && req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
       },
     },
   ],

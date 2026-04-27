@@ -10,8 +10,15 @@ export const WTCoins: GlobalConfig = {
     description: 'Track coins earned and redeemed',
     group: 'Loyalty & Rewards',
     hidden: ({ user }) => {
-      const isAuthorized = user?.role === 'super-admin' || user?.role === 'admin' 
+      const isAuthorized = user?.role === 'super-admin' || user?.role === 'admin'
       return !isAuthorized
+    },
+  },
+  versions: {
+    drafts: {
+      autosave: {
+        interval: 3000,
+      },
     },
   },
   access: {
@@ -114,6 +121,26 @@ export const WTCoins: GlobalConfig = {
           ],
         },
       ],
+    },
+    {
+      name: 'lastUpdatedBy',
+      label: 'Last Edited By',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'The email of the admin who last updated this configuration.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ req, value }) => {
+            if (req.user && req.user.collection === 'admins') {
+              return req.user.email
+            }
+            return value
+          },
+        ],
+      },
     },
   ],
 }
