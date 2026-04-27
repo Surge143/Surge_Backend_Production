@@ -7,11 +7,7 @@ export const Wholesale: CollectionConfig = {
     group: 'Marketing',
     description: 'Handle B2B and bulk orders',
     defaultColumns: ['company', 'email', 'createdAt'],
-    hidden: ({ user }) => {
-      const isAuthorized =
-        user?.role === 'super-admin' || user?.role === 'admin'
-      return !isAuthorized
-    },
+    hidden: () => true,
   },
   access: {
     read: ({ req: { user } }) => {
