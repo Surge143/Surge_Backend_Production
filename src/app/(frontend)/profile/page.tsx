@@ -11,6 +11,8 @@ export default function ProfilePage() {
   const [stamps, setStamps] = useState<any>(null)
   const [coins, setCoins] = useState<any>(null)
   const [orders, setOrders] = useState<any[]>([])
+  const [appOrders, setAppOrders] = useState<any[]>([])
+  const [activeOrderTab, setActiveOrderTab] = useState<'web' | 'cafe'>('cafe')
 
   // Profile Edit State
   const [editMode, setEditMode] = useState(false)
@@ -56,13 +58,17 @@ export default function ProfilePage() {
       .then((res) => res.json())
       .then((data) => setStamps(data.docs?.[0]))
 
-    fetch(`/api/user-wt-coins?where[user][equals]=${u.id}`)
+    fetch(`/api/user-surge-coins?where[user][equals]=${u.id}`)
       .then((res) => res.json())
       .then((data) => setCoins(data.docs?.[0]))
 
     fetch(`/api/web-orders?where[email][equals]=${u.email}`)
       .then((res) => res.json())
       .then((data) => setOrders(data.docs || []))
+
+    fetch(`/api/app-orders?where[user][equals]=${u.id}&sort=-createdAt&limit=20`, { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data) => setAppOrders(data.docs || []))
 
     fetch(`/api/users/${u.id}/addresses`)
       .then((res) => res.json())
@@ -229,25 +235,24 @@ export default function ProfilePage() {
           {/* Loyalty Info */}
           <div className="glass" style={styles.card}>
             <h3 style={styles.cardTitle}>Loyalty Status</h3>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginTop: '16px',
-              }}
-            >
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginTop: '16px' }}>
               <div>
-                <span style={{ fontSize: '32px', fontWeight: '900', color: 'var(--primary)' }}>
+                <span style={{ fontSize: '28px', fontWeight: '900', color: 'var(--primary)' }}>
                   {stamps?.stampCount || 0}/10
                 </span>
-                <p style={{ fontSize: '12px', opacity: 0.5 }}>Stamps Collected</p>
+                <p style={{ fontSize: '11px', opacity: 0.5, marginTop: '2px' }}>Stamps</p>
+              </div>
+              <div>
+                <span style={{ fontSize: '28px', fontWeight: '900', color: '#2ecc71' }}>
+                  {stamps?.stampReward || 0}
+                </span>
+                <p style={{ fontSize: '11px', opacity: 0.5, marginTop: '2px' }}>Free Rewards</p>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '32px', fontWeight: '900', color: 'var(--accent)' }}>
+                <span style={{ fontSize: '28px', fontWeight: '900', color: 'var(--accent)' }}>
                   {coins?.totalBalance || 0}
                 </span>
-                <p style={{ fontSize: '12px', opacity: 0.5 }}>WTCoins</p>
+                <p style={{ fontSize: '11px', opacity: 0.5, marginTop: '2px' }}>WTCoins</p>
               </div>
             </div>
           </div>
@@ -358,10 +363,48 @@ export default function ProfilePage() {
         </div>
 
         <div className="glass" style={{ ...styles.card, padding: 0 }}>
-          <h3 style={{ ...styles.cardTitle, padding: '32px' }}>Order History</h3>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            {orders.length > 0 ? (
-              orders.map((order, i) => (
+          <div style={{ padding: '32px 32px 0' }}>
+            <h3 style={styles.cardTitle}>Order History</h3>
+            <div style={{ display: 'flex', gap: '0', marginTop: '16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              {(['cafe', 'web'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveOrderTab(tab)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '10px 20px', fontSize: '13px', fontWeight: '700',
+                    color: activeOrderTab === tab ? 'var(--primary)' : 'rgba(255,255,255,0.4)',
+                    borderBottom: activeOrderTab === tab ? '2px solid var(--primary)' : '2px solid transparent',
+                    marginBottom: '-1px', transition: 'all 0.2s',
+                  }}
+                >
+                  {tab === 'cafe' ? '☕ Cafe Orders' : '🛍 Web Orders'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            {activeOrderTab === 'cafe' ? (
+              appOrders.length > 0 ? appOrders.map((order, i) => (
+                <div key={i} style={styles.orderRow}>
+                  <div>
+                    <p style={{ fontWeight: '800' }}>Cafe #{String(order.id).slice(-6)}</p>
+                    <p style={{ fontSize: '12px', opacity: 0.5 }}>
+                      {new Date(order.createdAt).toLocaleDateString()} · {order.orderType || ''}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontWeight: '800', color: 'var(--primary)' }}>
+                      AED {order.financials?.total?.toFixed(2) ?? '—'}
+                    </p>
+                    <p style={{ fontSize: '12px', opacity: 0.5 }}>{order.paymentStatus || order.appOrderStatus}</p>
+                  </div>
+                </div>
+              )) : (
+                <div style={{ padding: '40px', textAlign: 'center', opacity: 0.5 }}>No cafe orders yet.</div>
+              )
+            ) : (
+              orders.length > 0 ? orders.map((order, i) => (
                 <div key={i} style={styles.orderRow}>
                   <div>
                     <p style={{ fontWeight: '800' }}>Order #{String(order.id).slice(-6)}</p>
@@ -374,11 +417,9 @@ export default function ProfilePage() {
                     <p style={{ fontSize: '12px', opacity: 0.5 }}>{order.status}</p>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div style={{ padding: '40px', textAlign: 'center', opacity: 0.5 }}>
-                No orders yet.
-              </div>
+              )) : (
+                <div style={{ padding: '40px', textAlign: 'center', opacity: 0.5 }}>No web orders yet.</div>
+              )
             )}
           </div>
         </div>
