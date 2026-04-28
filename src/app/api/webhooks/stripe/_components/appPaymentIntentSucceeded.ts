@@ -43,30 +43,34 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
       const userId = typeof order.user === 'object' ? order.user.id : order.user
       console.log('🪙 Checking rewards for user:', userId)
 
-      try {
-        // DEDUCT WTCOINS IF USED (coinsUsed in AppOrders)
-        if (order.coinsUsed && order.coinsUsed > 0) {
+      // DEDUCT WTCOINS IF USED (coinsUsed in AppOrders)
+      if (order.coinsUsed && order.coinsUsed > 0) {
+        try {
           console.log(`📉 Deducting ${order.coinsUsed} WTCoins for order ${orderId}`)
           await deductWTCoins(payload, userId, order.coinsUsed, orderId, 'app-orders')
-        } else {
-          console.log('⏭️ No WTCoins to deduct')
+        } catch (error) {
+          console.error(`❌ Failed to deduct WTCoins for order ${orderId}:`, error)
         }
+      } else {
+        console.log('⏭️ No WTCoins to deduct')
+      }
 
-        // DEDUCT STAMP REWARDS IF USED (stampRewards in AppOrders)
-        if (
-          order.stampRewards &&
-          Array.isArray(order.stampRewards) &&
-          order.stampRewards.length > 0
-        ) {
+      // DEDUCT STAMP REWARDS IF USED (stampRewards in AppOrders)
+      if (
+        order.stampRewards &&
+        Array.isArray(order.stampRewards) &&
+        order.stampRewards.length > 0
+      ) {
+        try {
           console.log(
             `📉 Deducting ${order.stampRewards.length} stamp rewards for order ${orderId}`,
           )
           await deductStampRewards(payload, userId, order.stampRewards.length, orderId)
-        } else {
-          console.log('⏭️ No stamp rewards to deduct')
+        } catch (error) {
+          console.error(`❌ Failed to deduct stamp rewards for order ${orderId}:`, error)
         }
-      } catch (error) {
-        console.error('❌ Error managing rewards:', error)
+      } else {
+        console.log('⏭️ No stamp rewards to deduct')
       }
     }
 
@@ -165,6 +169,28 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
       })
       console.log(`✅ Order ${orderId} successfully marked as paid`)
 
+      // --- INCREMENT COUPON USAGE COUNT ---
+      if (order.isCouponUsed && order.coupon) {
+        const couponId = typeof order.coupon === 'object' ? order.coupon.id : order.coupon
+        try {
+          const couponDoc = await payload.findByID({
+            collection: 'surge-shop-coupon',
+            id: couponId,
+            overrideAccess: true,
+            depth: 0,
+          })
+          await payload.update({
+            collection: 'surge-shop-coupon',
+            id: couponId,
+            data: { usageCount: (couponDoc.usageCount || 0) + 1 },
+            overrideAccess: true,
+          })
+          console.log(`✅ Coupon ${couponId} usageCount incremented for order ${orderId}`)
+        } catch (error) {
+          console.error(`❌ Failed to increment usageCount for coupon ${couponId} on order ${orderId}:`, error)
+        }
+      }
+
       // --- DIRECT SOCKET EMIT (belt-and-suspenders alongside afterChange hook) ---
       try {
         const { emitOrderCreated } = await import('@/utilities/socket')
@@ -222,6 +248,7 @@ async function deductStampRewards(
       collection: 'surge-stamps',
       where: { user: { equals: userId } },
       limit: 1,
+      depth: 0,
       overrideAccess: true,
     })
 

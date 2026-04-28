@@ -20,6 +20,7 @@ export const WTStamps: CollectionConfig = {
       name: 'user',
       type: 'relationship',
       relationTo: 'users',
+      unique: true,
     },
     {
       name: 'stampCount',
