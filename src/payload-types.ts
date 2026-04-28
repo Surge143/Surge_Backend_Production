@@ -1808,7 +1808,7 @@ export interface Event {
   id: number;
   fullName: string;
   email: string;
-  phoneNumber: string;
+  phoneNumber: number;
   eventDate: string;
   timeWindow: string;
   expectedGuests: number;

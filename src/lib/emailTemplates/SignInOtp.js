@@ -25,14 +25,14 @@ export function getOTPEmailTemplate(otp) {
     }
     .greeting {
       font-size: 16px;
-      color: #4B3827;
+      color: #818686;
       margin-bottom: 12px;
       line-height: 1;
       font-family: Helvetica, Arial, sans-serif;
     }
     .welcome-text {
       font-size: 16px;
-      color: #4B3827;
+      color: #818686;
       margin-bottom: 8px;
       line-height: 0.5;
       padding-bottom: 10px;
@@ -40,14 +40,14 @@ export function getOTPEmailTemplate(otp) {
     }
     .instruction-text {
       font-size: 16px;
-      color: #4B3827;
+      color: #818686;
       margin-bottom: 24px;
       line-height: 1.5;
       font-family: Helvetica, Arial, sans-serif;
     }
     .code-label {
       font-size: 16px;
-      color: #4B3827;
+      color: #414343;
       font-weight: 500;
       margin-bottom: 16px;
       text-decoration: none;
@@ -68,16 +68,16 @@ export function getOTPEmailTemplate(otp) {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 600;
-      color: #4B3827;
+      color: #414343;
       text-align: center;
       line-height: 48px;
       font-family: Helvetica, Arial, sans-serif;
     }
     .validity-text {
       font-size: 14px;
-      color: #8C8C8C;
+      color: #414343;
       font-style: italic;
       margin-bottom: 32px;
       line-height: 1.5;
@@ -85,27 +85,27 @@ export function getOTPEmailTemplate(otp) {
     }
     .help-text {
       font-size: 16px;
-      color: #6C7A5F;
+      color: #414343;
       margin-bottom: 4px;
       line-height: 1.5;
       font-family: Helvetica, Arial, sans-serif;
     }
     .support-email {
       font-size: 16px;
-      color: #6C7A5F !important;
+      color: #C4754E !important;
       text-decoration: underline;
       margin-bottom: 32px;
       display: inline-block;
     }
     .closing {
       font-size: 16px;
-      color: #4B3827;
+      color: #414343;
       margin-bottom: 0px;
       line-height: 0.5;
     }
     .signature {
       font-size: 16px;
-      color: #4B3827;
+      color: #414343;
       font-weight: 500;
       line-height: 0.5;
     }
@@ -128,7 +128,7 @@ export function getOTPEmailTemplate(otp) {
   <div class="email-container">
     <p class="greeting">Hi there,</p>
     
-    <p class="welcome-text">Welcome to Whitemantis</p>
+    <p class="welcome-text">Welcome to Surge</p>
     <p class="instruction-text">To complete your sign-in, please use the verification code below:</p>
     
     <p class="code-label">Your verification code</p>
@@ -143,10 +143,10 @@ export function getOTPEmailTemplate(otp) {
     <p class="validity-text">This code is valid for the next 5 minutes.</p>
     
     <p class="help-text">Need help? Reach us at</p>
-    <a href="mailto:support@whitemantis.com" class="support-email">support@whitemantis.com</a>
+    <a href="mailto:support@surge.com" class="support-email">support@surge.com</a>
     
     <p class="closing">Happy brewing,</p>
-    <p class="signature">Team Whitemantis</p>
+    <p class="signature">Team Surge</p>
   </div>
 </body>
 </html>

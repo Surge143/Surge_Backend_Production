@@ -45,6 +45,7 @@
     "next-auth": "^4.24.13",
     "payload": "3.76.1",
     "payload-import-export": "^1.1.0",
+    "pg": "^8.20.0",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "sharp": "0.34.2",

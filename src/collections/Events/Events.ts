@@ -43,8 +43,9 @@ export const Events: CollectionConfig = {
       fields: [
         {
           name: 'phoneNumber',
-          type: 'text',
+          type: 'number',
           required: true,
+          max: 9999999999,
           admin: { width: '50%' },
         },
         {
