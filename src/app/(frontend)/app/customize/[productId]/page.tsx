@@ -130,8 +130,9 @@ export default function CustomizePage() {
         quantity,
         customizations: customizationsFlat,
       }
-      // Only include shopId when it is a valid non-empty value
-      if (shopId) cartBody.shopId = shopId
+      // NOTE: Do NOT send shopId — the backend derives it from the product's own
+      // shop field. Sending the URL param shopId caused Payload relationship
+      // validation failures ("The following field is invalid: Shop").
 
       const res = await fetch('/api/app/cart', {
         method: 'POST',
