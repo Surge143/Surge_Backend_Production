@@ -108,6 +108,17 @@ export default function CafeCheckoutPage() {
   const [error, setError] = useState('')
   const [apiSubtotal, setApiSubtotal] = useState<number | null>(null)
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null)
+  const [couponError, setCouponError] = useState('')
+  const [couponValidating, setCouponValidating] = useState(false)
+
+  // Stamp rewards state
+  const [stampRecord, setStampRecord] = useState<any>(null)
+  const [stampFreeProducts, setStampFreeProducts] = useState<any[]>([])
+  const [selectedStampRewards, setSelectedStampRewards] = useState<string[]>([])
+
   // Fetch cart
   useEffect(() => {
     fetch('/api/app/cart', { credentials: 'include' })
@@ -142,6 +153,25 @@ export default function CafeCheckoutPage() {
       .catch(() => { })
   }, [shop])
 
+  // Fetch stamp record
+  useEffect(() => {
+    if (!user) return
+    fetch(`/api/surge-stamps?where[user][equals]=${user.id}&limit=1`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setStampRecord(d.docs?.[0] || null))
+      .catch(() => { })
+  }, [user])
+
+  // Fetch stamp-eligible free products for this shop
+  useEffect(() => {
+    const sid = shop?.id || shop
+    if (!sid) return
+    fetch(`/api/shop-menu?where[shop][equals]=${sid}&where[isStampFreeProduct][equals]=true&limit=50`)
+      .then((r) => r.json())
+      .then((d) => setStampFreeProducts(d.docs || []))
+      .catch(() => { })
+  }, [shop])
+
   const subtotal = apiSubtotal !== null
     ? apiSubtotal
     : cart.reduce((s, item) => s + (item.price || 0) * (item.quantity || 1), 0)
@@ -149,6 +179,36 @@ export default function CafeCheckoutPage() {
   const displaySuccessOrderId = successOrderId ? String(successOrderId) : ''
   const displayDbOrderId = dbOrderId ? String(dbOrderId) : ''
   const readyForPayment = typeof clientSecret === 'string' && clientSecret.length > 0 && !!displayDbOrderId
+
+  const handleApplyCoupon = async () => {
+    const code = couponCode.trim().toUpperCase()
+    if (!code) { setCouponError('Please enter a coupon code'); return }
+    if (!shopId) { setCouponError('Shop not loaded yet, please wait'); return }
+    setCouponValidating(true)
+    setCouponError('')
+    try {
+      const res = await fetch(`/api/shop/${shopId}/coupons/${code}`, { credentials: 'include' })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setCouponError(data.error || 'Invalid coupon code')
+        return
+      }
+      setAppliedCoupon({ code, ...data.coupon })
+    } catch {
+      setCouponError('Failed to validate coupon. Please try again.')
+    } finally {
+      setCouponValidating(false)
+    }
+  }
+
+  const toggleStampReward = (productId: string) => {
+    const maxRewards = stampRecord?.stampReward || 0
+    setSelectedStampRewards((prev) => {
+      if (prev.includes(productId)) return prev.filter((id) => id !== productId)
+      if (prev.length >= maxRewards) return prev
+      return [...prev, productId]
+    })
+  }
 
   const handlePlaceOrder = async () => {
     if (!shopId) { setError('Missing shop information.'); return }
@@ -167,6 +227,8 @@ export default function CafeCheckoutPage() {
           selectedSlot: selectedSlot || undefined,
           specialInstructions,
           useWTCoins,
+          appliedCouponCode: appliedCoupon?.code || undefined,
+          stampRewards: selectedStampRewards.length > 0 ? selectedStampRewards : undefined,
         }),
       })
       const data = await parseJsonSafely<CheckoutResponse>(res)
@@ -361,6 +423,101 @@ export default function CafeCheckoutPage() {
             </div>
           )}
 
+          {/* Coupon */}
+          {shopId && (
+            <div className="glass" style={styles.card}>
+              <h3 style={styles.cardTitle}>Coupon Code</h3>
+              {appliedCoupon ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '14px' }}>✓ {appliedCoupon.code}</p>
+                    <p style={{ fontSize: '12px', opacity: 0.5, marginTop: '2px' }}>Discount applied at checkout</p>
+                  </div>
+                  <button
+                    onClick={() => { setAppliedCoupon(null); setCouponCode(''); setCouponError('') }}
+                    style={{ background: 'none', border: 'none', color: 'rgba(231,76,60,0.8)', fontSize: '13px', cursor: 'pointer' }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <input
+                      className="input-field"
+                      style={{ flex: 1 }}
+                      placeholder="Enter coupon code"
+                      value={couponCode}
+                      onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError('') }}
+                      onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                    />
+                    <button
+                      className="btn-outline"
+                      onClick={handleApplyCoupon}
+                      disabled={couponValidating || !couponCode.trim()}
+                      style={{ padding: '12px 18px', fontSize: '13px', flexShrink: 0 }}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  {couponError && <p style={{ fontSize: '12px', color: '#e74c3c', marginTop: '8px' }}>{couponError}</p>}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Stamp Rewards */}
+          {stampRecord && (stampRecord.stampReward > 0) && (
+            <div className="glass" style={{ ...styles.card, borderColor: 'rgba(196,164,132,0.2)', background: 'rgba(196,164,132,0.04)' }}>
+              <h3 style={styles.cardTitle}>Stamp Rewards</h3>
+              <p style={{ fontSize: '13px', opacity: 0.6, marginBottom: '16px' }}>
+                You have <strong>{stampRecord.stampReward}</strong> free reward{stampRecord.stampReward !== 1 ? 's' : ''} available.
+                {stampFreeProducts.length === 0 ? ' No redeemable items available for this shop.' : ' Select items to redeem:'}
+              </p>
+              {stampFreeProducts.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {stampFreeProducts.map((product: any) => {
+                    const pid = String(product.id)
+                    const selected = selectedStampRewards.includes(pid)
+                    const disabled = !selected && selectedStampRewards.length >= (stampRecord?.stampReward || 0)
+                    return (
+                      <button
+                        key={pid}
+                        className={`selection-option${selected ? ' selected' : ''}`}
+                        onClick={() => toggleStampReward(pid)}
+                        disabled={disabled}
+                        style={{ opacity: disabled ? 0.4 : 1, justifyContent: 'space-between' }}
+                      >
+                        <span>{product.name}</span>
+                        <span style={{ fontSize: '12px', color: selected ? 'var(--primary)' : 'inherit', opacity: selected ? 1 : 0.5 }}>
+                          {selected ? '✓ FREE' : `AED ${(product.salePrice || product.regularPrice || 0).toFixed(2)}`}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              {selectedStampRewards.length > 0 && (
+                <p style={{ fontSize: '12px', color: 'var(--primary)', marginTop: '12px', fontWeight: '600' }}>
+                  {selectedStampRewards.length} free item{selectedStampRewards.length !== 1 ? 's' : ''} added
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Stamp progress (when no rewards yet) */}
+          {stampRecord && stampRecord.stampReward === 0 && (
+            <div className="glass" style={{ ...styles.card, borderColor: 'rgba(196,164,132,0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h4 style={{ fontWeight: '800', marginBottom: '4px' }}>Stamp Card</h4>
+                  <p style={{ fontSize: '13px', opacity: 0.55 }}>{stampRecord.stampCount}/10 stamps · {10 - stampRecord.stampCount} more for a free item</p>
+                </div>
+                <span style={{ fontSize: '28px' }}>☕</span>
+              </div>
+            </div>
+          )}
+
           {/* Special Instructions */}
           <div className="glass" style={styles.card}>
             <h3 style={styles.cardTitle}>Special Instructions <span style={{ opacity: 0.4, fontWeight: '400' }}>(optional)</span></h3>
@@ -402,10 +559,48 @@ export default function CafeCheckoutPage() {
 
           <div style={styles.divider} />
 
+          <div style={styles.priceRow}>
+            <span style={{ opacity: 0.6, fontSize: '14px' }}>Subtotal</span>
+            <span style={{ fontSize: '14px' }}>AED {subtotal.toFixed(2)}</span>
+          </div>
+
+          {useWTCoins && coinBalance > 0 && (
+            <div style={{ ...styles.priceRow, fontSize: '13px', color: '#2ecc71', marginTop: '8px' }}>
+              <span>WTCoins discount</span>
+              <span>−AED {(coinBalance * 0.01).toFixed(2)}</span>
+            </div>
+          )}
+
+          {appliedCoupon && (() => {
+            let discountDisplay = 'Applied ✓'
+            if (appliedCoupon.discountType === 'percentage' && appliedCoupon.discountAmount) {
+              const off = subtotal * (appliedCoupon.discountAmount / 100)
+              discountDisplay = `−AED ${off.toFixed(2)}`
+            } else if (appliedCoupon.discountType === 'fixed' && appliedCoupon.discountAmount) {
+              discountDisplay = `−AED ${Number(appliedCoupon.discountAmount).toFixed(2)}`
+            }
+            return (
+              <div style={{ ...styles.priceRow, fontSize: '13px', color: '#2ecc71', marginTop: '8px' }}>
+                <span>Coupon ({appliedCoupon.code})</span>
+                <span>{discountDisplay}</span>
+              </div>
+            )
+          })()}
+
+          {selectedStampRewards.length > 0 && (
+            <div style={{ ...styles.priceRow, fontSize: '13px', color: 'var(--primary)', marginTop: '8px' }}>
+              <span>Stamp rewards</span>
+              <span>{selectedStampRewards.length} free item{selectedStampRewards.length !== 1 ? 's' : ''}</span>
+            </div>
+          )}
+
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '12px 0' }} />
+
           <div style={{ ...styles.priceRow, fontSize: '20px', fontWeight: '900' }}>
             <span>Total</span>
             <span style={{ color: 'var(--primary)' }}>AED {subtotal.toFixed(2)}</span>
           </div>
+          <p style={{ fontSize: '11px', opacity: 0.35, marginTop: '4px', textAlign: 'right' }}>Final amount calculated at payment</p>
 
           {error && <div style={styles.errorBox}>{error}</div>}
 

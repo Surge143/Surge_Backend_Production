@@ -57,3 +57,5 @@ devlog/
 .planning/
 docs/
 /README.md
+*.dump
+*.sql

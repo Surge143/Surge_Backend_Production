@@ -46,7 +46,7 @@ export const calculateCouponDiscount = (
     } else if (coupon.applicability === 'products') {
         // Apply only to eligible products
         const eligibleProducts = (coupon.products as any[])?.map((p: any) =>
-            typeof p === 'object' ? p.id : p
+            typeof p === 'object' ? (p.value ?? p.id) : p
         ) || [];
 
         let eligibleSubtotal = 0;
