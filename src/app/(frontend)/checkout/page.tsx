@@ -155,6 +155,12 @@ export default function CheckoutPage() {
   const [taxShipping, setTaxShipping] = useState<TaxShipping>({ taxRate: 0, shippingCharge: 0 })
   const [taxShippingLoading, setTaxShippingLoading] = useState(false)
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null)
+  const [couponError, setCouponError] = useState('')
+  const [couponValidating, setCouponValidating] = useState(false)
+
   // Checkout flow state
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
@@ -203,6 +209,26 @@ export default function CheckoutPage() {
     recalcTaxShipping()
   }, [recalcTaxShipping])
 
+  const handleApplyCoupon = async () => {
+    const code = couponCode.trim().toUpperCase()
+    if (!code) { setCouponError('Please enter a coupon code'); return }
+    setCouponValidating(true)
+    setCouponError('')
+    try {
+      const res = await fetch(`/api/surge-coupon/coupons/${code}`, { credentials: 'include' })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setCouponError(data.error || 'Invalid coupon code')
+        return
+      }
+      setAppliedCoupon({ code, ...data.coupon })
+    } catch {
+      setCouponError('Failed to validate coupon. Please try again.')
+    } finally {
+      setCouponValidating(false)
+    }
+  }
+
   const handleSelectSavedAddress = (id: string) => {
     const found = savedAddresses.find((a) => String(a.id) === id)
     if (found) setAddress(found)
@@ -224,6 +250,7 @@ export default function CheckoutPage() {
         deliveryOption,
         shippingAddressAsBillingAddress: true,
         orderNotes,
+        ...(appliedCoupon ? { appliedCouponCode: appliedCoupon.code } : {}),
       }
 
       if (deliveryOption === 'delivery') {
@@ -266,7 +293,12 @@ export default function CheckoutPage() {
   // ─── Computed totals ───────────────────────────────────────────────────────
 
   const taxAmount = subtotal * (taxShipping.taxRate / 100)
-  const finalTotal = subtotal + taxShipping.shippingCharge + taxAmount
+  const couponDiscount = appliedCoupon
+    ? appliedCoupon.discountType === 'percentage'
+      ? subtotal * (appliedCoupon.discountAmount / 100)
+      : Number(appliedCoupon.discountAmount || 0)
+    : 0
+  const finalTotal = Math.max(0, subtotal - couponDiscount) + taxShipping.shippingCharge + taxAmount
   const displaySuccessOrderId = successOrderId ? String(successOrderId) : ''
   const displayDbOrderId = dbOrderId ? String(dbOrderId) : ''
   const readyForPayment = typeof clientSecret === 'string' && clientSecret.length > 0 && !!displayDbOrderId
@@ -494,6 +526,52 @@ export default function CheckoutPage() {
               style={{ resize: 'vertical', minHeight: '80px' }}
             />
           </div>
+
+          {/* Coupon */}
+          <div className="glass" style={styles.card}>
+            <h3 style={styles.cardTitle}>Coupon Code</h3>
+            {appliedCoupon ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '14px' }}>✓ {appliedCoupon.code}</p>
+                  {appliedCoupon.couponTagline && (
+                    <p style={{ fontSize: '12px', opacity: 0.5, marginTop: '2px' }}>{appliedCoupon.couponTagline}</p>
+                  )}
+                  <p style={{ fontSize: '12px', color: '#2ecc71', marginTop: '4px', fontWeight: '600' }}>
+                    −AED {couponDiscount.toFixed(2)} off
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setAppliedCoupon(null); setCouponCode(''); setCouponError('') }}
+                  style={{ background: 'none', border: 'none', color: 'rgba(231,76,60,0.8)', fontSize: '13px', cursor: 'pointer' }}
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input
+                    className="input-field"
+                    style={{ flex: 1 }}
+                    placeholder="Enter coupon code"
+                    value={couponCode}
+                    onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError('') }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                  />
+                  <button
+                    className="btn-outline"
+                    onClick={handleApplyCoupon}
+                    disabled={couponValidating || !couponCode.trim()}
+                    style={{ padding: '12px 18px', fontSize: '13px', flexShrink: 0 }}
+                  >
+                    {couponValidating ? '…' : 'Apply'}
+                  </button>
+                </div>
+                {couponError && <p style={{ fontSize: '12px', color: '#e74c3c', marginTop: '8px' }}>{couponError}</p>}
+              </>
+            )}
+          </div>
         </div>
 
         {/* ── Right: Order Summary ── */}
@@ -538,6 +616,12 @@ export default function CheckoutPage() {
               <div style={styles.priceRow}>
                 <span style={{ opacity: 0.6 }}>Shipping</span>
                 <span>{taxShippingLoading ? '…' : taxShipping.shippingCharge === 0 ? 'Free' : `AED ${taxShipping.shippingCharge.toFixed(2)}`}</span>
+              </div>
+            )}
+            {appliedCoupon && couponDiscount > 0 && (
+              <div style={{ ...styles.priceRow, color: '#2ecc71' }}>
+                <span>Coupon ({appliedCoupon.code})</span>
+                <span>−AED {couponDiscount.toFixed(2)}</span>
               </div>
             )}
             {taxShipping.taxRate > 0 && (

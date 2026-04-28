@@ -45,7 +45,7 @@ export default function CafeApp() {
       .then((data) => setStamps(data.docs?.[0] || { stampCount: 0 }))
       .catch(() => setStamps({ stampCount: 0 }))
 
-    fetch(`/api/user-wt-coins?where[user][equals]=${user.id}`)
+    fetch(`/api/user-surge-coins?where[user][equals]=${user.id}`)
       .then((res) => res.json())
       .then((data) => setCoins(data.docs?.[0] || { totalBalance: 0 }))
       .catch(() => setCoins({ totalBalance: 0 }))

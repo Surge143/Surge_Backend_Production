@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { useUser } from '../../../context/UserContext'
 
 interface Option {
   label: string
@@ -50,9 +49,11 @@ const Toast: React.FC<{ message: string; visible: boolean }> = ({ message, visib
 export default function CustomizePage() {
   const { productId } = useParams<{ productId: string }>()
   const searchParams = useSearchParams()
-  const shopId = searchParams.get('shopId')
+  const rawShopId = searchParams.get('shopId')
+  // Guard against stringified null/undefined that would fail Payload's relationship validation
+  const shopId = (rawShopId && rawShopId !== 'null' && rawShopId !== 'undefined') ? rawShopId : null
   const router = useRouter()
-  const { user } = useUser()
+
 
   const [product, setProduct] = useState<MenuProduct | null>(null)
   const [loading, setLoading] = useState(true)
@@ -115,25 +116,31 @@ export default function CustomizePage() {
   }
 
   // Core cart POST — optionally clears existing cart first
-  const doAddToAppCart = async (clearFirst: boolean, customizationsFlat: any[]) => {
+  // retryAfterClear: internal flag used when recovering from stale-cart errors
+  const doAddToAppCart = async (clearFirst: boolean, customizationsFlat: any[], retryAfterClear = false) => {
     setAdding(true)
     try {
       if (clearFirst) {
         await fetch('/api/website/cart/clear', { method: 'POST', credentials: 'include' }).catch(() => {})
         await fetch('/api/app/cart', { method: 'DELETE', credentials: 'include' })
       }
+
+      const cartBody: Record<string, any> = {
+        productId: product!.id,
+        quantity,
+        customizations: customizationsFlat,
+      }
+      // Only include shopId when it is a valid non-empty value
+      if (shopId) cartBody.shopId = shopId
+
       const res = await fetch('/api/app/cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          productId: product!.id,
-          quantity,
-          customizations: customizationsFlat,
-          shopId,
-        }),
+        body: JSON.stringify(cartBody),
       })
       const data = await parseJsonSafely<AppCartResponse>(res)
+
       if (!res.ok) {
         if (data?.error === 'MIXED_CART') {
           setMixedCartOrigin(data?.origin === 'cafe' || (data as any)?.currentOrigin === 'cafe' ? 'cafe' : 'store')
@@ -145,6 +152,13 @@ export default function CustomizePage() {
           router.push('/login')
           return
         }
+        // If the error mentions "shop" or is a 500, try clearing the stale cart and retrying once
+        const errMsg: string = (data?.error || '').toLowerCase()
+        if (!retryAfterClear && (res.status === 500 || errMsg.includes('shop'))) {
+          await fetch('/api/app/cart', { method: 'DELETE', credentials: 'include' }).catch(() => {})
+          await doAddToAppCart(false, customizationsFlat, true)
+          return
+        }
         showToast(data?.error || 'Failed to add to cart')
         return
       }
@@ -154,7 +168,7 @@ export default function CustomizePage() {
       }
       showToast('Added to cart! ✅')
       setTimeout(() => {
-        window.location.href = `/app/menu/${shopId}`
+        window.location.href = `/app/menu/${shopId || ''}`
       }, 700)
     } catch {
       showToast('Failed to add item. Please try again.')

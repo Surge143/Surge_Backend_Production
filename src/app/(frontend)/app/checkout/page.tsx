@@ -180,11 +180,25 @@ export default function CafeCheckoutPage() {
   const displayDbOrderId = dbOrderId ? String(dbOrderId) : ''
   const readyForPayment = typeof clientSecret === 'string' && clientSecret.length > 0 && !!displayDbOrderId
 
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     const code = couponCode.trim().toUpperCase()
     if (!code) { setCouponError('Please enter a coupon code'); return }
-    setAppliedCoupon({ code })
+    if (!shopId) { setCouponError('Shop not loaded yet, please wait'); return }
+    setCouponValidating(true)
     setCouponError('')
+    try {
+      const res = await fetch(`/api/shop/${shopId}/coupons/${code}`, { credentials: 'include' })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setCouponError(data.error || 'Invalid coupon code')
+        return
+      }
+      setAppliedCoupon({ code, ...data.coupon })
+    } catch {
+      setCouponError('Failed to validate coupon. Please try again.')
+    } finally {
+      setCouponValidating(false)
+    }
   }
 
   const toggleStampReward = (productId: string) => {
@@ -557,12 +571,21 @@ export default function CafeCheckoutPage() {
             </div>
           )}
 
-          {appliedCoupon && (
-            <div style={{ ...styles.priceRow, fontSize: '13px', color: '#2ecc71', marginTop: '8px' }}>
-              <span>Coupon ({appliedCoupon.code})</span>
-              <span>Applied ✓</span>
-            </div>
-          )}
+          {appliedCoupon && (() => {
+            let discountDisplay = 'Applied ✓'
+            if (appliedCoupon.discountType === 'percentage' && appliedCoupon.discountAmount) {
+              const off = subtotal * (appliedCoupon.discountAmount / 100)
+              discountDisplay = `−AED ${off.toFixed(2)}`
+            } else if (appliedCoupon.discountType === 'fixed' && appliedCoupon.discountAmount) {
+              discountDisplay = `−AED ${Number(appliedCoupon.discountAmount).toFixed(2)}`
+            }
+            return (
+              <div style={{ ...styles.priceRow, fontSize: '13px', color: '#2ecc71', marginTop: '8px' }}>
+                <span>Coupon ({appliedCoupon.code})</span>
+                <span>{discountDisplay}</span>
+              </div>
+            )
+          })()}
 
           {selectedStampRewards.length > 0 && (
             <div style={{ ...styles.priceRow, fontSize: '13px', color: 'var(--primary)', marginTop: '8px' }}>
