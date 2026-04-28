@@ -7,13 +7,23 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
   // that column to sm_sect_sel_type (already exists with correct values), then
   // drop and recreate enum_app_categories_status with correct values.
   await db.execute(sql`
-    ALTER TABLE "shop_menu_customizations_sections"
-      ALTER COLUMN "selection_type"
-      SET DATA TYPE "public"."sm_sect_sel_type"
-      USING "selection_type"::text::"public"."sm_sect_sel_type";
-
-    DROP TYPE "public"."enum_app_categories_status";
-    CREATE TYPE "public"."enum_app_categories_status" AS ENUM('draft', 'published');
+    -- Only fix the enum if it was corrupted by dev-mode (has 'single'/'multiple' instead of 'draft'/'published').
+    -- On a clean production DB this block is skipped — the enum is already correct.
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_enum e ON t.oid = e.enumtypid
+        WHERE t.typname = 'enum_app_categories_status' AND e.enumlabel = 'single'
+      ) THEN
+        ALTER TABLE "shop_menu_customizations_sections"
+          ALTER COLUMN "selection_type"
+          SET DATA TYPE "public"."sm_sect_sel_type"
+          USING "selection_type"::text::"public"."sm_sect_sel_type";
+        DROP TYPE "public"."enum_app_categories_status";
+        CREATE TYPE "public"."enum_app_categories_status" AS ENUM('draft', 'published');
+      END IF;
+    END $$;
 
     DO $$ BEGIN
       DROP TYPE "public"."enum_shop_menu_customizations_sections_selection_type";
@@ -80,6 +90,19 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
     ALTER TABLE "_surge_shop_coupon_v" ADD COLUMN IF NOT EXISTS "autosave"                boolean;
     ALTER TABLE "_web_products_v"      ADD COLUMN IF NOT EXISTS "version_last_updated_by" varchar;
     ALTER TABLE "_web_products_v"      ADD COLUMN IF NOT EXISTS "version_created_by"      varchar;
+
+    -- Publish all pre-existing rows that got DEFAULT 'draft' when versioning was added.
+    -- Only updates rows that are still draft (safe to run multiple times).
+    UPDATE "shop_menu"         SET _status = 'published' WHERE _status = 'draft';
+    UPDATE "menu"              SET _status = 'published' WHERE _status = 'draft';
+    UPDATE "app_categories"    SET _status = 'published' WHERE _status = 'draft';
+    UPDATE "app_sub_categories" SET _status = 'published' WHERE _status = 'draft';
+    UPDATE "shop"              SET _status = 'published' WHERE _status = 'draft';
+    UPDATE "web_categories"    SET _status = 'published' WHERE _status = 'draft';
+    UPDATE "web_sub_categories" SET _status = 'published' WHERE _status = 'draft';
+    UPDATE "slots"             SET _status = 'published' WHERE _status = 'draft';
+    UPDATE "surge_coins"       SET _status = 'published' WHERE _status = 'draft';
+    UPDATE "ship_and_tax"      SET _status = 'published' WHERE _status = 'draft';
   `)
 }
 
