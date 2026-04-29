@@ -65,13 +65,45 @@ export const Coupon: CollectionConfig = {
         return data
       },
     ],
+    beforeDelete: [
+      async ({ id, req: { payload } }) => {
+        // Before Payload runs its cascade, strip the couponRelation back-reference from every
+        // linked ShopCoupon. Without this, Payload resolves each relationship during deletion,
+        // triggering the full versioning pipeline per ShopCoupon and causing the hang.
+        try {
+          const linked = await payload.find({
+            collection: 'surge-shop-coupon',
+            where: { couponRelation: { equals: id } },
+            depth: 0,
+            limit: 1000,
+            overrideAccess: true,
+          })
+
+          if (linked.docs.length > 0) {
+            await Promise.all(
+              linked.docs.map((sc) =>
+                payload.update({
+                  collection: 'surge-shop-coupon',
+                  id: sc.id,
+                  data: { couponRelation: [] } as any,
+                  overrideAccess: true,
+                  draft: false,
+                  context: { fromCouponSync: true },
+                }),
+              ),
+            )
+          }
+        } catch (err) {
+          payload.logger.error({ err }, '[Coupon] beforeDelete: failed to clean ShopCoupon relations')
+        }
+      },
+    ],
     afterChange: [
       async ({ doc, previousDoc, req: { payload, context }, operation }) => {
         // Break re-entry: if this update was itself triggered by the ShopCoupon sync, skip.
         if (context?.fromCouponSync) return doc
 
         if (operation === 'update') {
-          // Prevent infinite loops and unnecessary updates by checking if relevant fields changed
           const changedFields = [
             'couponStatus',
             'code',
@@ -98,11 +130,13 @@ export const Coupon: CollectionConfig = {
             collection: 'surge-shop-coupon',
             where: { couponRelation: { equals: doc.id } },
             depth: 0,
-            limit: 1000, // Increase limit to ensure all linked coupons are updated
+            limit: 1000,
           })
 
           if (shopCoupons.docs.length > 0) {
-            await Promise.all(
+            // Fire-and-forget: do NOT await this. The HTTP response returns immediately;
+            // ShopCoupon writes continue in the background. This is the fix for the update hang.
+            void Promise.all(
               shopCoupons.docs.map((shopCoupon) =>
                 payload.update({
                   collection: 'surge-shop-coupon',
@@ -122,15 +156,14 @@ export const Coupon: CollectionConfig = {
                     usageLimitPerUser: doc.usageLimitPerUser,
                     usageCount: doc.usageCount,
                   } as any,
-                  // draft:false → publish directly, skips version-table insert.
-                  // overrideAccess:true → skips the access-check DB query.
-                  // context.fromCouponSync → signals hooks in ShopCoupons to skip heavy work.
                   draft: false,
                   overrideAccess: true,
                   context: { fromCouponSync: true },
                 }),
               ),
-            )
+            ).catch((err) => {
+              payload.logger.error({ err }, '[Coupon] afterChange: background ShopCoupon sync failed')
+            })
           }
         }
         return doc
