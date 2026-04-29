@@ -3,10 +3,10 @@ import type { CollectionConfig } from 'payload'
 export const Events: CollectionConfig = {
   slug: 'events',
   admin: {
-    useAsTitle: 'fullName',
+    useAsTitle: 'firstName',
     group: 'Marketing',
     description: 'Bookings received for Surge events',
-    defaultColumns: ['fullName', 'email', 'eventDate', 'eventType', 'createdAt'],
+    defaultColumns: ['firstName', 'lastName', 'email', 'eventDate', 'eventType', 'createdAt'],
   },
   access: {
     read: ({ req: { user } }) => {
@@ -25,14 +25,14 @@ export const Events: CollectionConfig = {
       type: 'row',
       fields: [
         {
-          name: 'fullName',
+          name: 'firstName',
           type: 'text',
           required: true,
           admin: { width: '50%' },
         },
         {
-          name: 'email',
-          type: 'email',
+          name: 'lastName',
+          type: 'text',
           required: true,
           admin: { width: '50%' },
         },
@@ -42,12 +42,22 @@ export const Events: CollectionConfig = {
       type: 'row',
       fields: [
         {
-          name: 'phoneNumber',
-          type: 'number',
+          name: 'email',
+          type: 'email',
           required: true,
-          max: 9999999999,
           admin: { width: '50%' },
         },
+        {
+          name: 'phoneNumber',
+          type: 'text',
+          required: true,
+          admin: { width: '50%' },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
         {
           name: 'eventDate',
           type: 'date',
@@ -60,38 +70,31 @@ export const Events: CollectionConfig = {
             },
           },
         },
-      ],
-    },
-    {
-      type: 'row',
-      fields: [
         {
           name: 'timeWindow',
           type: 'text',
           required: true,
           admin: { width: '50%' },
         },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
         {
           name: 'expectedGuests',
           type: 'number',
           required: true,
           admin: { width: '50%' },
         },
-      ],
-    },
-    {
-      type: 'row',
-      fields: [
         {
           name: 'eventType',
-          type: 'text',
+          type: 'select',
           required: true,
-          admin: { width: '50%' },
-        },
-        {
-          name: 'package',
-          type: 'text',
-          required: true,
+          options: [
+            { label: 'Private Event', value: 'private' },
+            { label: 'Corporate Event', value: 'corporate' },
+          ],
           admin: { width: '50%' },
         },
       ],
@@ -99,16 +102,46 @@ export const Events: CollectionConfig = {
     {
       type: 'row',
       fields: [
+        {
+          name: 'package',
+          type: 'select',
+          required: true,
+          options: [
+            { label: '30 Cups', value: '30-cups' },
+            { label: '50 Cups', value: '50-cups' },
+            { label: '100 Cups', value: '100-cups' },
+            { label: 'Additional Cups', value: 'additional-cups' },
+          ],
+          admin: { width: '50%' },
+        },
         {
           name: 'addons',
           type: 'text',
           label: 'Add-ons',
           admin: { width: '50%' },
         },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
         {
-          name: 'location',
+          name: 'city',
           type: 'text',
           required: true,
+          admin: { width: '50%' },
+        },
+        {
+          name: 'emirate',
+          type: 'select',
+          required: true,
+          options: [
+            { label: 'Dubai', value: 'dubai' },
+            { label: 'Sharjah', value: 'sharjah' },
+            { label: 'Ras Al Khaimah', value: 'ras-al-khaimah' },
+            { label: 'Ajman', value: 'ajman' },
+            { label: 'Abu Dhabi', value: 'abu-dhabi' },
+          ],
           admin: { width: '50%' },
         },
       ],

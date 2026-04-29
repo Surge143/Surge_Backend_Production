@@ -1806,16 +1806,18 @@ export interface Newsletter {
  */
 export interface Event {
   id: number;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  phoneNumber: number;
+  phoneNumber: string;
   eventDate: string;
   timeWindow: string;
   expectedGuests: number;
-  eventType: string;
-  package: string;
+  eventType: 'private' | 'corporate';
+  package: '30-cups' | '50-cups' | '100-cups' | 'additional-cups';
   addons?: string | null;
-  location: string;
+  city: string;
+  emirate: 'dubai' | 'sharjah' | 'ras-al-khaimah' | 'ajman' | 'abu-dhabi';
   message: string;
   updatedAt: string;
   createdAt: string;
@@ -3146,7 +3148,8 @@ export interface NewslettersSelect<T extends boolean = true> {
  * via the `definition` "events_select".
  */
 export interface EventsSelect<T extends boolean = true> {
-  fullName?: T;
+  firstName?: T;
+  lastName?: T;
   email?: T;
   phoneNumber?: T;
   eventDate?: T;
@@ -3155,7 +3158,8 @@ export interface EventsSelect<T extends boolean = true> {
   eventType?: T;
   package?: T;
   addons?: T;
-  location?: T;
+  city?: T;
+  emirate?: T;
   message?: T;
   updatedAt?: T;
   createdAt?: T;
