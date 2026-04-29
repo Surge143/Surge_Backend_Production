@@ -98,7 +98,14 @@ export const ShopCoupons: CollectionConfig = {
 
   hooks: {
     beforeChange: [
-      async ({ data, req: { user, payload }, operation }) => {
+      async ({ data, req: { user, payload, context }, operation }) => {
+        // If this update was triggered by the Coupon sync, skip all hook logic to avoid
+        // running access-check DB queries and shop-manager lookups on every synced ShopCoupon.
+        if (context?.fromCouponSync) {
+          if (data.code) data.code = data.code.trim().toUpperCase()
+          return data
+        }
+
         if (operation === 'create' && user) {
           data.createdBy = user.id
 
@@ -125,7 +132,7 @@ export const ShopCoupons: CollectionConfig = {
           }
         }
 
-        if (data.code) data.code = data.code.toUpperCase()
+        if (data.code) data.code = data.code.trim().toUpperCase()
 
         return data
       },

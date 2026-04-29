@@ -60,13 +60,16 @@ export const Coupon: CollectionConfig = {
           data.createdBy = user.id
         }
 
-        if (data.code) data.code = data.code.toUpperCase()
+        if (data.code) data.code = data.code.trim().toUpperCase()
 
         return data
       },
     ],
     afterChange: [
-      async ({ doc, previousDoc, req: { payload }, operation }) => {
+      async ({ doc, previousDoc, req: { payload, context }, operation }) => {
+        // Break re-entry: if this update was itself triggered by the ShopCoupon sync, skip.
+        if (context?.fromCouponSync) return doc
+
         if (operation === 'update') {
           // Prevent infinite loops and unnecessary updates by checking if relevant fields changed
           const changedFields = [
@@ -119,7 +122,12 @@ export const Coupon: CollectionConfig = {
                     usageLimitPerUser: doc.usageLimitPerUser,
                     usageCount: doc.usageCount,
                   } as any,
-                  context: { fromCouponSync: true }, // Standard loop prevention in this project
+                  // draft:false → publish directly, skips version-table insert.
+                  // overrideAccess:true → skips the access-check DB query.
+                  // context.fromCouponSync → signals hooks in ShopCoupons to skip heavy work.
+                  draft: false,
+                  overrideAccess: true,
+                  context: { fromCouponSync: true },
                 }),
               ),
             )
