@@ -240,7 +240,10 @@ export const WebOrders: CollectionConfig = {
           setImmediate(async () => {
             const becamePaid = isNowPaid && !wasPaid
 
-            if (becamePaid && isNowDelivered && !wasDelivered) {
+            const justDelivered = isNowDelivered && !wasDelivered && isNowPaid
+            const justPaid = becamePaid && isNowDelivered
+
+            if (justDelivered || justPaid) {
               await awardReferralCoins(payload, userId, doc.id, 'web-orders')
             }
 
