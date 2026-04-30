@@ -29,6 +29,10 @@ export default function RegisterPage() {
   const [appleLoading, setAppleLoading] = useState(false)
   const [error, setError] = useState('')
   const [timer, setTimer] = useState(0)
+  const [referralCode, setReferralCode] = useState('')
+  const [referralValidating, setReferralValidating] = useState(false)
+  const [referralStatus, setReferralStatus] = useState<'idle' | 'valid' | 'invalid'>('idle')
+  const [referrerName, setReferrerName] = useState('')
 
   const router = useRouter()
   const { login } = useUser()
@@ -115,6 +119,31 @@ export default function RegisterPage() {
     }
   }
 
+  const handleValidateReferral = async () => {
+    if (!referralCode.trim()) return
+    setReferralValidating(true)
+    setReferralStatus('idle')
+    setReferrerName('')
+    try {
+      const res = await fetch('/api/users/validate-referral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referralCode: referralCode.trim() }),
+      })
+      const data = await res.json()
+      if (res.ok && data.valid) {
+        setReferralStatus('valid')
+        setReferrerName(data.referrer?.name || 'A friend')
+      } else {
+        setReferralStatus('invalid')
+      }
+    } catch {
+      setReferralStatus('invalid')
+    } finally {
+      setReferralValidating(false)
+    }
+  }
+
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -147,7 +176,11 @@ export default function RegisterPage() {
       const res = await fetch('/api/otp/verify-web', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp }),
+        body: JSON.stringify({
+          email,
+          otp,
+          ...(referralCode.trim() ? { referralCodeInput: referralCode.trim() } : {}),
+        }),
       })
       const data = await res.json()
       if (res.ok && data.valid) {
@@ -213,6 +246,38 @@ export default function RegisterPage() {
                 required
                 id="register-email"
               />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="Referral Code (optional)"
+                  className="input-field"
+                  value={referralCode}
+                  onChange={(e) => {
+                    setReferralCode(e.target.value)
+                    setReferralStatus('idle')
+                    setReferrerName('')
+                  }}
+                  style={{ flex: 1 }}
+                  id="register-referral-code"
+                />
+                <button
+                  type="button"
+                  onClick={handleValidateReferral}
+                  disabled={!referralCode.trim() || referralValidating}
+                  style={styles.verifyBtn}
+                  id="register-verify-referral-btn"
+                >
+                  {referralValidating ? '…' : 'Check'}
+                </button>
+              </div>
+              {referralStatus === 'valid' && (
+                <div style={styles.referralSuccess}>
+                  ✓ Referral from <strong>{referrerName}</strong> applied
+                </div>
+              )}
+              {referralStatus === 'invalid' && (
+                <div style={styles.referralError}>Invalid referral code</div>
+              )}
               <button className="btn-primary" style={{ padding: '16px' }} disabled={loading} id="register-send-otp-btn">
                 {loading ? 'Sending Code…' : 'Create Account'}
               </button>
@@ -284,4 +349,20 @@ const styles: Record<string, React.CSSProperties> = {
   dividerLine: { flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' },
   dividerText: { color: 'rgba(255,255,255,0.35)', fontSize: '12px', fontWeight: '600', letterSpacing: '0.3px', whiteSpace: 'nowrap' },
   footer: { marginTop: '28px', textAlign: 'center', fontSize: '14px', opacity: 0.55 },
+  verifyBtn: {
+    padding: '0 16px', borderRadius: '12px', fontSize: '14px', fontWeight: '600',
+    cursor: 'pointer', background: 'rgba(255,255,255,0.08)', color: 'white',
+    border: '1px solid rgba(255,255,255,0.12)', whiteSpace: 'nowrap' as const,
+    opacity: 1, transition: 'all 0.2s',
+  },
+  referralSuccess: {
+    background: 'rgba(39,174,96,0.12)', color: '#2ecc71',
+    padding: '10px 14px', borderRadius: '10px', fontSize: '13px',
+    border: '1px solid rgba(39,174,96,0.25)',
+  },
+  referralError: {
+    background: 'rgba(231,76,60,0.1)', color: '#e74c3c',
+    padding: '10px 14px', borderRadius: '10px', fontSize: '13px',
+    border: '1px solid rgba(231,76,60,0.2)',
+  },
 }

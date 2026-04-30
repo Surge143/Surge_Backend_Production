@@ -13,8 +13,8 @@ export const verifyOtpWeb: PayloadHandler = async (req) => {
             )
         }
 
-        const body = (await req.json()) as { otp?: string, email?: string }
-        const { otp, email } = body
+        const body = (await req.json()) as { otp?: string, email?: string, referralCodeInput?: string }
+        const { otp, email, referralCodeInput } = body
 
         if (!otp) {
             return Response.json(
@@ -137,6 +137,7 @@ export const verifyOtpWeb: PayloadHandler = async (req) => {
                         email: email,
                         role: 'customer',
                         password: randomPassword,
+                        ...(referralCodeInput ? { referralCodeInput } : {}),
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     } as any,
 
