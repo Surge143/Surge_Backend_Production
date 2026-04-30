@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
@@ -228,7 +228,9 @@ export default function CafeCheckoutPage() {
           specialInstructions,
           useWTCoins,
           appliedCouponCode: appliedCoupon?.code || undefined,
-          stampRewards: selectedStampRewards.length > 0 ? selectedStampRewards : undefined,
+          stampRewards: selectedStampRewards.length > 0
+            ? selectedStampRewards.map(id => { const n = Number(id); return isNaN(n) ? id : n })
+            : undefined,
         }),
       })
       const data = await parseJsonSafely<CheckoutResponse>(res)
