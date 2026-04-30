@@ -261,19 +261,13 @@ async function deductStampRewards(
     const currentRewardBalance = userStamps.stampReward || 0
     const newRewardBalance = Math.max(0, currentRewardBalance - rewardsUsed)
 
-    const processedHistory = (userStamps.stampsRedemptionHistory || []).map((h: any) => ({
-      redeemedStamps: h.redeemedStamps,
-      associatedOrder:
-        typeof h.associatedOrder === 'object' ? h.associatedOrder.id : h.associatedOrder,
-    }))
-
     await payload.update({
       collection: 'surge-stamps',
       id: userStamps.id,
       data: {
         stampReward: newRewardBalance,
         stampsRedemptionHistory: [
-          ...processedHistory,
+          ...(userStamps.stampsRedemptionHistory || []),
           {
             redeemedStamps: rewardsUsed,
             associatedOrder: {

@@ -2,6 +2,7 @@ import { CollectionConfig, slugField } from 'payload'
 
 export const ShopMenu: CollectionConfig = {
   slug: 'shop-menu',
+  orderable: true,
   labels: {
     singular: 'Menu',
     plural: 'Menu',

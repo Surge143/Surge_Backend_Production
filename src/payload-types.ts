@@ -628,6 +628,7 @@ export interface Menu {
  */
 export interface ShopMenu {
   id: number;
+  _order?: string | null;
   name: string;
   shop: number | Shop;
   menuRelation?: (number | Menu)[] | null;
@@ -2478,6 +2479,7 @@ export interface ShopSelect<T extends boolean = true> {
  * via the `definition` "shop-menu_select".
  */
 export interface ShopMenuSelect<T extends boolean = true> {
+  _order?: T;
   name?: T;
   shop?: T;
   menuRelation?: T;
