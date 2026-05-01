@@ -7,7 +7,7 @@ export const ProductsListView: React.FC = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/web-products?limit=500&depth=2&sort=name&draft=true')
+    fetch('/api/web-products?limit=500&depth=2&sort=_order&draft=true')
       .then((r) => r.json())
       .then(async (data) => {
         const docs: any[] = data.docs ?? []

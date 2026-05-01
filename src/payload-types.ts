@@ -800,6 +800,7 @@ export interface SurgeCoupon {
  */
 export interface WebProduct {
   id: number;
+  _order?: string | null;
   name: string;
   tagline: string;
   /**
@@ -2764,6 +2765,7 @@ export interface WebSubCategoriesSelect<T extends boolean = true> {
  * via the `definition` "web-products_select".
  */
 export interface WebProductsSelect<T extends boolean = true> {
+  _order?: T;
   name?: T;
   tagline?: T;
   productType?: T;

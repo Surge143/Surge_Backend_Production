@@ -37,6 +37,7 @@ const requiredForMerchandise =
 
 export const WebProducts: CollectionConfig = {
   slug: 'web-products',
+  orderable: true,
   labels: {
     singular: 'Product',
     plural: 'Products',
