@@ -60,6 +60,7 @@ export default buildConfig({
     'http://localhost:3001',
     process.env.PAYLOAD_PUBLIC_SERVER_URL || '',
     process.env.FRONTEND_URL || '',
+    process.env.FRONTEND_URL2 || '',
   ].filter(Boolean),
   collections: collections,
   globals: globals,
