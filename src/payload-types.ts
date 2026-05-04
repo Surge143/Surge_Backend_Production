@@ -101,6 +101,7 @@ export interface Config {
     'app-banners': AppBanner;
     newsletters: Newsletter;
     events: Event;
+    'featured-news': FeaturedNew;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -149,6 +150,7 @@ export interface Config {
     'app-banners': AppBannersSelect<false> | AppBannersSelect<true>;
     newsletters: NewslettersSelect<false> | NewslettersSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
+    'featured-news': FeaturedNewsSelect<false> | FeaturedNewsSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1825,6 +1827,24 @@ export interface Event {
   createdAt: string;
 }
 /**
+ * Featured news items managed exclusively from the admin panel.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "featured-news".
+ */
+export interface FeaturedNew {
+  id: number;
+  title: string;
+  description: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
@@ -2133,6 +2153,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'events';
         value: number | Event;
+      } | null)
+    | ({
+        relationTo: 'featured-news';
+        value: number | FeaturedNew;
       } | null)
     | ({
         relationTo: 'exports';
@@ -3165,6 +3189,18 @@ export interface EventsSelect<T extends boolean = true> {
   city?: T;
   emirate?: T;
   message?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "featured-news_select".
+ */
+export interface FeaturedNewsSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  generateSlug?: T;
+  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }

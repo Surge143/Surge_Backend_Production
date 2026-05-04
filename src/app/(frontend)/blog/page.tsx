@@ -39,17 +39,16 @@ export default function BlogPage() {
         {posts.map((post) => (
           <article key={post.id} className="glass glass-hover" style={styles.postCard}>
             <div style={styles.imgContainer}>
-              {post.mainImage?.url ? (
-                <img src={post.mainImage.url} alt={post.title} style={styles.postImg} />
+              {post.featuredImage?.url ? (
+                <img src={post.featuredImage.url} alt={post.title} style={styles.postImg} />
               ) : (
                 <div style={styles.placeholderImg}>☕</div>
               )}
             </div>
             <div style={{ padding: '32px' }}>
-              <span style={styles.category}>{post.category || 'Lifestyle'}</span>
               <h2 style={styles.postTitle}>{post.title}</h2>
               <p style={styles.excerpt}>
-                {post.excerpt ||
+                {post.shortDescription ||
                   'Dive into the world of specialty coffee with our latest insights and stories.'}
               </p>
               <div style={styles.footer}>
@@ -99,13 +98,6 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     alignItems: 'center',
     fontSize: '48px',
-  },
-  category: {
-    fontSize: '11px',
-    textTransform: 'uppercase',
-    letterSpacing: '2px',
-    color: 'var(--primary)',
-    fontWeight: '800',
   },
   postTitle: {
     fontSize: '24px',

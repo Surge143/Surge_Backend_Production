@@ -371,3 +371,38 @@ option {
 .stripe-element-wrapper:focus-within {
   border-color: var(--primary);
 }
+
+/* ─── Blog Content Prose ──────────────────────────────────────────────────── */
+.blog-content h1,
+.blog-content h2,
+.blog-content h3,
+.blog-content h4 {
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 2em 0 0.6em;
+}
+.blog-content h1 { font-size: 2rem; }
+.blog-content h2 { font-size: 1.6rem; }
+.blog-content h3 { font-size: 1.3rem; }
+.blog-content p  { margin-bottom: 1.4em; }
+.blog-content ul,
+.blog-content ol { padding-left: 1.6em; margin-bottom: 1.4em; }
+.blog-content li { margin-bottom: 0.4em; }
+.blog-content blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 1.2em;
+  opacity: 0.75;
+  margin: 1.6em 0;
+  font-style: italic;
+}
+.blog-content hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin: 2em 0;
+}
+.blog-content img {
+  max-width: 100%;
+  border-radius: 12px;
+  margin: 1.6em 0;
+}
+.blog-content a { color: var(--primary); }
