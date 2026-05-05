@@ -11,14 +11,15 @@ export const beforeWebCartChange: CollectionBeforeChangeHook = async ({ data, re
   // 2. Consolidate items
   if (data.items && Array.isArray(data.items)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const itemMap = new Map<string, { product: any; quantity: number; vId?: string }>()
+    const itemMap = new Map<string, { product: any; quantity: number; vId?: string; productHighlights?: any[] }>()
 
     for (const item of data.items) {
       const productId = typeof item.product === 'object' ? item.product.id : item.product
       if (!productId) continue
 
       const vId = item.vId || ''
-      const key = `${productId}:${vId}`
+      const highlightsKey = item.productHighlights ? JSON.stringify(item.productHighlights) : ''
+      const key = `${productId}:${vId}:${highlightsKey}`
 
       if (itemMap.has(key)) {
         const existing = itemMap.get(key)!
@@ -34,6 +35,7 @@ export const beforeWebCartChange: CollectionBeforeChangeHook = async ({ data, re
           product: productId,
           quantity: item.quantity || 1,
           vId: item.vId,
+          productHighlights: item.productHighlights || [],
         })
       }
     }

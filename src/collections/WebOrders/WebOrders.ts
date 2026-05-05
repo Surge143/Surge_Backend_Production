@@ -8,6 +8,7 @@ import { createOrderPaidNotification } from '@/utilities/orderNotifications'
 import { sendEmail } from '@/lib/emailConfig'
 import { OrderShippedEmail } from '@/lib/emailTemplates/StoreOrderShipped'
 import { OrderDeliveredEmail } from '@/lib/emailTemplates/StoreOrderDelivered'
+import { productHighlightsField } from '../WebProducts/fields/productHighlightsField'
 
 function generateOrderID() {
   const now = new Date()
@@ -459,6 +460,7 @@ export const WebOrders: CollectionConfig = {
                       type: 'text',
                       admin: { hidden: true, readOnly: true },
                     },
+                    productHighlightsField,
                   ],
                 },
               ],

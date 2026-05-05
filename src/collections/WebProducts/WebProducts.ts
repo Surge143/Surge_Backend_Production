@@ -6,6 +6,7 @@ import {
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
 import { type CollectionConfig } from 'payload'
+import { productHighlightsField } from './fields/productHighlightsField'
 
 // ─── Helper: isCoffee / isMerchandise ────────────────────────────────────────
 // These are reused in `admin.condition` and `validate` throughout the file.
@@ -343,6 +344,8 @@ export const WebProducts: CollectionConfig = {
                 position: 'sidebar',
               },
             },
+
+            productHighlightsField,
 
             // ─── Coffee Characteristics ──────────────────────────────────
             // These fields are only shown (and only validated) when productType === 'coffee'.

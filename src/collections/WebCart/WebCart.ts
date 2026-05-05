@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { beforeWebCartChange } from "./hooks/beforeWebCartChange";
+import { productHighlightsField } from '../WebProducts/fields/productHighlightsField'
 
 export const WebCart: CollectionConfig = {
     slug: 'web-cart',
@@ -51,6 +52,7 @@ export const WebCart: CollectionConfig = {
                     defaultValue: 1,
                     min: 1,
                 },
+                productHighlightsField,
             ],
         },
     ],

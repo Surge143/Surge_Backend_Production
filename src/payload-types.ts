@@ -846,6 +846,21 @@ export interface WebProduct {
     | number
     | boolean
     | null;
+  /**
+   * Group specific product details (e.g., Roast Type, Flavor Notes, Origin) into sections.
+   */
+  productHighlights?:
+    | {
+        sectionTitle: string;
+        items?:
+          | {
+              point: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
   farm?: string | null;
   tastingNotes?: string | null;
   variety?: string | null;
@@ -2813,6 +2828,18 @@ export interface WebProductsSelect<T extends boolean = true> {
   description?: T;
   categories?: T;
   subCategories?: T;
+  productHighlights?:
+    | T
+    | {
+        sectionTitle?: T;
+        items?:
+          | T
+          | {
+              point?: T;
+              id?: T;
+            };
+        id?: T;
+      };
   farm?: T;
   tastingNotes?: T;
   variety?: T;

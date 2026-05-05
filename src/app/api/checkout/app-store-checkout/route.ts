@@ -88,6 +88,7 @@ export const POST = async (req: NextRequest) => {
                 productId,
                 variantId: cartItem.vId || null,
                 quantity: cartItem.quantity || 1,
+                productHighlights: cartItem.productHighlights || [],
             };
         });
 
@@ -170,6 +171,7 @@ export const POST = async (req: NextRequest) => {
                 variantID: item.variantId || null,
                 quantity: item.quantity,
                 price: itemPrice,
+                productHighlights: item.productHighlights || [],
             });
         }
 

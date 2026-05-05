@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload';
 import { canReadCart, canUpdateOrDeleteCart } from './access';
 import { beforeCartChange } from './hooks/beforeCartChange';
 import { afterCartChange } from './hooks/afterCartChange';
+import { productHighlightsField } from '../WebProducts/fields/productHighlightsField'
 
 const AppCart: CollectionConfig = {
     slug: 'app-cart',
@@ -81,6 +82,7 @@ const AppCart: CollectionConfig = {
                         condition: (data) => data?.origin === 'cafe',
                     },
                 },
+                productHighlightsField,
             ],
         },
     ],

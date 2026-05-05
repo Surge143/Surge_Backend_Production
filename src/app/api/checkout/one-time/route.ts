@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
                     productId: typeof item.product === 'object' ? item.product.id : item.product,
                     variantId: item.vId,
                     quantity: item.quantity || 1,
+                    productHighlights: item.productHighlights || [],
                     productDoc: null, // We'll batch fetch these
                 }));
             }
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
                 productId: p.productId,
                 variantId: p.variantId,
                 quantity: p.quantity || 1,
+                productHighlights: p.productHighlights || [],
                 productDoc: null,
             }));
         }
@@ -172,6 +174,7 @@ export async function POST(req: NextRequest) {
                 variantID: item.variantId || "",
                 quantity: item.quantity,
                 price: itemPrice,
+                productHighlights: item.productHighlights || [],
             });
         }
 
