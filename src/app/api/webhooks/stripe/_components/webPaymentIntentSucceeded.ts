@@ -108,6 +108,24 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
             } else {
               console.error(`Variant ${variantId} not found in product ${productId}`)
             }
+          } else {
+            // No variants — decrement base-level stock (e.g. merch products)
+            const currentStock = productDoc.stockQuantity || 0
+            const newStock = Math.max(0, currentStock - quantity)
+
+            await payload.update({
+              collection: 'web-products',
+              id: productId,
+              data: {
+                stockQuantity: newStock,
+                ...(newStock === 0 && { inStock: false }),
+              },
+              overrideAccess: true,
+            })
+
+            console.log(
+              `✅ Stock updated for product ${productId} (no variants): ${currentStock} → ${newStock}`,
+            )
           }
         } catch (error) {
           console.error(`Error updating stock for item:`, error)
