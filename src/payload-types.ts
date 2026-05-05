@@ -1082,6 +1082,21 @@ export interface AppCart {
           | number
           | boolean
           | null;
+        /**
+         * Group specific product details (e.g., Roast Type, Flavor Notes, Origin) into sections.
+         */
+        productHighlights?:
+          | {
+              sectionTitle: string;
+              items?:
+                | {
+                    point: string;
+                    id?: string | null;
+                  }[]
+                | null;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -1306,6 +1321,21 @@ export interface WebCart {
         product: number | WebProduct;
         vId?: string | null;
         quantity?: number | null;
+        /**
+         * Group specific product details (e.g., Roast Type, Flavor Notes, Origin) into sections.
+         */
+        productHighlights?:
+          | {
+              sectionTitle: string;
+              items?:
+                | {
+                    point: string;
+                    id?: string | null;
+                  }[]
+                | null;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -1414,6 +1444,21 @@ export interface WebOrder {
     quantity: number;
     price: number;
     productName?: string | null;
+    /**
+     * Group specific product details (e.g., Roast Type, Flavor Notes, Origin) into sections.
+     */
+    productHighlights?:
+      | {
+          sectionTitle: string;
+          items?:
+            | {
+                point: string;
+                id?: string | null;
+              }[]
+            | null;
+          id?: string | null;
+        }[]
+      | null;
     id?: string | null;
   }[];
   shippingAddress?: {
@@ -2664,6 +2709,18 @@ export interface AppCartSelect<T extends boolean = true> {
         vId?: T;
         quantity?: T;
         customizations?: T;
+        productHighlights?:
+          | T
+          | {
+              sectionTitle?: T;
+              items?:
+                | T
+                | {
+                    point?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
         id?: T;
       };
   updatedAt?: T;
@@ -2889,6 +2946,18 @@ export interface WebCartSelect<T extends boolean = true> {
         product?: T;
         vId?: T;
         quantity?: T;
+        productHighlights?:
+          | T
+          | {
+              sectionTitle?: T;
+              items?:
+                | T
+                | {
+                    point?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
         id?: T;
       };
   updatedAt?: T;
@@ -2946,6 +3015,18 @@ export interface WebOrdersSelect<T extends boolean = true> {
         quantity?: T;
         price?: T;
         productName?: T;
+        productHighlights?:
+          | T
+          | {
+              sectionTitle?: T;
+              items?:
+                | T
+                | {
+                    point?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
         id?: T;
       };
   shippingAddress?:

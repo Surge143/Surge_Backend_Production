@@ -77,7 +77,7 @@ export async function handleChargeRefunded(charge: any) {
                     // Web store (web-products): stock is per variant
                     const variantId = item[variantIdKey]
 
-                    if (productDoc.variants && Array.isArray(productDoc.variants)) {
+                    if (productDoc.hasVariantOptions && productDoc.variants && Array.isArray(productDoc.variants)) {
                         const variantIndex = productDoc.variants.findIndex((v: any) => v.id === variantId)
 
                         if (variantIndex !== -1) {

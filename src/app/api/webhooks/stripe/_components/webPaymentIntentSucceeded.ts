@@ -77,7 +77,7 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
           }
 
           // Find the variant and update its stock
-          if (productDoc.variants && Array.isArray(productDoc.variants)) {
+          if (productDoc.hasVariantOptions && productDoc.variants && Array.isArray(productDoc.variants)) {
             const variantIndex = productDoc.variants.findIndex((v: any) => v.id === variantId)
 
             if (variantIndex !== -1) {
