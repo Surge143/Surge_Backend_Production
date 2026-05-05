@@ -1,5 +1,6 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { stripe } from '@/lib/stripe'
 import { sendEmail } from '@/lib/emailConfig'
 import { CafeOrderCancellationEmail } from '@/lib/emailTemplates/CafeOrderCancellation'
 import { StoreOrderCancellationEmail } from '@/lib/emailTemplates/StoreOrderCancellation'
@@ -7,8 +8,19 @@ import { StoreOrderCancellationEmail } from '@/lib/emailTemplates/StoreOrderCanc
 export async function handleChargeRefunded(charge: any) {
     const payload = await getPayload({ config })
 
-    const orderId = charge.metadata?.db_order_id
-    const orderType = charge.metadata?.order_type // 'store' | 'cafe'
+    let orderId = charge.metadata?.db_order_id
+    let orderType = charge.metadata?.order_type // 'store' | 'cafe'
+
+    // Charge metadata is empty — fall back to the PaymentIntent which always carries it
+    if (!orderId && charge.payment_intent) {
+        try {
+            const paymentIntent = await stripe.paymentIntents.retrieve(charge.payment_intent)
+            orderId = paymentIntent.metadata?.db_order_id
+            orderType = paymentIntent.metadata?.order_type
+        } catch (err) {
+            console.error('[ChargeRefunded] Failed to retrieve PaymentIntent for metadata fallback:', err)
+        }
+    }
 
     if (!orderId) {
         console.error('[ChargeRefunded] No db_order_id in charge metadata, skipping')
