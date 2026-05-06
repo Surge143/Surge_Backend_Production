@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
         if (!user || !payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
         const body = await request.json()
-        const { productId, quantity = 1, customizations, vId, shopId } = body
+        const { productId, quantity = 1, customizations, vId, shopId, productHighlights } = body
 
         if (!productId) return NextResponse.json({ error: 'Product ID is required' }, { status: 400 })
 
@@ -287,6 +287,7 @@ export async function POST(request: NextRequest) {
             vId: vId || null,
             quantity: Number(quantity),
             customizations: customizations || null,
+            productHighlights: productHighlights || [],
         })
 
         // Build cart data — always include origin (required field) and shop for cafe items

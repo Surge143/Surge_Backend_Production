@@ -140,7 +140,7 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
     // 3. Consolidate items
     if (data.items && Array.isArray(data.items)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const itemMap = new Map<string, { id?: string | number; product: any; vId?: string; quantity: number; customizations: any }>();
+        const itemMap = new Map<string, { id?: string | number; product: any; vId?: string; quantity: number; customizations: any; productHighlights?: any }>();
 
         for (const item of data.items) {
             const { relationTo, productId } = getInfo(item);
@@ -160,6 +160,7 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
                     vId: item.vId,
                     quantity: item.quantity || 1,
                     customizations: item.customizations,
+                    productHighlights: item.productHighlights,
                 });
             }
         }
@@ -170,6 +171,7 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
             vId: val.vId,
             quantity: val.quantity,
             customizations: val.customizations,
+            productHighlights: val.productHighlights,
         }));
     }
 

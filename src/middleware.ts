@@ -10,7 +10,7 @@ const ALLOWED_ORIGINS = [
     'http://localhost:8100',       // Ionic / Capacitor dev server
     'https://localhost',           // Capacitor iOS/Android (prod)
     'capacitor://localhost',       // Capacitor native scheme (prod)
-    'https://whitemantis-frontend-bfag.vercel.app',
+    'https://surge-frontend-sigma.vercel.app',
     process.env.PAYLOAD_PUBLIC_SERVER_URL,  // Production frontend URL
     process.env.FRONTEND_URL,
 ].filter(Boolean) as string[]
