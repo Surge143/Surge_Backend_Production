@@ -118,7 +118,7 @@ export const Blogs: CollectionConfig = {
                     },
                   }),
                 ],
-              }),c
+              }),
             },
             {
               name: 'relatedBlogs',
