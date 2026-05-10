@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
                 collection: 'users',
                 where: { email: { equals: email } },
                 limit: 1,
+                overrideAccess: true,
             });
 
             let userDoc = users.docs[0];
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest) {
             if (isNewUser) {
                 userDoc = await payload.create({
                     collection: 'users',
+                    overrideAccess: true,
                     data: {
                         email,
                         firstName,
@@ -81,6 +83,7 @@ export async function POST(req: NextRequest) {
                 userDoc = await payload.update({
                     collection: 'users',
                     id: userDoc.id,
+                    overrideAccess: true,
                     data: {
                         password: randomPassword,
                     } as any,
