@@ -36,7 +36,11 @@ export function middleware(req: NextRequest) {
     }
 
     // ── Normal request ───────────────────────────────────────────────────────
-    const res = NextResponse.next()
+    // Pass the origin through as a request header so Payload's own CORS layer
+    // recognises it and cooperates, avoiding duplicate header conflicts.
+    const res = NextResponse.next({
+        request: { headers: req.headers },
+    })
     if (isAllowed) {
         res.headers.set('Access-Control-Allow-Origin', origin)
     }
