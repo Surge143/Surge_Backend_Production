@@ -186,7 +186,7 @@ export const OrderShippedEmail = (order) => {
                   <!-- Footer Text -->
                   <div style="margin-top: 16px; padding-top: 20px; border-top: 1px solid #2F362A4D; font-size: 16px; font-weight:400; color: ${TEXT_LIGHT}; line-height: 1.6;">
                     <p style="margin-top: 15px; font-size: 16px; font-weight:400;color: ${TEXT_DARK};">
-                    Need help? <a href="mailto:support@surge.com" style="color: ${ACCENT_COLOR}; text-decoration: underline; margin-top:8px; font-size: 16px; font-weight:400;">Contact Support</a></p>
+                    Need help? <a href="mailto:hello@surgecoffee.ae" style="color: ${ACCENT_COLOR}; text-decoration: underline; margin-top:8px; font-size: 16px; font-weight:400;">Contact Support</a></p>
                     <p style="margin-top: 20px; color: ${TEXT_DARK}; font-size: 16px; font-weight:400;">Happy brewing,<br><strong style=" color: ${TEXT_DARK}; font-size: 16px; font-weight:400 ">Team Surge</strong></p>
                   </div>
 

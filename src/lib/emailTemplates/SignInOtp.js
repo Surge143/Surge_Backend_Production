@@ -80,7 +80,7 @@ export function getOTPEmailTemplate(otp) {
 
                   <p style="font-size: 16px; font-weight: 400; color: ${BODY_TEXT_COLOR}; margin: 0 0 20px 0; line-height: 1.6;">
                     Need help? Reach us at<br>
-                    <a href="mailto:support@surge.com" style="color: ${ACCENT_COLOR}; text-decoration: underline;">support@surge.com</a>
+                    <a href="mailto:hello@surgecoffee.ae" style="color: ${ACCENT_COLOR}; text-decoration: underline;">hello@surgecoffee.ae</a>
                   </p>
 
                   <!-- Signature Section -->

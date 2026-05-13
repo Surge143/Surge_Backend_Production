@@ -182,7 +182,7 @@ export const CafeOrderConfirmationEmail = (order) => {
                     <p style="margin-top: 15px; font-size: 16px; font-weight:400;color: ${TEXT_DARK}; ">Please note: Once the café begins preparing your order, it may no longer be cancelled. 
                       <br>For assistance, reach out to our Customer Support team.</p>
                     <p style="margin-top: 40px; font-size: 16px; font-weight:400;color: ${TEXT_DARK};">Need help? Reach us at<br>
-                    <a href="mailto:support@surge.com" style="color: ${ACCENT_COLOR}; text-decoration: underline; margin-top:8px; font-size: 16px; font-weight:400;">support@surge.com</a></p>
+                    <a href="mailto:hello@surgecoffee.ae" style="color: ${ACCENT_COLOR}; text-decoration: underline; margin-top:8px; font-size: 16px; font-weight:400;">hello@surgecoffee.ae</a></p>
                     <p style="margin-top: 20px; color: ${TEXT_DARK}; font-size: 16px; font-weight:400;">Happy brewing,<br><strong style=" color: ${TEXT_DARK}; font-size: 16px; font-weight:400 ">Team Surge</strong></p>
                   </div>
 

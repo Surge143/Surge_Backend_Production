@@ -22,7 +22,7 @@ export const afterUserCreated: CollectionAfterChangeHook = async ({
   try {
     await payload.sendEmail({
       to: email,
-      subject: 'Welcome to WhiteMantis!',
+      subject: 'Welcome to Surge!',
       html: welcomeEmailTemplate(doc.firstName || 'Customer'),
     })
     console.log(`[afterUserCreated] Welcome email sent to: ${email}`)

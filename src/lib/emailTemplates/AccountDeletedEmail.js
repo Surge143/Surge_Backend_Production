@@ -95,7 +95,7 @@ export const AccountDeletedEmail = (userData) => {
                   <!-- Mistake/Support paragraph -->
                   <p style="font-size: 16px; color: ${PRIMARY_COLOR}; font-weight: 400; font-family: 'montserrat'; margin: 0 0 20px 0; line-height: 1.5;">
                     If you believe this was a mistake or need help, contact us at<br>
-                    <a href="mailto:support@surge.com" style="color: #C4754E;font-weight: 400; font-family: 'montserrat'; text-decoration: underline;">support@surge.com</a>
+                    <a href="mailto:hello@surgecoffee.ae" style="color: #C4754E;font-weight: 400; font-family: 'montserrat'; text-decoration: underline;">hello@surgecoffee.ae</a>
                   </p>
 
                   <!-- Final Footer Verbatim from image_0.png -->
