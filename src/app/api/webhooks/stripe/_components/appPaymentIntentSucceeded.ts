@@ -208,7 +208,7 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
 
           await sendEmail({
             to: userEmail,
-            subject: 'Order Confirmation - White Mantis Cafe',
+            subject: 'Order Confirmation - Surge',
             body: `Hi ${userName},
 
 Thank you for your cafe order! Your order #${orderId} has been confirmed.
@@ -216,7 +216,7 @@ Thank you for your cafe order! Your order #${orderId} has been confirmed.
 We're starting to prepare your order. You can track its status in the app.
 
 Happy brewing,
-Team White Mantis Cafe`.trim(),
+Team Surge`.trim(),
             html: CafeOrderConfirmationEmail(order),
           })
 

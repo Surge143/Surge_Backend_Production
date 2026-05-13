@@ -183,7 +183,7 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
 
           await sendEmail({
             to: userEmail,
-            subject: 'Order Confirmation - White Mantis',
+            subject: 'Order Confirmation - Surge',
             body: `Hi ${userName},
 
 Thank you for your order! Your order #${orderId} has been confirmed.
@@ -193,7 +193,7 @@ Order Total: AED ${order.financials.total.toFixed(2)}
 We'll send you another email when your order ships.
 
 Happy brewing,
-Team White Mantis`.trim(),
+Team Surge`.trim(),
             html: OrderConfirmEmail(order),
           })
 

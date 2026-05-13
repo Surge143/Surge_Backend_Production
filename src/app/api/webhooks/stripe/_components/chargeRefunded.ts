@@ -207,7 +207,7 @@ export async function handleChargeRefunded(charge: any) {
 
             await sendEmail({
                 to: userEmail,
-                subject: 'Your Order Has Been Cancelled - White Mantis',
+                subject: 'Your Order Has Been Cancelled - Surge',
                 html,
             })
 

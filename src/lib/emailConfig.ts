@@ -41,7 +41,7 @@ export async function sendEmail({ to, subject, body = "", html, name }: SendEmai
 
     if (html) {
         const boundary = "----=_Part_" + Date.now();
-        emailContent = `From: "White Mantis" <${EMAIL_FROM}>
+        emailContent = `From: "Surge" <${EMAIL_FROM}>
 To: ${to}
 Subject: ${subject}
 MIME-Version: 1.0
@@ -60,7 +60,7 @@ ${html}
 --${boundary}--`;
     } else {
         // Plain text only
-        emailContent = `From: "White Mantis" <${EMAIL_FROM}>
+        emailContent = `From: "Surge" <${EMAIL_FROM}>
 To: ${to}
 Subject: ${subject}
 

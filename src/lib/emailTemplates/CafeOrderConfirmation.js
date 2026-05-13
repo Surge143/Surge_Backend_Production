@@ -1,6 +1,10 @@
 export const CafeOrderConfirmationEmail = (order) => {
-  const LOGO_URL = 'https://wordpressbackend.whitemantis.ae/wp-content/uploads/2026/01/image.png'
-  const BACKEND_URL = 'https://wordpressbackend.whitemantis.ae'
+  const BACKEND_URL = process.env.NEXTAUTH_URL;
+  const LOGO_URL = `${BACKEND_URL}/api/media/file/surge%20logo%20emailer.png`;
+
+  const ACCENT_COLOR = '#C4754E'; 
+  const TEXT_DARK = '#414343';
+  const TEXT_LIGHT = '#818686';
 
   const orderDate = order.createdAt
     ? new Date(order.createdAt).toLocaleDateString('en-US', {
@@ -16,119 +20,179 @@ export const CafeOrderConfirmationEmail = (order) => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.cdnfonts.com/css/lato" rel="stylesheet">
+  <title>Cafe Order Confirmation - Surge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body, table, td, p, span { font-family: 'Lato', Helvetica, Arial, sans-serif !important; font-weight: 400; }
-    h1, h2, strong { font-family: 'Lexend', sans-serif !important; }
+    body, table, td, p, span, h1, h2, strong {
+      font-family: 'Montserrat', sans-serif !important;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+
+    .container-table {
+      background-color: #ffffff;
+      border: 1px solid #eeeeee;
+    }
+
+    @media only screen and (max-width: 600px) {
+      .container-table {
+        width: 100% !important;
+      }
+      .content-padding {
+        padding: 30px 20px !important;
+      }
+    }
   </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: Helvetica, Arial, sans-serif; background-color: #f5f5f5;">
-  <table border="0" cellpadding="0" cellspacing="0" width="100%">
-    <tr>
-      <td align="center" style="padding: 40px 0;">
-        <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-          <tr>
-            <td style="padding: 40px;">
-              
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 32px;">
-                <tr>
-                  <td align="left"><img src="${LOGO_URL}" width="50" style="display: block;"></td>
-                  <td align="right" style="font-size: 14px; color: #2F362A; font-family: 'Lexend', sans-serif;">
-                    Order Id: <span style="font-weight: 400;">#${order.id}</span>
-                  </td>
-                </tr>
-              </table>
+<body>
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td align="center" style="padding: 40px 0;">
+            <table class="container-table" border="0" cellpadding="0" cellspacing="0" width="600">
+              <tr>
+                <td class="content-padding" style="padding: 29px 26px 37px; ">
+                  
+                  <!-- Header -->
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
+                    <tr>
+                      <td align="left"><img src="${LOGO_URL}" width="100" alt="Surge"></td>
+                      <td align="right" style="font-size: 16px; font-weight: 400; color: ${TEXT_DARK};">
+                        Order Id : ${order.id} 
+                        <span style="display:inline-block; vertical-align:middle; margin-left:5px; cursor:pointer;">
+                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<mask id="mask0_8925_22376" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+<rect width="20" height="20" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_8925_22376)">
+<path d="M7.54813 14.5859C7.12715 14.5859 6.77083 14.4401 6.47917 14.1484C6.1875 13.8568 6.04167 13.5005 6.04167 13.0795V3.5924C6.04167 3.17142 6.1875 2.8151 6.47917 2.52344C6.77083 2.23177 7.12715 2.08594 7.54813 2.08594H14.5352C14.9562 2.08594 15.3125 2.23177 15.6042 2.52344C15.8958 2.8151 16.0417 3.17142 16.0417 3.5924V13.0795C16.0417 13.5005 15.8958 13.8568 15.6042 14.1484C15.3125 14.4401 14.9562 14.5859 14.5352 14.5859H7.54813ZM7.54813 13.3359H14.5352C14.5994 13.3359 14.6581 13.3092 14.7115 13.2557C14.7649 13.2024 14.7917 13.1436 14.7917 13.0795V3.5924C14.7917 3.52823 14.7649 3.46948 14.7115 3.41615C14.6581 3.36267 14.5994 3.33594 14.5352 3.33594H7.54813C7.48396 3.33594 7.42521 3.36267 7.37188 3.41615C7.3184 3.46948 7.29167 3.52823 7.29167 3.5924V13.0795C7.29167 13.1436 7.3184 13.2024 7.37188 13.2557C7.42521 13.3092 7.48396 13.3359 7.54813 13.3359ZM4.63146 17.5026C4.21049 17.5026 3.85417 17.3568 3.5625 17.0651C3.27083 16.7734 3.125 16.4171 3.125 15.9961V5.25906H4.375V15.9961C4.375 16.0603 4.40174 16.1191 4.45521 16.1724C4.50854 16.2259 4.56729 16.2526 4.63146 16.2526H12.8685V17.5026H4.63146Z" fill="#414343"/>
+</g>
+</svg>
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
 
-              <h1 style="font-size: 22px; font-weight: 700; color: #2F362A; text-transform: uppercase; margin: 0; display: block;">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-top: -2px; margin-right: 8px;">
-                  <path fill-rule="evenodd" clip-rule="evenodd" d="M10 20C4.477 20 0 15.523 0 10C0 4.477 4.477 0 10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20ZM10 18.8C12.3339 18.8 14.5722 17.8729 16.2225 16.2225C17.8729 14.5722 18.8 12.3339 18.8 10C18.8 7.66609 17.8729 5.42778 16.2225 3.77746C14.5722 2.12714 12.3339 1.2 10 1.2C7.66609 1.2 5.42778 2.12714 3.77746 3.77746C2.12714 5.42778 1.2 7.66609 1.2 10C1.2 12.3339 2.12714 14.5722 3.77746 16.2225C5.42778 17.8729 7.66609 18.8 10 18.8ZM8.828 12.558L14.637 6.75L15.485 7.599L9.535 13.549C9.34747 13.7365 9.09316 13.8418 8.828 13.8418C8.56284 13.8418 8.30853 13.7365 8.121 13.549L5 10.426L5.849 9.577L8.829 12.557L8.828 12.558Z" fill="#2F362A"/>
-                </svg>
-                YOUR ORDER IS CONFIRMED!
-              </h1>
+                  <!-- Confirmation Title -->
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
+                    <tr>
+                      <td style="font-size: 22px; font-weight: 600; color: ${TEXT_DARK};">
+                        <span style="display:inline-block; vertical-align:middle; margin-right:8px; color: ${TEXT_LIGHT};">
+                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M10 20C4.477 20 0 15.523 0 10C0 4.477 4.477 0 10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20ZM10 18.8C12.3339 18.8 14.5722 17.8729 16.2225 16.2225C17.8729 14.5722 18.8 12.3339 18.8 10C18.8 7.66609 17.8729 5.42778 16.2225 3.77746C14.5722 2.12714 12.3339 1.2 10 1.2C7.66609 1.2 5.42778 2.12714 3.77746 3.77746C2.12714 5.42778 1.2 7.66609 1.2 10C1.2 12.3339 2.12714 14.5722 3.77746 16.2225C5.42778 17.8729 7.66609 18.8 10 18.8ZM8.828 12.558L14.637 6.75L15.485 7.599L9.535 13.549C9.34747 13.7365 9.09316 13.8418 8.828 13.8418C8.56284 13.8418 8.30853 13.7365 8.121 13.549L5 10.426L5.849 9.577L8.829 12.557L8.828 12.558Z" fill="#414343"/>
+</svg>
+                        </span>
+                        Your Order Is Confirmed!
+                      </td>
+                    </tr>
+                  </table>
 
-              <p style="font-size: 16px; color: #6E736A; margin-top: 20px;">Hi ${order.billingAddress.addressFirstName},</p>
-              <p style="font-size: 16px; color: #6E736A; margin: 0; line-height: 1.5;">
-                Thank you for your order. Your payment has been received and the café is preparing your order. 
-                Your order will be ready for pickup soon. You’ll receive another notification once it is ready.
-              </p>
+                  <p style="font-size: 16px; color: ${TEXT_LIGHT}; margin: 0 0 15px 0;">Hi ${order.billingAddress?.addressFirstName || order.shippingAddress?.addressFirstName || 'Customer'},</p>
+                  <p style="font-size: 16px; color: ${TEXT_LIGHT}; line-height: 1.6; margin: 0 0 32px 0;">
+                    Thank you for your order. Your payment has been received and the café is preparing your order. 
+                    Your order will be ready for pickup soon. You’ll receive another notification once it is ready.
+                  </p>
 
-              <div style="padding: 32px 0;">
-                <a href="https://whitemantis.ae/account/orders/${order.id}" style="background-color: #6c7a5f; color: #ffffff; text-decoration: none; padding: 13px 47px; font-size: 15px; display: inline-block;">View order</a>
-              </div>
+                  <div style="margin-bottom: 50px;">
+                    <a href="${BACKEND_URL}/account/orders/${order.id}" style="background-color: ${ACCENT_COLOR}; color: #ffffff; text-decoration: none; padding: 13px 47px; font-size: 16px; font-weight: 500; display: inline-block;">View order</a>
+                  </div>
 
-              <div style="padding-bottom: 10px;">
-                <h2 style="font-size: 22px; color: #2F362A; margin: 0; display: inline-block; vertical-align: middle;">Order Summary</h2>
-                <span style="font-size: 16px; color: #999; vertical-align: middle;"> (${order.items.length} items)</span>
-              </div>
+                  <!-- Order Summary -->
+                  <h2 style="font-size: 16px; font-weight: 400; color: #2F362A; margin: 0 0 40px 0;">
+                    Order Summary <span style="font-size: 16px; font-weight: 400; color: #2F362A;">(${(order.items || []).length} items)</span>
+                  </h2>
 
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
-                ${order.items
-                  .map(
-                    (item) => `
-                  <tr>
-                    <td style="padding: 15px 0; width: 80px;">
-                      <img src="${BACKEND_URL}${item.product?.image?.sizes?.thumbnail?.url || item.product?.image?.url}" width="60" style="display: block;">
-                    </td>
-                    <td style="padding: 15px 10px; vertical-align: middle;">
-                      <p style="font-weight: 700; font-size: 15px; color: #2F362A; margin: 0;">${item.product?.name || 'Menu Item'}</p>
-                    </td>
-                    <td align="center" style="padding: 15px 10px; font-size: 15px; color: #666;">×${item.quantity}</td>
-                    <td align="right" style="padding: 15px 0; font-size: 15px; color: #333; font-weight: bold;">AED ${(item.price * item.quantity).toFixed(2)}</td>
-                  </tr>
-                `,
-                  )
-                  .join('')}
-              </table>
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px; border-collapse: collapse;">
+                    ${(order.items || []).map(item => `
+                      <tr>
+                        <!-- Fixed Image Column -->
+                        <td style="padding: 16px 0; width: 60px; border-top: 1px solid #f0f0f0;">
+                          <div style="width: 50px; height: 65px; background: #f7f7f7; overflow: hidden;">
+                            <img 
+                              src="${BACKEND_URL}${item.product?.image?.sizes?.thumbnail?.url || item.product?.image?.url || ''}" 
+                              alt="${item.product?.name || 'Menu Item'}" 
+                              width="50" 
+                              height="65" 
+                              style="display: block; object-fit: cover; border: 0;"
+                            >
+                          </div>
+                        </td>
+                        <td style="padding: 15px 10px; border-top: 1px solid #f0f0f0;">
+                          <p style="font-size: 16px; font-weight: 400; color: ${TEXT_DARK}; margin: 0;">${item.product?.name || 'Menu Item'}</p>
+                        </td>
+                        <td align="center" style="padding: 15px 10px; font-size: 16px;font-weight: 400; color:#2F362A; border-top: 1px solid #f0f0f0;">
+                          ×${item.quantity}
+                        </td>
+                        <td align="right" style="padding: 15px 0; font-size: 16px; font-weight: 400;color: ${TEXT_DARK}; border-top: 1px solid #f0f0f0;">
+                          AED ${(item.price * item.quantity).toFixed(2)}
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </table>
 
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 32px; font-size: 14px; color: #2F362A;">
-                <tr>
-                  <td style="border-top: 1px solid #e5e5e5; padding: 20px 0 8px 0;">Subtotal</td>
-                  <td align="right" style="border-top: 1px solid #e5e5e5; padding: 20px 0 8px 0;">AED ${order.financials.subtotal.toFixed(2)}</td>
-                </tr>
-                ${order.financials.couponDiscount > 0 ? `<tr><td style="padding: 8px 0;">Coupon Discount</td><td align="right">AED -${order.financials.couponDiscount.toFixed(2)}</td></tr>` : ''}
-                <tr>
-                  <td style="padding: 8px 0 16px 0;">VAT</td>
-                  <td align="right" style="padding: 8px 0 16px 0;">AED ${order.financials.taxAmount.toFixed(2)}</td>
-                </tr>
-                <tr style="font-weight: 800; font-size: 16px;">
-                  <td style="border-top: 1px solid #e5e5e5; padding: 16px 0;">Total</td>
-                  <td align="right" style="border-top: 1px solid #e5e5e5; padding: 16px 0;">AED ${order.financials.total.toFixed(2)}</td>
-                </tr>
-              </table>
+                  <!-- Totals -->
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 16px; color: ${TEXT_DARK}; margin-bottom: 60px;">
+                    <tr><td style="padding: 16px 0; border-top: 1px solid #f0f0f0;">Subtotal</td><td align="right" style="padding: 8px 0; border-top: 1px solid #f0f0f0; color:${TEXT_DARK}">AED ${order.financials?.subtotal?.toFixed(2) || '0.00'}</td></tr>
+                    ${order.financials?.couponDiscount > 0 ? `<tr><td style="padding: 16px 0;">Coupon Discount</td><td align="right" style="padding: 8px 0; color:${TEXT_DARK}">AED -${order.financials.couponDiscount.toFixed(2)}</td></tr>` : ''}
+                    <tr><td style="padding: 16px 0; border-bottom: 1px solid #f0f0f0; padding-bottom:15px;">VAT</td><td align="right" style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; padding-bottom:15px; color:${TEXT_DARK}">AED ${order.financials?.taxAmount?.toFixed(2) || '0.00'}</td></tr>
+                    <tr style="font-weight: 700; color: ${TEXT_DARK};">
+                      <td style="padding: 16px 0;">Total</td>
+                      <td align="right" style="padding: 20px 0;">AED ${order.financials?.total?.toFixed(2) || '0.00'}</td>
+                    </tr>
+                  </table>
 
-              <h2 style="font-size: 20px; color: #2F362A; margin-bottom: 10px;">Information</h2>
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 30px;">
-                <tr>
-                  <td width="50%" valign="top" style="padding-right: 20px;">
-                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block;">Name</strong>${order.billingAddress.addressFirstName} ${order.billingAddress.addressLastName}</p>
-                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block;">Email</strong>${order.email}</p>
-                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block;">Order Date</strong>${orderDate}</p>
-                  </td>
-                  <td width="50%" valign="top">
-                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block;">Order Type</strong>${order.orderType}</p>
-                    <p style="margin: 0 0 15px 0;"><strong style="color: #333; display: block;">Pickup Location</strong>${order.pickupLocation}</p>
-                  </td>
-                </tr>
-              </table>
+                  <!-- Customer Info Grid -->
+                  <h2 style="font-size: 22px; font-weight: 400; color: ${TEXT_DARK}; margin: 0 0 25px 0;">Information</h2>
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 13px; line-height: 1.8; color: ${TEXT_LIGHT};">
+                    <tr>
+                      <td width="50%" valign="top" style="padding-right: 20px; padding-bottom: 25px;">
+                        <strong style="color: ${TEXT_DARK}; display: block; font-size: 16px; font-weight:400 ;text-transform: none; margin-bottom: 2px;">Name</strong>
+                        ${order.billingAddress?.addressFirstName || ''} ${order.billingAddress?.addressLastName || ''}
+                      </td>
+                      <td width="50%" valign="top" style="padding-bottom: 25px;">
+                        <strong style="color: ${TEXT_DARK}; display: block; font-size: 16px; font-weight:400;">Order Type</strong>
+                        ${order.orderType || 'Pickup'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td width="50%" valign="top" style="padding-right: 20px; margin-bottom:0;">
+                        <strong style="color: ${TEXT_DARK}; display: block; font-size: 16px; font-weight:400; margin-bottom: 2px;">Email</strong>
+                        ${order.email || ''}
+                      </td>
+                      <td width="50%" valign="top" style="padding-bottom: 25px;">
+                        <strong style="color: ${TEXT_DARK}; display: block; font-size: 16px; font-weight:400; margin-bottom: 2px;">Pickup Location</strong>
+                        ${order.pickupLocation || 'Cafe'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td width="50%" valign="top" style="padding-right: 20px;">
+                        <strong style="color: ${TEXT_DARK}; display: block; font-size: 16px; font-weight:400;">Order Date</strong>
+                        ${orderDate}
+                      </td>
+                    </tr>
+                  </table>
 
-              <div style="padding-top: 20px; border-top: 1px solid #e5e5e5;">
-                <p style="font-size: 14px; color: #6E736A; margin: 0 0 10px 0;">You will receive another notification when your order is ready for pickup.</p>
-                <p style="font-size: 14px; color: #2F362A; font-weight: bold; margin: 0;">Please note: Once the café begins preparing your order, it may no longer be cancelled.</p>
-              </div>
+                  <!-- Footer Text -->
+                  <div style="margin-top: 16px; padding-top: 6px; border-top: 1px solid #2F362A4D; font-size: 16px; font-weight:400; color: ${TEXT_LIGHT}; line-height: 1.6;">
+                    <p>You will receive another notification when your order is ready for pickup.</p>
+                    <p style="margin-top: 15px; font-size: 16px; font-weight:400;color: ${TEXT_DARK}; ">Please note: Once the café begins preparing your order, it may no longer be cancelled. 
+                      <br>For assistance, reach out to our Customer Support team.</p>
+                    <p style="margin-top: 40px; font-size: 16px; font-weight:400;color: ${TEXT_DARK};">Need help? Reach us at<br>
+                    <a href="mailto:support@surge.com" style="color: ${ACCENT_COLOR}; text-decoration: underline; margin-top:8px; font-size: 16px; font-weight:400;">support@surge.com</a></p>
+                    <p style="margin-top: 20px; color: ${TEXT_DARK}; font-size: 16px; font-weight:400;">Happy brewing,<br><strong style=" color: ${TEXT_DARK}; font-size: 16px; font-weight:400 ">Team Surge</strong></p>
+                  </div>
 
-              <p style="font-size: 15px; color: #2F362A; line-height: 1.5; margin-top: 30px;">
-                Need help? Reach us at <br><a href="mailto:support@whitemantis.com" style="color: #6C7A5F; text-decoration: underline;">support@whitemantis.com</a>
-                <br /><br />
-                Happy brewing,<br />
-                <strong>Team White Mantis</strong>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
 </body>
 </html>
-  `
+  `;
 }

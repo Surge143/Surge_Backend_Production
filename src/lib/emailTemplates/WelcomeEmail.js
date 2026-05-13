@@ -1,129 +1,99 @@
 export function welcomeEmailTemplate(name) {
+  const BACKEND_URL = process.env.NEXTAUTH_URL;
+  const LOGO_URL = `${BACKEND_URL}/api/media/file/surge%20logo%20emailer.png`;
+  
+  const PRIMARY_COLOR = '#414343'; 
+  const ACCENT_COLOR = '#C4754E';
+  const BODY_TEXT_COLOR = '#818686';
+
   return `
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to Whitemantis</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to Surge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body, table, td, p, span {
+            font-family: 'Montserrat', Helvetica, Arial, sans-serif !important;
+            font-weight: 400;
+        }
 
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: Helvetica, Arial, sans-serif;
-      background-color: #4a4a4a;
-    }
+        body {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
 
-    .email-container {
-      max-width: 600px;
-      margin: 40px auto;
-      background-color: #ffffff;
-      padding: 48px 40px;
-      border-radius: 4px;
-      font-family: Helvetica, Arial, sans-serif;
-    }
-
-    .logo {
-      margin-bottom: 32px;
-      font-family: Helvetica, Arial, sans-serif;
-    }
-
-    .logo img {
-      width: 45px;
-      height: 45px;
-      font-family: Helvetica, Arial, sans-serif;
-    }
-
-    .title {
-      font-size: 26px;
-      font-weight: 700;
-      color: #2F362A;
-      letter-spacing: 1px;
-      margin-bottom: 24px;
-      text-transform: uppercase;
-      font-family: Helvetica, Arial, sans-serif;
-    }
-
-    .greeting {
-      font-size: 16px;
-      color: #6E736A;
-      margin-bottom: 16px;
-      font-family: Helvetica, Arial, sans-serif;
-    }
-
-    .message {
-      font-size: 16px;
-      color: #6E736A;
-      margin-bottom: 32px;
-      font-family: Helvetica, Arial, sans-serif;
-    }
-
-    .cta-button {
-      display: inline-block;
-      background-color: #6C7A5F;
-      color: #ffffff !important;
-      text-decoration: none;
-      padding: 14px 32px;
-      font-size: 16px;
-      font-weight: 500;
-      border-radius: 2px;
-      margin-bottom: 40px;
-      font-family: Helvetica, Arial, sans-serif;
-    }
-
-    .closing {
-      font-size: 16px;
-      color: #2F362A;
-      font-weight: 500;
-      font-family: Helvetica, Arial, sans-serif;
-    }
-
-    .signature {
-      font-size: 16px;
-      font-weight: 500;
-      color: #2F362A;
-      font-family: Helvetica, Arial, sans-serif;
-    }
-
-    @media only screen and (max-width: 600px) {
-      .email-container {
-        margin: 20px;
-        padding: 32px 24px;
-        font-family: Helvetica, Arial, sans-serif;
-      }
-
-      .title {
-        font-size: 22px;
-        font-family: Helvetica, Arial, sans-serif;
-      }
-    }
-  </style>
+        @media only screen and (max-width: 600px) {
+            .container-table {
+                width: 100% !important;
+            }
+            .content-padding {
+                padding: 30px 20px !important;
+            }
+        }
+    </style>
 </head>
 
-<body>
-  <div class="email-container">
-    <div class="logo">
-      <img src="https://wordpressbackend.whitemantis.ae/wp-content/uploads/2026/01/image.png" alt="WhiteMantis Logo" />
-    </div>
+<body style="margin: 0; padding: 0;">
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td align="center" style="padding: 32px 0;">
+            <table class="container-table" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border: 1px solid #eeeeee; border-radius: 4px;">
+              <tr>
+                <td class="content-padding" style="padding: 16px 32px 42px;">
+                  
+                  <!-- Brand Logo -->
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 35px;">
+                    <tr>
+                      <td align="left">
+                        <img src="${LOGO_URL}" width="100" alt="Surge" style="display: block; border: 0;">
+                      </td>
+                    </tr>
+                  </table>
 
-    <h1 class="title">Welcome to WhiteMantis!</h1>
+                  <!-- Header Title -->
+                  <h1 style="font-size: 22px; font-weight: 600; color: ${PRIMARY_COLOR}; margin: 0 0 25px 0;">
+                    Welcome To Surge
+                  </h1>
 
-    <p class="greeting">Hi ${name},</p>
+                  <p style="font-size: 16px; font-weight: 400; color: ${BODY_TEXT_COLOR}; margin: 0 0 25px 0;">Hi ${name},</p>
+                  
+                  <p style="font-size: 16px; font-weight: 400;color: ${BODY_TEXT_COLOR}; margin: 0 0 32px 0; line-height: 1.6;">
+                    We're glad to have you here. Your Surge account is now active. Enjoy faster checkout and easy access to your orders and subscriptions.
+                  </p>
 
-    <p class="message">
-      We’re glad to have you here. Your Whitemantis account is now active.
-      Enjoy faster checkout and easy access to your orders.
-    </p>
+                  <!-- Call to Action -->
+                  <table border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 50px;">
+                    <tr>
+                      <td align="center" bgcolor="${ACCENT_COLOR}" style="border-radius: 2px;">
+                        <a href="${BACKEND_URL}" style="font-size: 16px; font-weight: 500; color: #ffffff; text-decoration: none; padding: 13px 47px; display: inline-block;">
+                          Start Exploring
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
 
-    <a href="https://whitemantis.ae" class="cta-button">
-      Start Exploring
-    </a>
-
-    <p class="closing">Happy brewing,</p>
-    <p class="signature">Team Whitemantis</p>
-  </div>
+                  <!-- Signature Section -->
+                  <p style="font-size: 16px; font-weight: 500;color: ${PRIMARY_COLOR};  margin: 0 0 8px 0;">
+                    Happy brewing,
+                  </p>
+                  <p style="font-size: 16px; font-weight: 500; color: ${PRIMARY_COLOR}; margin: 0;">
+                    Team Surge
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
 </body>
+
 </html>
-  `.trim()
+  `;
 }
