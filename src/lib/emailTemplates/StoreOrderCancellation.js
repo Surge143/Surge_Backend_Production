@@ -1,5 +1,6 @@
 export const StoreOrderCancellationEmail = (order) => {
   const BACKEND_URL = process.env.NEXTAUTH_URL;
+  const FRONTEND_URL = process.env.FRONTEND_URL;
   const LOGO_URL = `${BACKEND_URL}/api/media/file/surge%20logo%20emailer.png`;
 
   const ACCENT_COLOR = '#C4754E'; 
@@ -93,7 +94,7 @@ export const StoreOrderCancellationEmail = (order) => {
                   </p>
 
                   <div style="margin-bottom: 50px;">
-                    <a href="${BACKEND_URL}/account/orders/${order.id}" style="background-color: ${ACCENT_COLOR}; color: #ffffff; text-decoration: none; padding: 13px 47px; font-size: 16px; font-weight: 500; display: inline-block;">View order details</a>
+                    <a href="${FRONTEND_URL}/account/orders/${order.id}" style="background-color: ${ACCENT_COLOR}; color: #ffffff; text-decoration: none; padding: 13px 47px; font-size: 16px; font-weight: 500; display: inline-block;">View order details</a>
                   </div>
 
                   <!-- Order Summary -->

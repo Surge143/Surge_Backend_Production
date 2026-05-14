@@ -1,17 +1,18 @@
 export const CafeOrderConfirmationEmail = (order) => {
   const BACKEND_URL = process.env.NEXTAUTH_URL;
+  const FRONTEND_URL = process.env.FRONTEND_URL;
   const LOGO_URL = `${BACKEND_URL}/api/media/file/surge%20logo%20emailer.png`;
 
-  const ACCENT_COLOR = '#C4754E'; 
+  const ACCENT_COLOR = '#C4754E';
   const TEXT_DARK = '#414343';
   const TEXT_LIGHT = '#818686';
 
   const orderDate = order.createdAt
     ? new Date(order.createdAt).toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      })
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    })
     : 'N/A'
 
   return `
@@ -98,7 +99,7 @@ export const CafeOrderConfirmationEmail = (order) => {
                   </p>
 
                   <div style="margin-bottom: 50px;">
-                    <a href="${BACKEND_URL}/account/orders/${order.id}" style="background-color: ${ACCENT_COLOR}; color: #ffffff; text-decoration: none; padding: 13px 47px; font-size: 16px; font-weight: 500; display: inline-block;">View order</a>
+                    <a href="${FRONTEND_URL}/account/orders/${order.id}" style="background-color: ${ACCENT_COLOR}; color: #ffffff; text-decoration: none; padding: 13px 47px; font-size: 16px; font-weight: 500; display: inline-block;">View order</a>
                   </div>
 
                   <!-- Order Summary -->
