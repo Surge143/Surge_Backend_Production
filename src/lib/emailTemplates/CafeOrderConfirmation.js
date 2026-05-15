@@ -81,9 +81,17 @@ export const CafeOrderConfirmationEmail = (order) => {
                   <!-- Confirmation Title -->
                   <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
                     <tr>
-                      <td style="font-size: 22px; font-weight: 600; color: ${TEXT_DARK};">
-                        <img src="${BACKEND_URL}/api/media/file/emailer.png" width="20" height="20" alt="✓" style="display:inline-block; vertical-align:middle; margin-right:8px;" />
-                        Your Order Is Confirmed!
+                      <td>
+                        <table border="0" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td valign="middle" style="padding-right:8px;">
+                              <img src="${BACKEND_URL}/api/media/file/emailer.png" width="20" height="20" alt="✓" style="display:block;" />
+                            </td>
+                            <td valign="middle" style="font-size: 22px; font-weight: 600; color: ${TEXT_DARK};">
+                              Your Order Is Confirmed!
+                            </td>
+                          </tr>
+                        </table>
                       </td>
                     </tr>
                   </table>
