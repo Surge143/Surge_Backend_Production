@@ -66,7 +66,7 @@ export const OrderDeliveredEmail = (order) => {
                   <!-- Header -->
                   <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
                     <tr>
-                      <td align="left"><img src="${LOGO_URL}" width="100" alt="Surge"></td>
+                      <td align="left"><img src="${LOGO_URL}" width="50" alt="Surge"></td>
                       <td align="right" style="font-size: 16px; font-weight: 400; color: ${TEXT_DARK};">
                         Order Id : ${order.id} 
                       </td>

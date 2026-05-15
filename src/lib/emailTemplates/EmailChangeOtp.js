@@ -52,7 +52,7 @@ export function OTPForUpdateEmail(otp) {
                   <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 35px;">
                     <tr>
                       <td align="left">
-                        <img src="${LOGO_URL}" width="100" alt="Surge" style="display: block; border: 0;">
+                        <img src="${LOGO_URL}" width="50" alt="Surge" style="display: block; border: 0;">
                       </td>
                     </tr>
                   </table>
