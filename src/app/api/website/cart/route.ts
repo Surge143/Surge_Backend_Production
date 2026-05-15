@@ -122,23 +122,6 @@ export async function POST(request: NextRequest) {
 
         if (isNaN(product)) return NextResponse.json({ error: 'Valid Product ID is required' }, { status: 400 })
 
-        const appCarts = await payload.find({
-            collection: 'app-cart',
-            where: { user: { equals: user.id } },
-            limit: 1,
-            depth: 0,
-            select: { items: true, origin: true },
-        })
-
-        const appCart = appCarts.docs[0] as any
-        if ((appCart?.items || []).length > 0) {
-            return NextResponse.json({
-                error: 'MIXED_CART',
-                message: 'Your cafe cart already contains items. Clear it before adding store items.',
-                currentOrigin: appCart?.origin || 'cafe',
-            }, { status: 400 })
-        }
-
         const carts = await payload.find({
             collection: 'web-cart',
             where: { user: { equals: user.id } },
@@ -162,7 +145,7 @@ export async function POST(request: NextRequest) {
             }
             items[existingIndex].quantity += quantity
         } else {
-            if (quantity > 5) { 
+            if (quantity > 5) {
                 return NextResponse.json({ error: 'Maximum quantity of 5 units reached for this item' }, { status: 400 })
             }
             items.push({ product, vId, quantity })
