@@ -81,7 +81,7 @@ export const AccountDeletedEmail = (userData) => {
                   <p style="font-size: 16px; color:#818686; margin: 0 0 16px 0; font-weight: 400; line-height: 1.5;">Hi ${userData?.firstName || ''} ${userData?.lastName || ''},</p>
                   
                   <p style="font-size: 16px; color: ${BODY_TEXT_COLOR};font-family: 'montserrat';  font-weight: 400;margin: 0 0 40px 0; line-height: 1.5;">
-                    Your Surge account has been permanently deleted. Your subscriptions have been cancelled. Any order that was already shipped will still be delivered to you. All your personal data and account history have been permanently removed from our system.
+                    Your Surge account has been permanently deleted. Any order that was already shipped will still be delivered to you. All your personal data and account history have been permanently removed from our system.
                   </p>
 
                   <!-- Horizontal Line matching image_0.png -->

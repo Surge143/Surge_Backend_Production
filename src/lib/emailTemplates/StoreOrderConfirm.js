@@ -87,11 +87,7 @@ export const OrderConfirmEmail = (order) => {
                   <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
                     <tr>
                       <td style="font-size: 22px; font-weight: 600; color: ${TEXT_DARK};">
-                        <span style="display:inline-block; vertical-align:middle; margin-right:8px; color: ${TEXT_LIGHT};">
-                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M10 20C4.477 20 0 15.523 0 10C0 4.477 4.477 0 10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20ZM10 18.8C12.3339 18.8 14.5722 17.8729 16.2225 16.2225C17.8729 14.5722 18.8 12.3339 18.8 10C18.8 7.66609 17.8729 5.42778 16.2225 3.77746C14.5722 2.12714 12.3339 1.2 10 1.2C7.66609 1.2 5.42778 2.12714 3.77746 3.77746C2.12714 5.42778 1.2 7.66609 1.2 10C1.2 12.3339 2.12714 14.5722 3.77746 16.2225C5.42778 17.8729 7.66609 18.8 10 18.8ZM8.828 12.558L14.637 6.75L15.485 7.599L9.535 13.549C9.34747 13.7365 9.09316 13.8418 8.828 13.8418C8.56284 13.8418 8.30853 13.7365 8.121 13.549L5 10.426L5.849 9.577L8.829 12.557L8.828 12.558Z" fill="#414343"/>
-</svg>
-                        </span>
+                        <img src="${BACKEND_URL}/api/media/file/emailer.png" width="20" height="20" alt="✓" style="display:inline-block; vertical-align:middle; margin-right:8px;" />
                         Your Order Is Confirmed!
                       </td>
                     </tr>

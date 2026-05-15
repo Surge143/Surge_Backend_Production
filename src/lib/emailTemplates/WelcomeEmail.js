@@ -65,7 +65,7 @@ export function welcomeEmailTemplate(name) {
                   <p style="font-size: 16px; font-weight: 400; color: ${BODY_TEXT_COLOR}; margin: 0 0 25px 0;">Hi ${name},</p>
                   
                   <p style="font-size: 16px; font-weight: 400;color: ${BODY_TEXT_COLOR}; margin: 0 0 32px 0; line-height: 1.6;">
-                    We're glad to have you here. Your Surge account is now active. Enjoy faster checkout and easy access to your orders and subscriptions.
+                    We're glad to have you here. Your Surge account is now active. Enjoy faster checkout and easy access to your orders.
                   </p>
 
                   <!-- Call to Action -->

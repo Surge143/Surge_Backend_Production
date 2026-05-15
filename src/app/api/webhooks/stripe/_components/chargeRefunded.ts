@@ -198,7 +198,7 @@ export async function handleChargeRefunded(charge: any) {
         const userEmail =
             typeof order.user === 'object' && order.user?.email
                 ? order.user.email
-                : order.billingAddress?.email || order.shippingAddress?.email
+                : order.email || order.billingAddress?.email || order.shippingAddress?.email
 
         if (userEmail) {
             const html = orderType === 'cafe'

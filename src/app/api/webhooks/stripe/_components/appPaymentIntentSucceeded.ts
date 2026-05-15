@@ -201,7 +201,9 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
 
       // Send order confirmation email
       try {
-        const userEmail = typeof order.user === 'object' ? order.user?.email : null
+        const userEmail = typeof order.user === 'object' && order.user?.email
+          ? order.user.email
+          : order.email || null
         if (userEmail) {
           console.log('📧 Sending confirmation email to:', userEmail)
           const userName = (order.user as any)?.firstName || 'Coffee Lover'

@@ -1,5 +1,6 @@
 import { CollectionAfterChangeHook } from 'payload'
 import { welcomeEmailTemplate } from '@/lib/emailTemplates/WelcomeEmail'
+import { sendEmail } from '@/lib/emailConfig'
 
 /**
  * Fires after a new user account is created.
@@ -20,7 +21,7 @@ export const afterUserCreated: CollectionAfterChangeHook = async ({
 
   // Send Welcome Email
   try {
-    await payload.sendEmail({
+    await sendEmail({
       to: email,
       subject: 'Welcome to Surge!',
       html: welcomeEmailTemplate(doc.firstName || 'Customer'),
