@@ -61,47 +61,21 @@ export async function POST(req: NextRequest) {
         let itemsToProcess: any[] = [];
 
         if (user) {
-            // Fetch from user's cart
             const cartResult = await payload.find({
                 collection: 'web-cart',
                 where: { user: { equals: user.id } },
                 depth: 0,
                 select: { items: true }
             });
-
-            if (cartResult.docs.length > 0 && cartResult.docs[0].items && cartResult.docs[0].items.length > 0) {
-                itemsToProcess = cartResult.docs[0].items.map((item: any) => ({
-                    productId: typeof item.product === 'object' ? item.product.id : item.product,
-                    variantId: item.vId,
-                    quantity: item.quantity || 1,
-                    productHighlights: item.productHighlights || [],
-                    productDoc: null, // We'll batch fetch these
-                }));
-            }
-        }
-        if (user) {
-            const cartResult = await payload.find({
-                collection: 'web-cart',
-                where: { user: { equals: user.id } },
-                depth: 0,
-                select: { items: true }
-            });
-
-            // Build lookup from frontend payload
-            const frontendProductMap = new Map(
-                (products || []).map((p: any) => [`${p.productId}:${p.variantId || ""}`, p])
-            );
 
             if (cartResult.docs.length > 0 && cartResult.docs[0].items && cartResult.docs[0].items.length > 0) {
                 itemsToProcess = cartResult.docs[0].items.map((item: any) => {
                     const productId = typeof item.product === 'object' ? item.product.id : item.product;
-                    const key = `${productId}:${item.vId || ""}`;
-
                     return {
                         productId,
                         variantId: item.vId,
                         quantity: item.quantity || 1,
-                        productHighlights: frontendProductMap.get(key)?.productHighlights || [],
+                        // productHighlights will be sourced from the product doc after batch fetch
                         productDoc: null,
                     };
                 });
@@ -139,6 +113,7 @@ export async function POST(req: NextRequest) {
                 variants: true,
                 inStock: true,
                 stockQuantity: true,
+                productHighlights: true,
             }
         });
 
@@ -202,7 +177,8 @@ export async function POST(req: NextRequest) {
                 variantID: item.variantId || "",
                 quantity: item.quantity,
                 price: itemPrice,
-                productHighlights: item.productHighlights || [],
+                // Always source productHighlights from the product definition — authoritative
+                productHighlights: productDoc.productHighlights || [],
             });
         }
 
