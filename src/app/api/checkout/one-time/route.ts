@@ -79,6 +79,34 @@ export async function POST(req: NextRequest) {
                 }));
             }
         }
+        if (user) {
+            const cartResult = await payload.find({
+                collection: 'web-cart',
+                where: { user: { equals: user.id } },
+                depth: 0,
+                select: { items: true }
+            });
+
+            // Build lookup from frontend payload
+            const frontendProductMap = new Map(
+                (products || []).map((p: any) => [`${p.productId}:${p.variantId || ""}`, p])
+            );
+
+            if (cartResult.docs.length > 0 && cartResult.docs[0].items && cartResult.docs[0].items.length > 0) {
+                itemsToProcess = cartResult.docs[0].items.map((item: any) => {
+                    const productId = typeof item.product === 'object' ? item.product.id : item.product;
+                    const key = `${productId}:${item.vId || ""}`;
+
+                    return {
+                        productId,
+                        variantId: item.vId,
+                        quantity: item.quantity || 1,
+                        productHighlights: frontendProductMap.get(key)?.productHighlights || [],
+                        productDoc: null,
+                    };
+                });
+            }
+        }
 
         // ... (Guest/Override logic) ...
         if (itemsToProcess.length === 0 && products && Array.isArray(products) && products.length > 0) {
