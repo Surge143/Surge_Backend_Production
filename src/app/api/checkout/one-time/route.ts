@@ -69,13 +69,27 @@ export async function POST(req: NextRequest) {
             });
 
             if (cartResult.docs.length > 0 && cartResult.docs[0].items && cartResult.docs[0].items.length > 0) {
+                // Build a lookup map from the frontend payload so we can attach
+                // user-selected productHighlights to each DB cart item.
+                const frontendProductMap = new Map<string, any>();
+                if (products && Array.isArray(products)) {
+                    for (const p of products) {
+                        if (p.productId) {
+                            frontendProductMap.set(String(p.productId), p);
+                        }
+                    }
+                }
+
                 itemsToProcess = cartResult.docs[0].items.map((item: any) => {
                     const productId = typeof item.product === 'object' ? item.product.id : item.product;
+                    const frontendItem = frontendProductMap.get(String(productId));
                     return {
                         productId,
                         variantId: item.vId,
                         quantity: item.quantity || 1,
-                        // productHighlights will be sourced from the product doc after batch fetch
+                        // Pull user-selected highlights from the frontend payload;
+                        // fall back to an empty array if not provided.
+                        productHighlights: frontendItem?.productHighlights || [],
                         productDoc: null,
                     };
                 });
@@ -177,8 +191,9 @@ export async function POST(req: NextRequest) {
                 variantID: item.variantId || "",
                 quantity: item.quantity,
                 price: itemPrice,
-                // Always source productHighlights from the product definition — authoritative
-                productHighlights: productDoc.productHighlights || [],
+                // Use user-selected highlights from the frontend payload (item.productHighlights);
+                // the product doc highlights are master defaults and should not override the user's choice.
+                productHighlights: item.productHighlights || [],
             });
         }
 
