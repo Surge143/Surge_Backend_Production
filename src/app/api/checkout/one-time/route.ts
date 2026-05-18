@@ -186,14 +186,24 @@ export async function POST(req: NextRequest) {
             }
 
             subtotal += itemPrice * item.quantity;
+
+            // Strip Payload-managed `id` fields from each highlight section and its items.
+            // Payload auto-generates ids for array entries on create; passing a foreign `id`
+            // (from the product doc or the frontend payload) causes a validation error:
+            // "The following field is invalid: id".
+            const sanitizedHighlights = (item.productHighlights || []).map(
+                ({ id: _sid, ...section }: any) => ({
+                    ...section,
+                    items: (section.items || []).map(({ id: _iid, ...itm }: any) => itm),
+                })
+            );
+
             orderItems.push({
                 product: productDoc.id,
                 variantID: item.variantId || "",
                 quantity: item.quantity,
                 price: itemPrice,
-                // Use user-selected highlights from the frontend payload (item.productHighlights);
-                // the product doc highlights are master defaults and should not override the user's choice.
-                productHighlights: item.productHighlights || [],
+                productHighlights: sanitizedHighlights,
             });
         }
 
