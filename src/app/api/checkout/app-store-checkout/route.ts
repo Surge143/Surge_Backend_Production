@@ -212,6 +212,28 @@ export const POST = async (req: NextRequest) => {
         const taxAmount = totalWithShipping * (taxRate / 100);
         const finalTotal = totalWithShipping + taxAmount;
 
+        // Cancel and delete any stale pending order from a previous abandoned checkout
+        const existingPending = await payload.find({
+            collection: 'web-orders',
+            where: {
+                and: [
+                    { user: { equals: user.id } },
+                    { paymentStatus: { equals: 'pending' } },
+                    { origin: { equals: 'one-time' } },
+                ],
+            },
+            limit: 1,
+            depth: 0,
+            select: { id: true, stripeOrderId: true },
+        })
+        if (existingPending.docs.length > 0) {
+            const stale = existingPending.docs[0] as any
+            if (stale.stripeOrderId) {
+                await stripe.paymentIntents.cancel(stale.stripeOrderId).catch(() => {})
+            }
+            await payload.delete({ collection: 'web-orders', id: stale.id, overrideAccess: true }).catch(() => {})
+        }
+
         // --- CREATE PAYLOAD ORDER ---
         try {
             const orderDoc = await (payload as any).create({

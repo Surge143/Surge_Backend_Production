@@ -451,6 +451,27 @@ export const POST = async (req: NextRequest) => {
             stampRewards: stampRewardIds,
         };
 
+        // Cancel and delete any stale pending order from a previous abandoned checkout
+        const existingPending = await payload.find({
+            collection: 'app-orders',
+            where: {
+                and: [
+                    { user: { equals: user?.id } },
+                    { paymentStatus: { equals: 'pending' } },
+                ],
+            },
+            limit: 1,
+            depth: 0,
+            select: { id: true, stripeOrderId: true },
+        })
+        if (existingPending.docs.length > 0) {
+            const stale = existingPending.docs[0] as any
+            if (stale.stripeOrderId) {
+                await stripe.paymentIntents.cancel(stale.stripeOrderId).catch(() => {})
+            }
+            await payload.delete({ collection: 'app-orders', id: stale.id, overrideAccess: true }).catch(() => {})
+        }
+
         console.log('Creating Order with Data:', JSON.stringify(orderData, null, 2));
 
         const orderDoc = await (payload as any).create({
