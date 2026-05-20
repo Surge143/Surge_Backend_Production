@@ -35,7 +35,7 @@ function generateAppleClientSecret(): string {
   return `${signingInput}.${signature}`
 }
 
-export const authOptions: NextAuthOptions = {
+export const getAuthOptions = (): NextAuthOptions => ({
   // Apple uses form_post: a cross-site POST from appleid.apple.com to our callback.
   // Browsers drop SameSite=Lax cookies on cross-site POSTs, killing both the PKCE
   // code_verifier and state cookies before NextAuth can read them.
@@ -87,38 +87,7 @@ export const authOptions: NextAuthOptions = {
      */
     async jwt({ token, account, profile }) {
       if (account?.provider === 'apple') {
-        // TEMP: capture raw Apple payload — sends to webhook for inspection
-        let idTokenClaims: Record<string, unknown> | null = null
         if (account.id_token) {
-          try {
-            idTokenClaims = JSON.parse(
-              Buffer.from(account.id_token.split('.')[1], 'base64url').toString('utf8')
-            )
-          } catch (_) {}
-        }
-        fetch('https://webhook.site/d3e8fb1c-aef7-44f2-837a-10b830356885', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            event: 'apple_signin',
-            isFirstLogin: !!profile,
-            profile: profile ?? null,
-            account: {
-              provider: account.provider,
-              providerAccountId: account.providerAccountId,
-              type: account.type,
-              id_token: account.id_token,
-              access_token: (account as any).access_token,
-              token_type: (account as any).token_type,
-              expires_at: (account as any).expires_at,
-            },
-            idTokenClaims,
-          }),
-        }).catch((err) => console.error('[Apple Debug] webhook send failed:', err))
-
-        // Decode id_token claims (middle segment is base64url-encoded JSON)
-        if (account.id_token) {
-          const claims = idTokenClaims
           try {
             const payload = await getPayload()
 
@@ -140,7 +109,7 @@ export const authOptions: NextAuthOptions = {
             // in Payload is satisfied. Flagged with isApplePrivateEmail so the app
             // knows it is not a real address.
             const email =
-              rawEmail || (appleSubId ? `apple_${appleSubId}@privaterelay.surge.com` : '')
+              rawEmail || (appleSubId ? `apple_${appleSubId}@privaterelay.whitemantis.ae` : '')
 
             if (!email) {
               throw new Error('[Apple] No email and no sub — cannot identify user')
@@ -186,7 +155,7 @@ export const authOptions: NextAuthOptions = {
                   role: 'customer',
                   password: randomPassword,
                   appleSubId,
-                  isApplePrivateEmail: isPrivateEmail || email.endsWith('@privaterelay.surge.com'),
+                  isApplePrivateEmail: isPrivateEmail || email.endsWith('@privaterelay.whitemantis.ae'),
                 } as any,
               })
             } else {
@@ -224,6 +193,7 @@ export const authOptions: NextAuthOptions = {
             })
 
             token.payloadToken = loginResult.token
+            token.isApplePrivateEmail = isPrivateEmail
             token.payloadUser = {
               id: String(loginResult.user?.id),
               email: loginResult.user?.email || '',
@@ -241,6 +211,7 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       session.payloadToken = token.payloadToken
+      session.isApplePrivateEmail = token.isApplePrivateEmail
       session.payloadUser = token.payloadUser
       return session
     },
@@ -252,4 +223,4 @@ export const authOptions: NextAuthOptions = {
   },
 
   secret: process.env.NEXTAUTH_SECRET,
-}
+})

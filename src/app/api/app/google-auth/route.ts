@@ -4,6 +4,7 @@ import { OAuth2Client } from "google-auth-library";
 import { uploadGoogleImage } from '@/utilities/uploadGoogleImage';
 
 const CLIENT_ID = process.env.GOOGLE_APP_CLIENT_ID;
+const IOS_CLIENT_ID = process.env.GOOGLE_IOS_CLIENT_ID;
 const client = new OAuth2Client(CLIENT_ID);
 
 export async function POST(req: NextRequest) {
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
             console.time('[GoogleAuth] Token Verification');
             const ticket = await client.verifyIdToken({
                 idToken: googleToken,
-                audience: CLIENT_ID,
+                audience: [CLIENT_ID!, IOS_CLIENT_ID].filter(Boolean) as string[],
             });
 
             const googlePayload = ticket.getPayload();

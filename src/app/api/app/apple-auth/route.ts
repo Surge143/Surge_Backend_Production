@@ -60,6 +60,9 @@ async function verifyAppleToken(token: string): Promise<Record<string, any>> {
 
     // Validate standard claims
     if (applePayload.iss !== APPLE_ISSUER) throw new Error('Invalid token issuer')
+    // iOS native SDK sets aud = APPLE_BUNDLE_ID; Android web OAuth flow sets aud = APPLE_ID (Service ID)
+    const validAudiences = [process.env.APPLE_BUNDLE_ID, process.env.APPLE_ID].filter(Boolean)
+    if (!validAudiences.includes(applePayload.aud)) throw new Error('Invalid token audience')
     if (applePayload.exp < Math.floor(Date.now() / 1000)) throw new Error('Apple token has expired')
 
     return applePayload
@@ -89,18 +92,22 @@ export async function POST(req: NextRequest) {
             console.timeEnd('[AppleAuth] Token Verification')
 
             const appleSubId: string = applePayload.sub
-            const email: string | undefined = applePayload.email
+            const rawEmail: string | undefined = applePayload.email
+            // Phone-only Apple IDs have no email in the token — use a deterministic
+            // synthetic address so the required email field in Payload is satisfied.
+            const email = rawEmail || (appleSubId ? `apple_${appleSubId}@privaterelay.surge.ae` : '')
             const isPrivateEmail =
                 applePayload.is_private_email === true ||
                 applePayload.is_private_email === 'true' ||
-                (email ? isApplePrivateRelayEmail(email) : false)
+                (rawEmail ? isApplePrivateRelayEmail(rawEmail) : false) ||
+                email.endsWith('@privaterelay.surge.ae')
 
             if (!appleSubId) {
                 return NextResponse.json({ error: 'Invalid Apple token: missing sub' }, { status: 400 })
             }
 
             if (!email) {
-                return NextResponse.json({ error: 'Email scope not granted. Please allow email access.' }, { status: 400 })
+                return NextResponse.json({ error: 'Invalid Apple token: missing sub and email' }, { status: 400 })
             }
 
             console.time('[AppleAuth] DB Operations')

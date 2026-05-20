@@ -467,6 +467,7 @@ export const POST = async (req: NextRequest) => {
             currency: 'aed',
             customer: stripeCustomerId,
             setup_future_usage: 'off_session',
+            automatic_payment_methods: { enabled: true },
             metadata: {
                 db_order_id: orderDoc.id,
                 order_type: 'cafe',
