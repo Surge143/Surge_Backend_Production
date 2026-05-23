@@ -17,7 +17,7 @@ export const Users: CollectionConfig = {
     plural: 'Customers',
   },
   auth: {
-    tokenExpiration: 60 * 60 * 24 * 7,
+    tokenExpiration: 60 * 60 * 24 * 30,
   },
   admin: {
     useAsTitle: 'email',

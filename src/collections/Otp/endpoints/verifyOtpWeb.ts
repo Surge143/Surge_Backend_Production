@@ -182,7 +182,7 @@ export const verifyOtpWeb: PayloadHandler = async (req) => {
                     // 'lax' works fine for cross-port localhost in development
                     sameSite: isProduction ? 'none' : 'lax',
                     path: '/',
-                    maxAge: 60 * 60 * 24 * 7,
+                    maxAge: 60 * 60 * 24 * 30,
                 });
             }
 
