@@ -5,6 +5,7 @@ import { headers as getNextHeaders } from 'next/headers';
 import { calculateWTCoinsDiscount } from '../_components/validateAndCalculateWTCoins';
 import { stripe } from "@/lib/stripe";
 import { calculateTaxAndShipping } from '../_components/calculateTaxAndShipping';
+import { stripIds } from '@/utilities/stripIds';
 import { validateCoupon } from '@/collections/Coupon/endpoints/couponUtils';
 import { calculateCouponDiscount } from '../_components/calculateCouponDiscount';
 import crypto from 'crypto';
@@ -60,7 +61,18 @@ export async function POST(req: NextRequest) {
         // --- DETERMINE ITEMS TO PROCESS ---
         let itemsToProcess: any[] = [];
 
-        if (user) {
+        // 1. Prioritize explicit products from frontend (Buy Now / Direct Selection)
+        if (products && Array.isArray(products) && products.length > 0) {
+            itemsToProcess = products.map((p: any) => ({
+                productId: p.productId,
+                variantId: p.variantId,
+                quantity: p.quantity || 1,
+                productHighlights: p.productHighlights || [],
+                productDoc: null,
+            }));
+        }
+        // 2. Fallback to saved cart if user is authenticated and no specific products provided
+        else if (user) {
             const cartResult = await payload.find({
                 collection: 'web-cart',
                 where: { user: { equals: user.id } },
@@ -69,42 +81,14 @@ export async function POST(req: NextRequest) {
             });
 
             if (cartResult.docs.length > 0 && cartResult.docs[0].items && cartResult.docs[0].items.length > 0) {
-                // Build a lookup map from the frontend payload so we can attach
-                // user-selected productHighlights to each DB cart item.
-                const frontendProductMap = new Map<string, any>();
-                if (products && Array.isArray(products)) {
-                    for (const p of products) {
-                        if (p.productId) {
-                            frontendProductMap.set(String(p.productId), p);
-                        }
-                    }
-                }
-
-                itemsToProcess = cartResult.docs[0].items.map((item: any) => {
-                    const productId = typeof item.product === 'object' ? item.product.id : item.product;
-                    const frontendItem = frontendProductMap.get(String(productId));
-                    return {
-                        productId,
-                        variantId: item.vId,
-                        quantity: item.quantity || 1,
-                        // Pull user-selected highlights from the frontend payload;
-                        // fall back to an empty array if not provided.
-                        productHighlights: frontendItem?.productHighlights || [],
-                        productDoc: null,
-                    };
-                });
+                itemsToProcess = cartResult.docs[0].items.map((item: any) => ({
+                    productId: typeof item.product === 'object' ? item.product.id : item.product,
+                    variantId: item.vId,
+                    quantity: item.quantity || 1,
+                    productHighlights: item.productHighlights || [],
+                    productDoc: null,
+                }));
             }
-        }
-
-        // ... (Guest/Override logic) ...
-        if (itemsToProcess.length === 0 && products && Array.isArray(products) && products.length > 0) {
-            itemsToProcess = products.map((p: any) => ({
-                productId: p.productId,
-                variantId: p.variantId,
-                quantity: p.quantity || 1,
-                productHighlights: p.productHighlights || [],
-                productDoc: null,
-            }));
         }
 
         if (itemsToProcess.length === 0) {
@@ -187,23 +171,12 @@ export async function POST(req: NextRequest) {
 
             subtotal += itemPrice * item.quantity;
 
-            // Strip Payload-managed `id` fields from each highlight section and its items.
-            // Payload auto-generates ids for array entries on create; passing a foreign `id`
-            // (from the product doc or the frontend payload) causes a validation error:
-            // "The following field is invalid: id".
-            const sanitizedHighlights = (item.productHighlights || []).map(
-                ({ id: _sid, ...section }: any) => ({
-                    ...section,
-                    items: (section.items || []).map(({ id: _iid, ...itm }: any) => itm),
-                })
-            );
-
             orderItems.push({
                 product: productDoc.id,
                 variantID: item.variantId || "",
                 quantity: item.quantity,
                 price: itemPrice,
-                productHighlights: sanitizedHighlights,
+                productHighlights: stripIds(item.productHighlights || []),
             });
         }
 

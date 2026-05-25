@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { headers as getNextHeaders } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '../../../../payload.config'
+import { normalizeHighlights } from '../../../../utilities/cartUtils'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,6 +75,7 @@ async function mapCartItems(payload: any, items: any[]) {
                 image,
                 quantity: item.quantity,
                 variantName: variantName,
+                productHighlights: item.productHighlights || [],
             }
         })
         .filter(Boolean)
@@ -119,6 +121,8 @@ export async function POST(request: NextRequest) {
         const product = Number(body.product)
         const vId = body.vId || ''
         const quantity = Number(body.quantity || 1)
+        const highlights = body.productHighlights || []
+        const highlightsKey = normalizeHighlights(highlights)
 
         if (isNaN(product)) return NextResponse.json({ error: 'Valid Product ID is required' }, { status: 400 })
 
@@ -136,7 +140,8 @@ export async function POST(request: NextRequest) {
         const existingIndex = items.findIndex(
             (item: any) =>
                 (typeof item.product === 'object' ? item.product.id : item.product) === product &&
-                item.vId === vId
+                item.vId === vId &&
+                normalizeHighlights(item.productHighlights) === highlightsKey
         )
 
         if (existingIndex >= 0) {
@@ -148,7 +153,7 @@ export async function POST(request: NextRequest) {
             if (quantity > 5) {
                 return NextResponse.json({ error: 'Maximum quantity of 5 units reached for this item' }, { status: 400 })
             }
-            items.push({ product, vId, quantity })
+            items.push({ product, vId, quantity, productHighlights: highlights })
         }
 
         if (cart) {
@@ -202,8 +207,9 @@ export async function PATCH(request: NextRequest) {
         const { user, payload } = await getAuthContext()
         if (!user || !payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-        const { product: rawProduct, vId, quantity, action } = await request.json()
+        const { product: rawProduct, vId, quantity, action, productHighlights } = await request.json()
         const product = Number(rawProduct)
+        const patchHighlightsKey = normalizeHighlights(productHighlights || [])
 
         const carts = await payload.find({
             collection: 'web-cart',
@@ -220,7 +226,8 @@ export async function PATCH(request: NextRequest) {
         const index = items.findIndex(
             (item: any) =>
                 (typeof item.product === 'object' ? item.product.id : item.product) === product &&
-                item.vId === (vId || '')
+                item.vId === (vId || '') &&
+                normalizeHighlights(item.productHighlights) === patchHighlightsKey
         )
 
         if (index >= 0) {
@@ -260,8 +267,9 @@ export async function DELETE(request: NextRequest) {
         const { user, payload } = await getAuthContext()
         if (!user || !payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-        const { product: rawProduct, vId } = await request.json()
+        const { product: rawProduct, vId, productHighlights: deleteHighlights } = await request.json()
         const product = Number(rawProduct)
+        const deleteHighlightsKey = normalizeHighlights(deleteHighlights || [])
 
         const carts = await payload.find({
             collection: 'web-cart',
@@ -276,7 +284,8 @@ export async function DELETE(request: NextRequest) {
             const items = (cart.items || []).filter(
                 (item: any) =>
                     !((typeof item.product === 'object' ? item.product.id : item.product) === product &&
-                        item.vId === (vId || ''))
+                        item.vId === (vId || '') &&
+                        normalizeHighlights(item.productHighlights) === deleteHighlightsKey)
             )
 
             await payload.update({

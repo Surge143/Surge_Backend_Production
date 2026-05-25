@@ -7,6 +7,7 @@ import { stripe } from "@/lib/stripe";
 import { calculateTaxAndShipping } from '../_components/calculateTaxAndShipping';
 import { validateCoupon } from '@/collections/Coupon/endpoints/couponUtils';
 import { calculateCouponDiscount } from '../_components/calculateCouponDiscount';
+import { stripIds } from '@/utilities/stripIds';
 
 export const POST = async (req: NextRequest) => {
     try {
@@ -171,7 +172,7 @@ export const POST = async (req: NextRequest) => {
                 variantID: item.variantId || null,
                 quantity: item.quantity,
                 price: itemPrice,
-                productHighlights: item.productHighlights || [],
+                productHighlights: stripIds(item.productHighlights || []),
             });
         }
 
