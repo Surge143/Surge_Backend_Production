@@ -146,9 +146,7 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
             const { relationTo, productId } = getInfo(item);
 
             // Use stable stringification for customizations to include in the key
-            const custKey = item.customizations ? JSON.stringify(item.customizations) : '{}';
-            const vIdKey = item.vId || '';
-            const key = `${relationTo}:${productId}:${vIdKey}:${custKey}`;
+          const custKey
 
             if (itemMap.has(key)) {
                 const existing = itemMap.get(key)!;
