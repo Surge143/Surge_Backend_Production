@@ -212,7 +212,7 @@ export function formatOrder(o: any) {
       tagline: productDoc?.tagline || productDoc?.shortDescription || '',
       qty: item.quantity || 1,
       price: item.price || 0,
-      productHighlights: productDoc?.productHighlights || [],
+      productHighlights: item.productHighlights || [],
     }
   })
 
