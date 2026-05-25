@@ -222,11 +222,19 @@ export const WebOrders: CollectionConfig = {
         const wasCompleted = previousDoc?.paymentStatus === 'completed'
 
         if (isNowCompleted) {
+          // Re-fetch at depth 2 so item.product is fully populated (includes productHighlights)
+          // for the Store Dashboard formatOrder mapping
+          const populatedDoc = await payload.findByID({
+            collection: 'web-orders',
+            id: doc.id,
+            depth: 2,
+            overrideAccess: true,
+          })
           if (operation === 'create' || !wasCompleted) {
             // New paid order — broadcast so Store Dashboard picks it up instantly
-            emitWebOrderCreated(doc)
+            emitWebOrderCreated(populatedDoc)
           } else {
-            emitWebOrderUpdated(doc)
+            emitWebOrderUpdated(populatedDoc)
           }
         }
 

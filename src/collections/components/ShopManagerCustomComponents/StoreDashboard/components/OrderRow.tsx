@@ -766,7 +766,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                     borderBottom: i < order.items.length - 1 ? `1px solid ${C.border}` : 'none',
                   }}
                 >
-                  {/* Product name + variant + tagline */}
+                  {/* Product name + variant + tagline + highlights */}
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>
                       {item.name} {item.tagline}
@@ -774,6 +774,35 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                     {item.variant && (
                       <div style={{ fontSize: 11, color: C.textSub, marginTop: 1 }}>
                         {item.variant}g
+                      </div>
+                    )}
+                    {item.productHighlights && item.productHighlights.length > 0 && (
+                      <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {item.productHighlights.map((section: any, si: number) => (
+                          <div key={si}>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: C.textMute, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 2 }}>
+                              {section.sectionTitle}
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                              {(section.items || []).map((feat: any, fi: number) => (
+                                <span
+                                  key={fi}
+                                  style={{
+                                    fontSize: 10,
+                                    padding: '1px 6px',
+                                    borderRadius: 3,
+                                    background: C.surface,
+                                    border: `1px solid ${C.border}`,
+                                    color: C.textSub,
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {feat.point}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>

@@ -35,6 +35,14 @@ interface Variant {
   variantImage?: MediaImg | null
 }
 
+interface ProductHighlightItem {
+  point: string
+}
+interface ProductHighlightSection {
+  sectionTitle: string
+  items?: ProductHighlightItem[] | null
+}
+
 interface Product {
   id: string | number
   name: string
@@ -52,6 +60,7 @@ interface Product {
   _order?: string | null
   updatedAt?: string
   createdAt?: string
+  productHighlights?: ProductHighlightSection[] | null
 }
 
 interface EditingStockState {
@@ -161,12 +170,15 @@ interface SortableProductRowProps {
   onDeleteClick: (id: string | number) => void
   brokenImgs: Set<string | number>
   onImgError: (id: string | number) => void
+  expandedHighlights: Set<string | number>
+  toggleHighlights: (id: string | number) => void
 }
 
 const SortableProductRow: React.FC<SortableProductRowProps> = ({
   product, rowIdx, isSelected, onToggleSelect,
   editingStock, savingStock, onStartEditStock, onStockQtyChange, onStockInStockChange,
   onSaveStock, onCancelEditStock, deletingIds, onDeleteClick, brokenImgs, onImgError,
+  expandedHighlights, toggleHighlights,
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: product.id })
 
@@ -247,6 +259,56 @@ const SortableProductRow: React.FC<SortableProductRowProps> = ({
               <span style={{ fontSize: 11, color: 'var(--theme-elevation-400)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {product.tagline}
               </span>
+            )}
+            {product.productHighlights && product.productHighlights.length > 0 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleHighlights(product.id) }}
+                  style={{
+                    marginTop: 3,
+                    alignSelf: 'flex-start',
+                    background: 'none',
+                    border: '1px solid var(--theme-elevation-150)',
+                    borderRadius: 3,
+                    color: 'var(--theme-elevation-400)',
+                    fontSize: 10,
+                    padding: '1px 6px',
+                    cursor: 'pointer',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {expandedHighlights.has(product.id) ? '▲ Hide Features' : '▼ Key Features'}
+                </button>
+                {expandedHighlights.has(product.id) && (
+                  <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    {product.productHighlights.map((section, si) => (
+                      <div key={si}>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--theme-elevation-350)', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 3 }}>
+                          {section.sectionTitle}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                          {(section.items || []).map((feat, fi) => (
+                            <span
+                              key={fi}
+                              style={{
+                                fontSize: 10,
+                                padding: '1px 6px',
+                                borderRadius: 3,
+                                background: 'var(--theme-elevation-50)',
+                                border: '1px solid var(--theme-elevation-150)',
+                                color: 'var(--theme-elevation-500)',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {feat.point}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
           {hasVariants && (
@@ -439,6 +501,15 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [pendingDeleteId, setPendingDeleteId] = useState<string | number | null>(null)
   const [deletingIds, setDeletingIds] = useState<Set<string | number>>(new Set())
+  const [expandedHighlights, setExpandedHighlights] = useState<Set<string | number>>(new Set())
+  const toggleHighlights = (id: string | number) => {
+    setExpandedHighlights((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
   const [brokenImgs, setBrokenImgs] = useState<Set<string | number>>(new Set())
   const [reordering, setReordering] = useState(false)
 
@@ -838,6 +909,8 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
                 onDeleteClick={handleDeleteClick}
                 brokenImgs={brokenImgs}
                 onImgError={(id) => setBrokenImgs((prev) => new Set(prev).add(id))}
+                expandedHighlights={expandedHighlights}
+                toggleHighlights={toggleHighlights}
               />
             ))}
           </SortableContext>
