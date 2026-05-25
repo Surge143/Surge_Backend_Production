@@ -32,11 +32,7 @@ export const Shop: CollectionConfig = {
     },
   },
   versions: {
-    drafts: {
-      autosave: {
-        interval: 3000,
-      },
-    },
+    drafts: true,
     maxPerDoc: 50,
   },
   access: {
