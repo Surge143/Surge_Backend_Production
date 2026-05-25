@@ -171,6 +171,7 @@ async function mapAppCartItems(payload: any, items: any[]) {
             image,
             quantity: item.quantity || 1,
             customizations: item.customizations || [],
+            productHighlights: item.productHighlights || [],
         };
     });
 }
