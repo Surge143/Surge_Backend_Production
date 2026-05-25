@@ -355,6 +355,7 @@ export const ShopMenu: CollectionConfig = {
                         },
                         {
                           name: 'options',
+                          dbName: 'grp_opts',
                           type: 'array',
                           fields: [
                             {
@@ -456,6 +457,22 @@ export const ShopMenu: CollectionConfig = {
             return value
           },
         ],
+      },
+    },
+    slugField({
+      useAsSlug: 'name',
+    }),
+    {
+      name: 'isLatest',
+      label: 'Latest Product',
+      type: 'checkbox',
+      defaultValue: false,
+      access: {
+        update: ({ req: { user } }) => user?.role === 'super-admin',
+      },
+      admin: {
+        position: 'sidebar',
+        description: 'Synced from Menu Builder. Only super-admins can override this directly on a shop item.',
       },
     },
   ],

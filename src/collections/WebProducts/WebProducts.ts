@@ -583,6 +583,26 @@ export const WebProducts: CollectionConfig = {
       ],
     },
     {
+      name: 'isLatest',
+      label: 'Latest Product',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Mark this product as a latest/new arrival for the storefront.',
+      },
+    },
+    {
+      name: 'isBestseller',
+      label: 'Bestseller',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Mark this product as a bestseller for the storefront.',
+      },
+    },
+    {
       name: 'lastUpdatedBy',
       label: 'Last Edited By',
       type: 'text',

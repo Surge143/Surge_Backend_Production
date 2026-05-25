@@ -622,6 +622,15 @@ export interface Menu {
    * The email of the admin who created this item.
    */
   createdBy?: string | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  /**
+   * Mark this item as a latest/new arrival. Syncs to all linked shop menu items automatically.
+   */
+  isLatest?: boolean | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -705,6 +714,15 @@ export interface ShopMenu {
    * The email of the admin who last updated this item.
    */
   lastUpdatedBy?: string | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  /**
+   * Synced from Menu Builder. Only super-admins can override this directly on a shop item.
+   */
+  isLatest?: boolean | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -892,6 +910,14 @@ export interface WebProduct {
     image?: (number | null) | Media;
     description?: string | null;
   };
+  /**
+   * Mark this product as a latest/new arrival for the storefront.
+   */
+  isLatest?: boolean | null;
+  /**
+   * Mark this product as a bestseller for the storefront.
+   */
+  isBestseller?: boolean | null;
   /**
    * The email of the admin who last updated this product.
    */
@@ -2551,6 +2577,9 @@ export interface MenuSelect<T extends boolean = true> {
   isStampFreeProduct?: T;
   lastUpdatedBy?: T;
   createdBy?: T;
+  generateSlug?: T;
+  slug?: T;
+  isLatest?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -2653,6 +2682,9 @@ export interface ShopMenuSelect<T extends boolean = true> {
   isStampEligible?: T;
   isStampFreeProduct?: T;
   lastUpdatedBy?: T;
+  generateSlug?: T;
+  slug?: T;
+  isLatest?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -2964,6 +2996,8 @@ export interface WebProductsSelect<T extends boolean = true> {
         image?: T;
         description?: T;
       };
+  isLatest?: T;
+  isBestseller?: T;
   lastUpdatedBy?: T;
   createdBy?: T;
   slug?: T;

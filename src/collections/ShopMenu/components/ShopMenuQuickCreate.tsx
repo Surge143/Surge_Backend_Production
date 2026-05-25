@@ -134,7 +134,19 @@ export const ShopMenuQuickCreate: React.FC = () => {
                     dietaryType: globalItem.dietaryType,
                     stockCount: parseInt(String(selection?.stockCount ?? 0)) || 0,
                     inStock: selection?.inStock ?? true,
-                    customizations: cleanForPost(globalItem.customizations),
+                    customizations: (globalItem.customizations || []).map((c: any) => ({
+                        title: c.title,
+                        template: typeof c.template === 'object' && c.template !== null ? c.template.id : c.template,
+                        sections: (c.sections || []).map((s: any) => ({
+                            title: s.title,
+                            selectionType: s.selectionType,
+                            groups: (s.groups || []).map((g: any) => ({
+                                groupTitle: g.groupTitle,
+                                options: (g.options || []).map((o: any) => ({ label: o.label, price: o.price })),
+                            })),
+                            options: (s.options || []).map((o: any) => ({ label: o.label, price: o.price })),
+                        })),
+                    })),
                 }
 
                 const res = await fetch('/api/shop-menu', {

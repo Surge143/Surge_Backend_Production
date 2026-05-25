@@ -38,15 +38,44 @@ export const Menu: CollectionConfig = {
     },
   },
   hooks: {
+    afterDelete: [
+      async ({ id, req }) => {
+        const { payload } = req
+        const linked = await payload.find({
+          collection: 'shop-menu',
+          where: { menuRelation: { contains: id } },
+          depth: 0,
+          limit: 0,
+          req,
+          overrideAccess: true,
+        })
+        if (linked.docs.length > 0) {
+          await Promise.all(
+            linked.docs.map((item) =>
+              payload
+                .delete({
+                  collection: 'shop-menu',
+                  id: item.id,
+                  req,
+                  overrideAccess: true,
+                })
+                .catch((err: unknown) => {
+                  // FK constraint from orders/carts — shop-menu item has live references.
+                  // Log and skip; the orphaned item must be cleaned up manually after
+                  // resolving the dependent records.
+                  payload.logger.warn(
+                    `Could not auto-delete shop-menu item ${item.id} after menu item ${id} was deleted: ${err instanceof Error ? err.message : String(err)}`,
+                  )
+                }),
+            ),
+          )
+        }
+      },
+    ],
     afterChange: [
-      async ({ doc, req, context, operation }) => {
+      async ({ doc, req, operation }) => {
         const { payload } = req
         if (operation === 'update') {
-          // fromTemplateSync is true when this update was triggered by syncTemplates.
-          // In that case we also push customizations down to ShopMenu.
-          // On direct admin saves, we skip customizations so per-shop edits are not reverted.
-          const isTemplateSync = !!(context as any)?.fromTemplateSync
-
           const shopMenuItems = await payload.find({
             collection: 'shop-menu',
             where: { menuRelation: { contains: doc.id } },
@@ -74,13 +103,32 @@ export const Menu: CollectionConfig = {
                   ),
                   slug: doc.slug,
                   dietaryType: doc.dietaryType,
+                  isLatest: doc.isLatest ?? false,
                   // Loyalty flags are authoritative on Menu; always push them down
                   isStampEligible: doc.isStampEligible ?? false,
                   isStampFreeProduct: doc.isStampFreeProduct ?? false,
-                }
-                // Only propagate customizations when triggered by template sync
-                if (isTemplateSync) {
-                  data.customizations = doc.customizations
+                  customizations: (doc.customizations || []).map((c: any) => ({
+                    title: c.title,
+                    template:
+                      typeof c.template === 'object' && c.template !== null
+                        ? c.template.id
+                        : c.template,
+                    sections: (c.sections || []).map((s: any) => ({
+                      title: s.title,
+                      selectionType: s.selectionType,
+                      groups: (s.groups || []).map((g: any) => ({
+                        groupTitle: g.groupTitle,
+                        options: (g.options || []).map((o: any) => ({
+                          label: o.label,
+                          price: o.price,
+                        })),
+                      })),
+                      options: (s.options || []).map((o: any) => ({
+                        label: o.label,
+                        price: o.price,
+                      })),
+                    })),
+                  })),
                 }
                 return payload.update({
                   collection: 'shop-menu',
@@ -432,6 +480,19 @@ export const Menu: CollectionConfig = {
             return value
           },
         ],
+      },
+    },
+    slugField({
+      useAsSlug: 'name',
+    }),
+    {
+      name: 'isLatest',
+      label: 'Latest Product',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Mark this item as a latest/new arrival. Syncs to all linked shop menu items automatically.',
       },
     },
   ],

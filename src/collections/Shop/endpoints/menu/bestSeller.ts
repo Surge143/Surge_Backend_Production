@@ -79,6 +79,7 @@ export const getBestSellerHandler: PayloadHandler = async (req) => {
                 dietaryType: item.dietaryType,
                 isStampEligible: item.isStampEligible,
                 isStampFreeProduct: item.isStampFreeProduct,
+                isLatest: item.isLatest ?? false,
                 slug: item.slug,
             }
         })
