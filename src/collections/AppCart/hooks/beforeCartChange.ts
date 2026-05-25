@@ -136,24 +136,29 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
             }
         }
     }
-
     // 3. Consolidate items
     if (data.items && Array.isArray(data.items)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const itemMap = new Map<string, { id?: string | number; product: any; vId?: string; quantity: number; customizations: any; productHighlights?: any }>();
 
         for (const item of data.items) {
             const { relationTo, productId } = getInfo(item);
 
-            // Use stable stringification for customizations to include in the key
-          const custKey
+            const custKey = item.customizations ? JSON.stringify(item.customizations) : '{}';
+            const vIdKey = item.vId || '';
+            const hlKey = Array.isArray(item.productHighlights) && item.productHighlights.length > 0
+                ? [...item.productHighlights]
+                    .map((h: any) => `${h.sectionTitle ?? ''}:${Array.isArray(h.items) && h.items[0] ? h.items[0].point ?? '' : ''}`)
+                    .sort()
+                    .join('|')
+                : '';
+            const key = `${relationTo}:${productId}:${vIdKey}:${custKey}:${hlKey}`;
 
             if (itemMap.has(key)) {
                 const existing = itemMap.get(key)!;
                 existing.quantity += (item.quantity || 1);
             } else {
                 itemMap.set(key, {
-                    id: item.id, // Preserve the original ID if it exists
+                    id: item.id,
                     product: item.product,
                     vId: item.vId,
                     quantity: item.quantity || 1,
