@@ -1,4 +1,5 @@
 import { APIError, CollectionConfig } from 'payload'
+import { checkSubscriptionHandler } from './endpoints/checkSubscription'
 
 export const Newsletter: CollectionConfig = {
   slug: 'newsletters',
@@ -40,6 +41,13 @@ export const Newsletter: CollectionConfig = {
       },
     ],
   },
+  endpoints: [
+    {
+      path: '/check-subscription',
+      method: 'get',
+      handler: checkSubscriptionHandler,
+    },
+  ],
   fields: [
     {
       name: 'email',
