@@ -102,6 +102,7 @@ export interface Config {
     newsletters: Newsletter;
     events: Event;
     'featured-news': FeaturedNew;
+    careers: Career;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -151,6 +152,7 @@ export interface Config {
     newsletters: NewslettersSelect<false> | NewslettersSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     'featured-news': FeaturedNewsSelect<false> | FeaturedNewsSelect<true>;
+    careers: CareersSelect<false> | CareersSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1905,6 +1907,37 @@ export interface FeaturedNew {
   createdAt: string;
 }
 /**
+ * Manage job openings and career opportunities
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "careers".
+ */
+export interface Career {
+  id: number;
+  /**
+   * Maximum 100 words.
+   */
+  title: string;
+  /**
+   * Maximum 500 words. Plain text only.
+   */
+  shortDescription: string;
+  /**
+   * Full URL where candidates can apply.
+   */
+  link: string;
+  /**
+   * The email of the admin who last updated this career listing.
+   */
+  lastUpdatedBy?: string | null;
+  /**
+   * The email of the admin who created this career listing.
+   */
+  createdBy?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
@@ -2217,6 +2250,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'featured-news';
         value: number | FeaturedNew;
+      } | null)
+    | ({
+        relationTo: 'careers';
+        value: number | Career;
       } | null)
     | ({
         relationTo: 'exports';
@@ -3309,6 +3346,19 @@ export interface FeaturedNewsSelect<T extends boolean = true> {
   description?: T;
   generateSlug?: T;
   slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "careers_select".
+ */
+export interface CareersSelect<T extends boolean = true> {
+  title?: T;
+  shortDescription?: T;
+  link?: T;
+  lastUpdatedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }

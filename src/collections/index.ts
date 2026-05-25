@@ -34,6 +34,7 @@ import { AppBanners } from './AppBanner/AppBanner'
 import { Newsletter } from './Newsletter/Newsletter'
 import { Events } from './Events/Events'
 import { FeaturedNews } from './FeaturedNews/FeaturedNews'
+import { Careers } from './Careers/Careers'
 
 export const collections = [
   Users,
@@ -70,6 +71,7 @@ export const collections = [
   Newsletter,
   Events,
   FeaturedNews,
+  Careers,
 ]
 
 export const globals = [WTCoins, ShipAndTax]
