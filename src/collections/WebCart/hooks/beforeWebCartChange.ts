@@ -23,13 +23,13 @@ export const beforeWebCartChange: CollectionBeforeChangeHook = async ({ data, re
 
       if (itemMap.has(key)) {
         const existing = itemMap.get(key)!
-        if (existing.quantity + (item.quantity || 1) > 5) {
-          throw new Error(`Maximum quantity of 5 units allowed for this item.`)
+        if (existing.quantity + (item.quantity || 1) > 10) {
+          throw new Error(`Maximum quantity of 10 units allowed for this item.`)
         }
         existing.quantity += item.quantity || 1
       } else {
-        if ((item.quantity || 1) > 5) {
-          throw new Error(`Maximum quantity of 5 units allowed for this item.`)
+        if ((item.quantity || 1) > 10) {
+          throw new Error(`Maximum quantity of 10 units allowed for this item.`)
         }
         itemMap.set(key, {
           product: productId,

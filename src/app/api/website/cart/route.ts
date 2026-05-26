@@ -145,13 +145,13 @@ export async function POST(request: NextRequest) {
         )
 
         if (existingIndex >= 0) {
-            if (items[existingIndex].quantity + quantity > 5) {
-                return NextResponse.json({ error: 'Maximum quantity of 5 units reached for this item' }, { status: 400 })
+            if (items[existingIndex].quantity + quantity > 10) {
+                return NextResponse.json({ error: 'Maximum quantity of 10 units reached for this item' }, { status: 400 })
             }
             items[existingIndex].quantity += quantity
         } else {
-            if (quantity > 5) {
-                return NextResponse.json({ error: 'Maximum quantity of 5 units reached for this item' }, { status: 400 })
+            if (quantity > 10) {
+                return NextResponse.json({ error: 'Maximum quantity of 10 units reached for this item' }, { status: 400 })
             }
             items.push({ product, vId, quantity, productHighlights: highlights })
         }
@@ -232,15 +232,15 @@ export async function PATCH(request: NextRequest) {
 
         if (index >= 0) {
             if (action === 'increment') {
-                if (items[index].quantity >= 5) {
-                    return NextResponse.json({ error: 'Maximum quantity of 5 units reached' }, { status: 400 })
+                if (items[index].quantity >= 10) {
+                    return NextResponse.json({ error: 'Maximum quantity of 10 units reached' }, { status: 400 })
                 }
                 items[index].quantity += 1
             } else if (action === 'decrement') {
                 items[index].quantity = Math.max(1, items[index].quantity - 1)
             } else if (typeof quantity === 'number') {
-                if (quantity > 5) {
-                    return NextResponse.json({ error: 'Maximum quantity of 5 units is allowed' }, { status: 400 })
+                if (quantity > 10) {
+                    return NextResponse.json({ error: 'Maximum quantity of 10 units is allowed' }, { status: 400 })
                 }
                 items[index].quantity = Math.max(1, quantity)
             }
