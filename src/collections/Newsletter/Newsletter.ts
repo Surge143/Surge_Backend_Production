@@ -1,6 +1,6 @@
 import { APIError, CollectionConfig } from 'payload'
 import { checkSubscriptionHandler } from './endpoints/checkSubscription'
-
+// Commit Message
 export const Newsletter: CollectionConfig = {
   slug: 'newsletters',
   access: {
