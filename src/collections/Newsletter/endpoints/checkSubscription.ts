@@ -2,7 +2,7 @@ import { PayloadHandler } from 'payload'
 
 export const checkSubscriptionHandler: PayloadHandler = async (req) => {
   const { payload } = req
-  const url = new URL(req.url)
+  const url = new URL(req.url!)
   const email = url.searchParams.get('email')
 
   if (!email) {

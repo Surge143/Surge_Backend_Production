@@ -421,7 +421,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                     <button
                       onClick={() => {
                         if (!deliveredOnDate) return
-                        onDeliver && onDeliver(deliveredOnDate)
+                        if (onDeliver) onDeliver(deliveredOnDate)
                         setDeliverOpen(false)
                         setDeliveredOnDate('')
                       }}
