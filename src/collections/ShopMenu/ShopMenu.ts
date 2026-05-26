@@ -11,6 +11,9 @@ export const ShopMenu: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'shop', 'updatedAt'],
     components: {
+      beforeList: [
+        '@/collections/ShopMenu/components/HideCreateButton#HideCreateButton',
+      ],
       beforeListTable: [
         '@/collections/ShopMenu/components/ShopMenuQuickCreate#ShopMenuQuickCreate',
       ],
