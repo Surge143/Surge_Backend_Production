@@ -3,6 +3,7 @@ import * as migration_20260428_fix_web_products_v_columns from './20260428_fix_w
 import * as migration_20260504_095204 from './20260504_095204';
 import * as migration_20260505_093054 from './20260505_093054';
 import * as migration_20260525_063118 from './20260525_063118';
+import * as migration_20260526_fix_shop_menu_slug from './20260526_fix_shop_menu_slug';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20260525_063118.up,
     down: migration_20260525_063118.down,
-    name: '20260525_063118'
+    name: '20260525_063118',
+  },
+  {
+    up: migration_20260526_fix_shop_menu_slug.up,
+    down: migration_20260526_fix_shop_menu_slug.down,
+    name: '20260526_fix_shop_menu_slug',
   },
 ];

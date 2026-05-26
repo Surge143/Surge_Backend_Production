@@ -1,4 +1,4 @@
-import { CollectionConfig, slugField } from 'payload'
+import { CollectionConfig } from 'payload'
 
 export const ShopMenu: CollectionConfig = {
   slug: 'shop-menu',
@@ -101,8 +101,9 @@ export const ShopMenu: CollectionConfig = {
           }
         }
 
-        // Loyalty flags are controlled by admins only — strip them from shop-manager saves
+        // Customizations and loyalty flags are admin-only — strip from shop-manager saves
         if (user?.role === 'shop-manager') {
+          delete data.customizations
           delete data.isStampEligible
           delete data.isStampFreeProduct
         }
@@ -294,6 +295,8 @@ export const ShopMenu: CollectionConfig = {
               minRows: 0,
               maxRows: 1,
               admin: {
+                readOnly: true,
+                description: 'Synced automatically from Menu Builder and Customization Templates. Edit via the Menu Builder instead.',
                 components: {
                   RowLabel:
                     '@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel',
@@ -459,9 +462,16 @@ export const ShopMenu: CollectionConfig = {
         ],
       },
     },
-    slugField({
-      useAsSlug: 'name',
-    }),
+    {
+      name: 'slug',
+      type: 'text',
+      index: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        hidden: true,
+      },
+    },
     {
       name: 'isLatest',
       label: 'Latest Product',

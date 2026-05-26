@@ -668,6 +668,9 @@ export interface ShopMenu {
    * Check if the item is in stock
    */
   inStock?: boolean | null;
+  /**
+   * Synced automatically from Menu Builder and Customization Templates. Edit via the Menu Builder instead.
+   */
   customizations?:
     | {
         title?: string | null;
@@ -714,11 +717,7 @@ export interface ShopMenu {
    * The email of the admin who last updated this item.
    */
   lastUpdatedBy?: string | null;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
+  slug?: string | null;
   /**
    * Synced from Menu Builder. Only super-admins can override this directly on a shop item.
    */
@@ -2682,7 +2681,6 @@ export interface ShopMenuSelect<T extends boolean = true> {
   isStampEligible?: T;
   isStampFreeProduct?: T;
   lastUpdatedBy?: T;
-  generateSlug?: T;
   slug?: T;
   isLatest?: T;
   updatedAt?: T;

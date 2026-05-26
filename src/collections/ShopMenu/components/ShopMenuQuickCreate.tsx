@@ -124,7 +124,7 @@ export const ShopMenuQuickCreate: React.FC = () => {
                     shop: shopId,
                     menuRelation: [globalItem.id],
                     tagline: globalItem.tagline,
-                    slug: globalItem.slug,
+                    slug: globalItem.slug || (globalItem.name?.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '') ?? undefined),
                     image: globalItem.image ? (typeof globalItem.image === 'object' ? globalItem.image.id : globalItem.image) : undefined,
                     description: globalItem.description,
                     category: typeof globalItem.category === 'object' ? globalItem.category.id : globalItem.category,

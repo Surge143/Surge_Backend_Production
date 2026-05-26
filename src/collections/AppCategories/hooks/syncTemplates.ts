@@ -108,30 +108,26 @@ export const syncTemplates: CollectionAfterChangeHook = async ({
         }
 
         // --- 2. Update ShopMenu collection (only standalone items not linked to a Menu) ---
-        // Items that have a menuRelation are handled transitively when Menu syncs → shopMenu afterChange.
+        // Items linked via menuRelation are already handled above through Menu's afterChange cascade.
+        // menuRelation is hasMany:true so it defaults to [] — Payload's exists/null operators don't
+        // match an empty array, so we fetch all and filter client-side instead.
         const shopMenus = await payload.find({
             collection: 'shop-menu',
-            where: {
-                and: [
-                    { 'customizations.template': { equals: templateId } },
-                    {
-                        or: [
-                            { menuRelation: { exists: false } },
-                            { menuRelation: { equals: null } },
-                        ]
-                    }
-                ]
-            },
+            where: { 'customizations.template': { equals: templateId } },
             depth: 0,
             req,
             overrideAccess: true,
             limit: 0,
         })
 
-        if (shopMenus.docs.length > 0) {
-            await Promise.all(shopMenus.docs.map(async (shopMenu) => {
+        const standaloneShopMenus = shopMenus.docs.filter(
+            (sm: any) => !Array.isArray(sm.menuRelation) || sm.menuRelation.length === 0
+        )
+
+        if (standaloneShopMenus.length > 0) {
+            await Promise.all(standaloneShopMenus.map(async (shopMenu: any) => {
                 const updatedCustomizations = (shopMenu.customizations || []).map((c: any) => {
-                    const cId = typeof c.template === 'object' ? c.template.id : c.template;
+                    const cId = typeof c.template === 'object' ? c.template.id : c.template
                     return cId === templateId ? syncCustomization(c) : c
                 })
 
@@ -143,7 +139,7 @@ export const syncTemplates: CollectionAfterChangeHook = async ({
                     depth: 0,
                     overrideAccess: true,
                 })
-            }));
+            }))
         }
     } catch (error) {
         console.error('Error syncing templates:', error)
