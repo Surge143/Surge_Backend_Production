@@ -15,6 +15,7 @@ export const ShopMenu: CollectionConfig = {
         '@/collections/ShopMenu/components/HideCreateButton#HideCreateButton',
       ],
       beforeListTable: [
+        '@/collections/ShopMenu/components/MenuListHint#MenuListHint',
         '@/collections/ShopMenu/components/ShopMenuQuickCreate#ShopMenuQuickCreate',
       ],
     },

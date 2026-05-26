@@ -4,6 +4,7 @@ import { FolderField as FolderField_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@pa
 import { SectionRowLabel as SectionRowLabel_87ce31b3b7d74bdc5b919f371e76f950 } from '@/collections/AppCategories/components/SectionRowLabel'
 import { TemplateInjector as TemplateInjector_ef06a913d77ccb185f613e2f8ddf0d96 } from '@/collections/Menu/components/TemplateInjector'
 import { HideCreateButton as HideCreateButton_fea4bc16c9c72036f190864f45932dbd } from '@/collections/ShopMenu/components/HideCreateButton'
+import { MenuListHint as MenuListHint_2fb72b38ea11715d56aef19d96f50c6f } from '@/collections/ShopMenu/components/MenuListHint'
 import { ShopMenuQuickCreate as ShopMenuQuickCreate_98068d82267ea96f44e26a90051ccc98 } from '@/collections/ShopMenu/components/ShopMenuQuickCreate'
 import { ShopCouponQuickCreate as ShopCouponQuickCreate_47d2b66206e6260100d26bf1b04511f5 } from '@/collections/ShopCoupons/components/ShopCouponQuickCreate'
 import { ExportListMenuItem as ExportListMenuItem_7d8c2ee66d868f2af498f46de2c9b2f8 } from 'payload-import-export/rsc'
@@ -69,6 +70,7 @@ export const importMap = {
   "@/collections/AppCategories/components/SectionRowLabel#SectionRowLabel": SectionRowLabel_87ce31b3b7d74bdc5b919f371e76f950,
   "@/collections/Menu/components/TemplateInjector#TemplateInjector": TemplateInjector_ef06a913d77ccb185f613e2f8ddf0d96,
   "@/collections/ShopMenu/components/HideCreateButton#HideCreateButton": HideCreateButton_fea4bc16c9c72036f190864f45932dbd,
+  "@/collections/ShopMenu/components/MenuListHint#MenuListHint": MenuListHint_2fb72b38ea11715d56aef19d96f50c6f,
   "@/collections/ShopMenu/components/ShopMenuQuickCreate#ShopMenuQuickCreate": ShopMenuQuickCreate_98068d82267ea96f44e26a90051ccc98,
   "@/collections/ShopCoupons/components/ShopCouponQuickCreate#ShopCouponQuickCreate": ShopCouponQuickCreate_47d2b66206e6260100d26bf1b04511f5,
   "payload-import-export/rsc#ExportListMenuItem": ExportListMenuItem_7d8c2ee66d868f2af498f46de2c9b2f8,
