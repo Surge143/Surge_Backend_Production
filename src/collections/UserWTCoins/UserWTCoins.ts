@@ -29,7 +29,9 @@ export const UserWTCoins: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      ({ data }) => {
+      ({ data, req }) => {
+        if (req?.user?.role === 'super-admin') return data
+
         const now = new Date()
 
         // 1. Ensure we have the history array to work with
@@ -72,7 +74,6 @@ export const UserWTCoins: CollectionConfig = {
       min: 0,
       admin: {
         description: 'Current spendable balance (calculated from active earnings)',
-        readOnly: true,
       },
     },
     {
