@@ -12,6 +12,13 @@ export const OrderConfirmEmail = (order) => {
       ? `${addr.addressLine1}, ${addr.addressLine2 ? addr.addressLine2 + ', ' : ''}${addr.city}, ${addr.emirates}, ${addr.addressCountry}`
       : 'N/A'
 
+  const formatPickupShop = (shop) =>
+    shop?.address
+      ? [shop.address.street, shop.address.apartment, shop.address.city, shop.address.emirates, shop.address.country].filter(Boolean).join(', ')
+      : 'N/A'
+
+  const isPickup = order.deliveryOption === 'pickup'
+
   const orderDate = order.createdAt
     ? new Date(order.createdAt).toLocaleDateString('en-US', {
         month: 'long',
@@ -175,8 +182,8 @@ export const OrderConfirmEmail = (order) => {
                         ${order.email || ''}
                       </td>
                       <td width="50%" valign="top" style="padding-bottom: 25px;">
-                        <strong style="color: ${TEXT_DARK}; display: block; font-size: 16px; font-weight:400; margin-bottom: 2px;">Shipping Address</strong>
-                        ${formatAddress(order.shippingAddress)}
+                        <strong style="color: ${TEXT_DARK}; display: block; font-size: 16px; font-weight:400; margin-bottom: 2px;">${isPickup ? 'Pickup Location' : 'Shipping Address'}</strong>
+                        ${isPickup ? formatPickupShop(order.pickupShop) : formatAddress(order.shippingAddress)}
                       </td>
                     </tr>
                     <tr>
@@ -199,9 +206,14 @@ export const OrderConfirmEmail = (order) => {
 
                   <!-- Footer Text -->
                   <div style="margin-top: 16px; padding-top: 6px; border-top: 1px solid #2F362A4D; font-size: 16px; font-weight:400; color: ${TEXT_LIGHT}; line-height: 1.6;">
-                    <p>Your order will be dispatched within 2–3 business days. Once shipped, you'll receive tracking details by email.</p>
-                    <p style="margin-top: 15px; font-size: 16px; font-weight:400;color: ${TEXT_DARK}; ">Please note: once your order is dispatched, it can no longer be <br>cancelled. 
-                      <br>For assistance, reach out to our Customer Support team.</p>
+                    ${isPickup
+                      ? `<p>Your order is being prepared and will be ready for pickup at the selected location. We'll notify you when it's ready.</p>
+                    <p style="margin-top: 15px; font-size: 16px; font-weight:400;color: ${TEXT_DARK}; ">Please note: once your order is confirmed, it can no longer be <br>cancelled.
+                      <br>For assistance, reach out to our Customer Support team.</p>`
+                      : `<p>Your order will be dispatched within 2–3 business days. Once shipped, you'll receive tracking details by email.</p>
+                    <p style="margin-top: 15px; font-size: 16px; font-weight:400;color: ${TEXT_DARK}; ">Please note: once your order is dispatched, it can no longer be <br>cancelled.
+                      <br>For assistance, reach out to our Customer Support team.</p>`
+                    }
                     <p style="margin-top: 40px; font-size: 16px; font-weight:400;color: ${TEXT_DARK};">Need help? Reach us at<br>
                     <a href="mailto:hello@surgecoffee.ae" style="color: ${ACCENT_COLOR}; text-decoration: underline; margin-top:8px; font-size: 16px; font-weight:400;">hello@surgecoffee.ae</a></p>
                     <p style="margin-top: 20px; color: ${TEXT_DARK}; font-size: 16px; font-weight:400;">Happy brewing,<br><strong style=" color: ${TEXT_DARK}; font-size: 16px; font-weight:400 ">Team Surge</strong></p>

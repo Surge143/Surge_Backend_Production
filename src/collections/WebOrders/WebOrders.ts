@@ -290,7 +290,7 @@ export const WebOrders: CollectionConfig = {
         }
         const isShipped = data.deliveryStatus === 'shipped'
 
-        if (isShipped) {
+        if (isShipped && doc.deliveryOption !== 'pickup') {
           try {
             await sendEmail({
               to: data?.email,
@@ -409,6 +409,23 @@ export const WebOrders: CollectionConfig = {
                       },
                     },
                   ],
+                },
+                {
+                  name: 'pickupShop',
+                  type: 'relationship',
+                  relationTo: 'shop',
+                  required: false, // nullable in DB so delivery orders and existing records are unaffected
+                  validate: (value: any, { data, operation }: any) => {
+                    if (operation === 'create' && data?.deliveryOption === 'pickup' && !value) {
+                      return 'A pickup shop is required for pickup orders.'
+                    }
+                    return true
+                  },
+                  admin: {
+                    readOnly: true,
+                    condition: (data) => data?.deliveryOption === 'pickup',
+                    description: 'The shop location selected for pickup.',
+                  },
                 },
               ],
             },
@@ -658,7 +675,7 @@ export const WebOrders: CollectionConfig = {
                       type: 'select',
                       required: true,
                       admin: { width: '50%', readOnly: true },
-                      validate: (val, { data }) => {
+                      validate: (val: string, { data }: any) => {
                         if (
                           val === 'refunded' &&
                           data?.deliveryStatus !== 'placed' &&

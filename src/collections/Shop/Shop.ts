@@ -21,7 +21,7 @@ export const Shop: CollectionConfig = {
     { path: '/:shopId/barista', method: 'get', handler: getBaristaHandler },
   ],
   admin: {
-    useAsTitle: 'id',
+    useAsTitle: 'displayTitle',
     defaultColumns: ['isShopOpen', 'shopManager', 'address.city', 'openingTime', 'closingTime'],
     group: 'Cafe Management',
     description: 'Manage your cafe locations',
@@ -42,6 +42,20 @@ export const Shop: CollectionConfig = {
     create: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'super-admin',
   },
   fields: [
+    {
+      name: 'displayTitle',
+      type: 'text',
+      admin: { hidden: true, readOnly: true },
+      hooks: {
+        beforeChange: [
+          ({ data }: any) => {
+            const street = data?.address?.street || ''
+            const city = data?.address?.city || ''
+            return [street, city].filter(Boolean).join(' — ') || 'Unnamed Shop'
+          },
+        ],
+      },
+    },
     {
       name: 'operationalSettings',
       type: 'group',
@@ -155,6 +169,7 @@ export const Shop: CollectionConfig = {
               name: 'street',
               label: 'Street Address',
               type: 'text',
+              required: true,
               admin: { width: '70%' },
             },
             {

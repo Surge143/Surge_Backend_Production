@@ -399,6 +399,7 @@ export interface Admin {
  */
 export interface Shop {
   id: number;
+  displayTitle?: string | null;
   operationalSettings: {
     openingTime: string;
     closingTime: string;
@@ -416,7 +417,7 @@ export interface Shop {
     };
   };
   address: {
-    street?: string | null;
+    street: string;
     apartment?: string | null;
     city?: string | null;
     emirates: 'abu_dhabi' | 'dubai' | 'sharjah' | 'ajman' | 'umm_al_quwain' | 'ras_al_khaimah' | 'fujairah';
@@ -1458,6 +1459,10 @@ export interface WebOrder {
    * The payment ID from Stripe
    */
   stripeOrderId?: string | null;
+  /**
+   * The shop location selected for pickup.
+   */
+  pickupShop?: (number | null) | Shop;
   items: {
     product: number | WebProduct;
     /**
@@ -2588,6 +2593,7 @@ export interface MenuSelect<T extends boolean = true> {
  * via the `definition` "shop_select".
  */
 export interface ShopSelect<T extends boolean = true> {
+  displayTitle?: T;
   operationalSettings?:
     | T
     | {
@@ -3075,6 +3081,7 @@ export interface WebOrdersSelect<T extends boolean = true> {
   deliveryOption?: T;
   origin?: T;
   stripeOrderId?: T;
+  pickupShop?: T;
   items?:
     | T
     | {

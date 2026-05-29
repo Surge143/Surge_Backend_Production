@@ -12,6 +12,13 @@ export const OrderDeliveredEmail = (order) => {
       ? `${addr.addressLine1}, ${addr.addressLine2 ? addr.addressLine2 + ', ' : ''}${addr.city}, ${addr.emirates}, ${addr.addressCountry}`
       : 'N/A'
 
+  const formatPickupShop = (shop) =>
+    shop?.address
+      ? [shop.address.street, shop.address.apartment, shop.address.city, shop.address.emirates, shop.address.country].filter(Boolean).join(', ')
+      : 'N/A'
+
+  const isPickup = order.deliveryOption === 'pickup'
+
   const orderDate = order.createdAt
     ? new Date(order.createdAt).toLocaleDateString('en-US', {
         month: 'long',
@@ -161,8 +168,8 @@ export const OrderDeliveredEmail = (order) => {
                         ${order.email || ''}
                       </td>
                       <td width="50%" valign="top" style="padding-bottom: 25px;">
-                        <strong style="color: ${TEXT_DARK}; display: block; font-size: 16px; font-weight:400; margin-bottom: 2px;">Shipping Address</strong>
-                        ${formatAddress(order.shippingAddress)}
+                        <strong style="color: ${TEXT_DARK}; display: block; font-size: 16px; font-weight:400; margin-bottom: 2px;">${isPickup ? 'Pickup Location' : 'Shipping Address'}</strong>
+                        ${isPickup ? formatPickupShop(order.pickupShop) : formatAddress(order.shippingAddress)}
                       </td>
                     </tr>
                     <tr>

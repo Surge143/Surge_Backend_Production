@@ -161,7 +161,8 @@ export function formatOrder(o: any) {
 
   // ── Customer name ──────────────────────────────────────────────────────────
   let customer = 'Guest'
-  const addr = o.shippingAddress
+  // Pickup orders have no shippingAddress; fall back to billingAddress for name/phone
+  const addr = o.shippingAddress || o.billingAddress
   if (addr?.addressFirstName || addr?.addressLastName) {
     customer = [addr.addressFirstName, addr.addressLastName].filter(Boolean).join(' ').trim()
   } else if (o.user && typeof o.user === 'object') {
@@ -172,9 +173,20 @@ export function formatOrder(o: any) {
     customer = o.email
   }
 
+  // ── Pickup shop ────────────────────────────────────────────────────────────
+  const pickupShop =
+    o.pickupShop && typeof o.pickupShop === 'object'
+      ? {
+          id: String(o.pickupShop.id),
+          street: o.pickupShop.address?.street || '',
+          city: o.pickupShop.address?.city || '',
+          emirates: o.pickupShop.address?.emirates || '',
+        }
+      : null
+
   // ── Phone & address ────────────────────────────────────────────────────────
-  const phone = addr?.phoneNumber || ''
-  const shippingAddress = addr
+  const phone = o.shippingAddress?.phoneNumber || o.billingAddress?.phoneNumber || ''
+  const shippingAddress = o.shippingAddress
     ? {
         name:
           [addr.addressFirstName, addr.addressLastName].filter(Boolean).join(' ').trim() || null,
@@ -200,7 +212,9 @@ export function formatOrder(o: any) {
   const status = statusMap[o.deliveryStatus] || 'cancelled'
 
   // ── Slot display ───────────────────────────────────────────────────────────
-  const slot = type === 'pickup' ? 'Pickup' : 'Delivery'
+  const slot = type === 'pickup'
+    ? (pickupShop?.street || 'Pickup')
+    : 'Delivery'
 
   // ── Items ──────────────────────────────────────────────────────────────────
   const items = (o.items || []).map((item: any) => {
@@ -245,6 +259,7 @@ export function formatOrder(o: any) {
     items,
     total,
     reward,
+    pickupShop,
     isPickupReady: Boolean(o.isPickupReady),
     delayed: false,
     raw: o,

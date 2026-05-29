@@ -30,6 +30,7 @@ export const POST = async (req: NextRequest) => {
             shippingAddressAsBillingAddress,
             useWTCoins,
             appliedCouponCode,
+            pickupShopId,
         } = body
 
         // --- DATA NORMALIZATION ---
@@ -248,6 +249,7 @@ export const POST = async (req: NextRequest) => {
                     items: orderItems,
                     shippingAddress: deliveryOption === 'delivery' ? { ...shippingAddress, addressCountry: 'United Arab Emirates' } : undefined,
                     billingAddress: shippingAddressAsBillingAddress ? { ...shippingAddress, addressCountry: 'United Arab Emirates' } : { ...billingAddress, addressCountry: 'United Arab Emirates' },
+                    pickupShop: deliveryOption === 'pickup' && pickupShopId ? pickupShopId : undefined,
                     paymentStatus: 'pending',
                     couponCode: couponId as any,
                     pointsUsed: wtPointsUsed,

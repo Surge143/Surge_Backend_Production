@@ -210,15 +210,27 @@ export function formatPayloadOrderToInvoice(order: any, paymentDetails?: any): I
       order.billingAddress || order.shippingAddress,
       order.email || order.user?.email,
     ),
-    shipTo: order.shippingAddress
-      ? formatPayloadAddress(order.shippingAddress, order.email || order.user?.email)
-      : undefined,
+    shipTo: order.deliveryOption === 'pickup' && order.pickupShop
+      ? {
+          first_name: 'Pickup',
+          last_name: 'Location',
+          address_1: order.pickupShop.address?.street || '',
+          address_2: order.pickupShop.address?.apartment || '',
+          city: order.pickupShop.address?.city || '',
+          state: order.pickupShop.address?.emirates || '',
+          postcode: '00000',
+          country: order.pickupShop.address?.country || 'United Arab Emirates',
+          email: '',
+        }
+      : order.shippingAddress
+        ? formatPayloadAddress(order.shippingAddress, order.email || order.user?.email)
+        : undefined,
     lineItems: formatPayloadLineItems(order.items || []),
     subtotal: parseFloat(order.financials?.subtotal || 0),
     tax: parseFloat(order.financials?.taxAmount || 0),
     taxLabel: 'VAT tax',
     shipping: parseFloat(order.financials?.shippingCharge || 0),
-    shippingMethod: order.deliveryOption || '',
+    shippingMethod: order.deliveryOption === 'pickup' ? 'Pickup' : (order.deliveryOption || ''),
     discount:
       parseFloat(order.financials?.couponDiscount || 0) +
       parseFloat(order.financials?.surgeCoinsDiscount || 0),
