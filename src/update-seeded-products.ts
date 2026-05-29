@@ -204,7 +204,7 @@ async function updateSeededProducts() {
     console.log(`\nUpdating product: ID=${doc.id}, name="${doc.name}"`)
 
     // 1. Process variants to remove trailing "g"
-    let updatedVariants = []
+    let updatedVariants: any[] = []
     if (doc.variants && Array.isArray(doc.variants)) {
       updatedVariants = doc.variants.map((v: any) => {
         let cleanName = v.variantName
