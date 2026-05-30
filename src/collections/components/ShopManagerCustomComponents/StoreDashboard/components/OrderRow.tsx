@@ -645,8 +645,8 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                 </div>
               )}
 
-              {/* Shipping address with labels */}
-              {order.shippingAddress && (
+              {/* Shipping address — delivery orders only */}
+              {order.type === 'delivery' && order.shippingAddress && (
                 <>
                   <div
                     style={{
@@ -715,6 +715,63 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                         <span style={{ color: C.textMute, fontWeight: 600 }}>Phone: </span>
                         +971 {order.shippingAddress.phone}
                       </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Pickup location — pickup orders only */}
+              {order.type === 'pickup' && (
+                <>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: C.textMute,
+                      fontWeight: 600,
+                      letterSpacing: 0.8,
+                      marginTop: 10,
+                      marginBottom: 6,
+                    }}
+                  >
+                    PICKUP LOCATION
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: C.textSub,
+                      padding: '8px 10px',
+                      background: C.bg,
+                      borderRadius: 6,
+                      border: `1px solid ${C.border}`,
+                      lineHeight: 1.8,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
+                    }}
+                  >
+                    {order.pickupShop ? (
+                      <>
+                        {order.pickupShop.street && (
+                          <div>
+                            <span style={{ color: C.textMute, fontWeight: 600 }}>Address: </span>
+                            {order.pickupShop.street}
+                          </div>
+                        )}
+                        {order.pickupShop.city && (
+                          <div>
+                            <span style={{ color: C.textMute, fontWeight: 600 }}>City: </span>
+                            {order.pickupShop.city}
+                          </div>
+                        )}
+                        {order.pickupShop.emirates && (
+                          <div>
+                            <span style={{ color: C.textMute, fontWeight: 600 }}>Emirate: </span>
+                            {order.pickupShop.emirates}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div style={{ color: C.textMute }}>No shop assigned</div>
                     )}
                   </div>
                 </>
