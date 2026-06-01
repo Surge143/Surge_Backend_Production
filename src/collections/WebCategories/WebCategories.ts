@@ -56,8 +56,8 @@ export const WebCategories: CollectionConfig = {
             depth: 0,
           });
 
-          const minWidth = 1024;
-          const minHeight = 1024;
+          const minWidth = 512;
+          const minHeight = 512;
 
           if (media && (media.width < minWidth || media.height < minHeight)) {
             return `Image dimensions must be at least ${minWidth}x${minHeight}px. Current: ${media.width}x${media.height}px.`;
