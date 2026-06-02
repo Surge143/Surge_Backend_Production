@@ -207,10 +207,11 @@ Team Surge`.trim(),
       }
     } catch (error) {
       console.error('Error updating order status:', error)
+      throw error
     }
   } catch (error) {
     console.error('Error fetching order in Payment Intent Webhook:', error)
-    return
+    throw error
   }
 }
 

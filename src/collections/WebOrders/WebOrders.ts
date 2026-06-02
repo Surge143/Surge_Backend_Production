@@ -225,17 +225,21 @@ export const WebOrders: CollectionConfig = {
         if (isNowCompleted) {
           // Re-fetch at depth 2 so item.product is fully populated (includes productHighlights)
           // for the Store Dashboard formatOrder mapping
-          const populatedDoc = await payload.findByID({
-            collection: 'web-orders',
-            id: doc.id,
-            depth: 2,
-            overrideAccess: true,
-          })
-          if (operation === 'create' || !wasCompleted) {
-            // New paid order — broadcast so Store Dashboard picks it up instantly
-            emitWebOrderCreated(populatedDoc)
-          } else {
-            emitWebOrderUpdated(populatedDoc)
+          try {
+            const populatedDoc = await payload.findByID({
+              collection: 'web-orders',
+              id: doc.id,
+              depth: 2,
+              overrideAccess: true,
+            })
+            if (operation === 'create' || !wasCompleted) {
+              // New paid order — broadcast so Store Dashboard picks it up instantly
+              emitWebOrderCreated(populatedDoc)
+            } else {
+              emitWebOrderUpdated(populatedDoc)
+            }
+          } catch (emitErr) {
+            console.error('[afterChange] Failed to fetch/emit order', doc.id, emitErr)
           }
         }
 
