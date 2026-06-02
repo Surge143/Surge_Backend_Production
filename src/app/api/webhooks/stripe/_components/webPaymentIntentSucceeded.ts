@@ -133,7 +133,7 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
       // Doing it in afterChange causes a nested secondary payload.update() on the same
       // document which races with or conflicts with this primary update.
       let linkedUserId: string | number | null = null
-      let linkedCustomerType: string | null = null
+      let linkedCustomerType: 'user' | 'guest' | null = null
       if (!order.user && order.email) {
         try {
           const userResult = await payload.find({
