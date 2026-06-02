@@ -212,6 +212,7 @@ export const WebOrders: CollectionConfig = {
           payload,
           doc,
           previousDoc,
+          operation,
           collection: 'web-orders',
           paidStatus: 'completed',
         })

@@ -231,6 +231,7 @@ export async function POST(req: NextRequest) {
         try {
             const orderDoc = await (payload as any).create({
                 collection: 'web-orders',
+                overrideAccess: true,
                 data: {
                     customerType: user ? 'user' : 'guest',
                     user: user?.id,

@@ -1,30 +1,35 @@
 import { Payload } from 'payload'
 
 /**
- * When a payment is completed, check if the order belongs to a guest
+ * When a payment is completed (or order is created), check if the order belongs to a guest
  * whose email matches an existing user account. If so, link the order to that user.
  *
  * @param paidStatus - The value of paymentStatus that represents a completed payment
  *                     ('completed' for web-orders, 'paid' for app-orders)
+ * @param operation  - Payload operation ('create' | 'update'). Linking at create time means
+ *                     the webhook afterChange has one less nested update to trigger.
  */
 export const linkGuestOrderToUser = async ({
   payload,
   doc,
   previousDoc,
+  operation,
   collection,
   paidStatus,
 }: {
   payload: Payload
   doc: any
   previousDoc: any
+  operation?: string
   collection: string
   paidStatus: string
 }): Promise<void> => {
-  // Only fire when payment just transitioned to the paid status
+  // Fire on brand-new orders OR when payment status just transitioned to paid.
   const isNowPaid = doc.paymentStatus === paidStatus
   const wasPreviouslyPaid = previousDoc?.paymentStatus === paidStatus
+  const isCreation = operation === 'create'
 
-  if (!isNowPaid || wasPreviouslyPaid) return
+  if (!isCreation && (!isNowPaid || wasPreviouslyPaid)) return
 
   // Only attempt linking if there is no user but there is an email stored
   const alreadyHasUser = doc.user && (typeof doc.user === 'object' ? doc.user.id : doc.user)
