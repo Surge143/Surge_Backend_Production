@@ -19,7 +19,7 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
     order = await payload.findByID({
       collection: 'web-orders',
       id: orderId,
-      depth: 2, // Fetch related product data
+      depth: 0, // depth:0 is sufficient — all needed values are direct fields or IDs
       overrideAccess: true,
     })
 
@@ -56,15 +56,14 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
     }
 
     // --- STOCK DEDUCTION ---
-    // Deduct stock for each item in the order
+    // Deduct stock for all items in parallel to avoid sequential DB blocking
     if (order.items && order.items.length > 0) {
-      for (const item of order.items) {
+      await Promise.all(order.items.map(async (item: any) => {
         try {
           const productId = typeof item.product === 'object' ? item.product.id : item.product
           const variantId = item.variantID
           const quantity = item.quantity
 
-          // Fetch the product to update stock
           const productDoc = await payload.findByID({
             collection: 'web-products',
             id: productId,
@@ -73,10 +72,9 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
 
           if (!productDoc) {
             console.error(`Product ${productId} not found`)
-            continue
+            return
           }
 
-          // Find the variant and update its stock
           if (productDoc.hasVariantOptions && productDoc.variants && Array.isArray(productDoc.variants)) {
             const variantIndex = productDoc.variants.findIndex((v: any) => v.id === variantId)
 
@@ -85,10 +83,7 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
               const currentStock = variant.variantStockQuantity || 0
               const newStock = Math.max(0, currentStock - quantity)
 
-              // Update the variant stock
               productDoc.variants[variantIndex].variantStockQuantity = newStock
-
-              // If stock reaches 0, mark as out of stock
               if (newStock === 0) {
                 productDoc.variants[variantIndex].variantInStock = false
               }
@@ -96,20 +91,15 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
               await payload.update({
                 collection: 'web-products',
                 id: productId,
-                data: {
-                  variants: productDoc.variants,
-                },
+                data: { variants: productDoc.variants },
                 overrideAccess: true,
               })
 
-              console.log(
-                `✅ Stock updated for product ${productId}, variant ${variantId}: ${currentStock} → ${newStock}`,
-              )
+              console.log(`✅ Stock updated for product ${productId}, variant ${variantId}: ${currentStock} → ${newStock}`)
             } else {
               console.error(`Variant ${variantId} not found in product ${productId}`)
             }
           } else {
-            // No variants — decrement base-level stock (e.g. merch products)
             const currentStock = productDoc.stockQuantity || 0
             const newStock = Math.max(0, currentStock - quantity)
 
@@ -123,14 +113,12 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
               overrideAccess: true,
             })
 
-            console.log(
-              `✅ Stock updated for product ${productId} (no variants): ${currentStock} → ${newStock}`,
-            )
+            console.log(`✅ Stock updated for product ${productId} (no variants): ${currentStock} → ${newStock}`)
           }
         } catch (error) {
           console.error(`Error updating stock for item:`, error)
         }
-      }
+      }))
     }
 
     // --- UPDATE ORDER STATUS AND PAYMENT DETAILS ---

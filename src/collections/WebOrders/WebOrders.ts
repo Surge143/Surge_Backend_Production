@@ -69,13 +69,11 @@ export const WebOrders: CollectionConfig = {
           const orderUserId = typeof order.user === 'object' ? order.user?.id : order.user
           if (user && String(orderUserId) === String(user.id)) return true
 
-          // Allow if guest token matches
+          // Allow if guest token matches — check token regardless of customerType
+          // because linkGuestOrderToUser may have already updated customerType to 'user'
+          // while the guest is still on the success page using their token
           const token = query?.token || req.headers?.get?.('x-guest-token')
-          if (
-            order.customerType === 'guest' &&
-            order.guestAccessToken &&
-            token === order.guestAccessToken
-          ) {
+          if (token && order.guestAccessToken && token === order.guestAccessToken) {
             return true
           }
         } catch {
@@ -223,24 +221,27 @@ export const WebOrders: CollectionConfig = {
         const wasCompleted = previousDoc?.paymentStatus === 'completed'
 
         if (isNowCompleted) {
-          // Re-fetch at depth 2 so item.product is fully populated (includes productHighlights)
-          // for the Store Dashboard formatOrder mapping
-          try {
-            const populatedDoc = await payload.findByID({
-              collection: 'web-orders',
-              id: doc.id,
-              depth: 2,
-              overrideAccess: true,
-            })
-            if (operation === 'create' || !wasCompleted) {
-              // New paid order — broadcast so Store Dashboard picks it up instantly
-              emitWebOrderCreated(populatedDoc)
-            } else {
-              emitWebOrderUpdated(populatedDoc)
+          // Re-fetch at depth 2 for the Store Dashboard — run via setImmediate so it
+          // does not block the afterChange hook (and therefore the webhook response time)
+          const emitOperation = operation
+          const emitDocId = doc.id
+          setImmediate(async () => {
+            try {
+              const populatedDoc = await payload.findByID({
+                collection: 'web-orders',
+                id: emitDocId,
+                depth: 2,
+                overrideAccess: true,
+              })
+              if (emitOperation === 'create' || !wasCompleted) {
+                emitWebOrderCreated(populatedDoc)
+              } else {
+                emitWebOrderUpdated(populatedDoc)
+              }
+            } catch (emitErr) {
+              console.error('[afterChange] Failed to fetch/emit order', emitDocId, emitErr)
             }
-          } catch (emitErr) {
-            console.error('[afterChange] Failed to fetch/emit order', doc.id, emitErr)
-          }
+          })
         }
 
         // --- REFERRAL & NOTIFICATION LOGIC ---
