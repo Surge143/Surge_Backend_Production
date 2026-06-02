@@ -1,35 +1,38 @@
 import { Payload } from 'payload'
 
 /**
- * When a payment is completed (or order is created), check if the order belongs to a guest
- * whose email matches an existing user account. If so, link the order to that user.
+ * When payment is completed, check if the order belongs to a guest whose email matches
+ * an existing user account. If so, link the order to that user.
+ *
+ * IMPORTANT: This only runs on payment completion (update to paidStatus), NOT on create.
+ * Running on create causes a race condition with the Stripe webhook: both the create-time
+ * linking update and the webhook's paymentStatus update write to the same document
+ * concurrently, and the linking update can overwrite paymentStatus back to 'pending'.
  *
  * @param paidStatus - The value of paymentStatus that represents a completed payment
  *                     ('completed' for web-orders, 'paid' for app-orders)
- * @param operation  - Payload operation ('create' | 'update'). Linking at create time means
- *                     the webhook afterChange has one less nested update to trigger.
  */
 export const linkGuestOrderToUser = async ({
   payload,
   doc,
   previousDoc,
-  operation,
   collection,
   paidStatus,
 }: {
   payload: Payload
   doc: any
   previousDoc: any
-  operation?: string
+  operation?: string   // kept in signature for backwards compatibility — no longer used
   collection: string
   paidStatus: string
 }): Promise<void> => {
-  // Fire on brand-new orders OR when payment status just transitioned to paid.
+  // Only fire when payment JUST transitioned to the paid status on an update.
+  // Do NOT run on 'create' — the order is always created as 'pending', and
+  // running here at creation races with the Stripe webhook's status update.
   const isNowPaid = doc.paymentStatus === paidStatus
   const wasPreviouslyPaid = previousDoc?.paymentStatus === paidStatus
-  const isCreation = operation === 'create'
 
-  if (!isCreation && (!isNowPaid || wasPreviouslyPaid)) return
+  if (!isNowPaid || wasPreviouslyPaid) return
 
   // Only attempt linking if there is no user but there is an email stored
   const alreadyHasUser = doc.user && (typeof doc.user === 'object' ? doc.user.id : doc.user)
@@ -68,3 +71,4 @@ export const linkGuestOrderToUser = async ({
     console.error(`[linkGuestToUser] Error linking order ${doc.id} in ${collection}:`, error)
   }
 }
+
