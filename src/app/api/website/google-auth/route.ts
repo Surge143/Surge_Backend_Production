@@ -90,39 +90,6 @@ export async function POST(req: NextRequest) {
                 });
             }
 
-            // Link any unattached guest orders for this email on every login.
-            try {
-                const linkingUserId = userDoc.id
-                const orderCollections = [
-                    { slug: 'web-orders', hasCustomerType: true },
-                    { slug: 'app-orders', hasCustomerType: false },
-                ]
-                for (const { slug, hasCustomerType } of orderCollections) {
-                    const orphaned = await payload.find({
-                        collection: slug as any,
-                        where: { and: [{ email: { equals: email } }, { user: { exists: false } }] },
-                        limit: 100,
-                        depth: 0,
-                        overrideAccess: true,
-                        select: { id: true } as any,
-                    })
-                    for (const order of orphaned.docs) {
-                        const updateData: any = { user: linkingUserId }
-                        if (hasCustomerType) updateData.customerType = 'user'
-                        await payload.update({
-                            collection: slug as any,
-                            id: order.id,
-                            data: updateData,
-                            overrideAccess: true,
-                            depth: 0,
-                        })
-                        console.log(`✅ [googleAuth] Linked ${slug} order ${order.id} to user ${linkingUserId}`)
-                    }
-                }
-            } catch (linkErr: any) {
-                console.error('[googleAuth] Error linking guest orders:', linkErr)
-            }
-
             // 2. Log the user in
             const loginResult = await payload.login({
                 collection: 'users',

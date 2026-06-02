@@ -127,32 +127,6 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
       const chargeId = paymentIntent.latest_charge || paymentIntent.charges?.data?.[0]?.id
       const receiptUrl = paymentIntent.charges?.data?.[0]?.receipt_url
 
-      // --- GUEST-TO-USER LINKING (inline, same atomic update) ---
-      // If the order is a guest order but the email matches an existing user account,
-      // link them HERE in the same update call — not in afterChange.
-      // Doing it in afterChange causes a nested secondary payload.update() on the same
-      // document which races with or conflicts with this primary update.
-      let linkedUserId: string | number | null = null
-      let linkedCustomerType: 'user' | 'guest' | null = null
-      if (!order.user && order.email) {
-        try {
-          const userResult = await payload.find({
-            collection: 'users',
-            where: { email: { equals: order.email } },
-            limit: 1,
-            depth: 0,
-            overrideAccess: true,
-          })
-          if (userResult.docs.length > 0) {
-            linkedUserId = userResult.docs[0].id
-            linkedCustomerType = 'user'
-            console.log(`✅ [webhook] Will link order ${orderId} to user ${linkedUserId} in same update`)
-          }
-        } catch (linkErr) {
-          console.error('[webhook] Error resolving user for guest order:', linkErr)
-        }
-      }
-
       const updatedOrder = await payload.update({
         collection: 'web-orders',
         id: orderId,
@@ -160,7 +134,6 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
           paymentStatus: 'completed',
           deliveryStatus: 'placed', // Set initial delivery status when payment completes
           stripeOrderId: paymentIntent.id,
-          ...(linkedUserId ? { user: linkedUserId, customerType: linkedCustomerType } : {}),
           stripeData: {
             paymentIntentId: paymentIntent.id,
             chargeId: chargeId,

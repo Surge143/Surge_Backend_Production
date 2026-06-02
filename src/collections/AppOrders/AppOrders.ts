@@ -4,7 +4,6 @@ import { afterChangeHook } from './hooks/afterChange'
 import { afterDeleteHook } from './hooks/afterDelete'
 import { refundHandler } from './endpoints/refundHandler'
 import { downloadInvoiceHandler } from './endpoints/downloadInvoice'
-import { linkGuestOrderToUser } from '../WebOrders/hooks/linkGuestToUser'
 
 function generateOrderID() {
   const now = new Date()
@@ -60,13 +59,9 @@ export const AppOrders: CollectionConfig = {
     afterChange: [
       afterChangeHook,
       async ({ doc, previousDoc, req: { payload } }) => {
-        await linkGuestOrderToUser({
-          payload,
-          doc,
-          previousDoc,
-          collection: 'app-orders',
-          paidStatus: 'paid',
-        })
+        // Guest-to-user linking intentionally removed.
+        // Guest orders stay as guest (user: null). Visibility is handled
+        // by email-based access control — no linking needed.
       },
     ],
     afterDelete: [afterDeleteHook],

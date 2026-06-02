@@ -2,7 +2,6 @@ import type { CollectionConfig } from 'payload'
 import { awardWTCoins, convertPointsToAED } from '@/utilities/wtCoins'
 import { refundHandler } from './endpoints/refundHandler'
 import { downloadInvoiceHandler } from './endpoints/downloadInvoice'
-import { linkGuestOrderToUser } from './hooks/linkGuestToUser'
 import { awardReferralCoins } from '@/utilities/awardReferralCoins'
 import { createOrderPaidNotification } from '@/utilities/orderNotifications'
 import { sendEmail } from '@/lib/emailConfig'
@@ -215,14 +214,10 @@ export const WebOrders: CollectionConfig = {
     ],
     afterChange: [
       async ({ data, doc, previousDoc, operation, req: { payload } }) => {
-        await linkGuestOrderToUser({
-          payload,
-          doc,
-          previousDoc,
-          operation,
-          collection: 'web-orders',
-          paidStatus: 'completed',
-        })
+        // Guest-to-user linking intentionally removed.
+        // Guest orders stay as guest (user: null, customerType: 'guest').
+        // Logged-in users can still see their guest orders via the email-based
+        // OR clause in the read access control — no linking needed.
 
         // --- REAL-TIME SOCKET EMISSION ---
         const { emitWebOrderCreated, emitWebOrderUpdated } = await import('@/utilities/socket')
