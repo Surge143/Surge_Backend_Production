@@ -42,6 +42,39 @@ export const beforeUserDelete: CollectionBeforeDeleteHook = async ({ id, req }) 
     }
   }
 
+  // Orphan all orders belonging to this user — set user: null so they become
+  // relinkable when the same email re-registers (afterUserCreated will find them).
+  const orderCollections = [
+    { slug: 'web-orders', hasCustomerType: true },
+    { slug: 'app-orders', hasCustomerType: false },
+  ]
+  for (const { slug, hasCustomerType } of orderCollections) {
+    try {
+      const orders = await payload.find({
+        collection: slug as any,
+        where: { user: { equals: id } },
+        limit: 500,
+        depth: 0,
+        overrideAccess: true,
+        select: { id: true } as any,
+      })
+      for (const order of orders.docs) {
+        const data: any = { user: null }
+        if (hasCustomerType) data.customerType = 'guest'
+        await payload.update({
+          collection: slug as any,
+          id: order.id,
+          data,
+          overrideAccess: true,
+          depth: 0,
+        })
+      }
+      console.log(`✅ Orphaned ${orders.docs.length} ${slug} order(s) for deleted user ${id}`)
+    } catch (error) {
+      console.error(`❌ Failed to orphan ${slug} orders for user ${id}:`, error)
+    }
+  }
+
   try {
     await sendEmail({
       to: ((user as any)?.contactEmail ?? user?.email) as string,

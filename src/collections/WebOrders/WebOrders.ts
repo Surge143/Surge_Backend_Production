@@ -83,10 +83,19 @@ export const WebOrders: CollectionConfig = {
 
       // If no ID or not authorized yet, restrict to user's own orders (for listing)
       if (user) {
+        // Show orders linked to this user's account OR unlinked guest orders with
+        // matching email (covers orders placed before account existed, or after
+        // account deletion where user field was nullified by beforeUserDelete).
         return {
-          user: {
-            equals: user.id,
-          },
+          or: [
+            { user: { equals: user.id } },
+            {
+              and: [
+                { email: { equals: (user as any).email } },
+                { user: { exists: false } },
+              ],
+            },
+          ],
         }
       }
 
