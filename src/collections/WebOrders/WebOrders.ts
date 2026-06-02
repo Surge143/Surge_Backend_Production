@@ -96,7 +96,7 @@ export const WebOrders: CollectionConfig = {
               ],
             },
           ],
-        }
+        } as any
       }
 
       return false
