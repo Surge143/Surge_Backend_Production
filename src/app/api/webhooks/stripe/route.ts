@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { waitUntil } from '@vercel/functions'
 import { stripe } from '@/lib/stripe'
 import { handleWebPaymentIntentSucceeded } from './_components/webPaymentIntentSucceeded'
 import { handleAppPaymentIntentSucceeded } from './_components/appPaymentIntentSucceeded'
@@ -26,9 +27,11 @@ export async function POST(req: NextRequest) {
 
   // Return 200 to Stripe immediately — Payload init + DB work runs in the same
   // warm function instance AFTER the response is sent, so Stripe never sees a timeout.
-  // On Vercel Pro (maxDuration=60) the function stays alive until processEvent resolves.
-  processEvent(event).catch(err =>
-    console.error('❌ Webhook background processing error:', err.message)
+  // On Vercel, we MUST use waitUntil to ensure the background promise is not killed.
+  waitUntil(
+    processEvent(event).catch((err) =>
+      console.error('❌ Webhook background processing error:', err.message),
+    ),
   )
 
   return NextResponse.json({ received: true }, { status: 200 })
