@@ -26,9 +26,12 @@ export const StoreOrderCancellationEmail = (order) => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Order Cancellation - Surge</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root { color-scheme: light only; }
     body, table, td, p, span, h1, h2, strong {
       font-family: 'Montserrat', sans-serif !important;
       -webkit-font-smoothing: antialiased;
