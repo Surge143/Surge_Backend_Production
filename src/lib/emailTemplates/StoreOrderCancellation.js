@@ -106,12 +106,13 @@ export const StoreOrderCancellationEmail = (order) => {
                     ${(order.items || []).map(item => `
                       <tr>
                         <!-- Fixed Image Column -->
-                        <td width="70" align="center" valign="middle" bgcolor="#f7f7f7" style="width: 70px; padding: 10px; background-color: #f7f7f7; border-top: 1px solid #f0f0f0;">
+                        <td width="80" align="center" valign="top" bgcolor="#f7f7f7" style="width: 80px; padding: 10px; background-color: #f7f7f7; border-top: 1px solid #f0f0f0;">
                           <img
                             src="${BACKEND_URL}${item.product?.productImage?.sizes?.thumbnail?.url || item.product?.productImage?.url || ''}"
                             alt="${item.productName || item.product?.name || 'Product'}"
-                            width="50"
-                            style="display: block; margin: 0 auto; border: 0;"
+                            width="60"
+                            height="80"
+                            style="display: block; width: 60px; height: auto !important; max-width: 60px; border: 0;"
                           >
                         </td>
                         <td style="padding: 15px 10px; border-top: 1px solid #f0f0f0;">
