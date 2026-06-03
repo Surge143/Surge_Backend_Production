@@ -106,13 +106,12 @@ export const OrderShippedEmail = (order) => {
                     ${(order.items || []).map(item => `
                       <tr>
                         <!-- Fixed Image Column -->
-                        <td width="80" align="center" valign="top" bgcolor="#f7f7f7" style="width: 80px; padding: 10px; background-color: #f7f7f7; border-top: 1px solid #f0f0f0;">
+                        <td width="76" valign="top" bgcolor="#f7f7f7" style="width: 76px; padding: 8px; background-color: #f7f7f7; border-top: 1px solid #f0f0f0;">
                           <img
                             src="${BACKEND_URL}${item.product?.productImage?.sizes?.thumbnail?.url || item.product?.productImage?.url || ''}"
                             alt="${item.productName || item.product?.name || 'Product'}"
                             width="60"
-                            height="80"
-                            style="display: block; width: 60px; height: auto !important; max-width: 60px; border: 0;"
+                            style="display: block; width: 60px; height: auto; object-fit: contain; border: 0;"
                           >
                         </td>
                         <td style="padding: 15px 10px; border-top: 1px solid #f0f0f0;">
