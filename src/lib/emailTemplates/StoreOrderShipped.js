@@ -113,8 +113,8 @@ export const OrderShippedEmail = (order) => {
                           <img
                             src="${BACKEND_URL}/api/email-img?url=${encodeURIComponent(item.product?.productImage?.url || '')}"
                             alt="${item.productName || item.product?.name || 'Product'}"
-                            width="74"
-                            style="display: block; width: 74px; height: auto; object-fit: contain; margin: 0 auto; border: 0;"
+                            width="50"
+                            style="display: block; width: 50px; height: auto; object-fit: contain; margin: 0 auto; border: 0;"
                           >
                         </td>
                         <td style="padding: 15px 10px; border-top: 1px solid #f0f0f0;">

@@ -22,11 +22,11 @@ export async function GET(req: NextRequest) {
     const buffer = Buffer.from(await res.arrayBuffer())
 
     const jpeg = await sharp(buffer)
-      .flatten({ background: { r: 255, g: 255, b: 255 } }) // composite transparent pixels against white
+      .flatten({ background: { r: 245, g: 245, b: 245 } }) // #f5f5f5 — matches the td bgcolor in email templates
       .jpeg({ quality: 90 })
       .toBuffer()
 
-    return new NextResponse(jpeg, {
+    return new NextResponse(new Uint8Array(jpeg), {
       headers: {
         'Content-Type': 'image/jpeg',
         'Cache-Control': 'public, max-age=604800, immutable', // cache 7 days — product images rarely change
