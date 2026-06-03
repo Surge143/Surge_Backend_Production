@@ -68,7 +68,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ data }) => {
             </View> */}
             <View>
               <Text style={styles.brandName}>SURGE</Text>
-              <Text style={styles.brandDetail}>Dubai's Finest Coffee</Text>
+              <Text style={styles.brandDetail}>{"Dubai's Finest Coffee"}</Text>
               <Text style={styles.brandDetail}>Shop 12, AlWasl Road, Jumeirah</Text>
               <Text style={styles.brandDetail}>Dubai, UAE</Text>
             </View>
