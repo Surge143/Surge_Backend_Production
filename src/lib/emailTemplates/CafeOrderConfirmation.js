@@ -115,15 +115,13 @@ export const CafeOrderConfirmationEmail = (order) => {
                     ${(order.items || []).map(item => `
                       <tr>
                         <!-- Fixed Image Column -->
-                        <td style="padding: 16px 0; width: 60px; border-top: 1px solid #f0f0f0;">
-                          <div style="width: 50px; background: #f7f7f7;">
-                            <img
-                              src="${BACKEND_URL}${item.product?.image?.sizes?.thumbnail?.url || item.product?.image?.url || ''}"
-                              alt="${item.product?.name || 'Menu Item'}"
-                              width="50"
-                              style="display: block; width: 50px; height: auto; border: 0;"
-                            >
-                          </div>
+                        <td width="70" align="center" valign="middle" bgcolor="#f7f7f7" style="width: 70px; padding: 10px; background-color: #f7f7f7; border-top: 1px solid #f0f0f0;">
+                          <img
+                            src="${BACKEND_URL}${item.product?.image?.sizes?.thumbnail?.url || item.product?.image?.url || ''}"
+                            alt="${item.product?.name || 'Menu Item'}"
+                            width="50"
+                            style="display: block; margin: 0 auto; border: 0;"
+                          >
                         </td>
                         <td style="padding: 15px 10px; border-top: 1px solid #f0f0f0;">
                           <p style="font-size: 16px; font-weight: 400; color: ${TEXT_DARK}; margin: 0;">${item.product?.name || 'Menu Item'}</p>
