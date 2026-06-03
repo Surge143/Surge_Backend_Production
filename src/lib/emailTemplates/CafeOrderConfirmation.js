@@ -122,7 +122,7 @@ export const CafeOrderConfirmationEmail = (order) => {
                               alt="${item.product?.name || 'Menu Item'}" 
                               width="50" 
                               height="65" 
-                              style="display: block; object-fit: cover; border: 0;"
+                              style="display: block; object-fit: contain; border: 0;"
                             >
                           </div>
                         </td>

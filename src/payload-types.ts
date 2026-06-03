@@ -1891,6 +1891,7 @@ export interface AppBanner {
 export interface Newsletter {
   id: number;
   email: string;
+  unsubscribeToken?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -3352,6 +3353,7 @@ export interface AppBannersSelect<T extends boolean = true> {
  */
 export interface NewslettersSelect<T extends boolean = true> {
   email?: T;
+  unsubscribeToken?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto'
 import { unsubscribeHandler } from './endpoints/unsubscribe'
 import { sendEmail } from '@/lib/emailConfig'
 import { newsletterSubscriptionTemplate } from '@/lib/emailTemplates/NewsletterSubscription'
-// Commit Message
+
 export const Newsletter: CollectionConfig = {
   slug: 'newsletters',
   access: {
