@@ -101,13 +101,16 @@ export const CafeOrderCancellationEmail = (order) => {
                     ${(order.items || []).map(item => `
                       <tr>
                         <!-- Fixed Image Column -->
-                        <td width="76" valign="top" bgcolor="#f7f7f7" style="width: 76px; padding: 8px; background-color: #f7f7f7; border-top: 1px solid #f0f0f0;">
-                          <img
-                            src="${BACKEND_URL}${item.product?.image?.sizes?.thumbnail?.url || item.product?.image?.url || ''}"
-                            alt="${item.product?.name || 'Menu Item'}"
-                            width="60"
-                            style="display: block; width: 60px; height: auto; object-fit: contain; border: 0;"
-                          >
+                        <td style="padding: 16px 0; width: 60px; border-top: 1px solid #f0f0f0;">
+                          <div style="width: 50px; height: 65px; background: #f7f7f7; overflow: hidden;">
+                            <img
+                              src="${BACKEND_URL}${item.product?.image?.sizes?.thumbnail?.url || item.product?.image?.url || ''}"
+                              alt="${item.product?.name || 'Menu Item'}"
+                              width="50"
+                              height="65"
+                              style="display: block; object-fit: contain; border: 0;"
+                            >
+                          </div>
                         </td>
                         <td style="padding: 15px 10px; border-top: 1px solid #f0f0f0;">
                           <p style="font-size: 16px; font-weight: 400; color: ${TEXT_DARK}; margin: 0;">${item.product?.name || 'Menu Item'}</p>
