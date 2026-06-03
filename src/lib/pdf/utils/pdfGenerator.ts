@@ -1,6 +1,8 @@
 import React from 'react'
 import ReactPDF from '@react-pdf/renderer'
 import { InvoiceDocument } from '../components/InvoiceDocument'
+import { TakeAwayInvoice } from '../components/TakeAwayInvoice'
+import { DineInInvoice } from '../components/DineInInvoice'
 import { InvoiceData } from '../types/invoice.types'
 
 /**
@@ -10,8 +12,17 @@ import { InvoiceData } from '../types/invoice.types'
  */
 export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<Uint8Array> {
   try {
+    // Select component based on invoice type
+    let component: React.FC<any> = InvoiceDocument
+
+    if (invoiceData.type === 'takeAway') {
+      component = TakeAwayInvoice
+    } else if (invoiceData.type === 'dineIn') {
+      component = DineInInvoice
+    }
+
     // Render the React PDF document to a stream
-    const doc = React.createElement(InvoiceDocument, { data: invoiceData })
+    const doc = React.createElement(component, { data: invoiceData })
     const stream = await ReactPDF.renderToStream(doc as any)
 
     // Convert stream to buffer
@@ -26,7 +37,7 @@ export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<Uint
     })
   } catch (error) {
     console.error('Error generating PDF:', error)
-    throw new Error('Failed to generate PDF invoice')
+    throw error
   }
 }
 

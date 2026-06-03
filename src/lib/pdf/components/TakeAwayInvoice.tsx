@@ -55,19 +55,21 @@ export const TakeAwayInvoice: React.FC<InvoiceDocumentProps> = ({ data }) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.sidebar} />
 
         {/* ── HEADER ── */}
         <View style={styles.header}>
+          <View style={styles.logoArea}>
+            <View>
+              <Text style={styles.brandName}>SURGE</Text>
+              <Text style={styles.brandDetail}>Dubai's Finest Coffee</Text>
+              <Text style={styles.brandDetail}>Shop 12, AlWasl Road, Jumeirah</Text>
+              <Text style={styles.brandDetail}>Dubai, UAE</Text>
+            </View>
+          </View>
           <View>
             <Text style={styles.invoiceTitle}>Invoice</Text>
+            <Text style={styles.invoiceTitleDate}>Invoice date</Text>
             <Text style={styles.invoiceDate}>{data.metadata.invoiceDate}</Text>
-          </View>
-          <View style={styles.logoArea}>
-            <View style={styles.logoWrapper}>
-              <DiamondLogo />
-            </View>
-            <Text style={styles.brandName}>WHITE MANTIS</Text>
           </View>
         </View>
 
@@ -83,10 +85,10 @@ export const TakeAwayInvoice: React.FC<InvoiceDocumentProps> = ({ data }) => {
           </View>
 
           <View style={styles.infoCol}>
-            <Text style={styles.label}>Order Id</Text>
-            <Text style={styles.infoText}>#{data.metadata.orderNumber}</Text>
-            <Text style={{ ...styles.label, marginTop: 10 }}>Invoice no.</Text>
+            <Text style={styles.label}>Invoice no.</Text>
             <Text style={styles.infoTextBold}>{data.metadata.invoiceNumber}</Text>
+            <Text style={{ ...styles.label, marginTop: 5 }}>Payment Method</Text>
+            <Text style={styles.infoText}>{data.metadata.paymentMethod}</Text>
           </View>
 
           <View style={styles.infoColLast}>
@@ -94,13 +96,12 @@ export const TakeAwayInvoice: React.FC<InvoiceDocumentProps> = ({ data }) => {
             <Text style={{ ...styles.infoText, textAlign: 'right' }}>
               {data.metadata.invoiceDate}
             </Text>
-            You said
             {data.metadata.pickup && (
               <>
-                <Text style={{ ...styles.label, marginTop: 10, textAlign: 'right' }}>
+                <Text style={{ ...styles.label, marginTop: 5, textAlign: 'right' }}>
                   Pickup Time
                 </Text>
-                <Text style={{ ...styles.infoTextBold, textAlign: 'right' }}>
+                <Text style={{ ...styles.infoText, textAlign: 'right' }}>
                   {data.metadata.pickup}
                 </Text>
               </>
@@ -108,14 +109,11 @@ export const TakeAwayInvoice: React.FC<InvoiceDocumentProps> = ({ data }) => {
           </View>
         </View>
 
-        {/* ── LINE ITEMS TABLE ── */}
+        {/* ── TABLE ── qty folded into description ── */}
         <View style={styles.table}>
           <View style={{ ...styles.tableRow, ...styles.tableHead }}>
-            <Text style={{ ...styles.th, flex: 2 }}>Description</Text>
-            <Text style={{ ...styles.th, flex: 3, textAlign: 'center' }}>
-              Customization / Add Ons
-            </Text>
-            <Text style={{ ...styles.th, flex: 0.8, textAlign: 'center' }}>Qty</Text>
+            <Text style={{ ...styles.th, flex: 4 }}>Description</Text>
+            <Text style={{ ...styles.th, flex: 3, textAlign: 'center' }}>Customization</Text>
             <Text style={{ ...styles.th, flex: 2, textAlign: 'right' }}>Unit Price</Text>
             <Text style={{ ...styles.th, flex: 2, textAlign: 'right' }}>Amount</Text>
           </View>
@@ -125,18 +123,22 @@ export const TakeAwayInvoice: React.FC<InvoiceDocumentProps> = ({ data }) => {
               key={item.id}
               style={{ ...styles.tableRow, ...styles.tableBodyRow, alignItems: 'flex-start' }}
             >
-              <View style={{ ...styles.td, flex: 2, flexDirection: 'column' }}>
-                <Text>{item.name}</Text>
-              </View>
+              {/* Description with qty × weight folded in */}
+              <Text style={{ ...styles.td, flex: 4 }}>
+                {item.name}
+                {item.weight
+                  ? ` — (${item.weight} × ${item.quantity})`
+                  : ` × ${item.quantity}`}
+              </Text>
 
               <Text style={{ ...styles.td, flex: 3, textAlign: 'center' }}>
                 {item.customization || '—'}
               </Text>
 
-              <Text style={{ ...styles.td, flex: 0.8, textAlign: 'center' }}>{item.quantity}</Text>
               <Text style={{ ...styles.td, flex: 2, textAlign: 'right' }}>
                 AED {item.price.toFixed(0)}
               </Text>
+
               <Text style={{ ...styles.td, flex: 2, textAlign: 'right' }}>
                 AED {(item.price * item.quantity).toFixed(0)}
               </Text>
@@ -148,9 +150,13 @@ export const TakeAwayInvoice: React.FC<InvoiceDocumentProps> = ({ data }) => {
         <View style={styles.totalsWrapper}>
           <View style={styles.totalsBlock}>
             <TotalRow label="Subtotal :" value={`AED ${data.subtotal.toFixed(0)}`} />
-            <TotalRow label="Coupon Discount:" value={`AED ${data.subtotal.toFixed(0)}`} />
-            <TotalRow label="Beans Discount:" value={`AED ${data.subtotal.toFixed(0)}`} />
-            {/* <TotalRow label="Shipping :" value={`AED ${data.shipping.toFixed(0)}`} /> */}
+            {(data.couponDiscount ?? 0) > 0 && (
+              <TotalRow label="Coupon Discount :" value={`AED ${data.couponDiscount!.toFixed(0)}`} />
+            )}
+            {(data.beansDiscount ?? 0) > 0 && (
+              <TotalRow label="Beans Discount :" value={`AED ${data.beansDiscount!.toFixed(0)}`} />
+            )}
+            <TotalRow label="Shipping :" value={`AED ${data.shipping.toFixed(0)}`} />
             <TotalRow label={`${data.taxLabel} :`} value={`AED ${data.tax.toFixed(0)}`} />
             <View style={styles.totalDivider} />
             <View style={styles.totalFinalRow}>
@@ -164,28 +170,33 @@ export const TakeAwayInvoice: React.FC<InvoiceDocumentProps> = ({ data }) => {
         <View style={styles.footer}>
           <View style={styles.footerTop}>
             <Text style={styles.thankYou}>Thank you for your purchase</Text>
-            <Text style={styles.paidVia}>
-              Paid via{' '}
-              <Text style={{ color: C.dark, fontWeight: 'bold' }}>
-                {data.metadata.paymentMethod || 'Stripe'}
-              </Text>
-            </Text>
           </View>
           <View style={styles.footerBottom}>
-            <Text style={{ color: C.dark, fontWeight: 'bold' }}>
-              {data.company.taxId ? `${data.company.taxId.split(':')[0]}: ` : ''}
-              <Text style={styles.trn}>
-                {data.company.taxId ? data.company.taxId.split(':')[1]?.trim() : ''}
+            <View style={styles.footerLeft}>
+              <Text style={{ color: C.dark, marginBottom: 13 }}>
+                Contact {'\n'}
+                <Text style={{ ...styles.trn, fontWeight: 'normal' }}>
+                  billing@surgecoffee.ae {'\n'}
+                  +971 4 000 0000 {'\n'}
+                  www.surgecoffee.ae
+                </Text>
               </Text>
-            </Text>
+            </View>
             <View style={{ textAlign: 'right' }}>
-              <Text style={styles.companyFooter}>White Mantis Coffee LLC — Dubai, UAE</Text>
-              <Link src="https://whitemantis.ae/terms-and-conditions" style={styles.terms}>
+              <Text style={{ color: C.dark, fontWeight: 'bold' }}>
+                {data.company.taxId ? `${data.company.taxId.split(':')[0]}: ` : ''}
+                <Text style={styles.trn}>
+                  {data.company.taxId ? data.company.taxId.split(':')[1]?.trim() : ''}
+                </Text>
+              </Text>
+              <Text style={{ ...styles.companyFooter, marginTop: 7 }}>Surge</Text>
+              <Link src="https://surgecoffee.ae/terms-and-conditions" style={styles.terms}>
                 <Text>Terms and Conditions</Text>
               </Link>
             </View>
           </View>
         </View>
+
       </Page>
     </Document>
   )

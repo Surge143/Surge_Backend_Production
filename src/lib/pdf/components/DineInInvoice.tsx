@@ -1,3 +1,4 @@
+
 import React from 'react'
 import {
   Document,
@@ -67,7 +68,7 @@ export const DineInInvoice: React.FC<InvoiceDocumentProps> = ({ data }) => {
             <View style={styles.logoWrapper}>
               <DiamondLogo />
             </View>
-            <Text style={styles.brandName}>WHITE MANTIS</Text>
+            <Text style={styles.brandName}>SURGE</Text>
           </View>
         </View>
 
@@ -169,8 +170,8 @@ export const DineInInvoice: React.FC<InvoiceDocumentProps> = ({ data }) => {
               </Text>
             </Text>
             <View style={{ textAlign: 'right' }}>
-              <Text style={styles.companyFooter}>White Mantis Coffee LLC — Dubai, UAE</Text>
-              <Link src="https://whitemantis.ae/terms-and-conditions" style={styles.terms}>
+              <Text style={styles.companyFooter}>Surge Coffee LLC — Dubai, UAE</Text>
+              <Link src="https://surgecoffee.ae/terms-and-conditions" style={styles.terms}>
                 <Text>Terms and Conditions</Text>
               </Link>
             </View>

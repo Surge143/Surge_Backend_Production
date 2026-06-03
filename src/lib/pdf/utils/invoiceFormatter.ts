@@ -1,4 +1,4 @@
-import { InvoiceData, InvoiceLineItem, InvoiceAddress, InvoiceType } from '../types/invoice.types'
+import { InvoiceData, InvoiceLineItem, InvoiceAddress, InvoiceType, PickupLocation } from '../types/invoice.types'
 
 /**
  * Format currency value with symbol
@@ -84,16 +84,16 @@ export function formatOrderToInvoice(order: any, paymentDetails?: any): InvoiceD
       transactionId: paymentDetails?.id || order.transaction_id || '',
     },
     company: {
-      name: 'White Mantis',
+      name: 'Surge',
       logo: '/logo.png',
       address: 'Your Company Address',
       city: 'Dubai',
       state: 'Dubai',
       postcode: '00000',
       country: 'UAE',
-      email: 'info@whitemantis.com',
+      email: 'billing@surgecoffee.ae',
       phone: '+971-XXX-XXXX',
-      website: 'www.whitemantis.com',
+      website: 'www.surgecoffee.ae',
       taxId: 'TRN: XXXXXXXXX',
     },
     billTo: formatAddress(order.billing),
@@ -179,11 +179,35 @@ export function formatPayloadLineItems(items: any[]): InvoiceLineItem[] {
   })
 }
 
+function formatShopTime(isoString: string): string {
+  const date = new Date(isoString)
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+}
+
+function buildPickupLocation(shop: any): PickupLocation {
+  const addr = shop.address || {}
+  const parts = [addr.street, addr.apartment, addr.city, addr.country].filter(Boolean)
+  const ops = shop.operationalSettings || {}
+  const openTime = ops.openingTime ? formatShopTime(ops.openingTime) : ''
+  const closeTime = ops.closingTime ? formatShopTime(ops.closingTime) : ''
+  const hours = openTime && closeTime ? `${openTime} – ${closeTime}` : undefined
+  return {
+    name: shop.displayTitle || parts.slice(0, 2).join(', ') || 'Surge Coffee',
+    address: parts.join(', '),
+    hours,
+  }
+}
+
 /**
  * Convert Payload order to InvoiceData
  */
 export function formatPayloadOrderToInvoice(order: any, paymentDetails?: any): InvoiceData {
-  const currencySymbol = 'AED' // Default for White Mantis
+  const currencySymbol = 'AED'
+
+  const pickupShop =
+    order.deliveryOption === 'pickup' && order.pickupShop && typeof order.pickupShop === 'object'
+      ? order.pickupShop
+      : null
 
   return {
     metadata: {
@@ -194,43 +218,31 @@ export function formatPayloadOrderToInvoice(order: any, paymentDetails?: any): I
       transactionId: order.stripeData?.chargeId || order.stripeOrderId || '',
     },
     company: {
-      name: 'White Mantis',
+      name: 'Surge',
       logo: '/logo.png',
       address: 'Shop 12, Al Wasl Road, Jumeirah 1',
       city: 'Dubai',
       state: 'Dubai',
       postcode: 'UAE — P.O. Box 73401',
       country: 'UAE',
-      email: 'billing@whitemantis.ae',
+      email: 'surgeim1@gmail.com',
       phone: '+971 4 000 0000',
-      website: 'www.whitemantis.ae',
+      website: 'www.surgecoffee.ae',
       taxId: 'TRN: 100123456700003',
     },
     billTo: formatPayloadAddress(
       order.billingAddress || order.shippingAddress,
       order.email || order.user?.email,
     ),
-    shipTo: order.deliveryOption === 'pickup' && order.pickupShop
-      ? {
-          first_name: 'Pickup',
-          last_name: 'Location',
-          address_1: order.pickupShop.address?.street || '',
-          address_2: order.pickupShop.address?.apartment || '',
-          city: order.pickupShop.address?.city || '',
-          state: order.pickupShop.address?.emirates || '',
-          postcode: '00000',
-          country: order.pickupShop.address?.country || 'United Arab Emirates',
-          email: '',
-        }
-      : order.shippingAddress
-        ? formatPayloadAddress(order.shippingAddress, order.email || order.user?.email)
-        : undefined,
+    shipTo: order.shippingAddress
+      ? formatPayloadAddress(order.shippingAddress, order.email || order.user?.email)
+      : undefined,
     lineItems: formatPayloadLineItems(order.items || []),
     subtotal: parseFloat(order.financials?.subtotal || 0),
     tax: parseFloat(order.financials?.taxAmount || 0),
     taxLabel: 'VAT tax',
     shipping: parseFloat(order.financials?.shippingCharge || 0),
-    shippingMethod: order.deliveryOption === 'pickup' ? 'Pickup' : (order.deliveryOption || ''),
+    shippingMethod: order.deliveryOption || '',
     discount:
       parseFloat(order.financials?.couponDiscount || 0) +
       parseFloat(order.financials?.surgeCoinsDiscount || 0),
@@ -241,8 +253,9 @@ export function formatPayloadOrderToInvoice(order: any, paymentDetails?: any): I
     currency: 'AED',
     currencySymbol,
     notes: '',
-    terms: 'White Mantis Coffee LLC — Dubai, UAE\nTerms & Condition',
+    terms: 'Surge Coffee LLC — Dubai, UAE\nTerms & Condition',
     type: 'order',
+    pickupLocation: pickupShop ? buildPickupLocation(pickupShop) : undefined,
   }
 }
 
@@ -267,16 +280,16 @@ export function formatAppOrderToInvoice(order: any): InvoiceData {
       transactionId: order.stripeData?.chargeId || order.stripeOrderId || '',
     },
     company: {
-      name: 'White Mantis',
+      name: 'Surge',
       logo: '/logo.png',
       address: 'Shop 12, Al Wasl Road, Jumeirah 1',
       city: 'Dubai',
       state: 'Dubai',
       postcode: 'UAE — P.O. Box 73401',
       country: 'UAE',
-      email: 'billing@whitemantis.ae',
+      email: 'surgeim1@gmail.com',
       phone: '+971 4 000 0000',
-      website: 'www.whitemantis.ae',
+      website: 'www.surgecoffee.ae',
       taxId: 'TRN: 100123456700003',
     },
     billTo: {
@@ -304,7 +317,7 @@ export function formatAppOrderToInvoice(order: any): InvoiceData {
     currency: 'AED',
     currencySymbol,
     notes: order.specialInstructions || '',
-    terms: 'White Mantis Coffee LLC — Dubai, UAE',
+    terms: 'Surge Coffee LLC — Dubai, UAE',
     type: order.orderType === 'take-away' ? 'takeAway' : 'dineIn',
   }
 }

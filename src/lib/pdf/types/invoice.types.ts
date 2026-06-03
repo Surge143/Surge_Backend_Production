@@ -54,11 +54,18 @@ export interface CompanyInfo {
   taxId?: string
 }
 
+export interface PickupLocation {
+  name: string
+  address: string
+  hours?: string
+}
+
 export interface InvoiceData {
   metadata: InvoiceMetadata
   company: CompanyInfo
   billTo: InvoiceAddress
   shipTo?: InvoiceAddress
+  pickupLocation?: PickupLocation
   lineItems: InvoiceLineItem[]
   subtotal: number
   tax: number

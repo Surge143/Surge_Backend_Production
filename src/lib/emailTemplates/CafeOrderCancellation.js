@@ -103,7 +103,7 @@ export const CafeOrderCancellationEmail = (order) => {
                         <!-- Fixed Image Column -->
                         <td width="90" align="center" valign="middle" bgcolor="#f5f5f5" style="width: 90px; padding: 8px; background-color: #f5f5f5; border-top: 1px solid #f0f0f0; text-align: center; vertical-align: middle;">
                           <img
-                            src="${BACKEND_URL}${item.product?.image?.sizes?.thumbnail?.url || item.product?.image?.url || ''}"
+                            src="${BACKEND_URL}${item.product?.image?.sizes?.emailThumb?.url || item.product?.image?.url || ''}"
                             alt="${item.product?.name || 'Menu Item'}"
                             width="74"
                             style="display: block; width: 74px; height: auto; object-fit: contain; margin: 0 auto; border: 0;"

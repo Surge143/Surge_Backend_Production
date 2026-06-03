@@ -31,6 +31,11 @@ export const Media: CollectionConfig = {
         height: 300,
         position: 'centre',
       },
+      {
+        name: 'emailThumb',
+        width: 300,
+        // no height — maintains original aspect ratio, no cropping
+      },
     ],
   },
 }
