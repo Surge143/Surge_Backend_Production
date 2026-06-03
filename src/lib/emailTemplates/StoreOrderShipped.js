@@ -106,16 +106,13 @@ export const OrderShippedEmail = (order) => {
                     ${(order.items || []).map(item => `
                       <tr>
                         <!-- Fixed Image Column -->
-                        <td style="padding: 16px 0; width: 60px; border-top: 1px solid #f0f0f0;">
-                          <div style="width: 50px; height: 65px; background: #f7f7f7; overflow: hidden;">
-                            <img
-                              src="${BACKEND_URL}${item.product?.productImage?.sizes?.thumbnail?.url || item.product?.productImage?.url || ''}"
-                              alt="${item.productName || item.product?.name || 'Product'}"
-                              width="50"
-                              height="65"
-                              style="display: block; object-fit: contain; border: 0;"
-                            >
-                          </div>
+                        <td width="90" align="center" valign="middle" bgcolor="#f5f5f5" style="width: 90px; padding: 8px; background-color: #f5f5f5; border-top: 1px solid #f0f0f0; text-align: center; vertical-align: middle;">
+                          <img
+                            src="${BACKEND_URL}${item.product?.productImage?.sizes?.thumbnail?.url || item.product?.productImage?.url || ''}"
+                            alt="${item.productName || item.product?.name || 'Product'}"
+                            width="74"
+                            style="display: block; width: 74px; height: auto; object-fit: contain; margin: 0 auto; border: 0;"
+                          >
                         </td>
                         <td style="padding: 15px 10px; border-top: 1px solid #f0f0f0;">
                           <p style="font-size: 16px; font-weight: 400; color: ${TEXT_DARK}; margin: 0;">${item.productName || item.product?.name || 'Product'}</p>
