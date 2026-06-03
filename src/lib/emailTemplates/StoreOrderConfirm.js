@@ -3,7 +3,7 @@ export const OrderConfirmEmail = (order) => {
   const FRONTEND_URL = process.env.FRONTEND_URL;
   const LOGO_URL = `${BACKEND_URL}/api/media/file/surge%20logo%20emailer.png`;
 
-  const ACCENT_COLOR = '#C4754E'; 
+  const ACCENT_COLOR = '#C4754E';
   const TEXT_DARK = '#414343';
   const TEXT_LIGHT = '#818686';
 
@@ -21,10 +21,10 @@ export const OrderConfirmEmail = (order) => {
 
   const orderDate = order.createdAt
     ? new Date(order.createdAt).toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      })
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    })
     : 'N/A'
 
   return `
@@ -130,7 +130,8 @@ export const OrderConfirmEmail = (order) => {
                           <img
                             src="${BACKEND_URL}${item.product?.productImage?.sizes?.thumbnail?.url || item.product?.productImage?.url || ''}"
                             alt="${item.productName || item.product?.name || 'Product'}"
-                            width="50"
+                            width="92"
+                            height="92"
                             style="display: block; margin: 0 auto; border: 0;"
                           >
                         </td>
@@ -204,13 +205,13 @@ export const OrderConfirmEmail = (order) => {
                   <!-- Footer Text -->
                   <div style="margin-top: 16px; padding-top: 6px; border-top: 1px solid #2F362A4D; font-size: 16px; font-weight:400; color: ${TEXT_LIGHT}; line-height: 1.6;">
                     ${isPickup
-                      ? `<p>Your order is being prepared and will be ready for pickup at the selected location. We'll notify you when it's ready.</p>
+      ? `<p>Your order is being prepared and will be ready for pickup at the selected location. We'll notify you when it's ready.</p>
                     <p style="margin-top: 15px; font-size: 16px; font-weight:400;color: ${TEXT_DARK}; ">Please note: once your order is confirmed, it can no longer be <br>cancelled.
                       <br>For assistance, reach out to our Customer Support team.</p>`
-                      : `<p>Your order will be dispatched within 2–3 business days. Once shipped, you'll receive tracking details by email.</p>
+      : `<p>Your order will be dispatched within 2–3 business days. Once shipped, you'll receive tracking details by email.</p>
                     <p style="margin-top: 15px; font-size: 16px; font-weight:400;color: ${TEXT_DARK}; ">Please note: once your order is dispatched, it can no longer be <br>cancelled.
                       <br>For assistance, reach out to our Customer Support team.</p>`
-                    }
+    }
                     <p style="margin-top: 40px; font-size: 16px; font-weight:400;color: ${TEXT_DARK};">Need help? Reach us at<br>
                     <a href="mailto:hello@surgecoffee.ae" style="color: ${ACCENT_COLOR}; text-decoration: underline; margin-top:8px; font-size: 16px; font-weight:400;">hello@surgecoffee.ae</a></p>
                     <p style="margin-top: 20px; color: ${TEXT_DARK}; font-size: 16px; font-weight:400;">Happy brewing,<br><strong style=" color: ${TEXT_DARK}; font-size: 16px; font-weight:400 ">Team Surge</strong></p>
