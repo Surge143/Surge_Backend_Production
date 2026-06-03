@@ -127,7 +127,7 @@ export const OrderConfirmEmail = (order) => {
                       <tr>
                         <!-- Fixed Image Column -->
                         <td style="padding: 16px 0; width: 60px; border-top: 1px solid #f0f0f0;">
-                          <div style="width: 50px; height: 65px; background: #f7f7f7; overflow: hidden;">
+                          <div style="width: 50px; height: 65px; background: #f7f7f7; overflow: hidden; padding: 15px;">
                             <img 
                               src="${BACKEND_URL}${item.product?.productImage?.sizes?.thumbnail?.url || item.product?.productImage?.url || ''}" 
                               alt="${item.productName || item.product?.name || 'Product'}" 

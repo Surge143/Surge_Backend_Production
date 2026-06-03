@@ -169,6 +169,14 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
         if (userEmail) {
           const userName = order.billingAddress?.addressFirstName || 'Customer'
 
+          // Re-fetch with depth:2 so product images are populated for the email template
+          const orderForEmail = await payload.findByID({
+            collection: 'web-orders',
+            id: orderId,
+            depth: 2,
+            overrideAccess: true,
+          })
+
           await sendEmail({
             to: userEmail,
             subject: 'Order Confirmation - Surge',
@@ -182,7 +190,7 @@ We'll send you another email when your order ships.
 
 Happy brewing,
 Team Surge`.trim(),
-            html: OrderConfirmEmail(order),
+            html: OrderConfirmEmail(orderForEmail),
           })
 
           console.log(`✅ Order confirmation email sent to ${userEmail}`)

@@ -116,7 +116,7 @@ export const CafeOrderConfirmationEmail = (order) => {
                       <tr>
                         <!-- Fixed Image Column -->
                         <td style="padding: 16px 0; width: 60px; border-top: 1px solid #f0f0f0;">
-                          <div style="width: 50px; height: 65px; background: #f7f7f7; overflow: hidden;">
+                          <div style="width: 50px; height: 65px; background: #f7f7f7; overflow: hidden; padding: 15px;">
                             <img 
                               src="${BACKEND_URL}${item.product?.image?.sizes?.thumbnail?.url || item.product?.image?.url || ''}" 
                               alt="${item.product?.name || 'Menu Item'}" 
