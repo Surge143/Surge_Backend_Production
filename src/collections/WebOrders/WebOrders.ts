@@ -106,7 +106,9 @@ export const WebOrders: CollectionConfig = {
       // Admins and shop-managers always allowed
       if (user.role === 'admin' || user.role === 'super-admin' || user.role === 'shop-manager')
         return true
-      // Allow the order's owner to update their own order
+      // Allow the order's owner to update their own order,
+      // OR a logged-in user to update a guest order placed with their email
+      // (e.g. submitting a rating after logging in — mirrors the read access OR clause)
       if (id) {
         try {
           const order = await payload.findByID({
@@ -116,7 +118,11 @@ export const WebOrders: CollectionConfig = {
             overrideAccess: true,
           })
           const orderUserId = typeof order.user === 'object' ? order.user?.id : order.user
-          return String(orderUserId) === String(user.id)
+          // Registered order: user ID must match
+          if (orderUserId) return String(orderUserId) === String(user.id)
+          // Guest order: no user set — allow if email matches the logged-in user's email
+          if (!orderUserId && order.email && order.email === (user as any).email) return true
+          return false
         } catch {
           return false
         }
