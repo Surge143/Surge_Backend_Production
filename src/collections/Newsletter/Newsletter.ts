@@ -1,5 +1,9 @@
 import { APIError, CollectionConfig } from 'payload'
 import { checkSubscriptionHandler } from './endpoints/checkSubscription'
+import { randomUUID } from 'crypto'
+import { unsubscribeHandler } from './endpoints/unsubscribe'
+import { sendEmail } from '@/lib/emailConfig'
+import { newsletterSubscriptionTemplate } from '@/lib/emailTemplates/NewsletterSubscription'
 // Commit Message
 export const Newsletter: CollectionConfig = {
   slug: 'newsletters',
@@ -35,9 +39,25 @@ export const Newsletter: CollectionConfig = {
                 true,
               )
             }
+            data.unsubscribeToken = randomUUID();
           }
         }
         return args
+      },
+    ],
+    afterChange: [
+      async ({ doc, operation }) => {
+        if (operation !== 'create') return doc
+        try {
+          await sendEmail({
+            to: doc.email,
+            subject: "You're subscribed to Surge!",
+            html: newsletterSubscriptionTemplate(doc.unsubscribeToken),
+          })
+        } catch (error) {
+          console.error(`[Newsletter] Failed to send confirmation email to ${doc.email}:`, error)
+        }
+        return doc
       },
     ],
   },
@@ -47,6 +67,11 @@ export const Newsletter: CollectionConfig = {
       method: 'get',
       handler: checkSubscriptionHandler,
     },
+    {
+      path: '/unsubscribe',
+      method: 'get',
+      handler: unsubscribeHandler,
+    }
   ],
   fields: [
     {
@@ -55,5 +80,14 @@ export const Newsletter: CollectionConfig = {
       required: true,
       unique: true,
     },
+    {
+      name: 'unsubscribeToken',
+      type: 'text',
+      unique: true,
+      admin: {
+        readOnly: true,
+        hidden: true,
+      },
+    }
   ],
 }
