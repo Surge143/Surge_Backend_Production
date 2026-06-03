@@ -102,13 +102,12 @@ export const CafeOrderCancellationEmail = (order) => {
                       <tr>
                         <!-- Fixed Image Column -->
                         <td style="padding: 16px 0; width: 60px; border-top: 1px solid #f0f0f0;">
-                          <div style="width: 50px; height: 65px; background: #f7f7f7; overflow: hidden;">
-                            <img 
-                              src="${BACKEND_URL}${item.product?.image?.sizes?.thumbnail?.url || item.product?.image?.url || ''}" 
-                              alt="${item.product?.name || 'Menu Item'}" 
-                              width="50" 
-                              height="65" 
-                              style="display: block; object-fit: contain; border: 0;"
+                          <div style="width: 50px; background: #f7f7f7;">
+                            <img
+                              src="${BACKEND_URL}${item.product?.image?.sizes?.thumbnail?.url || item.product?.image?.url || ''}"
+                              alt="${item.product?.name || 'Menu Item'}"
+                              width="50"
+                              style="display: block; width: 50px; height: auto; border: 0;"
                             >
                           </div>
                         </td>
