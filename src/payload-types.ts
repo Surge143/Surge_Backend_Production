@@ -105,6 +105,7 @@ export interface Config {
     careers: Career;
     'service-areas': ServiceArea;
     'coffee-packages': CoffeePackage;
+    'addons-menu': AddonsMenu;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -157,6 +158,7 @@ export interface Config {
     careers: CareersSelect<false> | CareersSelect<true>;
     'service-areas': ServiceAreasSelect<false> | ServiceAreasSelect<true>;
     'coffee-packages': CoffeePackagesSelect<false> | CoffeePackagesSelect<true>;
+    'addons-menu': AddonsMenuSelect<false> | AddonsMenuSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -2036,6 +2038,37 @@ export interface CoffeePackage {
   createdAt: string;
 }
 /**
+ * Add-on menu categories displayed on the events page.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "addons-menu".
+ */
+export interface AddonsMenu {
+  id: number;
+  _order?: string | null;
+  /**
+   * e.g. "Coffee"
+   */
+  title: string;
+  /**
+   * e.g. "Small Bites / Canapés"
+   */
+  subtitle: string;
+  /**
+   * e.g. "Savoury selections crafted for elevated, memorable catering moments."
+   */
+  tagline: string;
+  items: {
+    /**
+     * e.g. "Bruschetta Bites", "Tuna Crostini"
+     */
+    name: string;
+    id?: string | null;
+  }[];
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
@@ -2360,6 +2393,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'coffee-packages';
         value: number | CoffeePackage;
+      } | null)
+    | ({
+        relationTo: 'addons-menu';
+        value: number | AddonsMenu;
       } | null)
     | ({
         relationTo: 'exports';
@@ -3524,6 +3561,24 @@ export interface CoffeePackagesSelect<T extends boolean = true> {
               label?: T;
               id?: T;
             };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "addons-menu_select".
+ */
+export interface AddonsMenuSelect<T extends boolean = true> {
+  _order?: T;
+  title?: T;
+  subtitle?: T;
+  tagline?: T;
+  items?:
+    | T
+    | {
+        name?: T;
+        id?: T;
       };
   updatedAt?: T;
   createdAt?: T;
