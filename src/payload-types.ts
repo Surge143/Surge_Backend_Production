@@ -104,6 +104,7 @@ export interface Config {
     'featured-news': FeaturedNew;
     careers: Career;
     'service-areas': ServiceArea;
+    'coffee-packages': CoffeePackage;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -155,6 +156,7 @@ export interface Config {
     'featured-news': FeaturedNewsSelect<false> | FeaturedNewsSelect<true>;
     careers: CareersSelect<false> | CareersSelect<true>;
     'service-areas': ServiceAreasSelect<false> | ServiceAreasSelect<true>;
+    'coffee-packages': CoffeePackagesSelect<false> | CoffeePackagesSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1988,6 +1990,52 @@ export interface ServiceArea {
   createdAt: string;
 }
 /**
+ * Coffee packages displayed on the events page.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coffee-packages".
+ */
+export interface CoffeePackage {
+  id: number;
+  _order?: string | null;
+  name: string;
+  features: {
+    /**
+     * e.g. "Coffee Setup", "Professional Barista"
+     */
+    value: string;
+    id?: string | null;
+  }[];
+  servingOptions: {
+    title: string;
+    tiers: {
+      /**
+       * e.g. 50, 100, 150
+       */
+      cups: number;
+      /**
+       * e.g. 1500
+       */
+      price: number;
+      id?: string | null;
+    }[];
+  };
+  optionalAddOns: {
+    title: string;
+    items?:
+      | {
+          /**
+           * e.g. "Extra Cups — AED 30/cup"
+           */
+          label: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
@@ -2308,6 +2356,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'service-areas';
         value: number | ServiceArea;
+      } | null)
+    | ({
+        relationTo: 'coffee-packages';
+        value: number | CoffeePackage;
       } | null)
     | ({
         relationTo: 'exports';
@@ -3434,6 +3486,45 @@ export interface ServiceAreasSelect<T extends boolean = true> {
   _order?: T;
   location?: T;
   fee?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coffee-packages_select".
+ */
+export interface CoffeePackagesSelect<T extends boolean = true> {
+  _order?: T;
+  name?: T;
+  features?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  servingOptions?:
+    | T
+    | {
+        title?: T;
+        tiers?:
+          | T
+          | {
+              cups?: T;
+              price?: T;
+              id?: T;
+            };
+      };
+  optionalAddOns?:
+    | T
+    | {
+        title?: T;
+        items?:
+          | T
+          | {
+              label?: T;
+              id?: T;
+            };
+      };
   updatedAt?: T;
   createdAt?: T;
 }

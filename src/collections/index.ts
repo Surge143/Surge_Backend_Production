@@ -36,6 +36,7 @@ import { Events } from './Events/Events'
 import { FeaturedNews } from './FeaturedNews/FeaturedNews'
 import { Careers } from './Careers/Careers'
 import { ServiceAreas } from './ServiceAreas/ServiceAreas'
+import { CoffeePackages } from './Events/CoffeePackages'
 
 export const collections = [
   Users,
@@ -74,6 +75,7 @@ export const collections = [
   FeaturedNews,
   Careers,
   ServiceAreas,
+  CoffeePackages,
 ]
 
 export const globals = [WTCoins, ShipAndTax]
