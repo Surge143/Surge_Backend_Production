@@ -3781,6 +3781,15 @@ export interface ShipAndTax {
     fujairah?: number | null;
   };
   /**
+   * Admin emails that receive a copy of every order confirmation. Maximum 5 recipients.
+   */
+  orderNotificationEmails?:
+    | {
+        email: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * The email of the admin who last updated this configuration.
    */
   lastUpdatedBy?: string | null;
@@ -3822,6 +3831,12 @@ export interface ShipAndTaxSelect<T extends boolean = true> {
         umm_al_quwain?: T;
         ras_al_khaimah?: T;
         fujairah?: T;
+      };
+  orderNotificationEmails?:
+    | T
+    | {
+        email?: T;
+        id?: T;
       };
   lastUpdatedBy?: T;
   _status?: T;

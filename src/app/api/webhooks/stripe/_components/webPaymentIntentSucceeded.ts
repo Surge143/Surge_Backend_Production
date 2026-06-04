@@ -160,7 +160,15 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
 
       // Send order confirmation email
       try {
-        // Extract user email from order
+        // Re-fetch with depth:2 so product images are populated for the email template
+        const orderForEmail = await payload.findByID({
+          collection: 'web-orders',
+          id: orderId,
+          depth: 2,
+          overrideAccess: true,
+        })
+
+        // Customer email
         const userEmail =
           typeof order.user === 'object' && order.user?.email
             ? order.user.email
@@ -168,15 +176,6 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
 
         if (userEmail) {
           const userName = order.billingAddress?.addressFirstName || 'Customer'
-
-          // Re-fetch with depth:2 so product images are populated for the email template
-          const orderForEmail = await payload.findByID({
-            collection: 'web-orders',
-            id: orderId,
-            depth: 2,
-            overrideAccess: true,
-          })
-
           await sendEmail({
             to: userEmail,
             subject: 'Order Confirmation - Surge',
@@ -192,10 +191,28 @@ Happy brewing,
 Team Surge`.trim(),
             html: OrderConfirmEmail(orderForEmail),
           })
-
           console.log(`✅ Order confirmation email sent to ${userEmail}`)
         } else {
           console.warn(`⚠️ No email found for order ${orderId}, skipping confirmation email`)
+        }
+
+        // Admin notification emails
+        const settings = await payload.findGlobal({ slug: 'ship-and-tax', overrideAccess: true })
+        const adminEmails = ((settings as any)?.orderNotificationEmails || [])
+          .map((e: any) => e.email)
+          .filter(Boolean)
+
+        if (adminEmails.length > 0) {
+          await Promise.all(
+            adminEmails.map((adminEmail: string) =>
+              sendEmail({
+                to: adminEmail,
+                subject: `New Store Order #${orderId} — AED ${order.financials.total.toFixed(2)}`,
+                html: OrderConfirmEmail(orderForEmail),
+              }),
+            ),
+          )
+          console.log(`✅ Admin order notification sent to ${adminEmails.length} recipient(s)`)
         }
       } catch (emailError: any) {
         console.error('❌ Failed to send order confirmation email:', emailError)

@@ -116,6 +116,27 @@ export const ShipAndTax: GlobalConfig = {
       ],
     },
     {
+      name: 'orderNotificationEmails',
+      label: 'Order Notification Emails',
+      type: 'array',
+      maxRows: 5,
+      labels: {
+        singular: 'Recipient',
+        plural: 'Recipients',
+      },
+      admin: {
+        description: 'Admin emails that receive a copy of every order confirmation. Maximum 5 recipients.',
+      },
+      fields: [
+        {
+          name: 'email',
+          label: 'Email',
+          type: 'email',
+          required: true,
+        },
+      ],
+    },
+    {
       name: 'lastUpdatedBy',
       label: 'Last Edited By',
       type: 'text',

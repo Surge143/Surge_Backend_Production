@@ -221,10 +221,28 @@ Happy brewing,
 Team Surge`.trim(),
             html: CafeOrderConfirmationEmail(order),
           })
-
           console.log(`✅ App order confirmation email sent to ${userEmail}`)
         } else {
           console.warn(`⚠️ No email found for app order ${orderId}, skipping confirmation email`)
+        }
+
+        // Admin notification emails
+        const settings = await payload.findGlobal({ slug: 'ship-and-tax', overrideAccess: true })
+        const adminEmails = ((settings as any)?.orderNotificationEmails || [])
+          .map((e: any) => e.email)
+          .filter(Boolean)
+
+        if (adminEmails.length > 0) {
+          await Promise.all(
+            adminEmails.map((adminEmail: string) =>
+              sendEmail({
+                to: adminEmail,
+                subject: `New Cafe Order #${orderId} — AED ${order.financials.total.toFixed(2)}`,
+                html: CafeOrderConfirmationEmail(order),
+              }),
+            ),
+          )
+          console.log(`✅ Admin order notification sent to ${adminEmails.length} recipient(s)`)
         }
       } catch (emailError: any) {
         console.error('❌ Failed to send order confirmation email:', emailError)
