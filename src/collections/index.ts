@@ -35,6 +35,7 @@ import { Newsletter } from './Newsletter/Newsletter'
 import { Events } from './Events/Events'
 import { FeaturedNews } from './FeaturedNews/FeaturedNews'
 import { Careers } from './Careers/Careers'
+import { ServiceAreas } from './ServiceAreas/ServiceAreas'
 
 export const collections = [
   Users,
@@ -72,6 +73,7 @@ export const collections = [
   Events,
   FeaturedNews,
   Careers,
+  ServiceAreas,
 ]
 
 export const globals = [WTCoins, ShipAndTax]

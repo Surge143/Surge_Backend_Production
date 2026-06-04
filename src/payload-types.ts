@@ -103,6 +103,7 @@ export interface Config {
     events: Event;
     'featured-news': FeaturedNew;
     careers: Career;
+    'service-areas': ServiceArea;
     exports: Export;
     import_export_plugin_imports: ImportExportPluginImport;
     'payload-kv': PayloadKv;
@@ -153,6 +154,7 @@ export interface Config {
     events: EventsSelect<false> | EventsSelect<true>;
     'featured-news': FeaturedNewsSelect<false> | FeaturedNewsSelect<true>;
     careers: CareersSelect<false> | CareersSelect<true>;
+    'service-areas': ServiceAreasSelect<false> | ServiceAreasSelect<true>;
     exports: ExportsSelect<false> | ExportsSelect<true>;
     import_export_plugin_imports: ImportExportPluginImportsSelect<false> | ImportExportPluginImportsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -1969,6 +1971,23 @@ export interface Career {
   createdAt: string;
 }
 /**
+ * Delivery locations and fees displayed on the events page.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-areas".
+ */
+export interface ServiceArea {
+  id: number;
+  _order?: string | null;
+  location: string;
+  /**
+   * Enter 0 for free delivery.
+   */
+  fee: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exports".
  */
@@ -2285,6 +2304,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'careers';
         value: number | Career;
+      } | null)
+    | ({
+        relationTo: 'service-areas';
+        value: number | ServiceArea;
       } | null)
     | ({
         relationTo: 'exports';
@@ -3400,6 +3423,17 @@ export interface CareersSelect<T extends boolean = true> {
   link?: T;
   lastUpdatedBy?: T;
   createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "service-areas_select".
+ */
+export interface ServiceAreasSelect<T extends boolean = true> {
+  _order?: T;
+  location?: T;
+  fee?: T;
   updatedAt?: T;
   createdAt?: T;
 }

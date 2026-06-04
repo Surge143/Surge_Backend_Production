@@ -4,7 +4,7 @@ export const Events: CollectionConfig = {
   slug: 'events',
   admin: {
     useAsTitle: 'firstName',
-    group: 'Marketing',
+    group: 'Events',
     description: 'Bookings received for Surge events',
     defaultColumns: ['firstName', 'lastName', 'email', 'eventDate', 'eventType', 'createdAt'],
   },
