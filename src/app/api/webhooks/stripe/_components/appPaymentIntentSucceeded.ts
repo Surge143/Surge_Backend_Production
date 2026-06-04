@@ -237,7 +237,7 @@ Team Surge`.trim(),
             adminEmails.map((adminEmail: string) =>
               sendEmail({
                 to: adminEmail,
-                subject: `New Cafe Order #${orderId} — AED ${order.financials.total.toFixed(2)}`,
+                subject: `New Cafe Order #${orderId} - AED ${order.financials.total.toFixed(2)}`,
                 html: CafeOrderConfirmationEmail(order),
               }),
             ),
