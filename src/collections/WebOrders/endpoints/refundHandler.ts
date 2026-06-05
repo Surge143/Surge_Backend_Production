@@ -5,9 +5,10 @@ export const refundHandler: PayloadHandler = async (req) => {
     const { payload, user, query } = req
     const { id } = (req.routeParams || {}) as { id: string }
     const reason = query?.reason as string || ''
+    const guestToken = query?.token as string || req.headers?.get?.('x-guest-token') || null
 
-    if (!user) {
-        return Response.json({ error: 'User not found' }, { status: 404 })
+    if (!user && !guestToken) {
+        return Response.json({ error: 'Authentication required' }, { status: 401 })
     }
 
     if (!id) {
@@ -20,6 +21,7 @@ export const refundHandler: PayloadHandler = async (req) => {
             collection: 'web-orders',
             id,
             depth: 0,
+            overrideAccess: true,
         }).catch(() => null)
 
         if (!order) {
@@ -30,7 +32,12 @@ export const refundHandler: PayloadHandler = async (req) => {
             return Response.json({ error: 'Order has already been refunded' }, { status: 400 })
         }
 
-        if (order.user !== user.id) {
+        const orderUserId = typeof order.user === 'object' ? order.user?.id : order.user
+        const isOwner = user && orderUserId && String(orderUserId) === String(user.id)
+        const isEmailMatch = user && !orderUserId && order.email && order.email === (user as any).email
+        const isGuestTokenMatch = !user && guestToken && order.guestAccessToken === guestToken
+
+        if (!isOwner && !isEmailMatch && !isGuestTokenMatch) {
             return Response.json({ error: 'You are not authorized to refund this order' }, { status: 403 })
         }
 

@@ -15,6 +15,7 @@ export const downloadInvoiceHandler: PayloadHandler = async (req) => {
       collection: 'web-orders',
       id,
       depth: 1,
+      overrideAccess: true,
     })
 
     if (!order) {
@@ -32,11 +33,14 @@ export const downloadInvoiceHandler: PayloadHandler = async (req) => {
     const queryParams = new URLSearchParams((req.url || '').split('?')[1])
     const guestToken = queryParams.get('token') || req.headers.get('x-guest-token')
     const isGuestMatch =
-      order.customerType === 'guest' &&
       order.guestAccessToken &&
       order.guestAccessToken === guestToken
+    const isEmailMatch =
+      user &&
+      order.email &&
+      order.email === (user as any).email
 
-    if (!isSuperAdmin && !isOwner && !isGuestMatch) {
+    if (!isSuperAdmin && !isOwner && !isGuestMatch && !isEmailMatch) {
       return Response.json({ error: 'Unauthorized to view this invoice' }, { status: 401 })
     }
 
