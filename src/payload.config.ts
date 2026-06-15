@@ -56,7 +56,7 @@ export default buildConfig({
     'capacitor://localhost',
     'http://localhost:3000',
     'http://localhost:3001',
-    'https://surge-frontend-sigma.vercel.app',
+    'https://test.surgecoffee.ae',
     process.env.PAYLOAD_PUBLIC_SERVER_URL || '',
     process.env.FRONTEND_URL || '',
     process.env.FRONTEND_URL2 || '',
