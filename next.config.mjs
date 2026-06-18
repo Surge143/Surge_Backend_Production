@@ -6,7 +6,7 @@ const nextConfig = {
     return [
       {
         source: '/',
-        destination: 'https://surge-frontend-sigma.vercel.app',
+        destination: process.env.FRONTEND_URL || 'https://surge-frontend-sigma.vercel.app',
         permanent: false,
       },
     ]

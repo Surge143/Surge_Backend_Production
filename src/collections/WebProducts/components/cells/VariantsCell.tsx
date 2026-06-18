@@ -4,8 +4,8 @@ import React from 'react'
 interface Variant {
   id?: string | null
   variantName: string
-  variantRegularPrice: number
-  variantSalePrice?: number | null
+  variantRegularPrice: string | number
+  variantSalePrice?: string | number | null
   variantInStock?: boolean | null
   variantStockQuantity?: number | null
 }

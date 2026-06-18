@@ -6,6 +6,7 @@ import {
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
 import { type CollectionConfig } from 'payload'
+import { formatPriceHook, priceValidator } from '../hooks/formatPrice'
 import { productHighlightsField } from './fields/productHighlightsField'
 
 // ─── Helper: isCoffee / isMerchandise ────────────────────────────────────────
@@ -121,8 +122,8 @@ export const WebProducts: CollectionConfig = {
         position: 'sidebar',
       },
       options: [
-        { label: '☕ Coffee (Beans, Drip Bags, Capsules)', value: 'coffee' },
-        { label: '🛍️ Merchandise (Mugs, Apparel, Equipment)', value: 'merchandise' },
+        { label: 'Coffee (Beans, Drip Bags, Capsules)', value: 'coffee' },
+        { label: 'Merchandise (Mugs, Apparel, Equipment)', value: 'merchandise' },
       ],
     },
 
@@ -176,30 +177,31 @@ export const WebProducts: CollectionConfig = {
                     {
                       name: 'variantRegularPrice',
                       label: 'Regular Price',
-                      min: 0,
-                      type: 'number',
+                      type: 'text',
                       required: true,
                       admin: { width: '50%' },
+                      validate: priceValidator,
+                      hooks: { beforeChange: [formatPriceHook] },
                     },
                     {
                       name: 'variantSalePrice',
                       label: 'Sale Price',
-                      type: 'number',
-                      min: 0,
+                      type: 'text',
                       admin: { width: '50%' },
                       validate: (val, { siblingData }) => {
-                        // 1. If no sale price is entered, it's valid (assuming it's not required)
+                        const priceError = priceValidator(val, {} as any)
+                        if (priceError !== true) return priceError
+
                         if (!val) return true
 
-                        // 2. Compare against Regular Price
                         const regularPrice = siblingData?.variantRegularPrice
-
                         if (regularPrice && Number(val) >= Number(regularPrice)) {
                           return 'The Sale Price must be less than the Regular Price.'
                         }
 
                         return true
                       },
+                      hooks: { beforeChange: [formatPriceHook] },
                     },
                   ],
                 },
@@ -236,8 +238,7 @@ export const WebProducts: CollectionConfig = {
                 {
                   name: 'regularPrice',
                   label: 'Regular Price',
-                  type: 'number',
-                  min: 0,
+                  type: 'text',
                   required: true,
                   admin: {
                     width: '50%',
@@ -245,12 +246,13 @@ export const WebProducts: CollectionConfig = {
                       Cell: '@/collections/WebProducts/components/cells/PriceCell#PriceCell',
                     },
                   },
+                  validate: priceValidator,
+                  hooks: { beforeChange: [formatPriceHook] },
                 },
                 {
                   name: 'salePrice',
                   label: 'Sale Price',
-                  type: 'number',
-                  min: 0,
+                  type: 'text',
                   admin: {
                     width: '50%',
                     components: {
@@ -258,6 +260,9 @@ export const WebProducts: CollectionConfig = {
                     },
                   },
                   validate: (val, { siblingData }) => {
+                    const priceError = priceValidator(val, {} as any)
+                    if (priceError !== true) return priceError
+
                     if (!val) return true
                     const regularPrice = siblingData?.regularPrice
                     if (regularPrice && Number(val) > Number(regularPrice)) {
@@ -266,6 +271,7 @@ export const WebProducts: CollectionConfig = {
 
                     return true
                   },
+                  hooks: { beforeChange: [formatPriceHook] },
                 },
               ],
             },
@@ -352,7 +358,7 @@ export const WebProducts: CollectionConfig = {
             // A coffee product describes where it came from, how it tastes, and how to brew it.
             {
               type: 'collapsible',
-              label: '☕ Coffee Characteristics',
+              label: 'Coffee Characteristics',
               // Hide the entire section when the product is Merchandise
               admin: { condition: (data) => isCoffee(data) },
               fields: [
@@ -487,7 +493,7 @@ export const WebProducts: CollectionConfig = {
             // These fields replace the coffee-specific characteristics section.
             {
               type: 'collapsible',
-              label: '🛍️ Merchandise Details',
+              label: 'Merchandise Details',
               // Hide the entire section when the product is Coffee
               admin: { condition: (data) => isMerchandise(data) },
               fields: [

@@ -2,7 +2,7 @@
 import React from 'react'
 
 interface Props {
-  cellData?: number | null
+  cellData?: string | number | null
   rowData?: {
     hasVariantOptions?: boolean | null
   }

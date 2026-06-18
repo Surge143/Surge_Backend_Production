@@ -42,7 +42,7 @@ async function mapCartItems(payload: any, items: any[]) {
 
             if (!product) return null
 
-            let price = product.salePrice || product.regularPrice
+            let price: number = Number(product.salePrice || product.regularPrice || 0)
 
             // Resolve product image defensively — depth:1 returns an object with .url
             let image = ''
@@ -56,7 +56,7 @@ async function mapCartItems(payload: any, items: any[]) {
             if (item.vId && product.variants) {
                 const variant = product.variants.find((v: any) => String(v.id) === String(item.vId))
                 if (variant) {
-                    price = variant.variantSalePrice || variant.variantRegularPrice
+                    price = Number(variant.variantSalePrice || variant.variantRegularPrice || 0)
                     // Prefer variant image; fall back to product image if not set
                     if (typeof variant.variantImage === 'object' && variant.variantImage !== null) {
                         image = variant.variantImage.url || image
