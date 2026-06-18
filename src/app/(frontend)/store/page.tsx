@@ -13,11 +13,11 @@ interface Product {
   name: string
   tagline: string
   slug: string
-  regularPrice?: number
-  salePrice?: number
+  regularPrice?: string | number
+  salePrice?: string | number
   productImage?: { url: string }
   hasVariantOptions?: boolean
-  variants?: Array<{ variantRegularPrice: number; variantSalePrice?: number }>
+  variants?: Array<{ variantRegularPrice: string | number; variantSalePrice?: string | number }>
   categories?: string | number | { id: string | number }
 }
 

@@ -2,12 +2,12 @@
 import React from 'react'
 
 interface Variant {
-  variantRegularPrice: number
-  variantSalePrice?: number | null
+  variantRegularPrice: string | number
+  variantSalePrice?: string | number | null
 }
 
 interface Props {
-  cellData?: number | null
+  cellData?: string | number | null
   rowData?: {
     hasVariantOptions?: boolean | null
     variants?: Variant[] | null
@@ -16,7 +16,10 @@ interface Props {
 
 function variantPriceRange(variants: Variant[]): string {
   const prices = variants
-    .map((v) => v.variantSalePrice ?? v.variantRegularPrice)
+    .map((v) => {
+      const p = v.variantSalePrice ?? v.variantRegularPrice
+      return p != null ? Number(p) : null
+    })
     .filter((p): p is number => p != null)
   if (!prices.length) return '—'
   const min = Math.min(...prices)

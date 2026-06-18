@@ -9,8 +9,8 @@ import { useUser } from '../../../context/UserContext'
 interface Variant {
   id: string
   variantName: string
-  variantRegularPrice: number
-  variantSalePrice?: number
+  variantRegularPrice: string | number
+  variantSalePrice?: string | number
   variantImage?: { url: string }
   variantInStock?: boolean
 }
@@ -21,8 +21,8 @@ interface Product {
   tagline: string
   slug: string
   description: string
-  regularPrice?: number
-  salePrice?: number
+  regularPrice?: string | number
+  salePrice?: string | number
   inStock?: boolean
   productImage?: { url: string }
   hasVariantOptions?: boolean

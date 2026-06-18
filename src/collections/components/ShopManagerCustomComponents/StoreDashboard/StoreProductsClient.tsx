@@ -28,8 +28,8 @@ interface MediaImg {
 interface Variant {
   id?: string | null
   variantName: string
-  variantRegularPrice: number
-  variantSalePrice?: number | null
+  variantRegularPrice: string | number
+  variantSalePrice?: string | number | null
   variantInStock?: boolean | null
   variantStockQuantity?: number | null
   variantImage?: MediaImg | null
@@ -49,8 +49,8 @@ interface Product {
   tagline?: string
   slug?: string | null
   hasVariantOptions?: boolean | null
-  regularPrice?: number | null
-  salePrice?: number | null
+  regularPrice?: string | number | null
+  salePrice?: string | number | null
   inStock?: boolean | null
   stockQuantity?: number | null
   variants?: Variant[] | null
@@ -696,7 +696,7 @@ export const StoreProductsClient: React.FC<Props> = ({ initialProducts }) => {
         switch (sortKey) {
           case 'name': av = a.name; bv = b.name; break
           case 'stockQuantity': av = a.stockQuantity ?? -1; bv = b.stockQuantity ?? -1; break
-          case 'regularPrice': av = a.regularPrice ?? -1; bv = b.regularPrice ?? -1; break
+          case 'regularPrice': av = Number(a.regularPrice ?? -1); bv = Number(b.regularPrice ?? -1); break
           case 'inStock': av = a.inStock ? 1 : 0; bv = b.inStock ? 1 : 0; break
           case 'slug': av = a.slug ?? ''; bv = b.slug ?? ''; break
           case 'categories': av = (a.categories as any)?.name ?? ''; bv = (b.categories as any)?.name ?? ''; break

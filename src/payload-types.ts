@@ -843,15 +843,15 @@ export interface WebProduct {
          */
         variantName: string;
         variantImage: number | Media;
-        variantRegularPrice: number;
-        variantSalePrice?: number | null;
+        variantRegularPrice: string;
+        variantSalePrice?: string | null;
         variantInStock?: boolean | null;
         variantStockQuantity?: number | null;
         id?: string | null;
       }[]
     | null;
-  regularPrice: number;
-  salePrice?: number | null;
+  regularPrice: string;
+  salePrice?: string | null;
   inStock?: boolean | null;
   stockQuantity?: number | null;
   /**

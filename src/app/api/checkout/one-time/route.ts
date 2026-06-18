@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
                     return NextResponse.json({ error: `Insufficient stock for ${productDoc.name} variant` }, { status: 400 });
                 }
 
-                itemPrice = selectedVariant.variantSalePrice || selectedVariant.variantRegularPrice;
+                itemPrice = Number(selectedVariant.variantSalePrice || selectedVariant.variantRegularPrice || 0);
             } else {
                 // STOCK VALIDATION
                 if (!productDoc.inStock) {
@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
                     return NextResponse.json({ error: `Insufficient stock for ${productDoc.name}` }, { status: 400 });
                 }
 
-                itemPrice = productDoc.salePrice || productDoc.regularPrice;
+                itemPrice = Number(productDoc.salePrice || productDoc.regularPrice || 0);
             }
 
             subtotal += itemPrice * item.quantity;

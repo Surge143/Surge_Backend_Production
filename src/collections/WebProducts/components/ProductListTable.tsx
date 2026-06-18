@@ -6,8 +6,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 interface Variant {
   id?: string | null
   variantName: string
-  variantRegularPrice: number
-  variantSalePrice?: number | null
+  variantRegularPrice: string | number
+  variantSalePrice?: string | number | null
   variantInStock?: boolean | null
   variantStockQuantity?: number | null
 }
@@ -19,8 +19,8 @@ interface Product {
   _status?: string | null
   hasVariantOptions?: boolean | null
   variants?: Variant[] | null
-  regularPrice?: number | null
-  salePrice?: number | null
+  regularPrice?: string | number | null
+  salePrice?: string | number | null
   inStock?: boolean | null
   stockQuantity?: number | null
   // Payload sometimes returns a bare numeric ID instead of the populated
@@ -32,13 +32,18 @@ interface Product {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function fmtPrice(v?: number | null) {
+function fmtPrice(v?: string | number | null) {
   if (v == null) return '—'
   return `AED ${Number(v).toFixed(2)}`
 }
 
 function variantPriceRange(variants: Variant[]) {
-  const prices = variants.map((v) => v.variantSalePrice ?? v.variantRegularPrice).filter((p): p is number => p != null)
+  const prices = variants
+    .map((v) => {
+      const p = v.variantSalePrice ?? v.variantRegularPrice
+      return p != null ? Number(p) : null
+    })
+    .filter((p): p is number => p != null)
   if (!prices.length) return '—'
   const min = Math.min(...prices), max = Math.max(...prices)
   if (min === max) return `AED ${min.toFixed(2)}`
