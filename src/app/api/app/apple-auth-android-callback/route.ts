@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const ANDROID_PACKAGE = process.env.ANDROID_APP_PACKAGE || 'com.whitemantis.app'
+const ANDROID_PACKAGE = process.env.ANDROID_APP_PACKAGE || 'com.surge.app'
 
 export async function POST(req: NextRequest) {
     try {
