@@ -103,7 +103,7 @@ export const ProductPickerGrid: React.FC<ProductPickerGridProps> = ({
         const term = searchTerm.toLowerCase()
         const nameMatch = (p.name || '').toLowerCase().includes(term)
         const categoryMatch = (typeof p.category === 'object' && p.category?.title || '').toLowerCase().includes(term)
-        const subCategoryMatch = Array.isArray(p.subCategories) && p.subCategories.some(s => (s.title || '').toLowerCase().includes(term))
+        const subCategoryMatch = Array.isArray(p.subCategories) && p.subCategories.filter(Boolean).some(s => (s.title || '').toLowerCase().includes(term))
         return nameMatch || categoryMatch || subCategoryMatch
     })
 
@@ -141,12 +141,12 @@ export const ProductPickerGrid: React.FC<ProductPickerGridProps> = ({
                                 <td className={styles.colName} onClick={() => onToggle(product)}>
                                     <span className={styles.productName}>{product.name}</span>
                                 </td>
-                                <td className={styles.colCategory}>
-                                    {typeof product.category === 'object' ? product.category.title : ''}
-                                </td>
-                                <td className={styles.colSubcategories}>
-                                    {Array.isArray(product.subCategories) ? product.subCategories.map(s => s.title).join(', ') : ''}
-                                </td>
+                               <td className={styles.colCategory}>
+    {product.category && typeof product.category === 'object' ? product.category.title : ''}
+</td>
+                              <td className={styles.colSubcategories}>
+    {Array.isArray(product.subCategories) ? product.subCategories.filter(Boolean).map(s => s.title).join(', ') : ''}
+</td>
                                 <td className={styles.colPrice}>
                                     <TextInput
                                         path={`originalPrice_${product.id}`}
