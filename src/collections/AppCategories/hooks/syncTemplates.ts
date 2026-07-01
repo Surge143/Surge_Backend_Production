@@ -38,14 +38,14 @@ export const syncTemplates: CollectionAfterChangeHook = async ({
                     const eOpt = eGroup?.options?.find((eo: any) => eo.label === tOpt.label)
                     return {
                         ...tOpt,
-                        id: eOpt?.id || tOpt.id,
+                        id: eOpt?.id,
                         price: tOpt.price ?? 0,
                     }
                 })
 
                 return {
                     ...tGroup,
-                    id: eGroup?.id || tGroup.id,
+                    id: eGroup?.id,
                     options: newOptionsInGroup,
                 }
             })
@@ -55,14 +55,14 @@ export const syncTemplates: CollectionAfterChangeHook = async ({
                 const eOpt = eSection?.options?.find((eo: any) => eo.label === tOpt.label)
                 return {
                     ...tOpt,
-                    id: eOpt?.id || tOpt.id,
+                    id: eOpt?.id,
                     price: tOpt.price ?? 0,
                 }
             })
 
             return {
                 ...tSection,
-                id: eSection?.id || tSection.id,
+                id: eSection?.id,
                 groups: newGroups,
                 options: newOptionsDirect,
             }
