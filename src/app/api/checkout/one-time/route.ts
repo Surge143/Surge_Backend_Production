@@ -309,6 +309,9 @@ export async function POST(req: NextRequest) {
                     currency: 'aed',
                     customer: stripeCustomerId,
                     automatic_payment_methods: { enabled: true },
+                    payment_method_options: {
+                      card: { request_three_d_secure: 'any' },
+                    },
                     metadata: {
                         db_order_id: orderDoc.id,
                         order_type: 'store',
