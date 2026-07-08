@@ -308,9 +308,10 @@ export async function POST(req: NextRequest) {
                     amount: Math.round(finalTotal * 100),
                     currency: 'aed',
                     customer: stripeCustomerId,
-                    // If user is logged in, enable saving for future use
-                    setup_future_usage: user ? 'off_session' : undefined,
                     automatic_payment_methods: { enabled: true },
+                    payment_method_options: {
+                      card: { request_three_d_secure: 'any' },
+                    },
                     metadata: {
                         db_order_id: orderDoc.id,
                         order_type: 'store',
