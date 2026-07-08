@@ -36,8 +36,7 @@ interface Product {
   altitude?: string
   roast?: string
   body?: string
-  aroma?: string
-  finish?: string
+  acidity?: string
   // Brew guide
   brewGuide?: { filter?: boolean; espresso?: boolean; milk?: boolean }
   // Merchandise
@@ -257,8 +256,7 @@ export default function ProductDetailPage() {
                 {product.process && <SpecRow label="Process" value={product.process} />}
                 {product.altitude && <SpecRow label="Altitude" value={product.altitude} />}
                 {product.body && <SpecRow label="Body" value={product.body} />}
-                {product.aroma && <SpecRow label="Aroma" value={product.aroma} />}
-                {product.finish && <SpecRow label="Finish" value={product.finish} />}
+                {product.acidity && <SpecRow label="Acidity" value={product.acidity} />}
                 {product.tastingNotes && (
                   <div style={{ gridColumn: 'span 2' }}>
                     <SpecRow label="Tasting Notes" value={product.tastingNotes} />
