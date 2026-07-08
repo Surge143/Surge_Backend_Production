@@ -892,9 +892,8 @@ export interface WebProduct {
   variety?: string | null;
   process?: string | null;
   altitude?: string | null;
-  finish?: string | null;
   body?: string | null;
-  aroma?: string | null;
+  acidity?: string | null;
   roast?: string | null;
   farmDescription?: string | null;
   videoBanner?: (number | null) | Media;
@@ -3088,9 +3087,8 @@ export interface WebProductsSelect<T extends boolean = true> {
   variety?: T;
   process?: T;
   altitude?: T;
-  finish?: T;
   body?: T;
-  aroma?: T;
+  acidity?: T;
   roast?: T;
   farmDescription?: T;
   videoBanner?: T;

@@ -20,22 +20,22 @@ const isMerchandise = (data: Record<string, unknown>) => data?.productType === '
 // If it IS coffee and the value is empty, show the error message.
 const requiredForCoffee =
   (label: string) =>
-  (val: unknown, { data }: { data: Record<string, unknown> }) => {
-    if (!isCoffee(data)) return true // not a coffee product – skip
-    if (!val || (typeof val === 'string' && val.trim() === ''))
-      return `${label} is required for coffee products.`
-    return true
-  }
+    (val: unknown, { data }: { data: Record<string, unknown> }) => {
+      if (!isCoffee(data)) return true // not a coffee product – skip
+      if (!val || (typeof val === 'string' && val.trim() === ''))
+        return `${label} is required for coffee products.`
+      return true
+    }
 
 // ─── Shared validator: only enforce "required" when the product is Merchandise ─
 const requiredForMerchandise =
   (label: string) =>
-  (val: unknown, { data }: { data: Record<string, unknown> }) => {
-    if (!isMerchandise(data)) return true // not a merchandise product – skip
-    if (!val || (typeof val === 'string' && val.trim() === ''))
-      return `${label} is required for merchandise products.`
-    return true
-  }
+    (val: unknown, { data }: { data: Record<string, unknown> }) => {
+      if (!isMerchandise(data)) return true // not a merchandise product – skip
+      if (!val || (typeof val === 'string' && val.trim() === ''))
+        return `${label} is required for merchandise products.`
+      return true
+    }
 
 export const WebProducts: CollectionConfig = {
   slug: 'web-products',
@@ -370,16 +370,21 @@ export const WebProducts: CollectionConfig = {
                       label: 'Farm',
                       type: 'text',
                       // No hardcoded `required: true` — validation is driven by productType
-                      admin: { width: '33.33%' },
+                      admin: { width: '50%' },
                       validate: requiredForCoffee('Farm'),
                     },
                     {
                       name: 'tastingNotes',
                       label: 'Tasting Notes',
                       type: 'text',
-                      admin: { width: '33.33%' },
+                      admin: { width: '50%' },
                       validate: requiredForCoffee('Tasting Notes'),
                     },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
                     {
                       name: 'variety',
                       label: 'Variety',
@@ -387,11 +392,6 @@ export const WebProducts: CollectionConfig = {
                       admin: { width: '33.33%' },
                       validate: requiredForCoffee('Variety'),
                     },
-                  ],
-                },
-                {
-                  type: 'row',
-                  fields: [
                     {
                       name: 'process',
                       label: 'Process',
@@ -406,13 +406,6 @@ export const WebProducts: CollectionConfig = {
                       admin: { width: '33.33%' },
                       validate: requiredForCoffee('Altitude'),
                     },
-                    {
-                      name: 'finish',
-                      label: 'Finish',
-                      type: 'text',
-                      admin: { width: '33.33%' },
-                      validate: requiredForCoffee('Finish'),
-                    },
                   ],
                 },
                 {
@@ -426,11 +419,12 @@ export const WebProducts: CollectionConfig = {
                       validate: requiredForCoffee('Body'),
                     },
                     {
-                      name: 'aroma',
-                      label: 'Aroma',
+                      name: 'acidity',
+                      label: 'Acidity',
                       type: 'text',
+                      defaultValue: 'Soft, Mellow',
                       admin: { width: '33.33%' },
-                      validate: requiredForCoffee('Aroma'),
+                      validate: requiredForCoffee('Acidity'),
                     },
                     {
                       name: 'roast',

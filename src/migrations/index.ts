@@ -11,6 +11,7 @@ import * as migration_20260604_073302 from './20260604_073302';
 import * as migration_20260604_083905 from './20260604_083905';
 import * as migration_20260604_094346 from './20260604_094346';
 import * as migration_20260618_price_fields_to_text from './20260618_price_fields_to_text';
+import * as migration_20260708_100926_add_acidity_remove_finish_aroma from './20260708_100926_add_acidity_remove_finish_aroma';
 
 export const migrations = [
   {
@@ -71,11 +72,16 @@ export const migrations = [
   {
     up: migration_20260604_094346.up,
     down: migration_20260604_094346.down,
-    name: '20260604_094346'
+    name: '20260604_094346',
   },
   {
     up: migration_20260618_price_fields_to_text.up,
     down: migration_20260618_price_fields_to_text.down,
-    name: '20260618_price_fields_to_text'
+    name: '20260618_price_fields_to_text',
+  },
+  {
+    up: migration_20260708_100926_add_acidity_remove_finish_aroma.up,
+    down: migration_20260708_100926_add_acidity_remove_finish_aroma.down,
+    name: '20260708_100926_add_acidity_remove_finish_aroma'
   },
 ];
