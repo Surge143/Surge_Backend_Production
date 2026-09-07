@@ -47,26 +47,6 @@ export const WebCategories: CollectionConfig = {
       type: 'upload',
       relationTo: 'media',
       required: true,
-      validate: async (value, { req }: any) => {
-        if (!value) return true;
-        try {
-          const media = await req.payload.findByID({
-            collection: 'media',
-            id: value,
-            depth: 0,
-          });
-
-          const minWidth = 512;
-          const minHeight = 512;
-
-          if (media && (media.width < minWidth || media.height < minHeight)) {
-            return `Image dimensions must be at least ${minWidth}x${minHeight}px. Current: ${media.width}x${media.height}px.`;
-          }
-        } catch (error) {
-          return 'Selected image could not be validated.';
-        }
-        return true;
-      },
     },
     {
       name: 'brewingGuide',
