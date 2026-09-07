@@ -5,6 +5,20 @@ import { afterDeleteHook } from './hooks/afterDelete'
 import { refundHandler } from './endpoints/refundHandler'
 import { downloadInvoiceHandler } from './endpoints/downloadInvoice'
 
+// Only staff (or internal server code, which uses overrideAccess and bypasses
+// this entirely — e.g. the Stripe webhook that actually confirms payment) may
+// set these fields directly. The mobile app also sends an optimistic client-side
+// PATCH {paymentStatus:'paid'} right after checkout purely to make the order
+// screen update instantly — that call becomes a harmless no-op for this field
+// once this is in place; the real "paid" status still gets set a moment later
+// by the Stripe webhook, which is unaffected. Without this, a customer could
+// replay that same request on any of their own orders to mark it paid without
+// ever actually paying.
+const staffOnlyFieldAccess = {
+  update: ({ req: { user } }: any) =>
+    !!user && (user.role === 'super-admin' || user.role === 'admin' || user.role === 'shop-manager'),
+}
+
 function generateOrderID() {
   const now = new Date()
   const datePart = now.toISOString().slice(2, 10).replace(/-/g, '')
@@ -90,7 +104,12 @@ export const AppOrders: CollectionConfig = {
       if (user.role === 'shop-manager') {
         return { 'shop.shopManager': { equals: user.id } } as any
       }
-      return false
+      // The mobile app PATCHes its own order directly after creation
+      // (patchOrderCustomizations, submitCafeOrderRatings, and the cancel
+      // fallback in apiCafeOrders.ts) — so the owner must still be allowed to
+      // update their own order at the document level. This does NOT yet lock
+      // down which fields they can touch (see note to product owner).
+      return { user: { equals: user.id } } as any
     },
     delete: ({ req: { user } }) => {
       if (!user) return false
@@ -129,6 +148,7 @@ export const AppOrders: CollectionConfig = {
                   name: 'orderAcceptance',
                   type: 'select',
                   defaultValue: 'pending',
+                  access: staffOnlyFieldAccess,
                   options: [
                     { label: 'Pending', value: 'pending' },
                     { label: 'Accepted', value: 'accepted' },
@@ -178,6 +198,7 @@ export const AppOrders: CollectionConfig = {
               type: 'select',
               required: true,
               defaultValue: 'pending',
+              access: staffOnlyFieldAccess,
               options: [
                 { label: 'Pending', value: 'pending' },
                 { label: 'Paid', value: 'paid' },
