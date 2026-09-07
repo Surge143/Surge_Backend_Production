@@ -78,8 +78,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
         stamps: stampRecord?.stampCount || 0,
       }
 
+      // Idempotency guard: a retried request (network retry, POS resubmitting)
+      // carrying the SAME referenceId must not redeem a second time.
+      const stampAlreadyProcessed = !!stampRecord?.stampsRedemptionHistory?.some(
+        (h: any) => h.offlineReferenceId === referenceId,
+      )
+      const beansAlreadyProcessed = !!beanRecord?.pointsRedemptionHistory?.some(
+        (h: any) => h.offlineReferenceId === referenceId,
+      )
+
       // 1. PRE-VALIDATION: Check all requested redemptions first
-      if (stampsRewardRedeemed) {
+      if (stampsRewardRedeemed && !stampAlreadyProcessed) {
         if (!stampRecord) {
           return NextResponse.json(
             { success: false, message: 'No stamp record found for user' },
@@ -95,7 +104,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
         }
       }
 
-      if (beansRedeemed) {
+      if (beansRedeemed && !beansAlreadyProcessed) {
         const WTCoinsConfiguration: any = await payload.findGlobal({
           slug: 'surge-coins',
           depth: 0,
@@ -167,7 +176,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       }
 
       // 2. EXECUTION
-      if (stampsRewardRedeemed && stampRecord) {
+      if (stampsRewardRedeemed && stampAlreadyProcessed) {
+        messages.push('Stamp reward already redeemed for this transaction (no change made)')
+      } else if (stampsRewardRedeemed && stampRecord) {
         await payload.update({
           collection: 'surge-stamps',
           id: stampRecord.id,
@@ -188,7 +199,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
         messages.push('Stamp reward redeemed successfully')
       }
 
-      if (beansRedeemed && beanRecord && pointsToRedeem > 0) {
+      if (beansRedeemed && beansAlreadyProcessed) {
+        messages.push('Beans already redeemed for this transaction (no change made)')
+      } else if (beansRedeemed && beanRecord && pointsToRedeem > 0) {
         await payload.update({
           collection: 'user-surge-coins',
           id: beanRecord.id,

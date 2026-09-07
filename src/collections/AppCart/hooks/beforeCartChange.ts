@@ -228,10 +228,10 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
                     }
 
                     for (const sel of incomingSelections) {
-                        if (sel.sectionTitle && sel.label && typeof sel.price === 'number') {
-                            snapshot.push({ sectionTitle: sel.sectionTitle, label: sel.label, price: sel.price });
-                            continue;
-                        }
+                        // The price is ALWAYS taken from the menu's own customization
+                        // definition, never from whatever the client sends — previously
+                        // a client-supplied numeric price (e.g. 0) was trusted outright,
+                        // letting a paid add-on be added for free.
                         if (sel.sectionTitle && sel.label) {
                             const key = `${sel.sectionTitle}:${sel.label}`;
                             if (availableOptions.has(key)) {

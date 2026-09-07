@@ -48,6 +48,18 @@ export const uploadProfileImage: PayloadHandler = async (req) => {
 
         // --- PROCESSING ---
 
+        // 0. Look up the current image so we can delete it after the swap —
+        // previously the old file was just left behind in storage forever.
+        const existingUser = await payload.findByID({
+            collection: 'users',
+            id: userId,
+            depth: 0,
+            overrideAccess: true,
+        }).catch(() => null)
+        const oldImageId = existingUser
+            ? (typeof existingUser.profileImage === 'object' ? existingUser.profileImage?.id : existingUser.profileImage)
+            : null
+
         // 1. Create Media record
         const mediaDoc = await payload.create({
             collection: 'media',
@@ -72,6 +84,17 @@ export const uploadProfileImage: PayloadHandler = async (req) => {
             },
             overrideAccess: true,
         })
+
+        // 3. Delete the old image now that the new one is safely in place
+        if (oldImageId && String(oldImageId) !== String(mediaDoc.id)) {
+            await payload.delete({
+                collection: 'media',
+                id: oldImageId,
+                overrideAccess: true,
+            }).catch((err) => {
+                console.error(`Failed to delete old profile image ${oldImageId} for user ${userId}:`, err)
+            })
+        }
 
         return NextResponse.json({
             success: true,

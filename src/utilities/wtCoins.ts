@@ -1,4 +1,5 @@
 import { Payload } from 'payload'
+import { sql } from '@payloadcms/db-postgres'
 
 /**
  * Award WTCoins to user based on real money spent
@@ -142,7 +143,21 @@ export async function deductWTCoins(
   orderId: string | number,
   relationTo: 'web-orders' | 'app-orders' = 'web-orders',
 ) {
+  // Serialize concurrent deductions for the SAME user — two orders paid at
+  // nearly the same instant previously could both read the same starting
+  // balance before either wrote back, letting the same coins be spent twice
+  // (or silently corrupting the final balance either way). A deduction for a
+  // DIFFERENT user is completely unaffected.
+  const transactionID = await payload.db.beginTransaction()
+  const txReq = transactionID ? ({ transactionID } as any) : undefined
+  let committed = false
+
   try {
+    if (transactionID) {
+      const tx = payload.db.sessions?.[String(transactionID)]?.db as any
+      await payload.db.execute({ db: tx, sql: sql`SELECT pg_advisory_xact_lock(${Number(userId)})` })
+    }
+
     console.log(`🎬 [wtCoins] Starting FIFO deduction for user ${userId}:`)
     console.log(`   - pointsUsed: ${pointsUsed}`)
     console.log(`   - orderId: ${orderId}`)
@@ -154,6 +169,7 @@ export async function deductWTCoins(
       where: { user: { equals: userId } },
       depth: 0,
       overrideAccess: true,
+      req: txReq,
     })
 
     const record = userRewards.docs[0]
@@ -245,7 +261,13 @@ export async function deductWTCoins(
         ],
       },
       overrideAccess: true,
+      req: txReq,
     })
+
+    if (transactionID) {
+      await payload.db.commitTransaction(transactionID)
+      committed = true
+    }
 
     if (!updateResult) {
       console.error(
@@ -259,6 +281,12 @@ export async function deductWTCoins(
   } catch (error) {
     console.error('❌ [wtCoins] Error in deductWTCoins:', error)
     throw error
+  } finally {
+    // Guarantees the lock and connection are always released, whether the
+    // function returned successfully or threw.
+    if (transactionID && !committed) {
+      await payload.db.rollbackTransaction(transactionID).catch(() => {})
+    }
   }
 }
 

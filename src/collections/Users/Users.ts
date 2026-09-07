@@ -18,6 +18,13 @@ export const Users: CollectionConfig = {
   },
   auth: {
     tokenExpiration: 60 * 60 * 24 * 30,
+    // Enables per-session token tracking so a session can be invalidated
+    // before its 30-day expiry (used on email change, below) — previously a
+    // leaked/stale token had no way to be cut off early. NOTE: turning this on
+    // invalidates every currently-issued token at once (nobody has a session
+    // marker yet), so every logged-in user/device is signed out on deploy and
+    // must log in again — a one-time, expected event, not a bug.
+    useSessions: true,
   },
   admin: {
     useAsTitle: 'email',

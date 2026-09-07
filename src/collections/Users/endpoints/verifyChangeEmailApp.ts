@@ -124,6 +124,10 @@ export const verifyChangeEmailApp: PayloadHandler = async (req) => {
                 data: {
                     email: decryptedEmail.email,
                     password: randomPassword,
+                    // Sign the account out everywhere — changing the email is a
+                    // genuine security-relevant event. The login call right after
+                    // this issues a fresh session for the current device only.
+                    sessions: [],
                 },
             });
         } catch (updateUserError: any) {

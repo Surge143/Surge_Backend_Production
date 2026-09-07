@@ -55,6 +55,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing shipping address' }, { status: 400 })
         }
 
+        // Checking the object exists isn't enough — a wallet checkout (Apple/Google
+        // Pay) could previously submit a present-but-empty/incomplete address object.
+        if (deliveryOption === 'delivery' && shippingAddress) {
+            const requiredFields = ['addressLine1', 'city', 'phoneNumber']
+            const missing = requiredFields.filter((f) => !String((shippingAddress as any)[f] || '').trim())
+            if (missing.length > 0) {
+                return NextResponse.json({ error: `Incomplete shipping address: missing ${missing.join(', ')}` }, { status: 400 })
+            }
+        }
+
         if (deliveryOption === 'pickup' && !billingAddress) {
             return NextResponse.json({ error: 'Missing billing address' }, { status: 400 })
         }

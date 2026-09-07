@@ -21,10 +21,20 @@ export const beforeUserDelete: CollectionBeforeDeleteHook = async ({ id, req }) 
       await stripe.customers.del(stripeCustomerId)
       console.log(`✅ Deleted Stripe customer ${stripeCustomerId} for user ${id}`)
     }
+
+    // Also delete their profile image — previously it was left behind in
+    // storage forever, still publicly reachable, even after "deletion."
+    const profileImageId = (targetUser as any)?.profileImage
+      ? (typeof (targetUser as any).profileImage === 'object' ? (targetUser as any).profileImage?.id : (targetUser as any).profileImage)
+      : null
+    if (profileImageId) {
+      await payload.delete({ collection: 'media', id: profileImageId, overrideAccess: true })
+      console.log(`✅ Deleted profile image ${profileImageId} for user ${id}`)
+    }
   } catch (error) {
-    // Don't block account deletion if Stripe cleanup fails (e.g. already deleted,
+    // Don't block account deletion if this cleanup fails (e.g. already deleted,
     // or Stripe has an open dispute/invoice attached) — log and continue.
-    console.error(`❌ Failed to delete Stripe customer for user ${id}:`, error)
+    console.error(`❌ Failed to clean up Stripe customer/profile image for user ${id}:`, error)
   }
 
   // List of collections where the user has a required/unique relationship

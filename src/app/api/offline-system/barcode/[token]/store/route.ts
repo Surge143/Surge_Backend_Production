@@ -73,6 +73,35 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       const initialBalance = beanRecord.totalBalance || 0
       const rate = WTCoinsConfiguration.pointsToAed || 1
 
+      // Idempotency guard: a retried request (network retry, POS resubmitting)
+      // carrying the SAME referenceId must not earn/redeem a second time. This
+      // transaction applies both in one update, so if either history already
+      // has this reference, the whole request was already processed.
+      const alreadyProcessed =
+        (beanRecord.pointsRedemptionHistory || []).some((h: any) => h.offlineReferenceId === referenceId) ||
+        (beanRecord.coinEarningHistory || []).some((h: any) => h.offlineReferenceId === referenceId)
+
+      if (alreadyProcessed) {
+        if (transactionID) {
+          await payload.db.commitTransaction(transactionID)
+          committed = true
+        }
+        return NextResponse.json({
+          success: true,
+          message: 'Already processed for this transaction (no change made)',
+          data: {
+            referenceId,
+            totalBalance: initialBalance,
+            liveBreakdown: {
+              orderTotal: OrderValue,
+              beansRedeemedValue: 0,
+              payableTotal: OrderValue,
+              beansEarned: 0,
+            },
+          },
+        })
+      }
+
       let pointsToRedeem = 0
       let updatedBeanHistory = [...(beanRecord.coinEarningHistory || [])]
 
