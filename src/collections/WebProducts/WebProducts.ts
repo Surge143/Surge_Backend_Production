@@ -80,10 +80,12 @@ export const WebProducts: CollectionConfig = {
     maxPerDoc: 50,
   },
   access: {
+    // Browsing the shop stays public. Only staff can change price/stock/details —
+    // this was previously wide open to anonymous writes.
     read: () => true,
-    update: () => true,
-    create: () => true,
-    delete: () => true,
+    update: ({ req: { user } }) => !!user && (user.role === 'super-admin' || user.role === 'admin'),
+    create: ({ req: { user } }) => !!user && (user.role === 'super-admin' || user.role === 'admin'),
+    delete: ({ req: { user } }) => !!user && (user.role === 'super-admin' || user.role === 'admin'),
   },
 
   fields: [

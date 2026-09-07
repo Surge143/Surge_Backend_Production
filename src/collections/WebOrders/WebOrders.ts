@@ -9,6 +9,15 @@ import { OrderShippedEmail } from '@/lib/emailTemplates/StoreOrderShipped'
 import { OrderDeliveredEmail } from '@/lib/emailTemplates/StoreOrderDelivered'
 import { productHighlightsField } from '../WebProducts/fields/productHighlightsField'
 
+// Only staff may directly set these fields via the API. Internal hooks/webhooks
+// still set them fine (they run with overrideAccess: true, which bypasses this).
+// `admin: { readOnly: true }` elsewhere on these fields only hides them in the
+// admin UI — it does NOT block the REST API, which is the actual bug being fixed.
+const staffOnlyFieldAccess = {
+  update: ({ req: { user } }: any) =>
+    !!user && ['super-admin', 'admin', 'shop-manager'].includes(user.role),
+}
+
 function generateOrderID() {
   const now = new Date()
   const datePart = now.toISOString().slice(2, 10).replace(/-/g, '')
@@ -690,6 +699,7 @@ export const WebOrders: CollectionConfig = {
                       name: 'paymentStatus',
                       type: 'select',
                       required: true,
+                      access: staffOnlyFieldAccess,
                       admin: { width: '50%', readOnly: true },
                       validate: (val: string, { data }: any) => {
                         if (
@@ -713,6 +723,7 @@ export const WebOrders: CollectionConfig = {
                       name: 'deliveryStatus',
                       type: 'select',
                       defaultValue: 'placed',
+                      access: staffOnlyFieldAccess,
                       admin: {
                         width: '50%',
                         readOnly: true,
@@ -747,6 +758,7 @@ export const WebOrders: CollectionConfig = {
                       name: 'deliveringBy',
                       label: 'Delivering By',
                       type: 'date',
+                      access: staffOnlyFieldAccess,
                       admin: {
                         width: '50%',
                         readOnly: true,
@@ -757,6 +769,7 @@ export const WebOrders: CollectionConfig = {
                       name: 'deliveredOn',
                       label: 'Delivered On',
                       type: 'date',
+                      access: staffOnlyFieldAccess,
                       admin: {
                         width: '50%',
                         readOnly: true,
@@ -784,6 +797,7 @@ export const WebOrders: CollectionConfig = {
                       label: 'Pickup Ready',
                       type: 'checkbox',
                       defaultValue: false,
+                      access: staffOnlyFieldAccess,
                       admin: {
                         width: '50%',
                         readOnly: true,
@@ -794,6 +808,7 @@ export const WebOrders: CollectionConfig = {
                       name: 'pickedUpDate',
                       label: 'Picked Up Date',
                       type: 'date',
+                      access: staffOnlyFieldAccess,
                       admin: {
                         width: '50%',
                         readOnly: true,
@@ -821,12 +836,14 @@ export const WebOrders: CollectionConfig = {
                       name: 'refundReason',
                       label: 'Refund Reason',
                       type: 'text',
+                      access: staffOnlyFieldAccess,
                       admin: { width: '50%', readOnly: true },
                     },
                     {
                       name: 'refundedOn',
                       label: 'Refunded On',
                       type: 'date',
+                      access: staffOnlyFieldAccess,
                       admin: {
                         width: '25%',
                         readOnly: true,
@@ -838,6 +855,7 @@ export const WebOrders: CollectionConfig = {
                       label: 'Refunded Amount (AED)',
                       type: 'number',
                       min: 0,
+                      access: staffOnlyFieldAccess,
                       admin: { width: '25%', readOnly: true },
                     },
                   ],
@@ -857,6 +875,7 @@ export const WebOrders: CollectionConfig = {
                       name: 'couponCode',
                       type: 'relationship',
                       relationTo: 'surge-coupon',
+                      access: staffOnlyFieldAccess,
                       admin: {
                         width: '50%',
                         readOnly: true,
@@ -867,6 +886,7 @@ export const WebOrders: CollectionConfig = {
                       name: 'pointsUsed',
                       label: 'WT Points Used',
                       type: 'number',
+                      access: staffOnlyFieldAccess,
                       admin: { width: '50%', readOnly: true },
                     },
                   ],
@@ -878,6 +898,7 @@ export const WebOrders: CollectionConfig = {
               name: 'financials',
               type: 'group',
               label: 'Financial Breakdown',
+              access: staffOnlyFieldAccess,
               admin: { readOnly: true },
               fields: [
                 {
@@ -979,6 +1000,7 @@ export const WebOrders: CollectionConfig = {
       name: 'wtCoinsAwarded',
       type: 'checkbox',
       defaultValue: false,
+      access: staffOnlyFieldAccess,
       admin: {
         hidden: true,
         readOnly: true,

@@ -141,6 +141,13 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: `Product not found: ${productId}` }, { status: 404 });
             }
 
+            // Reject non-positive/non-integer quantities — without this, a negative
+            // quantity on one line can drag the whole order's subtotal to ~0 while
+            // real items still ship, and can even increase stock at fulfillment.
+            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+                return NextResponse.json({ error: `Invalid quantity for ${productDoc.name}` }, { status: 400 });
+            }
+
             let itemPrice = 0;
 
             if (item.variantId) {

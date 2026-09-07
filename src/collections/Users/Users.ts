@@ -119,8 +119,25 @@ export const Users: CollectionConfig = {
     beforeDelete: [beforeUserDelete],
   },
   access: {
-    create: () => true,
-    read: () => true,
+    // Public signup is intentionally blocked: every real account is created
+    // internally (OTP verify, Google/Apple auth), which use the Local API and
+    // are unaffected by this — see verifyOtpWeb.ts / google-auth/route.ts etc.
+    // Staff can still create a customer record manually from the admin panel.
+    create: ({ req }) => {
+      if (!req.user) return false
+      return req.user.role === 'super-admin' || req.user.role === 'admin'
+    },
+    // A customer may only read their own record; staff can read all.
+    // (Public collection-wide read was the critical PII-leak bug.)
+    read: ({ req }) => {
+      if (!req.user) return false
+      if (req.user.role === 'super-admin') return true
+      if (req.user.role === 'admin') return true
+      if (req.user.role === 'shop-manager') return true
+      return {
+        id: { equals: req.user.id },
+      }
+    },
     update: ({ req }) => {
       if (!req.user) return false
       if (req.user.role === 'super-admin') return true

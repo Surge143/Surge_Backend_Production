@@ -1068,6 +1068,7 @@ export interface Otp {
   email: string;
   otp: string;
   isUsed?: boolean | null;
+  attempts?: number | null;
   expiresAt: string;
   requestHistory?:
     | {
@@ -2874,6 +2875,7 @@ export interface OtpSelect<T extends boolean = true> {
   email?: T;
   otp?: T;
   isUsed?: T;
+  attempts?: T;
   expiresAt?: T;
   requestHistory?: T;
   updatedAt?: T;

@@ -80,6 +80,7 @@ export const sendOtpWeb: PayloadHandler = async (req) => {
           data: {
             otp: encryptedOtp,
             isUsed: false,
+            attempts: 0,
             expiresAt: new Date(nowMs + 5 * 60 * 1000).toISOString(),
             requestHistory: recentRequests,
           },

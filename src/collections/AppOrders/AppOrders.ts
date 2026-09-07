@@ -67,15 +67,35 @@ export const AppOrders: CollectionConfig = {
     afterDelete: [afterDeleteHook],
   },
   access: {
+    // All legitimate reads/writes (cafe-checkout, shop-manager routes, the
+    // Stripe webhook, refundHandler) go through the Local API with
+    // overrideAccess/no req context and are unaffected by any of this — this
+    // access block only governs the raw REST/GraphQL API hit directly.
     read: ({ req: { user } }) => {
-      if (user?.role === 'shop-manager') {
-        return { 'shop.shopManager': { equals: user.id } }
+      if (!user) return false
+      if (user.role === 'super-admin' || user.role === 'admin') return true
+      if (user.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } } as any
       }
-      return true
+      // A logged-in customer may read only their own cafe orders.
+      return { user: { equals: user.id } } as any
     },
-    create: () => true,
-    update: () => true,
-    delete: () => true,
+    create: ({ req: { user } }) => {
+      if (!user) return false
+      return user.role === 'super-admin' || user.role === 'admin' || user.role === 'shop-manager'
+    },
+    update: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.role === 'super-admin' || user.role === 'admin') return true
+      if (user.role === 'shop-manager') {
+        return { 'shop.shopManager': { equals: user.id } } as any
+      }
+      return false
+    },
+    delete: ({ req: { user } }) => {
+      if (!user) return false
+      return user.role === 'super-admin' || user.role === 'admin'
+    },
   },
   fields: [
     {

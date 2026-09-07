@@ -56,69 +56,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- RESTORE STOCK ---
-    if (order.items && order.items.length > 0) {
-      for (const item of order.items) {
-        try {
-          const productId = typeof item.product === 'object' ? item.product.id : item.product
-          const variantId = item.variantID
-          const quantity = item.quantity || 1
-
-          const productDoc: any = await payload.findByID({
-            collection: 'web-products',
-            id: productId,
-            overrideAccess: true,
-          })
-
-          if (!productDoc) {
-            console.warn(`[refund-web-order] Product ${productId} not found, skipping stock restore`)
-            continue
-          }
-
-          if (productDoc.hasVariantOptions && productDoc.variants && Array.isArray(productDoc.variants)) {
-            const variantIndex = productDoc.variants.findIndex((v: any) => v.id === variantId)
-
-            if (variantIndex !== -1) {
-              const currentStock = productDoc.variants[variantIndex].variantStockQuantity || 0
-              const restoredStock = currentStock + quantity
-
-              productDoc.variants[variantIndex].variantStockQuantity = restoredStock
-              if (restoredStock > 0) {
-                productDoc.variants[variantIndex].variantInStock = true
-              }
-
-              await payload.update({
-                collection: 'web-products',
-                id: productId,
-                data: { variants: productDoc.variants },
-                overrideAccess: true,
-              })
-
-              console.log(`✅ [refund-web-order] Variant stock restored for product ${productId}, variant ${variantId}: ${currentStock} → ${restoredStock}`)
-            } else {
-              console.warn(`[refund-web-order] Variant ${variantId} not found in product ${productId}`)
-            }
-          } else {
-            const currentStock = productDoc.stockQuantity || 0
-            const restoredStock = currentStock + quantity
-
-            await payload.update({
-              collection: 'web-products',
-              id: productId,
-              data: {
-                stockQuantity: restoredStock,
-                ...(restoredStock > 0 && { inStock: true }),
-              },
-              overrideAccess: true,
-            })
-
-            console.log(`✅ [refund-web-order] Base stock restored for product ${productId}: ${currentStock} → ${restoredStock}`)
-          }
-        } catch (stockErr) {
-          console.error(`[refund-web-order] Error restoring stock for item:`, stockErr)
-        }
-      }
-    }
+    // NOTE: Stock is intentionally NOT restored here. It's restored exactly once,
+    // by the `charge.refunded` Stripe webhook (chargeRefunded.ts), which only fires
+    // once Stripe has actually confirmed the refund succeeded. Restoring it here too
+    // caused (a) stock being put back even when the Stripe refund call above failed
+    // — customer paid, got no refund, item resold anyway — and (b) stock being
+    // restored twice when the refund did succeed.
 
     // Update order status — always save refundReason regardless of Stripe result
     const updated = await payload.update({

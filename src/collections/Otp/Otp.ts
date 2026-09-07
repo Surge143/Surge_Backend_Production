@@ -42,6 +42,7 @@ export const Otp: CollectionConfig = {
         { name: 'email', type: 'email', required: true, index: true },
         { name: 'otp', type: 'text', required: true },
         { name: 'isUsed', type: 'checkbox', defaultValue: false },
+        { name: 'attempts', type: 'number', defaultValue: 0 }, // failed-guess counter, resets on a new code
         { name: 'expiresAt', type: 'date', required: true },
         { name: 'requestHistory', type: 'json' }, // Array of timestamps [number, number]
     ],

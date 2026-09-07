@@ -28,6 +28,15 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
       return
     }
 
+    // --- IDEMPOTENCY GUARD ---
+    // Stripe only guarantees at-least-once delivery (retries, dashboard "resend").
+    // Without this, a redelivered event would deduct WTCoins and stock a second
+    // time for one real payment.
+    if (order.paymentStatus === 'completed') {
+      console.log(`⏭️  Order ${orderId} already marked completed — skipping duplicate webhook processing`)
+      return
+    }
+
     // --- WTCOINS MANAGEMENT ---
     // Handle WTCoins deduction only (awarding happens when order is shipped)
     if (order.user) {

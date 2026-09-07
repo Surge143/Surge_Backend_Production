@@ -73,9 +73,26 @@ export const verifyChangeEmailWeb: PayloadHandler = async (req) => {
             );
         }
 
+        const MAX_OTP_ATTEMPTS = 5;
+        if ((record.attempts || 0) >= MAX_OTP_ATTEMPTS) {
+            return Response.json(
+                { success: false, message: 'Too many incorrect attempts. Please request a new code.' },
+                { status: 429 }
+            );
+        }
+
         const { otp: encryptedOtp } = decrypt<{ otp: string }>(record.otp as string);
 
         if (otp !== encryptedOtp) {
+            try {
+                await payload.update({
+                    collection: 'otp',
+                    id: record.id,
+                    data: { attempts: (record.attempts || 0) + 1 },
+                });
+            } catch (attemptError: any) {
+                console.error("Error incrementing OTP attempt count in verifyChangeEmailWeb:", attemptError);
+            }
             return Response.json(
                 { success: true, valid: false, message: 'Invalid OTP' },
                 { status: 200 }
