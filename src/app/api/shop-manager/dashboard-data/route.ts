@@ -14,7 +14,24 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { searchParams } = new URL(req.url)
-    const shopId = searchParams.get('shopId')
+    let shopId = searchParams.get('shopId')
+
+    // A shop-manager's shopId is always derived from their own account, never
+    // trusted from the query string — otherwise any shop-manager could pass
+    // another shop's ID and see that shop's live orders/staff. Admins/super-admins
+    // keep the existing behavior (pass a shopId to filter, or omit it to see all).
+    if ((user as any).role === 'shop-manager') {
+      const managedShops = await payload.find({
+        collection: 'shop',
+        where: { shopManager: { equals: user.id } },
+        limit: 1,
+        depth: 0,
+      })
+      shopId = managedShops.docs[0]?.id ? String(managedShops.docs[0].id) : null
+      if (!shopId) {
+        return NextResponse.json({ error: 'No shop assigned to this account' }, { status: 403 })
+      }
+    }
 
     const todayStart = new Date()
     todayStart.setHours(0, 0, 0, 0)

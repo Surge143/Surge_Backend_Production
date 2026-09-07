@@ -13,10 +13,35 @@ const Wishlist: CollectionConfig = {
     hidden: ({ user }: any) => user?.role !== 'super-admin',
   },
   access: {
-    read: () => true, // Access control is handled at document level or via custom API
-    update: () => true,
-    delete: () => true,
-    create: () => true,
+    // The custom /api/wishlist route already scopes correctly to req.user, but
+    // this collection was also reachable at the raw /api/wishlist REST endpoint
+    // with no owner check at all — anyone could read/edit/wipe any other
+    // customer's wishlist by guessing an ID.
+    read: ({ req: { user } }) => {
+      if (!user) return false;
+      const u = user as any;
+      if (u.role === 'admin' || u.role === 'super-admin') return true;
+      return { user: { equals: user.id } };
+    },
+    update: ({ req: { user } }) => {
+      if (!user) return false;
+      const u = user as any;
+      if (u.role === 'admin' || u.role === 'super-admin') return true;
+      return { user: { equals: user.id } };
+    },
+    delete: ({ req: { user } }) => {
+      if (!user) return false;
+      const u = user as any;
+      if (u.role === 'admin' || u.role === 'super-admin') return true;
+      return { user: { equals: user.id } };
+    },
+    create: ({ req: { user }, data }: any) => {
+      if (!user) return false;
+      const u = user as any;
+      if (u.role === 'admin' || u.role === 'super-admin') return true;
+      // A customer may only ever create a wishlist record for themselves.
+      return !data?.user || String(data.user) === String(user.id);
+    },
   },
   fields: [
     {

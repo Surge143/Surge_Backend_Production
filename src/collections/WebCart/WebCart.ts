@@ -18,10 +18,36 @@ export const WebCart: CollectionConfig = {
         beforeChange: [beforeWebCartChange],
     },
     access: {
-        read: () => true,
-        update: () => true,
-        delete: () => true,
-        create: () => true,
+        // The custom /api/website/cart route already scopes correctly to req.user,
+        // but this collection was also reachable at the raw /api/web-cart REST
+        // endpoint with no owner check at all — anyone could read/edit/wipe any
+        // other customer's cart by guessing an ID. Mirrors AppCart/access.ts,
+        // which already does this correctly for the mobile app's cart.
+        read: ({ req: { user } }) => {
+            if (!user) return false;
+            const u = user as any;
+            if (u.role === 'admin' || u.role === 'super-admin') return true;
+            return { user: { equals: user.id } };
+        },
+        update: ({ req: { user } }) => {
+            if (!user) return false;
+            const u = user as any;
+            if (u.role === 'admin' || u.role === 'super-admin') return true;
+            return { user: { equals: user.id } };
+        },
+        delete: ({ req: { user } }) => {
+            if (!user) return false;
+            const u = user as any;
+            if (u.role === 'admin' || u.role === 'super-admin') return true;
+            return { user: { equals: user.id } };
+        },
+        create: ({ req: { user }, data }: any) => {
+            if (!user) return false;
+            const u = user as any;
+            if (u.role === 'admin' || u.role === 'super-admin') return true;
+            // A customer may only ever create a cart record for themselves.
+            return !data?.user || String(data.user) === String(user.id);
+        },
     },
     fields: [
         {

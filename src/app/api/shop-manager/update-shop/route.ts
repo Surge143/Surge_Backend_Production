@@ -19,6 +19,21 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'shopId is required' }, { status: 400 })
     }
 
+    // A shop-manager may only edit their own shop — without this, any
+    // shop-manager account could edit any other shop's settings.
+    if ((user as any).role === 'shop-manager') {
+      const managedShops = await payload.find({
+        collection: 'shop',
+        where: { shopManager: { equals: user.id } },
+        limit: 1,
+        depth: 0,
+      })
+      const managedShopId = managedShops.docs[0]?.id
+      if (!managedShopId || String(shopId) !== String(managedShopId)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+
     const updated = await payload.update({
       collection: 'shop',
       id: shopId,

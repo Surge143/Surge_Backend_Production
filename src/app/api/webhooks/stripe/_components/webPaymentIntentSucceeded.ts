@@ -3,6 +3,7 @@ import config from '@/payload.config'
 import { sendEmail } from '@/lib/emailConfig'
 import { OrderConfirmEmail } from '@/lib/emailTemplates/StoreOrderConfirm'
 import { deductWTCoins } from '@/utilities/wtCoins'
+import { sql } from '@payloadcms/db-postgres'
 
 export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
   const payload = await getPayload({ config })
@@ -73,10 +74,18 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
           const variantId = item.variantID
           const quantity = item.quantity
 
+          // Only reading this to know whether the product uses variants — the
+          // actual stock number itself is never read-then-written here, since
+          // that pattern is exactly what let two concurrent payments both read
+          // the same stale stock and silently corrupt the final count (or, on
+          // the last unit, oversell it). The two UPDATEs below do the read AND
+          // write as a single atomic database statement instead.
           const productDoc = await payload.findByID({
             collection: 'web-products',
             id: productId,
             overrideAccess: true,
+            depth: 0,
+            select: { hasVariantOptions: true } as any,
           })
 
           if (!productDoc) {
@@ -84,45 +93,36 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
             return
           }
 
-          if (productDoc.hasVariantOptions && productDoc.variants && Array.isArray(productDoc.variants)) {
-            const variantIndex = productDoc.variants.findIndex((v: any) => v.id === variantId)
-
-            if (variantIndex !== -1) {
-              const variant = productDoc.variants[variantIndex]
-              const currentStock = variant.variantStockQuantity || 0
-              const newStock = Math.max(0, currentStock - quantity)
-
-              productDoc.variants[variantIndex].variantStockQuantity = newStock
-              if (newStock === 0) {
-                productDoc.variants[variantIndex].variantInStock = false
-              }
-
-              await payload.update({
-                collection: 'web-products',
-                id: productId,
-                data: { variants: productDoc.variants },
-                overrideAccess: true,
-              })
-
-              console.log(`✅ Stock updated for product ${productId}, variant ${variantId}: ${currentStock} → ${newStock}`)
+          if (productDoc.hasVariantOptions && variantId) {
+            const result: any = await payload.db.execute({
+              sql: sql`
+              UPDATE web_products_variants
+              SET variant_stock_quantity = GREATEST(variant_stock_quantity - ${quantity}, 0),
+                  variant_in_stock = CASE WHEN variant_stock_quantity - ${quantity} <= 0 THEN false ELSE variant_in_stock END
+              WHERE id = ${variantId} AND _parent_id = ${productId}
+              RETURNING variant_stock_quantity
+            `,
+            })
+            if (result.rows?.length > 0) {
+              console.log(`✅ Stock updated for product ${productId}, variant ${variantId} → ${result.rows[0].variant_stock_quantity}`)
             } else {
               console.error(`Variant ${variantId} not found in product ${productId}`)
             }
           } else {
-            const currentStock = productDoc.stockQuantity || 0
-            const newStock = Math.max(0, currentStock - quantity)
-
-            await payload.update({
-              collection: 'web-products',
-              id: productId,
-              data: {
-                stockQuantity: newStock,
-                ...(newStock === 0 && { inStock: false }),
-              },
-              overrideAccess: true,
+            const result: any = await payload.db.execute({
+              sql: sql`
+              UPDATE web_products
+              SET stock_quantity = GREATEST(stock_quantity - ${quantity}, 0),
+                  in_stock = CASE WHEN stock_quantity - ${quantity} <= 0 THEN false ELSE in_stock END
+              WHERE id = ${productId}
+              RETURNING stock_quantity
+            `,
             })
-
-            console.log(`✅ Stock updated for product ${productId} (no variants): ${currentStock} → ${newStock}`)
+            if (result.rows?.length > 0) {
+              console.log(`✅ Stock updated for product ${productId} (no variants) → ${result.rows[0].stock_quantity}`)
+            } else {
+              console.error(`Product ${productId} not found for stock update`)
+            }
           }
         } catch (error) {
           console.error(`Error updating stock for item:`, error)
@@ -158,6 +158,30 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
         overrideAccess: true,
       })
       console.log(`✅ Order ${orderId} marked as completed with payment details`)
+
+      // --- INCREMENT COUPON USAGE COUNT ---
+      // Previously never incremented for website orders (only for cafe/app orders),
+      // so a coupon's total usage cap silently never applied on the website.
+      if (order.couponCode) {
+        const couponId = typeof order.couponCode === 'object' ? order.couponCode.id : order.couponCode
+        try {
+          const couponDoc = await payload.findByID({
+            collection: 'surge-coupon',
+            id: couponId,
+            overrideAccess: true,
+            depth: 0,
+          })
+          await payload.update({
+            collection: 'surge-coupon',
+            id: couponId,
+            data: { usageCount: (couponDoc.usageCount || 0) + 1 },
+            overrideAccess: true,
+          })
+          console.log(`✅ Coupon ${couponId} usageCount incremented for order ${orderId}`)
+        } catch (error) {
+          console.error(`Failed to increment usageCount for coupon ${couponId} on order ${orderId}:`, error)
+        }
+      }
 
       // --- DIRECT SOCKET EMIT (belt-and-suspenders alongside afterChange hook) ---
       try {

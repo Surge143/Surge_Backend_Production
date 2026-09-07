@@ -3,6 +3,7 @@ import config from '@/payload.config'
 import { sendEmail } from '@/lib/emailConfig'
 import { CafeOrderConfirmationEmail } from '@/lib/emailTemplates/CafeOrderConfirmation'
 import { deductWTCoins } from '@/utilities/wtCoins'
+import { sql } from '@payloadcms/db-postgres'
 
 export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
   console.log('🏁 Starting handleAppPaymentIntentSucceeded for:', paymentIntent.id)
@@ -109,31 +110,24 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
       console.log(`📦 Deducting stock for ${allItemsToDeduct.length} line items`)
       for (const { productId, quantity } of allItemsToDeduct) {
         try {
-          const productDoc = await payload.findByID({
-            collection: 'shop-menu',
-            id: productId,
-            overrideAccess: true,
+          // Single atomic UPDATE instead of read-then-write — two near-simultaneous
+          // orders for the same item can no longer both read the same stale stock
+          // number and silently corrupt the final count (or oversell the last unit).
+          const result: any = await payload.db.execute({
+            sql: sql`
+            UPDATE shop_menu
+            SET stock_count = GREATEST(stock_count - ${quantity}, 0),
+                in_stock = CASE WHEN stock_count - ${quantity} <= 0 THEN false ELSE in_stock END
+            WHERE id = ${productId}
+            RETURNING stock_count
+          `,
           })
 
-          if (!productDoc) {
+          if (result.rows?.length > 0) {
+            console.log(`✅ Stock updated for shop-menu ${productId} → ${result.rows[0].stock_count}`)
+          } else {
             console.error(`❌ Shop item ${productId} not found for stock update`)
-            continue
           }
-
-          const currentStock = productDoc.stockCount || 0
-          const newStock = Math.max(0, currentStock - quantity)
-
-          await payload.update({
-            collection: 'shop-menu',
-            id: productId,
-            data: {
-              stockCount: newStock,
-              inStock: newStock > 0,
-            },
-            overrideAccess: true,
-          })
-
-          console.log(`✅ Stock updated for shop-menu ${productId}: ${currentStock} → ${newStock}`)
         } catch (error) {
           console.error(`❌ Error updating stock for shop item ${productId}:`, error)
         }

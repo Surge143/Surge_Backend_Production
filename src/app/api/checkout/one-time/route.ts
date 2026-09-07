@@ -229,6 +229,33 @@ export async function POST(req: NextRequest) {
         const taxAmount = totalWithShipping * (taxRate / 100);
         const finalTotal = totalWithShipping + taxAmount;
 
+        // Cancel and delete any stale pending order from a previous abandoned/double
+        // checkout attempt — without this, a double-click or slow retry can create
+        // two separate live Stripe PaymentIntents for the same cart. Only applies to
+        // logged-in users (guests have no stable identity to look this up by).
+        if (user) {
+            const existingPending = await payload.find({
+                collection: 'web-orders',
+                where: {
+                    and: [
+                        { user: { equals: user.id } },
+                        { paymentStatus: { equals: 'pending' } },
+                        { origin: { equals: 'one-time' } },
+                    ],
+                },
+                limit: 1,
+                depth: 0,
+                select: { id: true, stripeOrderId: true },
+            });
+            if (existingPending.docs.length > 0) {
+                const stale = existingPending.docs[0] as any;
+                if (stale.stripeOrderId) {
+                    await stripe.paymentIntents.cancel(stale.stripeOrderId).catch(() => {});
+                }
+                await payload.delete({ collection: 'web-orders', id: stale.id, overrideAccess: true }).catch(() => {});
+            }
+        }
+
         // --- CREATE PAYLOAD ORDER ---
         let guestAccessToken: string | null = null;
         if (!user) {

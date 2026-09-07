@@ -19,6 +19,31 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'slotId is required' }, { status: 400 })
     }
 
+    // A shop-manager may only edit their own shop's slots — without this,
+    // any shop-manager account could edit any other shop's slots.
+    if ((user as any).role === 'shop-manager') {
+      const slot = await payload.findByID({
+        collection: 'slots',
+        id: slotId,
+        depth: 0,
+        overrideAccess: true,
+      }).catch(() => null)
+      if (!slot) {
+        return NextResponse.json({ error: 'Slot not found' }, { status: 404 })
+      }
+      const managedShops = await payload.find({
+        collection: 'shop',
+        where: { shopManager: { equals: user.id } },
+        limit: 1,
+        depth: 0,
+      })
+      const managedShopId = managedShops.docs[0]?.id
+      const slotShopId = typeof (slot as any).shop === 'object' ? (slot as any).shop?.id : (slot as any).shop
+      if (!managedShopId || String(slotShopId) !== String(managedShopId)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+
     const updated = await payload.update({
       collection: 'slots',
       id: slotId,

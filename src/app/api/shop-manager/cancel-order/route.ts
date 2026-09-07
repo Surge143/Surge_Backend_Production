@@ -30,6 +30,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
+    // A shop-manager may only act on their own shop's orders — without this,
+    // any shop-manager account could cancel/refund any other shop's orders.
+    if ((user as any).role === 'shop-manager') {
+      const managedShops = await payload.find({
+        collection: 'shop',
+        where: { shopManager: { equals: user.id } },
+        limit: 1,
+        depth: 0,
+      })
+      const managedShopId = managedShops.docs[0]?.id
+      const orderShopId = typeof order.shop === 'object' ? order.shop?.id : order.shop
+      if (!managedShopId || String(orderShopId) !== String(managedShopId)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+
     if (
       order.paymentStatus === 'refunded' ||
       order.paymentStatus === 'refund-initiated'

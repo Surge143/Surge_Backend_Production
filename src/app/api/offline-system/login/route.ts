@@ -5,7 +5,7 @@ import config from '@/payload.config'
 export async function POST(request: NextRequest) {
   const { email, password } = await request.json()
 
-  console.log('Received login request:', { email, password })
+  console.log('Received login request for:', email)
 
   if (!email || !password) {
     return NextResponse.json(

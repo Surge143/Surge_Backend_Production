@@ -1,9 +1,31 @@
 import { sendEmail } from '@/lib/emailConfig'
 import type { CollectionBeforeDeleteHook } from 'payload'
 import { AccountDeletedEmail } from '@/lib/emailTemplates/AccountDeletedEmail'
+import { stripe } from '@/lib/stripe'
 
 export const beforeUserDelete: CollectionBeforeDeleteHook = async ({ id, req }) => {
   const { payload, user } = req
+
+  // Delete the Stripe customer (and any saved payment methods) so "delete account"
+  // is actually complete on both sides — previously the Stripe billing profile
+  // survived indefinitely after account deletion.
+  try {
+    const targetUser = await payload.findByID({
+      collection: 'users',
+      id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    const stripeCustomerId = (targetUser as any)?.stripeCustomerId
+    if (stripeCustomerId) {
+      await stripe.customers.del(stripeCustomerId)
+      console.log(`✅ Deleted Stripe customer ${stripeCustomerId} for user ${id}`)
+    }
+  } catch (error) {
+    // Don't block account deletion if Stripe cleanup fails (e.g. already deleted,
+    // or Stripe has an open dispute/invoice attached) — log and continue.
+    console.error(`❌ Failed to delete Stripe customer for user ${id}:`, error)
+  }
 
   // List of collections where the user has a required/unique relationship
   // these must be deleted BEFORE the user is deleted to avoid constraint violations.

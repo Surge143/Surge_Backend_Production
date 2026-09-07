@@ -37,6 +37,23 @@ export async function handleChargeRefunded(charge: any) {
         return
     }
 
+    // A partial refund (e.g. issued manually from the Stripe dashboard) is NOT
+    // the same as cancelling the order — without this check, ANY refund amount
+    // would fully restock every item and mark the whole order cancelled/refunded,
+    // even if only a small portion was actually refunded. Deciding what a partial
+    // refund should trigger (proportional restock, a distinct status, etc.) is a
+    // product decision for later — for now we just stop it from doing the wrong
+    // thing automatically. Full refunds are unaffected and behave exactly as before.
+    const isFullRefund = charge.amount_refunded >= charge.amount
+    if (!isFullRefund) {
+        console.log(
+            `⏭️ [ChargeRefunded] Partial refund detected for ${collection} #${orderId} ` +
+            `(refunded ${charge.amount_refunded}/${charge.amount}) — skipping automatic ` +
+            `stock/coins restoration and order cancellation. Handle manually if needed.`,
+        )
+        return
+    }
+
     // --- 1. RESTORE STOCK ---
     const productCollection = orderType === 'cafe' ? 'shop-menu' : 'web-products'
     const variantIdKey = 'variantID'
