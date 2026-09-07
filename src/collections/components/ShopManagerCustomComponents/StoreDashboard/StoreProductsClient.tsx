@@ -1,6 +1,7 @@
 'use client'
 import React, { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { withUnit } from '@/utilities/variantLabel'
 import { ConfirmationModal, useModal } from '@payloadcms/ui'
 import {
   DndContext,
@@ -431,7 +432,7 @@ const SortableProductRow: React.FC<SortableProductRowProps> = ({
             {/* Variant name */}
             <div style={{ padding: '7px 8px', display: 'flex', alignItems: 'center', minWidth: 0 }}>
               <span style={{ fontSize: 12, color: 'var(--theme-elevation-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {variant.variantName}g
+                {withUnit(variant.variantName)}
               </span>
             </div>
 

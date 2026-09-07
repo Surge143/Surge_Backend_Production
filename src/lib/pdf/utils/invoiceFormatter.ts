@@ -1,4 +1,5 @@
 import { InvoiceData, InvoiceLineItem, InvoiceAddress, InvoiceType, PickupLocation } from '../types/invoice.types'
+import { withUnit } from '@/utilities/variantLabel'
 
 /**
  * Format currency value with symbol
@@ -159,11 +160,10 @@ export function formatPayloadLineItems(items: any[]): InvoiceLineItem[] {
     const quantity = parseInt(item.quantity) || 1
     const total = price * quantity
 
-    let rawWeight =
-      item.variantName || (typeof item.customizations === 'string' ? item.customizations : '') || ''
-    if (rawWeight && !rawWeight.toLowerCase().endsWith('g')) {
-      rawWeight += 'g'
-    }
+    const rawVariant = item.variantName || ''
+    const rawWeight = rawVariant
+      ? withUnit(rawVariant)
+      : (typeof item.customizations === 'string' ? item.customizations : '') || ''
 
     return {
       id: item.id || index,

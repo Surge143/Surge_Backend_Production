@@ -839,9 +839,13 @@ export interface WebProduct {
   variants?:
     | {
         /**
-         * Add quantity in Grams
+         * Coffee: quantity in grams, e.g. 250 (just the number — "g" is added automatically). Merchandise: any label, e.g. M, XL, White - L, 500ml.
          */
         variantName: string;
+        /**
+         * Optional. A hex code (e.g. #FFFFFF) or CSS color name — shows a small color dot next to this variant on the website. Mainly useful for Merchandise (e.g. t-shirt colors).
+         */
+        variantColor?: string | null;
         variantImage: number | Media;
         variantRegularPrice: string;
         variantSalePrice?: string | null;
@@ -3057,6 +3061,7 @@ export interface WebProductsSelect<T extends boolean = true> {
     | T
     | {
         variantName?: T;
+        variantColor?: T;
         variantImage?: T;
         variantRegularPrice?: T;
         variantSalePrice?: T;

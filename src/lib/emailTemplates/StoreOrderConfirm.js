@@ -1,3 +1,5 @@
+import { withUnit } from '@/utilities/variantLabel'
+
 export const OrderConfirmEmail = (order) => {
   const BACKEND_URL = process.env.NEXTAUTH_URL;
   const FRONTEND_URL = process.env.FRONTEND_URL;
@@ -139,7 +141,7 @@ export const OrderConfirmEmail = (order) => {
                         </td>
                         <td style="padding: 15px 10px; border-top: 1px solid #f0f0f0;">
                           <p style="font-size: 16px; font-weight: 400; color: ${TEXT_DARK}; margin: 0;">${item.productName || item.product?.name || 'Product'}</p>
-                          <p style="font-size: 16px;font-weight: 400; color: ${TEXT_DARK}; margin: 0;">${item.variantName || 'Regular'}${item.variantName ? 'g' : ''}</p>
+                          <p style="font-size: 16px;font-weight: 400; color: ${TEXT_DARK}; margin: 0;">${item.variantName ? withUnit(item.variantName) : 'Regular'}</p>
                         </td>
                         <td align="center" style="padding: 15px 10px; font-size: 16px;font-weight: 400; color:#2F362A; border-top: 1px solid #f0f0f0;">
                           ×${item.quantity}

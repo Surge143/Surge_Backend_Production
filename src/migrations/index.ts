@@ -14,6 +14,7 @@ import * as migration_20260618_price_fields_to_text from './20260618_price_field
 import * as migration_20260708_100926_add_acidity_remove_finish_aroma from './20260708_100926_add_acidity_remove_finish_aroma';
 import * as migration_20260907_082433_add_otp_attempts from './20260907_082433_add_otp_attempts';
 import * as migration_20260907_091247_add_otp_attempts from './20260907_091247_add_otp_attempts';
+import * as migration_20260907_130858_add_variant_color from './20260907_130858_add_variant_color';
 
 export const migrations = [
   {
@@ -94,6 +95,11 @@ export const migrations = [
   {
     up: migration_20260907_091247_add_otp_attempts.up,
     down: migration_20260907_091247_add_otp_attempts.down,
-    name: '20260907_091247_add_otp_attempts'
+    name: '20260907_091247_add_otp_attempts',
+  },
+  {
+    up: migration_20260907_130858_add_variant_color.up,
+    down: migration_20260907_130858_add_variant_color.down,
+    name: '20260907_130858_add_variant_color'
   },
 ];
