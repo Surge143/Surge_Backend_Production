@@ -46,7 +46,7 @@ export const AppOrders: CollectionConfig = {
   endpoints: [
     {
       path: '/:id/cancel',
-      method: 'get',
+      method: 'post',
       handler: refundHandler,
     },
     {

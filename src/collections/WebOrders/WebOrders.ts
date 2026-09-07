@@ -44,7 +44,7 @@ export const WebOrders: CollectionConfig = {
   endpoints: [
     {
       path: '/:id/cancel',
-      method: 'get',
+      method: 'post',
       handler: refundHandler,
     },
     {

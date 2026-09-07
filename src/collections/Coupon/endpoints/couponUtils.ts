@@ -73,13 +73,16 @@ export const validateCoupon = async (
 
         // Usage limit per user (only for logged in users)
         if (user && coupon.usageLimitPerUser) {
+            // Only orders that actually completed payment count toward the limit —
+            // previously a pending/failed/abandoned checkout still permanently
+            // burned the customer's one-time-use coupon even though they never paid.
             const userOrdersWithCoupon = await (payload as any).find({
                 collection: 'web-orders',
                 where: {
                     and: [
                         { user: { equals: user.id } },
                         { couponCode: { equals: String(coupon.id) } },
-                        { paymentStatus: { not_equals: 'refunded' } }
+                        { paymentStatus: { equals: 'completed' } }
                     ],
                 },
                 limit: 1,
