@@ -50,7 +50,14 @@ export const POST = async (req: NextRequest) => {
             return NextResponse.json({ error: 'Missing shipping address' }, { status: 400 })
         }
 
-        if (deliveryOption === 'pickup' && !billingAddress) {
+        // Mirrors exactly what order creation uses below, so validation and the
+        // value actually saved can never disagree. Previously this only checked
+        // the raw `billingAddress` field for pickup, and didn't check delivery
+        // orders at all — missing the case where the client says "billing =
+        // shipping" and only sends shippingAddress.
+        const effectiveBillingAddress = shippingAddressAsBillingAddress ? shippingAddress : billingAddress
+
+        if (!effectiveBillingAddress) {
             return NextResponse.json({ error: 'Missing billing address' }, { status: 400 })
         }
 
@@ -248,7 +255,7 @@ export const POST = async (req: NextRequest) => {
                     origin: 'one-time',
                     items: orderItems,
                     shippingAddress: deliveryOption === 'delivery' ? { ...shippingAddress, addressCountry: 'United Arab Emirates' } : undefined,
-                    billingAddress: shippingAddressAsBillingAddress ? { ...shippingAddress, addressCountry: 'United Arab Emirates' } : { ...billingAddress, addressCountry: 'United Arab Emirates' },
+                    billingAddress: { ...effectiveBillingAddress, addressCountry: 'United Arab Emirates' },
                     pickupShop: deliveryOption === 'pickup' && pickupShopId ? pickupShopId : undefined,
                     paymentStatus: 'pending',
                     couponCode: couponId as any,
