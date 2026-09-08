@@ -847,6 +847,15 @@ export interface WebProduct {
          */
         variantColor?: string | null;
         variantImage: number | Media;
+        /**
+         * Optional. Up to 2 extra photos for this specific variant (3 total with the Variant Image above). Not required — leave empty and only the single Variant Image is used. If a product/variant ends up with more than one image in total, the website shows a small dot-carousel to switch between them.
+         */
+        variantGalleryImages?:
+          | {
+              image: number | Media;
+              id?: string | null;
+            }[]
+          | null;
         variantRegularPrice: string;
         variantSalePrice?: string | null;
         variantInStock?: boolean | null;
@@ -862,6 +871,15 @@ export interface WebProduct {
    * Upload product image that will be visible on Product Listing
    */
   productImage: number | Media;
+  /**
+   * Optional. Up to 2 extra photos (3 total with the Product Image above). Not required — leave empty and only the single Product Image is used. Only applies when the product has no variants selected (a selected variant uses its own Variant Image + Additional Variant Images instead). If a product ends up with more than one image in total, the website shows a small dot-carousel to switch between them.
+   */
+  productGalleryImages?:
+    | {
+        image: number | Media;
+        id?: string | null;
+      }[]
+    | null;
   description: string;
   /**
    * Select category
@@ -3063,6 +3081,12 @@ export interface WebProductsSelect<T extends boolean = true> {
         variantName?: T;
         variantColor?: T;
         variantImage?: T;
+        variantGalleryImages?:
+          | T
+          | {
+              image?: T;
+              id?: T;
+            };
         variantRegularPrice?: T;
         variantSalePrice?: T;
         variantInStock?: T;
@@ -3074,6 +3098,12 @@ export interface WebProductsSelect<T extends boolean = true> {
   inStock?: T;
   stockQuantity?: T;
   productImage?: T;
+  productGalleryImages?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
   description?: T;
   categories?: T;
   subCategories?: T;

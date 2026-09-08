@@ -15,6 +15,7 @@ import * as migration_20260708_100926_add_acidity_remove_finish_aroma from './20
 import * as migration_20260907_082433_add_otp_attempts from './20260907_082433_add_otp_attempts';
 import * as migration_20260907_091247_add_otp_attempts from './20260907_091247_add_otp_attempts';
 import * as migration_20260907_130858_add_variant_color from './20260907_130858_add_variant_color';
+import * as migration_20260908_040337_add_variant_and_product_gallery_images from './20260908_040337_add_variant_and_product_gallery_images';
 
 export const migrations = [
   {
@@ -100,6 +101,11 @@ export const migrations = [
   {
     up: migration_20260907_130858_add_variant_color.up,
     down: migration_20260907_130858_add_variant_color.down,
-    name: '20260907_130858_add_variant_color'
+    name: '20260907_130858_add_variant_color',
+  },
+  {
+    up: migration_20260908_040337_add_variant_and_product_gallery_images.up,
+    down: migration_20260908_040337_add_variant_and_product_gallery_images.down,
+    name: '20260908_040337_add_variant_and_product_gallery_images'
   },
 ];

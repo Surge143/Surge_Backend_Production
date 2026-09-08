@@ -183,6 +183,25 @@ export const WebProducts: CollectionConfig = {
                   required: true,
                   filterOptions: { mimeType: { contains: 'image' } },
                 },
+                {
+                  name: 'variantGalleryImages',
+                  label: 'Additional Variant Images (optional, up to 2 more)',
+                  type: 'array',
+                  maxRows: 2,
+                  admin: {
+                    description:
+                      'Optional. Up to 2 extra photos for this specific variant (3 total with the Variant Image above). Not required — leave empty and only the single Variant Image is used. If a product/variant ends up with more than one image in total, the website shows a small dot-carousel to switch between them.',
+                  },
+                  fields: [
+                    {
+                      name: 'image',
+                      type: 'upload',
+                      relationTo: 'media',
+                      required: true,
+                      filterOptions: { mimeType: { contains: 'image' } },
+                    },
+                  ],
+                },
 
                 {
                   type: 'row',
@@ -337,6 +356,25 @@ export const WebProducts: CollectionConfig = {
                 },
               },
               filterOptions: { mimeType: { contains: 'image' } },
+            },
+            {
+              name: 'productGalleryImages',
+              label: 'Additional Product Images (optional, up to 2 more)',
+              type: 'array',
+              maxRows: 2,
+              admin: {
+                description:
+                  'Optional. Up to 2 extra photos (3 total with the Product Image above). Not required — leave empty and only the single Product Image is used. Only applies when the product has no variants selected (a selected variant uses its own Variant Image + Additional Variant Images instead). If a product ends up with more than one image in total, the website shows a small dot-carousel to switch between them.',
+              },
+              fields: [
+                {
+                  name: 'image',
+                  type: 'upload',
+                  relationTo: 'media',
+                  required: true,
+                  filterOptions: { mimeType: { contains: 'image' } },
+                },
+              ],
             },
             { name: 'description', label: 'Description', type: 'textarea', required: true },
 
