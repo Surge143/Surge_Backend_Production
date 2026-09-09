@@ -7,6 +7,7 @@ import { stripe } from "@/lib/stripe";
 import { validateAppCoupon } from '@/collections/Shop/endpoints/coupons/components/shopCouponUtils';
 import { calculateCouponDiscount } from '../_components/calculateCouponDiscount';
 import crypto from 'crypto';
+import { sql } from '@payloadcms/db-postgres';
 
 export const POST = async (req: NextRequest) => {
     try {
@@ -453,13 +454,70 @@ export const POST = async (req: NextRequest) => {
 
         console.log('Creating Order with Data:', JSON.stringify(orderData, null, 2));
 
-        const orderDoc = await (payload as any).create({
-            collection: 'app-orders',
-            data: orderData,
-            overrideAccess: true,
-            depth: 0,
-            select: { id: true },
-        });
+        // Serialize concurrent bookings for the SAME slot — the capacity check
+        // above is a fast-fail for the common case, but without a lock, two
+        // near-simultaneous checkouts for the last remaining slot could both
+        // pass that read before either order is created, overbooking it. A
+        // second request for a DIFFERENT slot (or no slot at all) is unaffected
+        // and proceeds immediately without any transaction overhead.
+        let orderDoc: any;
+        if (slotDoc) {
+            const transactionID = await payload.db.beginTransaction()
+            const txReq = transactionID ? ({ transactionID } as any) : undefined
+            let committed = false
+            try {
+                if (transactionID) {
+                    const tx = (payload.db as any).sessions?.[String(transactionID)]?.db
+                    await payload.db.execute({ db: tx, sql: sql`SELECT pg_advisory_xact_lock(${Number(slotDoc.id)})` })
+                }
+
+                // Re-check capacity now that we hold the lock — the read above
+                // can be stale if another booking for this exact slot committed
+                // in the meantime.
+                const freshSlot: any = await payload.findByID({
+                    collection: 'slots',
+                    id: slotDoc.id,
+                    depth: 0,
+                    overrideAccess: true,
+                    req: txReq,
+                })
+                const freshLoad = freshSlot?.currentLoad || 0
+                const freshCapacity = freshSlot?.maxCapacity || 0
+                if (freshLoad >= freshCapacity) {
+                    return NextResponse.json({ error: 'The selected slot is fully booked. Please choose another slot.' }, { status: 400 });
+                }
+
+                orderDoc = await (payload as any).create({
+                    collection: 'app-orders',
+                    data: orderData,
+                    overrideAccess: true,
+                    depth: 0,
+                    select: { id: true },
+                    req: txReq,
+                });
+
+                if (transactionID) {
+                    await payload.db.commitTransaction(transactionID)
+                    committed = true
+                }
+            } finally {
+                // Guarantees the lock and connection are always released — on
+                // the early "fully booked" return above as well as on any
+                // thrown error — so a failed/short-circuited request can never
+                // leave a transaction open.
+                if (transactionID && !committed) {
+                    await payload.db.rollbackTransaction(transactionID).catch(() => {})
+                }
+            }
+        } else {
+            orderDoc = await (payload as any).create({
+                collection: 'app-orders',
+                data: orderData,
+                overrideAccess: true,
+                depth: 0,
+                select: { id: true },
+            });
+        }
 
         // Create Payment Intent (Deferred Flow)
         const paymentIntent = await stripe.paymentIntents.create({

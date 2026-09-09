@@ -105,10 +105,14 @@ export const AppOrders: CollectionConfig = {
         return { 'shop.shopManager': { equals: user.id } } as any
       }
       // The mobile app PATCHes its own order directly after creation
-      // (patchOrderCustomizations, submitCafeOrderRatings, and the cancel
-      // fallback in apiCafeOrders.ts) — so the owner must still be allowed to
-      // update their own order at the document level. This does NOT yet lock
-      // down which fields they can touch (see note to product owner).
+      // (submitCafeOrderRatings and the cancel fallback in apiCafeOrders.ts)
+      // — so the owner must still be allowed to update their own order at the
+      // document level. items/financials/stampRewards/coinsUsed/coupon/
+      // isCouponUsed are now individually locked to staff via
+      // staffOnlyFieldAccess below, so an owner's PATCH can only ever touch
+      // the handful of fields those two legitimate flows actually send
+      // (ratings, appOrderStatus for cancel) — everything money/contents
+      // -related is rejected regardless of what a tampered request sends.
       return { user: { equals: user.id } } as any
     },
     delete: ({ req: { user } }) => {
@@ -247,6 +251,7 @@ export const AppOrders: CollectionConfig = {
               name: 'items',
               type: 'array',
               required: true,
+              access: staffOnlyFieldAccess,
               admin: {
                 readOnly: true,
               },
@@ -346,12 +351,14 @@ export const AppOrders: CollectionConfig = {
                 {
                   name: 'isCouponUsed',
                   type: 'checkbox',
+                  access: staffOnlyFieldAccess,
                   admin: { width: '30%', style: { marginTop: '35px' }, readOnly: true },
                 },
                 {
                   name: 'coupon',
                   type: 'relationship',
                   relationTo: 'surge-shop-coupon',
+                  access: staffOnlyFieldAccess,
                   admin: {
                     width: '70%',
                     readOnly: true,
@@ -367,6 +374,7 @@ export const AppOrders: CollectionConfig = {
                   name: 'coinsUsed',
                   label: 'Surge Coins Used',
                   type: 'number',
+                  access: staffOnlyFieldAccess,
                   admin: { width: '50%', readOnly: true },
                 },
                 {
@@ -374,6 +382,7 @@ export const AppOrders: CollectionConfig = {
                   type: 'relationship',
                   relationTo: 'shop-menu',
                   hasMany: true,
+                  access: staffOnlyFieldAccess,
                   filterOptions: {
                     isStampFreeProduct: { equals: true },
                   },
@@ -385,6 +394,7 @@ export const AppOrders: CollectionConfig = {
               name: 'financials',
               type: 'group',
               label: 'Financial Breakdown',
+              access: staffOnlyFieldAccess,
               fields: [
                 {
                   type: 'row',

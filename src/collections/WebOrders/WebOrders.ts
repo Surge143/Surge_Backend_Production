@@ -460,6 +460,7 @@ export const WebOrders: CollectionConfig = {
               type: 'array',
               label: 'Order Items',
               required: true,
+              access: staffOnlyFieldAccess,
               admin: { readOnly: true },
               fields: [
                 {
