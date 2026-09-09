@@ -257,13 +257,29 @@ async function deductStampRewards(
   rewardsUsed: number,
   orderId: string | number,
 ) {
+  // Serialize concurrent deductions for the SAME user — two orders paid at
+  // nearly the same instant (e.g. a double-tapped checkout creating two
+  // orders before either payment confirms) previously could both read the
+  // same starting reward balance before either wrote back, letting the same
+  // stamp reward be redeemed twice. A deduction for a DIFFERENT user is
+  // completely unaffected. Mirrors deductWTCoins' locking in this same file.
+  const transactionID = await payload.db.beginTransaction()
+  const txReq = transactionID ? ({ transactionID } as any) : undefined
+  let committed = false
+
   try {
+    if (transactionID) {
+      const tx = payload.db.sessions?.[String(transactionID)]?.db as any
+      await payload.db.execute({ db: tx, sql: sql`SELECT pg_advisory_xact_lock(${Number(userId)})` })
+    }
+
     const stampResult = await payload.find({
       collection: 'surge-stamps',
       where: { user: { equals: userId } },
       limit: 1,
       depth: 0,
       overrideAccess: true,
+      req: txReq,
     })
 
     if (stampResult.docs.length === 0) {
@@ -292,7 +308,13 @@ async function deductStampRewards(
         ],
       },
       overrideAccess: true,
+      req: txReq,
     })
+
+    if (transactionID) {
+      await payload.db.commitTransaction(transactionID)
+      committed = true
+    }
 
     console.log(
       `✅ Deducted ${rewardsUsed} Stamp Rewards from user ${userId}. New balance: ${newRewardBalance}`,
@@ -300,6 +322,10 @@ async function deductStampRewards(
   } catch (error) {
     console.error('Error deducting Stamp Rewards:', error)
     throw error
+  } finally {
+    if (transactionID && !committed) {
+      await payload.db.rollbackTransaction(transactionID).catch(() => {})
+    }
   }
 }
 

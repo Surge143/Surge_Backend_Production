@@ -460,6 +460,15 @@ export const POST = async (req: NextRequest) => {
         // pass that read before either order is created, overbooking it. A
         // second request for a DIFFERENT slot (or no slot at all) is unaffected
         // and proceeds immediately without any transaction overhead.
+        //
+        // Note: stamp-reward eligibility is deliberately NOT re-checked here.
+        // The stamp balance itself is only ever decremented later, when payment
+        // is confirmed (see deductStampRewards in appPaymentIntentSucceeded.ts,
+        // now lock-protected against the same class of race) — creating an
+        // order here never touches it. Re-reading the same untouched balance a
+        // second time inside a lock would give false confidence without
+        // actually closing anything, so it's intentionally left out; see the
+        // audit notes for what a real fix here would require.
         let orderDoc: any;
         if (slotDoc) {
             const transactionID = await payload.db.beginTransaction()
