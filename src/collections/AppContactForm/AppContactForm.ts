@@ -17,10 +17,18 @@ export const AppContactForm: CollectionConfig = {
     },
   },
   access: {
-    read: () => true,
+    // read was previously open to anyone (even unauthenticated) — these rows
+    // carry customer name/email/phone from the app's "Need Help" form, so
+    // read is now staff-only. create stays open — this is the actual
+    // public-facing submission channel the app posts to. delete was
+    // hardcoded false (no role could ever delete a row, including
+    // super-admin) — now admin/super-admin can, matching how the Events
+    // collection already lets super-admin delete submissions.
+    read: ({ req: { user } }) =>
+      !!user && (user.role === 'super-admin' || user.role === 'admin' || user.role === 'shop-manager'),
     create: () => true,
     update: () => false,
-    delete: () => false,
+    delete: ({ req: { user } }) => !!user && (user.role === 'super-admin' || user.role === 'admin'),
   },
   fields: [
     {
