@@ -26,6 +26,18 @@ function generateOrderID() {
   return `${datePart}-${randomPart}`
 }
 
+// Deterministic, collision-proof: derived from the order's own database id
+// (guaranteed unique) instead of a random 4-character suffix. invoiceId has a
+// unique constraint — a collision there (unlikely on any single day at
+// today's volume, but not negligible over months of real operation) would
+// fail the very update that marks the order paid, even though the customer's
+// payment with Stripe already succeeded.
+function generateInvoiceID(docId: string | number) {
+  const now = new Date()
+  const datePart = now.toISOString().slice(2, 10).replace(/-/g, '')
+  return `${datePart}-${docId}`
+}
+
 export const AppOrders: CollectionConfig = {
   slug: 'app-orders',
 
@@ -64,7 +76,11 @@ export const AppOrders: CollectionConfig = {
         const alreadyHasInvoice = data.invoiceId || originalDoc?.invoiceId
 
         if (isPaid && !alreadyHasInvoice) {
-          data.invoiceId = generateOrderID()
+          // originalDoc.id is always available here in the real flow (orders
+          // are always created 'pending' first, then updated to 'paid' by the
+          // webhook) — the random fallback only covers a theoretical
+          // create-time-paid edge case that doesn't currently exist.
+          data.invoiceId = originalDoc?.id != null ? generateInvoiceID(originalDoc.id) : generateOrderID()
           data.invoiceDate = new Date().toISOString()
         }
         return data

@@ -43,10 +43,35 @@ export const Notifications: CollectionConfig = {
         hidden: ({ user }: any) => user?.role !== 'super-admin',
     },
     access: {
-        read: () => true,
-        create: ({ req: { user } }) => !!user,
-        update: ({ req: { user } }) => !!user,
-        delete: ({ req: { user } }) => !!user,
+        // Was previously wide open — read: ()=>true let anyone (even logged
+        // out) read every user's notification history, and create/update/
+        // delete only checked "is someone logged in", letting any user write
+        // to, or delete, another user's notifications. Local API calls (e.g.
+        // any internal code creating a notification on a user's behalf) use
+        // overrideAccess and are unaffected by any of this.
+        read: ({ req: { user } }) => {
+            if (!user) return false
+            if (user.role === 'super-admin' || user.role === 'admin') return true
+            return { user: { equals: user.id } } as any
+        },
+        create: ({ req: { user }, data }) => {
+            if (!user) return false
+            if (user.role === 'super-admin' || user.role === 'admin') return true
+            // Must be creating/appending to your OWN notification record —
+            // otherwise a crafted request could inject notifications into
+            // someone else's account via the beforeChange merge-on-duplicate
+            // hook below.
+            return !data || String((data as any).user) === String(user.id)
+        },
+        update: ({ req: { user } }) => {
+            if (!user) return false
+            if (user.role === 'super-admin' || user.role === 'admin') return true
+            return { user: { equals: user.id } } as any
+        },
+        delete: ({ req: { user } }) => {
+            if (!user) return false
+            return user.role === 'super-admin' || user.role === 'admin'
+        },
     },
     hooks: {
         beforeChange: [beforeChangeHook],
