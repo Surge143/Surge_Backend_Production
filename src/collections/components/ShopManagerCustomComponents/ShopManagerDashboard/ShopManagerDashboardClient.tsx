@@ -214,7 +214,14 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
   // ── API helpers ───────────────────────────────────────────────────────────
   const setLoading = (id: string, v: boolean) => setLoadingIds((p) => ({ ...p, [id]: v }))
 
-  const patchOrder = async (orderId: string, data: any) => {
+  // Returns whether the update actually succeeded. Callers MUST check this
+  // before doing any optimistic local-state update or "success" toast — a
+  // caller that proceeds unconditionally after `await patchOrder(...)` will
+  // show "Order completed ✓" and remove the order from view even when the
+  // backend save was rejected (e.g. a validation error), leaving the order's
+  // real status silently unchanged and making the failure invisible beyond a
+  // toast that auto-dismisses in ~2s.
+  const patchOrder = async (orderId: string, data: any): Promise<boolean> => {
     setLoading(orderId, true)
     try {
       const res = await fetch('/api/shop-manager/update-order', {
@@ -226,8 +233,10 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error || 'Update failed')
       }
+      return true
     } catch (e: any) {
       notify(e.message || 'Error updating order', 'err')
+      return false
     } finally {
       setLoading(orderId, false)
     }
@@ -249,11 +258,16 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
 
     // Always mark both fields to avoid stale appOrderStatusDine confusing cron / hooks
     // For slot-queue orders, also clear scheduledForPrep so the cron won't re-process them
-    await patchOrder(order.id, {
+    const ok = await patchOrder(order.id, {
       appOrderStatus: nextApiStatus,
       appOrderStatusDine: nextApiStatus,
       ...(order.status === 'slot-queue' ? { scheduledForPrep: false } : {}),
     })
+    // Never apply the optimistic "it worked" UI update on a failed save — the
+    // order must stay exactly where it was so the manager can see it didn't
+    // advance and retry, instead of it silently vanishing while still
+    // 'pending' in the database (see patchOrder's comment above).
+    if (!ok) return
 
     if (nextApiStatus === 'completed') {
       setOrders((prev) => prev.filter((o) => o.id !== order.id))
@@ -275,13 +289,14 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
     const THIRTY_MIN_MS = 30 * 60 * 1000
     const isLateSlot = order.slotMs !== null && order.slotMs - Date.now() > THIRTY_MIN_MS
 
-    await patchOrder(order.id, {
+    const ok = await patchOrder(order.id, {
       orderAcceptance: 'accepted',
       appOrderStatus: 'pending',
       appOrderStatusDine: 'pending',
       scheduledForPrep: isLateSlot,
       ...(baristaId ? { barista: Number(baristaId) } : {}),
     })
+    if (!ok) return
 
     if (isLateSlot) {
       // Move into the slot-queue section — cron will release it to 'queued' at T-30
@@ -331,11 +346,12 @@ export const ShopManagerDashboardClient: React.FC<Props> = ({
   const handleRestore = async (id: string) => {
     const o = cancelled.find((x) => x.id === id)
     if (!o) return
-    await patchOrder(id, {
+    const ok = await patchOrder(id, {
       orderAcceptance: 'pending',
       appOrderStatus: 'pending',
       appOrderStatusDine: 'pending',
     })
+    if (!ok) return
     setCancelled((prev) => prev.filter((x) => x.id !== id))
     setOrders((prev) => [{ ...o, status: 'new' }, ...prev])
     notify('Order restored')

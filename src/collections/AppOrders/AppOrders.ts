@@ -399,9 +399,27 @@ export const AppOrders: CollectionConfig = {
                   relationTo: 'shop-menu',
                   hasMany: true,
                   access: staffOnlyFieldAccess,
-                  filterOptions: {
-                    isStampFreeProduct: { equals: true },
-                  },
+                  // No filterOptions here — Payload re-validates a relationship
+                  // field's filterOptions on EVERY partial update to this
+                  // document (not just when the field itself is being changed):
+                  // its existing value is cloned from the original doc and
+                  // re-checked via a scoped `find` against
+                  // {isStampFreeProduct: true} each time. If that internal
+                  // lookup ever fails to re-match the same product for any
+                  // reason (the menu item later edited into a draft state,
+                  // an access-control nuance, timing), Payload throws a
+                  // validation error and the ENTIRE update — including an
+                  // unrelated status-only PATCH from the Shop Manager
+                  // Dashboard's Accept/Advance buttons — is rejected, leaving
+                  // the order's real status silently unchanged forever. This
+                  // is exactly what caused a "reward order" to stay stuck as
+                  // pending no matter how many times it was accepted/advanced.
+                  // The real, one-time validation of stampRewards already
+                  // happens explicitly in beforeValidate.ts, which only runs
+                  // when stampRewards is actually part of the incoming data
+                  // (i.e. at order creation) — that's the correct place for
+                  // this check, not a per-save field constraint on a
+                  // historical record.
                   admin: { width: '50%', readOnly: true },
                 },
               ],

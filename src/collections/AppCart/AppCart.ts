@@ -75,6 +75,16 @@ const AppCart: CollectionConfig = {
                     min: 1,
                 },
                 {
+                    name: 'isRewardItem',
+                    label: 'Redeemed As Stamp Reward',
+                    type: 'checkbox',
+                    defaultValue: false,
+                    admin: {
+                        description: 'Set when the customer selected this product as their free stamp-reward redemption — validated and priced free in beforeCartChange / cafe-checkout.',
+                        condition: (data) => data?.origin === 'cafe',
+                    },
+                },
+                {
                     name: 'customizations',
                     type: 'json',
                     admin: {
