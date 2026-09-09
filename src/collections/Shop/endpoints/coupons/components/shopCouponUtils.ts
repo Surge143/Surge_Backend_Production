@@ -75,7 +75,11 @@ export const validateAppCoupon = async (
             return { success: false, error: 'This coupon has reached its total usage limit', status: 400 };
         }
 
-        // Usage limit per user (only for logged in users)
+        // Usage limit per user (only for logged in users). Only count orders
+        // that actually completed payment — a pending/failed/refunded order
+        // never really "used" the coupon, and counting it here would wrongly
+        // block a customer from applying the same code on a real subsequent
+        // attempt. Same fix already applied to the website's equivalent check.
         if (user && coupon.usageLimitPerUser) {
             const userOrdersWithCoupon = await (payload as any).find({
                 collection: 'app-orders',
@@ -83,7 +87,7 @@ export const validateAppCoupon = async (
                     and: [
                         { user: { equals: user.id } },
                         { coupon: { equals: String(coupon.id) } },
-                        { paymentStatus: { not_equals: 'refunded' } },
+                        { paymentStatus: { equals: 'paid' } },
                         { shop: { equals: shopId } }
                     ],
                 },

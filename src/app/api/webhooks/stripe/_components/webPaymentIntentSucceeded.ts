@@ -165,17 +165,12 @@ export async function handleWebPaymentIntentSucceeded(paymentIntent: any) {
       if (order.couponCode) {
         const couponId = typeof order.couponCode === 'object' ? order.couponCode.id : order.couponCode
         try {
-          const couponDoc = await payload.findByID({
-            collection: 'surge-coupon',
-            id: couponId,
-            overrideAccess: true,
-            depth: 0,
-          })
-          await payload.update({
-            collection: 'surge-coupon',
-            id: couponId,
-            data: { usageCount: (couponDoc.usageCount || 0) + 1 },
-            overrideAccess: true,
+          // Atomic UPDATE instead of read-then-write — two orders using the same
+          // coupon and paid at nearly the same instant can no longer both read
+          // the same stale usageCount and silently undercount it, letting the
+          // coupon be used more times than its total usage limit allows.
+          await payload.db.execute({
+            sql: sql`UPDATE surge_coupon SET usage_count = COALESCE(usage_count, 0) + 1 WHERE id = ${couponId}`,
           })
           console.log(`✅ Coupon ${couponId} usageCount incremented for order ${orderId}`)
         } catch (error) {
