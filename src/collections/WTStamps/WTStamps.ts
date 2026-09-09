@@ -15,6 +15,26 @@ export const WTStamps: CollectionConfig = {
       return !isAuthorized
     },
   },
+  access: {
+    // This collection had NO access block at all — every operation defaulted
+    // to open, meaning any request (even unauthenticated) could read anyone's
+    // stamp/reward balance, and any logged-in user could PATCH their own (or
+    // literally anyone's) stampReward to any number and go redeem free items.
+    // All legitimate stamp/reward changes happen server-side (the payment
+    // webhook, the offline redeem system) via the Local API, which bypasses
+    // this entirely — so there's no legitimate customer-facing write path to
+    // preserve here.
+    read: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.role === 'super-admin' || user.role === 'admin' || user.role === 'shop-manager') return true
+      return { user: { equals: user.id } } as any
+    },
+    create: ({ req: { user } }) =>
+      !!user && (user.role === 'super-admin' || user.role === 'admin' || user.role === 'shop-manager'),
+    update: ({ req: { user } }) =>
+      !!user && (user.role === 'super-admin' || user.role === 'admin' || user.role === 'shop-manager'),
+    delete: ({ req: { user } }) => !!user && (user.role === 'super-admin' || user.role === 'admin'),
+  },
   fields: [
     {
       name: 'user',
