@@ -208,44 +208,46 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
 
                 // Customization Snapshotting
                 //
-                // BUG FIX: this used to key/match on `sel.sectionTitle` +
-                // `sel.label` — but the app never sends those field names.
-                // buildPricedPayload() (CafeMain.tsx) sends
-                // {sectionId, selectedOptionId, selectedOptionLabel, price},
-                // where `sectionId` is an internal section id, not the
-                // section's display title. So `sel.sectionTitle`/`sel.label`
-                // were always undefined, the `if` below always failed, and
-                // every single customization was silently dropped here —
-                // every cart item's `customizations` was saved as `[]`,
-                // regardless of what was actually selected.
+                // Round 1 bug: this used to key/match on `sel.sectionTitle` +
+                // `sel.label`, which the app never sends — always failed,
+                // silently dropping every customization.
                 //
-                // Fixed by matching on the option's own stable id (Payload
-                // auto-assigns one to every customization option row) —
-                // which is exactly what the app sends as `selectedOptionId`
-                // — instead of section/option display text. Also now walks
-                // BOTH customization shapes the menu can use (grouped
-                // options under `section.groups[].options` as well as flat
-                // `section.options`) — the old code only checked the flat
-                // shape. sectionTitle/label/price in the saved snapshot are
-                // still derived entirely from the menu's own definition,
-                // never trusted from the client.
+                // Round 2 bug: fixed the matching, but rewrote the *saved
+                // shape* to {sectionTitle, label, price} — a shape nothing
+                // else in the app actually reads. Everywhere else
+                // (apiCafeOrders.ts, the order-results screen, this same
+                // reference pattern in the other Surge app) expects the
+                // original {sectionId, selectedOptionId, selectedOptionLabel,
+                // price} shape buildPricedPayload() (CafeMain.tsx) sends —
+                // so the previous fix still ended up invisible everywhere it
+                // was actually displayed.
+                //
+                // Fixed properly now: preserve the original field names, and
+                // try matching by the option's own id first, falling back to
+                // matching by label text (mirrors how the option lookup
+                // already degrades on the frontend). If a selection still
+                // can't be matched against the current menu definition at
+                // all, keep the client's label so nothing silently
+                // disappears, but zero out its price — the actual charged
+                // price only ever comes from a verified menu option, never
+                // from whatever the client sent.
                 if (item.customizations && Array.isArray(item.customizations)) {
                     const incomingSelections = item.customizations;
-                    const snapshot: Array<{ sectionTitle: string, label: string, price: number }> = [];
-                    const availableOptions = new Map<string, { sectionTitle: string, label: string, price: number }>();
+                    const snapshot: Array<{ sectionId: string, sectionTitle: string, selectedOptionId: string, selectedOptionLabel: string, price: number }> = [];
+                    const byId = new Map<string, { sectionId: string, sectionTitle: string, label: string, price: number }>();
+                    const byLabel = new Map<string, { sectionId: string, sectionTitle: string, label: string, price: number }>();
 
                     if (shopMenuItem?.customizations && Array.isArray(shopMenuItem.customizations)) {
                         shopMenuItem.customizations.forEach((panel: any) => {
                             if (panel.sections && Array.isArray(panel.sections)) {
                                 panel.sections.forEach((section: any) => {
-                                    const sectionTitle = section.title;
+                                    const sectionId = String(section.id ?? section.title ?? "");
+                                    const sectionTitle = String(section.title ?? "");
                                     const addOption = (opt: any) => {
-                                        if (opt?.id == null) return;
-                                        availableOptions.set(String(opt.id), {
-                                            sectionTitle,
-                                            label: opt.label,
-                                            price: opt.price || 0,
-                                        });
+                                        if (!opt?.label) return;
+                                        const meta = { sectionId, sectionTitle, label: String(opt.label), price: opt.price || 0 };
+                                        if (opt.id != null) byId.set(String(opt.id), meta);
+                                        byLabel.set(String(opt.label).trim().toLowerCase(), meta);
                                     };
                                     if (section.groups && Array.isArray(section.groups)) {
                                         section.groups.forEach((group: any) => {
@@ -263,21 +265,31 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
                     }
 
                     for (const sel of incomingSelections) {
-                        // The price (and label/section) is ALWAYS taken from the
-                        // menu's own customization definition, never from
-                        // whatever the client sends — previously a
-                        // client-supplied numeric price (e.g. 0) was trusted
-                        // outright, letting a paid add-on be added for free.
-                        const optionId = String(sel?.selectedOptionId ?? sel?.optionId ?? "");
-                        if (optionId && availableOptions.has(optionId)) {
-                            const meta = availableOptions.get(optionId)!;
-                            snapshot.push({ sectionTitle: meta.sectionTitle, label: meta.label, price: meta.price });
-                        }
+                        if (!sel) continue;
+                        const selectedOptionId = String(sel.selectedOptionId ?? sel.optionId ?? "");
+                        const selectedOptionLabel = String(sel.selectedOptionLabel ?? sel.label ?? "");
+
+                        // Price is ALWAYS taken from the menu's own customization
+                        // definition, never from whatever the client sends —
+                        // previously a client-supplied numeric price (e.g. 0) was
+                        // trusted outright, letting a paid add-on be added for free.
+                        const meta =
+                            (selectedOptionId && byId.get(selectedOptionId)) ||
+                            (selectedOptionLabel && byLabel.get(selectedOptionLabel.trim().toLowerCase())) ||
+                            null;
+
+                        if (!selectedOptionId && !selectedOptionLabel) continue;
+
+                        snapshot.push({
+                            sectionId: meta?.sectionId ?? String(sel.sectionId ?? ""),
+                            sectionTitle: meta?.sectionTitle ?? String(sel.sectionTitle ?? ""),
+                            selectedOptionId,
+                            selectedOptionLabel: meta?.label ?? selectedOptionLabel,
+                            price: meta?.price ?? 0,
+                        });
                     }
 
-                    item.customizations = snapshot.sort((a, b) =>
-                        `${a.sectionTitle}:${a.label}`.localeCompare(`${b.sectionTitle}:${b.label}`)
-                    );
+                    item.customizations = snapshot;
                 } else {
                     item.customizations = [];
                 }

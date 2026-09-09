@@ -247,43 +247,71 @@ export const POST = async (req: NextRequest) => {
             let itemPrice = productDoc.salePrice || productDoc.regularPrice || 0;
 
             // Validate Customizations
+            //
+            // Bug fix: this used to match on `selection.sectionTitle` +
+            // `selection.label` — fields the cart's saved customizations
+            // never actually had (they carry `selectedOptionId` /
+            // `selectedOptionLabel`, matching what the app sends when
+            // adding to cart). So this block never matched anything, never
+            // added a single add-on's price to itemPrice, and — since the
+            // `if` just guarded skipping rather than throwing — never
+            // errored either, so the gap was invisible until customizations
+            // started actually reaching this point (see beforeCartChange.ts
+            // for the earlier link in this same chain).
+            //
+            // Matches by the option's own id first, falling back to label
+            // text, mirroring the same two-strategy lookup now used when the
+            // cart snapshot is built. A selection that still can't be
+            // verified against the live menu just doesn't contribute price
+            // (rather than rejecting the whole checkout) — being this is the
+            // first time this validation has ever actually run against real
+            // data, hard-failing checkout on an edge-case mismatch would be
+            // worse than a single add-on silently costing nothing.
             if (item.customizations && Array.isArray(item.customizations)) {
                 const sourceCustomizations = productDoc.customizations as any[];
                 if (sourceCustomizations && Array.isArray(sourceCustomizations)) {
-                    // Build a flat map of available options: "Section Title:Option Label" -> Price
-                    // Supports BOTH grouped options (groups[].options) and flat options (options)
-                    const availableOptions = new Map<string, number>();
+                    const byId = new Map<string, number>();
+                    const byLabel = new Map<string, number>();
                     sourceCustomizations.forEach((panel: any) => {
                         if (panel.sections && Array.isArray(panel.sections)) {
                             panel.sections.forEach((section: any) => {
+                                const addOption = (opt: any) => {
+                                    if (!opt?.label) return;
+                                    const price = opt.price ?? 0;
+                                    if (opt.id != null) byId.set(String(opt.id), price);
+                                    byLabel.set(String(opt.label).trim().toLowerCase(), price);
+                                };
                                 // Case 1: grouped options
                                 if (section.groups && Array.isArray(section.groups) && section.groups.length > 0) {
                                     section.groups.forEach((group: any) => {
                                         if (group.options && Array.isArray(group.options)) {
-                                            group.options.forEach((opt: any) => {
-                                                availableOptions.set(`${section.title}:${opt.label}`, opt.price ?? 0);
-                                            });
+                                            group.options.forEach(addOption);
                                         }
                                     });
                                 }
                                 // Case 2: flat options (no groups)
                                 if (section.options && Array.isArray(section.options)) {
-                                    section.options.forEach((opt: any) => {
-                                        availableOptions.set(`${section.title}:${opt.label}`, opt.price ?? 0);
-                                    });
+                                    section.options.forEach(addOption);
                                 }
                             });
                         }
                     });
 
                     for (const selection of item.customizations) {
-                        if (selection.sectionTitle && selection.label) {
-                            const key = `${selection.sectionTitle}:${selection.label}`;
-                            if (availableOptions.has(key)) {
-                                itemPrice += availableOptions.get(key)!;
-                            } else {
-                                return NextResponse.json({ error: `Invalid customization option selected: ${selection.label} in ${selection.sectionTitle}` }, { status: 400 });
-                            }
+                        const selectedOptionId = String(selection?.selectedOptionId ?? selection?.optionId ?? "");
+                        const selectedOptionLabel = String(selection?.selectedOptionLabel ?? selection?.label ?? "").trim().toLowerCase();
+                        const price =
+                            (selectedOptionId && byId.get(selectedOptionId)) ??
+                            (selectedOptionLabel && byLabel.get(selectedOptionLabel)) ??
+                            null;
+                        if (price != null) {
+                            itemPrice += price;
+                        } else if (selectedOptionId || selectedOptionLabel) {
+                            console.warn(`[cafe-checkout] Could not verify customization option against menu — not charging for it`, {
+                                productId: productDoc.id,
+                                selectedOptionId,
+                                selectedOptionLabel,
+                            });
                         }
                     }
                 }
