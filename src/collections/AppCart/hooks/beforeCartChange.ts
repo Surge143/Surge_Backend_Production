@@ -138,7 +138,7 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
     }
     // 3. Consolidate items
     if (data.items && Array.isArray(data.items)) {
-        const itemMap = new Map<string, { id?: string | number; product: any; vId?: string; quantity: number; customizations: any; productHighlights?: any; isRewardItem?: boolean }>();
+        const itemMap = new Map<string, { id?: string | number; product: any; vId?: string; quantity: number; customizations: any; productHighlights?: any }>();
 
         for (const item of data.items) {
             const { relationTo, productId } = getInfo(item);
@@ -151,12 +151,7 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
                     .sort()
                     .join('|')
                 : '';
-            // isRewardItem is part of the merge key too — a free reward
-            // redemption must never silently merge quantity with an
-            // otherwise-identical paid line (or vice versa); they mean
-            // different things even for the same product/customization.
-            const rewardKey = item.isRewardItem ? 'reward' : 'paid';
-            const key = `${relationTo}:${productId}:${vIdKey}:${custKey}:${hlKey}:${rewardKey}`;
+            const key = `${relationTo}:${productId}:${vIdKey}:${custKey}:${hlKey}`;
 
             if (itemMap.has(key)) {
                 const existing = itemMap.get(key)!;
@@ -169,7 +164,6 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
                     quantity: item.quantity || 1,
                     customizations: item.customizations,
                     productHighlights: item.productHighlights,
-                    isRewardItem: Boolean(item.isRewardItem),
                 });
             }
         }
@@ -181,7 +175,6 @@ export const beforeCartChange: CollectionBeforeChangeHook = async ({
             quantity: val.quantity,
             customizations: val.customizations,
             productHighlights: val.productHighlights,
-            isRewardItem: val.isRewardItem,
         }));
     }
 
