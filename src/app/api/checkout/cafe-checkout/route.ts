@@ -423,6 +423,27 @@ export const POST = async (req: NextRequest) => {
                 }
                 stampRewardIds.push(productId);
             }
+
+            // Add the redeemed product as a real order line too — this used
+            // to only ever be recorded in the separate `stampRewards`
+            // relationship (a validation/balance-deduction record), never in
+            // `items`, so the barista dashboard never saw it and there was
+            // nothing to actually prepare. Pushed AFTER subtotal/tax/total
+            // are already computed above, so a free item never inflates the
+            // bill. Tagged with a synthetic marker inside its own
+            // (freeform-JSON) customizations array — the items schema has no
+            // dedicated price/isReward column, and this is the one
+            // unambiguous signal apiCafeOrders.ts (the app) and the invoice
+            // reader need to render it as a AED 0 "FREE" row regardless of
+            // whether the same product also appears elsewhere in the order
+            // as a normal paid line.
+            for (const rewardProductId of stampRewardIds) {
+                processedItems.push({
+                    product: rewardProductId,
+                    quantity: 1,
+                    customizations: [{ __rewardRedemption: true }],
+                });
+            }
         }
 
         // --- STRIPE CUSTOMER ---

@@ -90,18 +90,29 @@ export async function handleAppPaymentIntentSucceeded(paymentIntent: any) {
     // --- STOCK DEDUCTION (Paid Items + Free Reward Items) ---
     const allItemsToDeduct: { productId: string | number; quantity: number }[] = []
 
-    // Add regular order items
+    // Add regular order items — as of cafe-checkout/route.ts adding the
+    // redeemed reward product as its own line in `items` (tagged with a
+    // __rewardRedemption marker in its customizations), this loop already
+    // covers reward items for every order created from now on.
+    const itemsProductIds = new Set<string>()
     if (order.items && order.items.length > 0) {
       order.items.forEach((item: any) => {
         const productId = typeof item.product === 'object' ? item.product.id : item.product
+        itemsProductIds.add(String(productId))
         allItemsToDeduct.push({ productId, quantity: item.quantity || 1 })
       })
     }
 
-    // Add stamp reward items (quantity is always 1 per reward item)
+    // Add stamp reward items NOT already covered by `items` above — kept
+    // only for orders placed before the fix above (where a redeemed reward
+    // was recorded in `stampRewards` but never added to `items` at all).
+    // Skipping any productId already present in `items` prevents double-
+    // deducting stock for the same physical unit on every order going
+    // forward (quantity is always 1 per reward item).
     if (order.stampRewards && Array.isArray(order.stampRewards)) {
       order.stampRewards.forEach((reward: any) => {
         const productId = typeof reward === 'object' ? reward.id : reward
+        if (itemsProductIds.has(String(productId))) return
         allItemsToDeduct.push({ productId, quantity: 1 })
       })
     }
